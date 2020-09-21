@@ -1,4 +1,4 @@
-# DRACO: Deconvolution of RnA COnformations
+# DRACO: Deconvolution of RNA Alternative COnformations
 
 ## Requirements
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include <cstdlib>
 
 double KScdf(int n, double x);
 double KSfbar(int n, double x);

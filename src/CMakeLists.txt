@@ -25,7 +25,15 @@ add_executable(
 )
 
 target_link_libraries(draco ${ARMADILLO_LIBRARIES} ${TBB_LIBRARIES} ${DLIB_LIBRARIES})
-target_include_directories(draco PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(
+    draco
+    PRIVATE
+        ${CMAKE_CURRENT_BINARY_DIR}
+    PUBLIC
+        ${ARMADILLO_INCLUDE_DIRS}
+        ${TBB_INCLUDE_DIRS}
+        ${DLIB_INCLUDE_DIR}
+)
 
 add_custom_target(
     run_args_generate

@@ -1,6 +1,7 @@
 #include "args_def.hpp"
 
 #include <fstream>
+#include <sstream>
 #include <string_view>
 
 template <typename Arg>
@@ -96,12 +97,31 @@ create_setter_function(std::ostream& os) {
   os << "\n}";
 }
 
-int
-main() {
-  auto out_stream = std::ofstream("args_generated.hpp");
+template <typename Stream> static void generate_on_stream(Stream &stream) {
+  stream << "#pragma once\n#include <string>\n\nstruct ArgsGenerated {\n";
+  dump_opts(stream);
+  create_setter_function(stream);
+  stream << "};";
+}
 
-  out_stream << "#pragma once\n#include <string>\n\nstruct ArgsGenerated {\n";
-  dump_opts(out_stream);
-  create_setter_function(out_stream);
-  out_stream << "};";
+int main() {
+  constexpr char const *generated_file_name = "args_generated.hpp";
+  if (std::ifstream stream(generated_file_name); stream.good()) {
+    std::string old_content{std::istreambuf_iterator<char>(stream),
+                            std::istreambuf_iterator<char>()};
+    std::stringstream new_content_stream;
+    generate_on_stream(new_content_stream);
+
+    std::string new_content(new_content_stream.str());
+    if (new_content != old_content) {
+      std::ofstream out_stream(generated_file_name);
+      new_content_stream.seekg(0);
+      std::copy(std::istreambuf_iterator<char>(new_content_stream),
+                std::istreambuf_iterator<char>(),
+                std::ostreambuf_iterator<char>(out_stream));
+    }
+  } else {
+    auto out_stream = std::ofstream(generated_file_name);
+    generate_on_stream(out_stream);
+  }
 }

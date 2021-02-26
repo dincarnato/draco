@@ -24,7 +24,14 @@ add_executable(
     args_generate.cpp
 )
 
-target_link_libraries(draco ${ARMADILLO_LIBRARIES} ${TBB_LIBRARIES} ${DLIB_LIBRARIES})
+target_link_libraries(
+    draco
+    ${ARMADILLO_LIBRARIES}
+    ${TBB_LIBRARIES}
+    ${DLIB_LIBRARIES}
+    ${Boost_LIBRARIES}
+)
+
 target_include_directories(
     draco
     PRIVATE
@@ -33,6 +40,7 @@ target_include_directories(
         ${ARMADILLO_INCLUDE_DIRS}
         ${TBB_INCLUDE_DIRS}
         ${DLIB_INCLUDE_DIR}
+        ${Boost_INCLUDE_DIRS}
 )
 
 add_custom_target(

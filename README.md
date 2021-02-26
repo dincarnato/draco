@@ -5,6 +5,7 @@
 * A linux-based distribution
 * GCC 9 or higher (GCC 10 is better because GCC 9 gives a lot of false positive warnings), or Clang 9 or higher
 * [Armadillo](http://arma.sourceforge.net/) library
+* [Boost](https://www.boost.org/) library >= 1.66
 * [Dlib](http://dlib.net/) library
 * [Intel TBB](https://software.intel.com/content/www/us/en/develop/tools/threading-building-blocks.html)
 

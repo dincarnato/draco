@@ -5,6 +5,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 subdirs(src test)
 
 find_package(PkgConfig REQUIRED)
+find_package(Boost 1.66 REQUIRED)
 find_package(Armadillo REQUIRED)
 find_package(TBB COMPONENTS tbbmalloc)
 find_package(OpenMP REQUIRED)

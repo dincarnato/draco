@@ -13,12 +13,12 @@ add_arg_to_opts(cxxopts::OptionAdder& opt_adder, Arg const& arg) {
                         typename Arg::default_value_type::value_type, bool>) {
         if (arg.get_description().max_size == 0) {
           return arg.get_description()
-              .append("(default: ")
+              .append("(Default: ")
               .append(arg.get_default_string())
               .append(")\0");
         } else {
           return arg.get_description()
-              .append(" (default: ")
+              .append(" (Default: ")
               .append(arg.get_default_string())
               .append(")");
         }
@@ -41,7 +41,7 @@ add_args_to_opts(cxxopts::Options& opts, Group const& group,
   (add_arg_to_opts(opt_adder, std::get<Idx>(group.args)), ...);
 
   if (group.description.is_empty()) {
-    opt_adder("help", "prints this help");
+    opt_adder("help", "Displays this help");
   }
 }
 

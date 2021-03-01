@@ -28,12 +28,12 @@ std::enable_if_t<std::is_convertible_v<std::decay_t<T>, Transcript>,
                  std::basic_ostream<CharT, Traits>&>
 jsonify(std::basic_ostream<CharT, Traits>& os, T&& transcript) {
   os << '{';
-  jsonify(os, "name", transcript.name, "sequence", transcript.sequence, "reads",
+  jsonify(os, "id", transcript.name, "sequence", transcript.sequence, "nReads",
           transcript.reads);
 
   if (transcript.coverages) {
     os << ',';
-    jsonify(os, "coverages", transcript.coverages);
+    jsonify(os, "preCoverage", transcript.coverages);
   }
 
   if (transcript.windows) {

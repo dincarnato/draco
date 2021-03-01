@@ -449,6 +449,8 @@ int
 main(int argc, char* argv[]) {
   auto const args = Args(argc, argv);
 
+  std::cout << "\n[+] Starting DRACO analysis. This might take a while...\n";
+
   // Disabling OMP, we parallelize a higher level
   omp_set_num_threads(1);
 
@@ -494,7 +496,7 @@ main(int argc, char* argv[]) {
           break;
         auto const& transcript = std::get<0>(*poppedData);
         auto& ringmapData = std::get<1>(*poppedData);
-        std::cout << "Analyising transcript " << transcript.getId() << '\n';
+        std::cout << "\e[2K\r[+] Analyzing transcript " << transcript.getId() << std::flush;
 
         results::Transcript transcriptResult;
         transcriptResult.name = transcript.getId();
@@ -991,4 +993,7 @@ main(int argc, char* argv[]) {
   reader.join();
   for (auto& worker : workers)
     worker.join();
+
+  std::cout << "\n[+] All done.\n\n";
+
 }

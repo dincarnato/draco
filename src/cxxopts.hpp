@@ -1184,7 +1184,7 @@ namespace cxxopts
     Options(std::string program, std::string help_string = "")
     : m_program(std::move(program))
     , m_help_string(toLocalString(std::move(help_string)))
-    , m_custom_help("[OPTION...]")
+    , m_custom_help("[OPTIONS]")
     , m_positional_help("positional parameters")
     , m_show_positional(false)
     , m_next_positional(m_positional.end())
@@ -1953,8 +1953,12 @@ inline
 std::string
 Options::help(const std::vector<std::string>& help_groups) const
 {
-  String result = m_help_string + "\nUsage:\n  " +
-    toLocalString(m_program) + " " + toLocalString(m_custom_help);
+  String result = m_help_string + "\n" +
+                  " Author(s):  Edoardo Morandi (emorandi[at]rnaframework.com) [Main developer]\n" +
+                  "             Danny Incarnato (dincarnato[at]rnaframework.com)\n" + 
+                  " Summary:    Deconvolution of coexisting RNA structural conformations from MaP experiments\n\n" +
+                  " Usage:   " + toLocalString(m_program) + " " + toLocalString(m_custom_help) + " --mm <sample.mm> --output <sample.json>\n\n" +
+                  " Options";
 
   if (m_positional.size() > 0 && m_positional_help.size() > 0) {
     result += " " + toLocalString(m_positional_help);

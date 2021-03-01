@@ -36,7 +36,7 @@ impl Db {
             let mut line = loop {
                 let line = lines.next().unwrap()?;
                 match line[0] {
-                    b'x' | b'.' => modificability_profiles.push(line.into()),
+                    b'(' | b')' | b'x' | b'.' => modificability_profiles.push(line.into()),
                     _ => break line,
                 }
             };
@@ -68,6 +68,8 @@ impl From<BString> for ModificabilityProfile {
             .bytes()
             .map(|c| match c {
                 b'x' => false,
+                b'(' => false,
+                b')' => false,
                 b'.' => true,
                 _ => panic!("invalid modificability profile character '{}'", c),
             })

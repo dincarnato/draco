@@ -13,52 +13,48 @@ use structopt::{clap::ArgGroup, StructOpt};
 #[derive(StructOpt)]
 #[structopt(group = ArgGroup::with_name("reads_amount").required(true))]
 struct ArgsOpt {
-    /// DB input file
+    /// Input file with structure profiles
     #[structopt(parse(from_os_str))]
     db_file: PathBuf,
 
-    /// Output DB file, with the number of modifications per base updated according to the
-    /// generation
-    #[structopt(parse(from_os_str), short = "o", long = "db-out")]
+    /// Output file with structure profiles updated according to the simulation
+    #[structopt(parse(from_os_str), short = "o", long = "outProfiles")]
     db_out: PathBuf,
 
-    /// Output MM file
+    /// Output mutation map (MM) file
     #[structopt(parse(from_os_str))]
     mm_file: PathBuf,
 
-    /// Number of generated reads for each transcript
-    #[structopt(short = "n", long = "reads", group = "reads_amount")]
+    /// Number of reads mapping to each transcript
+    /// [Note: this parameter and "--meanCoverage" are mutually exclusive]
+    #[structopt(short = "n", long = "nReads", group = "reads_amount")]
     n_reads: Option<usize>,
 
-    /// Mean base coverage that will be obtained. The number of reads are deduced accordingly
-    #[structopt(short = "c", long = "mean-coverage", group = "reads_amount")]
+    /// Mean sequencing depth (coverage) per base
+    /// [Note: this parameter and "--nReads" are mutually exclusive]
+    #[structopt(short = "c", long = "meanCoverage", group = "reads_amount")]
     mean_coverage: Option<u32>,
 
-    /// Size of the generated reads
-    #[structopt(short = "s", long = "read-size")]
+    /// Length (in bp) of the simulated reads
+    #[structopt(short = "s", long = "readLen")]
     read_size: u32,
 
-    /// Percentages of reads for each profile. Each set of percentages must be comma separated and
-    /// must sum around 100 (97-103 is accepted). The number of percentages applies to the relative
-    /// number of profiles. For instance, "25,60,15" means that when 3 profiles are needed, the
-    /// reads belonging to the first profile will represent the 25% of the total reads, the second
-    /// the 60% and the third the 15%. Multiple set of percentages can be passed. When the
-    /// percentages are not specified for a certain number of profiles, the reads are assigned
-    /// evenly.
+    /// Comma-separated list of % conformation stoichiometries
+    /// [Note: the stoichiometries must sum to approx. 100 (tollerance: 97-103).
+    /// When no stoichiometry is specified, the conformations are assumed to be equimolar]
     #[structopt(
         short = "p",
-        long = "percentages",
+        long = "stoichiometry",
         parse(try_from_str = parse_percentages)
     )]
     fractions: Vec<Vec<f32>>,
 
-    /// Create a file with a text representation of the MM
+    /// Output MM file "human-readable" version
     #[structopt(short, long)]
     text: Option<PathBuf>,
 
-    /// Set the `p` value for the distribution of modifications. This value is used to create a
-    /// binomial distribution in order to simulate the RNA modifications induced by DMS. Generally
-    /// this value should be pretty low.
+    /// Sets the `p` value for generation of the binomial distribution of mutations
+    /// [Note: the default value (0.01927) has been learnt empirically from Homan et al., 2014]
     #[structopt(default_value, long)]
     probability: Probability,
 }

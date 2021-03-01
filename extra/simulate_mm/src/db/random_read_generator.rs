@@ -49,14 +49,14 @@ impl<'a> RandomReadGenerator<'a> {
                     .collect::<Vec<_>>()
             })
             .collect();
-        assert!(modificable_indices
-            .iter()
-            .all(
-                |modificable_indices| modificable_indices.iter().all(|&index| {
-                    let base = db_entry.sequence[index as usize];
-                    base == b'A' || base == b'C'
-                })
-            ));
+//        assert!(modificable_indices
+//            .iter()
+//            .all(
+//                |modificable_indices| modificable_indices.iter().all(|&index| {
+//                    let base = db_entry.sequence[index as usize];
+//                    base == b'A' || base == b'C'
+//                })
+//            ));
         assert_ne!(modificable_indices.len(), 0);
         assert_eq!(modificable_indices.len() - 1, fractions.len());
 

@@ -107,10 +107,9 @@ jsonify(std::basic_ostream<CharT, Traits>& os, T&& window) {
     IosSaver iosSaver(os);
     os << std::fixed << std::setprecision(3);
 
-    jsonify(os, "begin", window.begin_index, "end", window.end_index,
-            "fractions", window.fractions, "patterns", window.patterns,
-            "bases_coverages", window.bases_coverages, "coverages",
-            window.coverages);
+    jsonify(os, "start", window.begin_index, "end", window.end_index,
+            "stoichiometries", window.fractions, "counts", window.patterns,
+            "coverage", window.bases_coverages, "preCoverage", window.coverages);
   }
 
   os << ",";
@@ -136,8 +135,8 @@ std::basic_ostream<CharT, Traits>&
 jsonify(std::basic_ostream<CharT, Traits>& os,
         RingmapMatrixRow const& ringmap_row) {
   os << '{';
-  jsonify(os, "begin", ringmap_row.begin_index, "end", ringmap_row.end_index,
-          "modified_indices",
+  jsonify(os, "start", ringmap_row.begin_index, "end", ringmap_row.end_index,
+          "mutatedIndexes",
           static_cast<RingmapMatrixRow::base_type const&>(ringmap_row));
   return os << "}";
 }

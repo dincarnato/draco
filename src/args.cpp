@@ -89,8 +89,8 @@ check_arguments_for_arg(cxxopts::ParseResult const& results, Arg const& arg) {
     if (arg.is_mandatory()) {
       auto const& parameter_name = arg.get_parameter_name();
       if (not results.count(parameter_name.c_str())) {
-        std::cout << "ERROR: argument '" << parameter_name.c_str()
-                  << "' is required\n";
+        std::cout << "[!] Error: no argument provided for parameter '" << parameter_name.c_str()
+                  << "'\n";
         std::exit(2);
       }
     }
@@ -138,7 +138,7 @@ Args::parse_options(int argc, char* argv[]) noexcept {
     try {
       return arg_opts.parse(argc, argv);
     } catch (std::exception& e) {
-      std::cerr << "ERROR: " << e.what() << '\n';
+      std::cerr << "[!] Error: " << e.what() << '\n';
       std::exit(2);
     }
   }();

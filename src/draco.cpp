@@ -496,7 +496,13 @@ main(int argc, char* argv[]) {
           break;
         auto const& transcript = std::get<0>(*poppedData);
         auto& ringmapData = std::get<1>(*poppedData);
-        std::cout << "\e[2K\r[+] Analyzing transcript " << transcript.getId() << std::flush;
+        if (ringmapData.data().rows_size() == 0) {
+          std::cout << "\e[2K\r[+] Skipping transcript " << transcript.getId()
+                    << " (no reads)" << std::endl;
+          continue;
+        }
+        std::cout << "\e[2K\r[+] Analyzing transcript " << transcript.getId()
+                  << std::flush;
 
         results::Transcript transcriptResult;
         transcriptResult.name = transcript.getId();
@@ -995,5 +1001,4 @@ main(int argc, char* argv[]) {
     worker.join();
 
   std::cout << "\n[+] All done.\n\n";
-
 }

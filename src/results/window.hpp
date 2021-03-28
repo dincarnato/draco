@@ -32,8 +32,8 @@ struct Window {
   unsigned short begin_index, end_index;
   WeightedClusters weighted_clusters;
   clusters_fraction_type fractions;
-  clusters_pattern_type patterns;
-  std::vector<std::vector<unsigned>> bases_coverages;
+  std::optional<clusters_pattern_type> patterns;
+  std::optional<std::vector<std::vector<unsigned>>> bases_coverages;
   std::vector<std::int8_t> assignments;
   std::vector<unsigned> coverages;
 };
@@ -70,11 +70,14 @@ inline Window::Window(unsigned short begin_index,
     : begin_index(begin_index),
       end_index(begin_index + static_cast<unsigned short>(coverages.size())),
       weighted_clusters(weighted_clusters), coverages(coverages) {
-  if (begin_index + coverages.size() > std::numeric_limits<unsigned short>::max()) {
-    throw std::runtime_error("end_index cannot be represented with an unsigned short");
+  if (begin_index + coverages.size() >
+      std::numeric_limits<unsigned short>::max()) {
+    throw std::runtime_error(
+        "end_index cannot be represented with an unsigned short");
   }
   auto const weighted_clusters_size = weighted_clusters.getElementsSize();
-  if (weighted_clusters_size != 0 and weighted_clusters_size != coverages.size()) {
+  if (weighted_clusters_size != 0 and
+      weighted_clusters_size != coverages.size()) {
     throw std::runtime_error("Weights have a different size than coverages");
   }
 }
@@ -108,8 +111,17 @@ jsonify(std::basic_ostream<CharT, Traits>& os, T&& window) {
     os << std::fixed << std::setprecision(3);
 
     jsonify(os, "start", window.begin_index, "end", window.end_index,
-            "stoichiometries", window.fractions, "counts", window.patterns,
-            "coverage", window.bases_coverages, "preCoverage", window.coverages);
+            "stoichiometries", window.fractions);
+
+    if (window.patterns) {
+      jsonify(os, "counts", window.patterns);
+    }
+
+    if (window.bases_coverages) {
+      jsonify(os, "coverage", window.bases_coverages);
+    }
+
+    jsonify(os, "preCoverage", window.coverages);
   }
 
   os << ",";

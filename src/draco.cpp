@@ -860,8 +860,8 @@ main(int argc, char* argv[]) {
                      window.fractions[0] >= 0.01);
 
               bool const redundandPatterns = [&] {
-                auto patterns_iter = std::cbegin(window.patterns);
-                auto const patterns_end = std::cend(window.patterns);
+                auto patterns_iter = std::cbegin(*window.patterns);
+                auto const patterns_end = std::cend(*window.patterns);
 
                 for (; patterns_iter < patterns_end; ++patterns_iter) {
                   auto&& cur_pattern = *patterns_iter;
@@ -913,7 +913,8 @@ main(int argc, char* argv[]) {
               if (not stop)
                 continue;
 
-              window.patterns = filteredRingmap.remapPatterns(window.patterns);
+              *window.patterns =
+                  filteredRingmap.remapPatterns(*window.patterns);
 
               {
                 std::vector assignments(std::move_iterator(std::begin(
@@ -924,7 +925,10 @@ main(int argc, char* argv[]) {
                     assignments, {},
                     [](auto&& pair) -> decltype(auto) { return pair.first; }));
 
-                auto& bases_coverages = window.bases_coverages;
+                if (not window.bases_coverages) {
+                  window.bases_coverages = std::vector<std::vector<unsigned>>{};
+                }
+                auto& bases_coverages = *window.bases_coverages;
                 bases_coverages.resize(
                     window.weighted_clusters.getClustersSize(),
                     std::vector<unsigned>(window.end_index - window.begin_index,
@@ -986,6 +990,16 @@ main(int argc, char* argv[]) {
                                      [](auto&& coverage) { ++coverage; });
                   }
                 }
+              }
+
+              if (std::all_of(std::cbegin(*window.patterns),
+                              std::cend(*window.patterns), [](auto&& pattern) {
+                                return std::all_of(
+                                    std::cbegin(pattern), std::cend(pattern),
+                                    [](auto&& value) { return value == 0; });
+                              })) {
+                window.patterns = std::nullopt;
+                window.bases_coverages = std::nullopt;
               }
             }
           }

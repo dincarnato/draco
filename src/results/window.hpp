@@ -114,13 +114,16 @@ jsonify(std::basic_ostream<CharT, Traits>& os, T&& window) {
             "stoichiometries", window.fractions);
 
     if (window.patterns) {
+      os << ',';
       jsonify(os, "counts", window.patterns);
     }
 
     if (window.bases_coverages) {
+      os << ',';
       jsonify(os, "coverage", window.bases_coverages);
     }
 
+    os << ',';
     jsonify(os, "preCoverage", window.coverages);
   }
 

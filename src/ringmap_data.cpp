@@ -901,9 +901,12 @@ RingmapData::get_new_range(
   new_ringmap.modificationsFilter = modificationsFilter;
   new_ringmap.minimumCoverage = minimumCoverage;
   new_ringmap.minimumModificationsPerBase = minimumModificationsPerBase;
+  new_ringmap.minimumModificationsPerRead = minimumModificationsPerRead;
+  new_ringmap.minimumModificationsPerBaseFraction = minimumModificationsPerBaseFraction;
   new_ringmap.sequence = sequence.substr(begin - startIndex, end - begin);
   new_ringmap.baseCoverages.resize(end - begin, 0);
   new_ringmap.m_data = RingmapMatrix(end - begin);
+  new_ringmap.shape = shape;
 
   auto&& rows = m_data.rows();
   auto rows_iter = ranges::begin(rows);

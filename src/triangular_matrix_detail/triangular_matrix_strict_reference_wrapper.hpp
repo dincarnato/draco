@@ -35,14 +35,13 @@ struct TriangularMatrixStrictReferenceWrapper {
           }
         }()) {}
 
-  inline void
-  check_validity() const noexcept(
 #ifndef NDEBUG
-      false
+  static constexpr bool is_check_validity_noexcept = false;
 #else
-      true
+  static constexpr bool is_check_validity_noexcept = true;
 #endif
-  ) {
+  inline void
+  check_validity() const noexcept(is_check_validity_noexcept) {
 #ifndef NDEBUG
     if (value == nullptr)
       throw std::runtime_error(
@@ -50,12 +49,13 @@ struct TriangularMatrixStrictReferenceWrapper {
 #endif
   }
 
-  inline operator value_type&() noexcept(noexcept(check_validity())) {
+  inline
+  operator value_type&() noexcept(is_check_validity_noexcept) {
     return get();
   }
 
   inline value_type&
-  get() noexcept(noexcept(check_validity())) {
+  get() noexcept(is_check_validity_noexcept) {
     check_validity();
     return *value;
   }
@@ -70,120 +70,121 @@ struct TriangularMatrixStrictReferenceWrapper {
 
   template <typename T>
   inline value_type&
-  operator=(T&& rhs) noexcept(noexcept(check_validity()) and
-                              noexcept(*this->value = std::forward<T>(rhs))) {
+  operator=(T&& rhs) noexcept(is_check_validity_noexcept and noexcept(
+      std::declval<value_type&>() = std::forward<T>(rhs))) {
     check_validity();
     return *value = std::forward<T>(rhs);
   }
 
   template <typename T>
   inline value_type&
-  operator+=(T&& rhs) noexcept(noexcept(check_validity()) and
-                               noexcept(*this->value += std::forward<T>(rhs))) {
+  operator+=(T&& rhs) noexcept(is_check_validity_noexcept and noexcept(
+      std::declval<value_type&>() += std::forward<T>(rhs))) {
     check_validity();
     return *value += std::forward<T>(rhs);
   }
 
   template <typename T>
   inline value_type&
-  operator-=(T&& rhs) noexcept(noexcept(check_validity()) and
-                               noexcept(*this->value -= std::forward<T>(rhs))) {
+  operator-=(T&& rhs) noexcept(is_check_validity_noexcept and noexcept(
+      std::declval<value_type&>() -= std::forward<T>(rhs))) {
     check_validity();
     return *value -= std::forward<T>(rhs);
   }
 
   template <typename T>
   inline value_type&
-  operator*=(T&& rhs) noexcept(noexcept(check_validity()) and
-                               noexcept(*this->value *= std::forward<T>(rhs))) {
+  operator*=(T&& rhs) noexcept(is_check_validity_noexcept and noexcept(
+      std::declval<value_type&>() *= std::forward<T>(rhs))) {
     check_validity();
     return *value *= std::forward<T>(rhs);
   }
 
   template <typename T>
   inline value_type&
-  operator/=(T&& rhs) noexcept(noexcept(check_validity()) and
-                               noexcept(*this->value /= std::forward<T>(rhs))) {
+  operator/=(T&& rhs) noexcept(is_check_validity_noexcept and noexcept(
+      std::declval<value_type&>() /= std::forward<T>(rhs))) {
     check_validity();
     return *value /= std::forward<T>(rhs);
   }
 
   template <typename T>
   inline value_type&
-  operator%=(T&& rhs) noexcept(noexcept(check_validity()) and
-                               noexcept(*this->value %= std::forward<T>(rhs))) {
+  operator%=(T&& rhs) noexcept(is_check_validity_noexcept and noexcept(
+      std::declval<value_type&>() %= std::forward<T>(rhs))) {
     check_validity();
     return *value %= std::forward<T>(rhs);
   }
 
   template <typename T>
   inline value_type&
-  operator^=(T&& rhs) noexcept(noexcept(check_validity()) and
-                               noexcept(*this->value ^= std::forward<T>(rhs))) {
+  operator^=(T&& rhs) noexcept(is_check_validity_noexcept and noexcept(
+      std::declval<value_type&>() ^= std::forward<T>(rhs))) {
     check_validity();
     return *value ^= std::forward<T>(rhs);
   }
 
   template <typename T>
   inline value_type&
-  operator&=(T&& rhs) noexcept(noexcept(check_validity()) and
-                               noexcept(*this->value &= std::forward<T>(rhs))) {
+  operator&=(T&& rhs) noexcept(is_check_validity_noexcept and noexcept(
+      std::declval<value_type&>() &= std::forward<T>(rhs))) {
     check_validity();
     return *value &= std::forward<T>(rhs);
   }
 
   template <typename T>
   inline value_type&
-  operator|=(T&& rhs) noexcept(noexcept(check_validity()) and
-                               noexcept(*this->value |= std::forward<T>(rhs))) {
+  operator|=(T&& rhs) noexcept(is_check_validity_noexcept and noexcept(
+      std::declval<value_type&>() |= std::forward<T>(rhs))) {
     check_validity();
     return *value |= std::forward<T>(rhs);
   }
 
   template <typename T>
   inline value_type&
-  operator<<=(T&& rhs) noexcept(noexcept(check_validity()) and
-                                noexcept(*this->value <<=
-                                         std::forward<T>(rhs))) {
+  operator<<=(T&& rhs) noexcept(is_check_validity_noexcept and noexcept(
+      std::declval<value_type&>() <<= std::forward<T>(rhs))) {
     check_validity();
     return *value <<= std::forward<T>(rhs);
   }
 
   template <typename T>
   inline value_type&
-  operator>>=(T&& rhs) noexcept(noexcept(check_validity()) and
-                                noexcept(*this->value >>=
-                                         std::forward<T>(rhs))) {
+  operator>>=(T&& rhs) noexcept(is_check_validity_noexcept and noexcept(
+      std::declval<value_type&>() >>= std::forward<T>(rhs))) {
     check_validity();
     return *value >>= std::forward<T>(rhs);
   }
 
   inline value_type&
-  operator++() noexcept(noexcept(check_validity()) and
-                        noexcept(++*this->value)) {
+  operator++() noexcept(
+      is_check_validity_noexcept and noexcept(++std::declval<value_type&>())) {
     check_validity();
     return ++*value;
   }
 
   inline value_type
-  operator++(int) noexcept(noexcept(check_validity()) and noexcept((*this->value)++)) {
+  operator++(int) noexcept(
+      is_check_validity_noexcept and noexcept(std::declval<value_type&>()++)) {
     check_validity();
     return (*value)++;
   }
 
   inline value_type&
-  operator--() noexcept(noexcept(check_validity()) and noexcept(--*this->value)) {
+  operator--() noexcept(
+      is_check_validity_noexcept and noexcept(--std::declval<value_type&>())) {
     check_validity();
     return --*value;
   }
 
   inline value_type
-  operator--(int) noexcept(noexcept(check_validity()) and noexcept((*this->value)--)) {
+  operator--(int) noexcept(
+      is_check_validity_noexcept and noexcept(std::declval<value_type&>()--)) {
     check_validity();
     return (*value)--;
   }
 
-private: 
+private:
   pointer value;
   static constexpr value_type zero{0};
 };

@@ -8,6 +8,10 @@
 #include <type_traits>
 #include <utility>
 
+#if __cpp_lib_to_chars
+#include <charconv>
+#endif
+
 template <typename String>
 TokenizerIterator<String>::TokenizerIterator(const String& str, char token)
     : str(&str), token(token), iter(&*std::begin(str)), end(&*std::end(str)),

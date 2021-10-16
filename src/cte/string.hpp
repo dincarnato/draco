@@ -489,7 +489,7 @@ struct into_string_helper<T, std::enable_if_t<std::is_floating_point_v<T>>> {
 };
 
 template <typename T>
-struct into_string_helper<T, std::enable_if_t<std::is_literal_type_v<T>>> {
+struct into_string_helper<T, std::enable_if_t<std::is_default_constructible_v<T>>> {
   using type = T;
   static constexpr StringArgType arg_type = StringArgType::Literal;
 

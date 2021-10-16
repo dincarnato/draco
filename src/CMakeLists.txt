@@ -28,7 +28,6 @@ target_link_libraries(
     draco
     ${ARMADILLO_LIBRARIES}
     ${TBB_LIBRARIES}
-    ${DLIB_LIBRARIES}
     ${Boost_LIBRARIES}
 )
 
@@ -39,9 +38,29 @@ target_include_directories(
     PUBLIC
         ${ARMADILLO_INCLUDE_DIRS}
         ${TBB_INCLUDE_DIRS}
-        ${DLIB_INCLUDE_DIR}
+        ${dlib_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
 )
+
+
+
+if (NOT dlib_USES_PKGCONFIG)
+    target_link_libraries(
+        draco
+        dlib::dlib
+    )
+else()
+    target_link_libraries(
+        draco
+        ${dlib_LIBRARIES}
+    )
+
+    target_include_directories(
+        draco
+        PUBLIC
+            ${dlib_INCLUDE_DIRS}
+    )
+endif()
 
 add_custom_target(
     run_args_generate

@@ -3,6 +3,7 @@
 #include <armadillo>
 #include <cmath>
 #include <cstdlib>
+#include <map>
 #include <vector>
 
 constexpr int nExact = 500;

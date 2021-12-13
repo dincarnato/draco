@@ -38,9 +38,9 @@ Please see <http://www.gnu.org/licenses/> for more information.
   <br/>Clang v9 or greater (<https://releases.llvm.org/download.html>)
 - CMake v3.8 or higher (<https://cmake.org/download/>)
 - OpenBLAS (<https://www.openblas.net>)
-- Armadillo (<http://arma.sourceforge.net>)
+- Armadillo v9.850.1 or greater (<http://arma.sourceforge.net>)
 - Boost v1.66 or greater (<https://www.boost.org>)
-- dlib (<http://dlib.net>)
+- dlib v19.4.0 or greater (<http://dlib.net>)
 - Intel oneAPI Thread Building Blocks (<https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onetbb.html>)
 
 To compile the `simulate_mm` utility, Rust and Cargo are also needed (<https://doc.rust-lang.org/cargo/getting-started/installation.html>).
@@ -64,11 +64,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DLINK_TIME_OPTIMIZATIONS=ON -DNATIVE_BUILD=
 make -jN
 ```
 where *N* is the number of processors on your computer. The parameter `CMAKE_INSTALL_PREFIX` can be used to set the installation directory. For example, to install DRACO in `/usr/local/bin`, just set it to `/usr/local`.<br/>
-The `draco` executable will be located under `build/src/`. To install it:
-
-```bash
-make install
-```
+The `draco` executable will be located under `build/src/`.
 <br/>
 To compile the `simulate_mm` utility:
 

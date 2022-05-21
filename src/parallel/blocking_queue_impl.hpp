@@ -2,6 +2,7 @@
 
 #include "blocking_queue.hpp"
 #include <cassert>
+#include <utility>
 
 namespace parallel {
 

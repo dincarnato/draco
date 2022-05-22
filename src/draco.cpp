@@ -524,14 +524,16 @@ main(int argc, char* argv[]) {
           ranges::nth_element(reads_sizes, median_iter);
           return *median_iter;
         }();
+
+        std::size_t transcript_size = ringmapData.data().cols_size();
         const auto window_size = [&] {
           auto&& window_size = args.window_size();
-          if (window_size > 0) {
-            return window_size;
-          } else {
-            return static_cast<unsigned>(static_cast<double>(median_read_size) *
+          if (window_size <= 0) {
+            window_size = static_cast<unsigned>(static_cast<double>(median_read_size) *
                                          args.window_size_fraction());
           }
+
+          return std::min(window_size, static_cast<unsigned>(transcript_size));
         }();
         const auto window_offset = [&] {
           auto&& window_shift = args.window_shift();
@@ -543,13 +545,14 @@ main(int argc, char* argv[]) {
           }
         }();
 
-        std::size_t transcript_size = ringmapData.data().cols_size();
         assert(window_size <= transcript_size);
 
         std::size_t n_windows =
             (transcript_size - window_size) / window_offset + 1;
         if (n_windows * window_offset + window_size < transcript_size)
           ++n_windows;
+
+        assert(n_windows > 0);
         std::vector<Window> windows(n_windows);
         auto const window_precise_offset =
             static_cast<double>(transcript_size - window_size) /

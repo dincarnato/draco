@@ -31,10 +31,10 @@ enum BinomialResult {
     Big(f64),
 }
 
-impl Into<f64> for BinomialResult {
-    fn into(self) -> f64 {
+impl From<BinomialResult> for f64 {
+    fn from(binomial_result: BinomialResult) -> Self {
         use BinomialResult::*;
-        match self {
+        match binomial_result {
             Small(n) => n as f64,
             Big(n) => n,
         }

@@ -1,18 +1,16 @@
 use super::Entry;
-use bstr::BStr;
 use rand::rngs::ThreadRng;
 
 #[derive(Debug)]
-pub struct RandomReadGenerator<'a> {
-    sequence: &'a BStr,
+pub struct RandomReadGenerator {
     modificable_indices: Vec<Vec<u32>>,
     modifications_cdf: Vec<f64>,
     cum_fractions: Vec<f32>,
     rng: ThreadRng,
 }
 
-impl<'a> RandomReadGenerator<'a> {
-    pub fn new(db_entry: &'a Entry, mut fractions: Vec<f32>, probability: f64) -> Self {
+impl RandomReadGenerator {
+    pub fn new(db_entry: &Entry, mut fractions: Vec<f32>, probability: f64) -> Self {
         use crate::modifications_distribution::ModificationDistribution;
         use rand::thread_rng;
 
@@ -49,19 +47,10 @@ impl<'a> RandomReadGenerator<'a> {
                     .collect::<Vec<_>>()
             })
             .collect();
-//        assert!(modificable_indices
-//            .iter()
-//            .all(
-//                |modificable_indices| modificable_indices.iter().all(|&index| {
-//                    let base = db_entry.sequence[index as usize];
-//                    base == b'A' || base == b'C'
-//                })
-//            ));
         assert_ne!(modificable_indices.len(), 0);
         assert_eq!(modificable_indices.len() - 1, fractions.len());
 
         Self {
-            sequence: &db_entry.sequence,
             modificable_indices,
             modifications_cdf,
             cum_fractions: fractions,
@@ -70,7 +59,7 @@ impl<'a> RandomReadGenerator<'a> {
     }
 }
 
-impl Iterator for RandomReadGenerator<'_> {
+impl Iterator for RandomReadGenerator {
     type Item = (usize, Vec<u32>);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -81,7 +70,7 @@ impl Iterator for RandomReadGenerator<'_> {
             .cum_fractions
             .iter()
             .position(|&fraction| fraction >= random_fraction)
-            .unwrap_or_else(|| self.modificable_indices.len() - 1);
+            .unwrap_or(self.modificable_indices.len() - 1);
         let modificable_indices = &self.modificable_indices[profile_index];
 
         let p: f64 = self.rng.gen();
@@ -89,7 +78,7 @@ impl Iterator for RandomReadGenerator<'_> {
             .modifications_cdf
             .iter()
             .position(|&cdf| cdf > p)
-            .unwrap_or_else(|| self.modifications_cdf.len());
+            .unwrap_or(self.modifications_cdf.len());
 
         let mut sampled: Vec<_> = modificable_indices
             .choose_multiple(&mut self.rng, n_modifications)

@@ -38,7 +38,6 @@ target_include_directories(
     PUBLIC
         ${ARMADILLO_INCLUDE_DIRS}
         ${TBB_INCLUDE_DIRS}
-        ${dlib_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
 )
 
@@ -48,6 +47,12 @@ if (NOT dlib_USES_PKGCONFIG)
     target_link_libraries(
         draco
         dlib::dlib
+    )
+
+    target_include_directories(
+        draco
+        PUBLIC
+            dlib::dlib
     )
 else()
     target_link_libraries(

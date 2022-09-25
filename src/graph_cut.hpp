@@ -30,7 +30,8 @@ public:
   GraphCut() = default;
   GraphCut(const arma::mat &adjacency, Graph type = Graph::symmetricLaplacian);
 
-  WeightedClusters run(std::uint8_t nClusters, FuzzyCut = fuzzy) const;
+  WeightedClusters run(std::uint8_t nClusters, std::uint16_t iterations,
+                       FuzzyCut = fuzzy) const;
   HardClusters run(std::uint8_t nClusters, HardCut) const;
 
   double calculateClustersScore(
@@ -42,7 +43,8 @@ private:
   inline arma::mat createGraph(const arma::mat &adjacency) const;
   inline arma::mat createSymmetricLaplacian(const arma::mat &adjacency) const;
   template <typename Fun>
-  WeightedClusters partitionGraph(std::uint8_t nClusters, Fun graphFun) const;
+  std::tuple<WeightedClusters, double> partitionGraph(std::uint8_t nClusters,
+                                                      Fun graphFun) const;
   template <typename Fun>
   HardClusters partitionGraphHard(std::uint8_t nClusters, Fun graphFun) const;
   template <typename Clusters>

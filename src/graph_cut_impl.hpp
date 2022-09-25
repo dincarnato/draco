@@ -22,8 +22,8 @@ static constexpr void checkGraphFunCallable() {
 }
 
 template <typename Fun>
-WeightedClusters GraphCut::partitionGraph(std::uint8_t nClusters,
-                                          Fun graphFun) const {
+std::tuple<WeightedClusters, double>
+GraphCut::partitionGraph(std::uint8_t nClusters, Fun graphFun) const {
   constexpr unsigned minClusterTotalWeight = 3;
 
   checkGraphFunCallable<std::decay_t<Fun>>();
@@ -34,9 +34,9 @@ WeightedClusters GraphCut::partitionGraph(std::uint8_t nClusters,
                                   std::numeric_limits<std::uint8_t>::max()))));
   if (nClusters < 2) {
     if (auto init = std::get_if<WeightedClusters>(&initialClusters))
-      return *init;
+      return std::tuple{*init, NAN};
     else
-      return WeightedClusters(adjacency.n_rows, 1);
+      return std::tuple{WeightedClusters(adjacency.n_rows, 1), NAN};
   }
 
   auto graph = graphFun(adjacency);
@@ -202,9 +202,10 @@ WeightedClusters GraphCut::partitionGraph(std::uint8_t nClusters,
   auto weightsClusters = weights.clusters();
   static_assert(not std::is_const<decltype(weightsClusters)>::value, "!");
   float currentWeightChange = weightModule;
+  double bestScore = NAN;
 
   for (const auto clustersEnd = ranges::end(weightsClusters);;) {
-    double bestScore = calculateCutScore(graph, weights);
+    bestScore = calculateCutScore(graph, weights);
 
     if (std::isnan(bestScore)) {
       std::cerr << "Invalid bestScore\nGraph content:\n";
@@ -293,7 +294,7 @@ WeightedClusters GraphCut::partitionGraph(std::uint8_t nClusters,
     }
   }
 
-  return weights;
+  return std::tuple{weights, bestScore};
 }
 
 template <typename Fun>

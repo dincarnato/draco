@@ -155,7 +155,12 @@ static constexpr auto opts = args::Opts(
                          "cluster/conformation "
                          "[Note: if this threshold is not met, the number of "
                          "clusters is automatically decreased]")
-            .DEFAULT_VALUE(0.05)),
+            .DEFAULT_VALUE(0.05),
+        ARG(std::uint16_t, soft_clustering_iterations)
+            .parameter_name("softClusteringIterations")
+            .description("Number of iterations performed on graph cut. The cut "
+                         "with the best score is chosen.")
+            .DEFAULT_VALUE(100)),
 
     args::Group(
         "Windowed analysis",

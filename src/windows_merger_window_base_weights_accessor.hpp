@@ -8,12 +8,11 @@
 
 namespace windows_merger {
 
-template <typename Weight>
-struct WindowsMergerWindowBaseWeightsAccessor {
+template <typename Weight> struct WindowsMergerWindowBaseWeightsAccessor {
   using weight_type = Weight;
   using decayed_weight_type = std::decay_t<weight_type>;
-  using pointer = weight_type*;
-  using reference = weight_type&;
+  using pointer = weight_type *;
+  using reference = weight_type &;
   using iterator = pointer;
   using clusters_size_type = typename WindowsMergerTraits::clusters_size_type;
 
@@ -22,18 +21,11 @@ struct WindowsMergerWindowBaseWeightsAccessor {
     assert(first <= last);
   }
 
-  constexpr iterator
-  begin() const noexcept {
-    return _begin;
-  }
+  constexpr iterator begin() const noexcept { return _begin; }
 
-  constexpr iterator
-  end() const noexcept {
-    return _end;
-  }
+  constexpr iterator end() const noexcept { return _end; }
 
-  constexpr clusters_size_type
-  size() const noexcept {
+  constexpr clusters_size_type size() const noexcept {
     const auto size = _end - _begin;
     assert(size <= std::numeric_limits<clusters_size_type>::max());
     return static_cast<clusters_size_type>(size);

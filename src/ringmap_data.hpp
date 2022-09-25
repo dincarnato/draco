@@ -30,21 +30,21 @@ public:
   friend struct test::RingmapData;
 
   RingmapData() = default;
-  RingmapData(const std::string& sequence, data_type&& dataMatrix,
-              unsigned startIndex, unsigned endIndex, Args const& args);
-  RingmapData(const std::string& filename, const std::string& sequence,
-              Args const& args, bool keepFragments = true);
-  RingmapData(const MutationMapTranscript& transcript, Args const& args);
+  RingmapData(const std::string &sequence, data_type &&dataMatrix,
+              unsigned startIndex, unsigned endIndex, Args const &args);
+  RingmapData(const std::string &filename, const std::string &sequence,
+              Args const &args, bool keepFragments = true);
+  RingmapData(const MutationMapTranscript &transcript, Args const &args);
   template <typename Iter>
-  RingmapData(const std::string& sequence, unsigned nReads, Iter readsBegin,
-              Iter readsEnd, Args const& args);
-  RingmapData(const RingmapData& other,
-              const std::vector<unsigned>& subsetIndices);
+  RingmapData(const std::string &sequence, unsigned nReads, Iter readsBegin,
+              Iter readsEnd, Args const &args);
+  RingmapData(const RingmapData &other,
+              const std::vector<unsigned> &subsetIndices);
 
   template <typename T>
   static std::enable_if_t<std::is_same<std::decay_t<T>, RingmapData>::value,
                           RingmapData>
-  from(T&& other);
+  from(T &&other);
 
   bool isFiltered() const;
   unsigned getModificationsFilter() const;
@@ -54,30 +54,29 @@ public:
   void perturb();
   void shuffle();
   void resize(unsigned size);
-  const data_type& data() const;
-  static void removeHighValuesOnAdjacency(arma::mat& adjacency,
+  const data_type &data() const;
+  static void removeHighValuesOnAdjacency(arma::mat &adjacency,
                                           double maxFraction = 0.35);
   void shed(unsigned begin,
             unsigned end = std::numeric_limits<unsigned>::max());
   void remove(unsigned begin,
               unsigned end = std::numeric_limits<unsigned>::max());
-  void dump(const std::string& filename) const;
+  void dump(const std::string &filename) const;
   std::size_t size() const;
-  const std::string& getSequence() const;
+  const std::string &getSequence() const;
 
   void allowSequenceMismatches(bool value = true);
-  RingmapData& operator+=(const RingmapData& other);
-  RingmapData operator+(const RingmapData& other) const;
-  bool operator==(const RingmapData& other) const;
+  RingmapData &operator+=(const RingmapData &other);
+  RingmapData operator+(const RingmapData &other) const;
+  bool operator==(const RingmapData &other) const;
 
-  template <typename Iterable>
-  void keepOnlyIndices(Iterable&& iterable);
+  template <typename Iterable> void keepOnlyIndices(Iterable &&iterable);
 
   void setBasesMask(arma::Col<std::uint8_t> mask);
   RingmapData get_new_range(unsigned begin, unsigned end,
-                            std::vector<unsigned>* const = nullptr) const;
+                            std::vector<unsigned> *const = nullptr) const;
 
-  WeightedClusters getUnfilteredWeights(const WeightedClusters& weights) const;
+  WeightedClusters getUnfilteredWeights(const WeightedClusters &weights) const;
 
   using clusters_fraction_type = std::vector<double>;
   using cluster_pattern_type = std::vector<std::size_t>;
@@ -86,20 +85,20 @@ public:
       std::map<data_type::row_type, std::vector<std::size_t>>;
   std::tuple<clusters_fraction_type, clusters_pattern_type,
              clusters_assignment_type>
-  fractionReadsByWeights(const WeightedClusters& weights) const;
+  fractionReadsByWeights(const WeightedClusters &weights) const;
   clusters_pattern_type
-  remapPatterns(const clusters_pattern_type& patterns) const;
+  remapPatterns(const clusters_pattern_type &patterns) const;
 
   double getUnfoldedFraction() const;
 
   static void enqueueRingmapsFromMutationMap(
-      MutationMap& mutationMap,
-      parallel::blocking_queue<std::pair<MutationMapTranscript, RingmapData>>&
-          queue,
-      Args const& args);
+      MutationMap &mutationMap,
+      parallel::blocking_queue<std::pair<MutationMapTranscript, RingmapData>>
+          &queue,
+      Args const &args);
 
 private:
-  RingmapData(const std::string& sequence, data_type&& dataMatrix,
+  RingmapData(const std::string &sequence, data_type &&dataMatrix,
               unsigned startIndex, unsigned endIndex);
 
 #ifndef NDEBUG
@@ -124,17 +123,16 @@ private:
   bool shape = false;
 
 public:
-  const decltype(oldColsToNew)& getNonFilteredToFilteredMap() const;
+  const decltype(oldColsToNew) &getNonFilteredToFilteredMap() const;
   decltype(oldColsToNew) getFilteredToNonFilteredMap() const;
-  const decltype(readsMap)& getReadsMap() const;
-  const std::vector<unsigned>& getBaseCoverages() const;
-  const std::vector<double>& getBaseWeights() const;
+  const decltype(readsMap) &getReadsMap() const;
+  const std::vector<unsigned> &getBaseCoverages() const;
+  const std::vector<double> &getBaseWeights() const;
   std::vector<RingmapData>
-  split_into_windows(std::vector<results::Window> const& windows) &&;
+  split_into_windows(std::vector<results::Window> const &windows) &&;
 
 private:
-  template <typename Iter>
-  void addReads(Iter begin, Iter end);
+  template <typename Iter> void addReads(Iter begin, Iter end);
 };
 
 #include "ringmap_data_impl.hpp"

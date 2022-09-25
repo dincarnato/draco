@@ -6,21 +6,17 @@
 
 namespace windows_merger {
 
-template <typename>
-struct WindowsMergerWindowAccessor;
+template <typename> struct WindowsMergerWindowAccessor;
 
-template <typename>
-struct WindowsMergerWindowBaseWeightsAccessor;
+template <typename> struct WindowsMergerWindowBaseWeightsAccessor;
 
 struct WindowsMergerWindows;
 
-template <typename Merger>
-struct WindowsMergerWindowBaseAccessor {
-  template <typename>
-  friend struct WindowsMergerWindowBaseAccessor;
+template <typename Merger> struct WindowsMergerWindowBaseAccessor {
+  template <typename> friend struct WindowsMergerWindowBaseAccessor;
 
   using merger_type = std::decay_t<Merger>;
-  using merger_pointer_type = std::remove_reference_t<Merger>*;
+  using merger_pointer_type = std::remove_reference_t<Merger> *;
   using traits_type = WindowsMergerTraits;
   using window_accessor = WindowsMergerWindowAccessor<Merger>;
   using clusters_size_type = typename traits_type::clusters_size_type;
@@ -34,37 +30,37 @@ struct WindowsMergerWindowBaseAccessor {
       WindowsMergerWindowBaseWeightsAccessor<weight_type>;
   using self = WindowsMergerWindowBaseAccessor;
 
-  WindowsMergerWindowBaseAccessor(Merger& merger,
+  WindowsMergerWindowBaseAccessor(Merger &merger,
                                   windows_size_type window_index,
                                   bases_size_type base_index) noexcept;
-  WindowsMergerWindowBaseAccessor(const WindowsMergerWindowBaseAccessor&) =
+  WindowsMergerWindowBaseAccessor(const WindowsMergerWindowBaseAccessor &) =
       default;
-  WindowsMergerWindowBaseAccessor(WindowsMergerWindowBaseAccessor&&) = default;
+  WindowsMergerWindowBaseAccessor(WindowsMergerWindowBaseAccessor &&) = default;
 
-  self const&
-  operator=(WindowsMergerWindowBaseAccessor<WindowsMergerWindows> const&) const
+  self const &
+  operator=(WindowsMergerWindowBaseAccessor<WindowsMergerWindows> const &) const
       noexcept(false);
-  self const&
-  operator=(WindowsMergerWindowBaseAccessor<WindowsMergerWindows>&&) const
+  self const &
+  operator=(WindowsMergerWindowBaseAccessor<WindowsMergerWindows> &&) const
       noexcept(false);
-  self const& operator=(
-      WindowsMergerWindowBaseAccessor<WindowsMergerWindows const> const&) const
+  self const &operator=(
+      WindowsMergerWindowBaseAccessor<WindowsMergerWindows const> const &) const
       noexcept(false);
-  self const&
-  operator=(WindowsMergerWindowBaseAccessor<WindowsMergerWindows const>&&) const
+  self const &operator=(
+      WindowsMergerWindowBaseAccessor<WindowsMergerWindows const> &&) const
       noexcept(false);
-  self const& operator=(
-      WindowsMergerWindowBaseAccessor<WindowsMergerWindows&&> const&) const
+  self const &operator=(
+      WindowsMergerWindowBaseAccessor<WindowsMergerWindows &&> const &) const
       noexcept(false);
-  self const&
-  operator=(WindowsMergerWindowBaseAccessor<WindowsMergerWindows&&>&&) const
+  self const &
+  operator=(WindowsMergerWindowBaseAccessor<WindowsMergerWindows &&> &&) const
       noexcept(false);
 
-  self const& operator=(WindowsMergerWindowBase const&) const noexcept(false);
-  self const& operator=(WindowsMergerWindowBase&&) const noexcept(false);
+  self const &operator=(WindowsMergerWindowBase const &) const noexcept(false);
+  self const &operator=(WindowsMergerWindowBase &&) const noexcept(false);
 
-  weight_type& weight(clusters_size_type index) const noexcept;
-  coverage_type& coverage() const noexcept;
+  weight_type &weight(clusters_size_type index) const noexcept;
+  coverage_type &coverage() const noexcept;
   clusters_size_type clusters_size() const noexcept;
   weights_accessor_type weights() const noexcept;
 
@@ -72,9 +68,8 @@ private:
   void perform_checks() const noexcept;
 
   template <typename Accessor>
-  void assign_from_accessor(Accessor&& rhs) const noexcept;
-  template <typename Base>
-  void assign_from_base(Base&& rhs) const noexcept;
+  void assign_from_accessor(Accessor &&rhs) const noexcept;
+  template <typename Base> void assign_from_base(Base &&rhs) const noexcept;
 
   merger_pointer_type merger;
   windows_size_type _window_index;

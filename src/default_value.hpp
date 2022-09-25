@@ -14,72 +14,57 @@ enum class DefaultValueType {
   None,
 };
 
-template <auto value, DefaultValueType type>
-struct DefaultValue;
+template <auto value, DefaultValueType type> struct DefaultValue;
 
-template <auto _value>
-struct DefaultValue<_value, DefaultValueType::Integral> {
+template <auto _value> struct DefaultValue<_value, DefaultValueType::Integral> {
   using value_type = decltype(_value);
   static_assert(std::is_integral_v<value_type>);
   constexpr static bool is_available = true;
 
   constexpr DefaultValue() = default;
-  template <typename... Ts>
-  constexpr DefaultValue(Ts...) noexcept {}
+  template <typename... Ts> constexpr DefaultValue(Ts...) noexcept {}
 
-  constexpr value_type
-  value() const noexcept {
-    return _value;
-  }
+  constexpr value_type value() const noexcept { return _value; }
 
-  constexpr auto
-  into_string() const noexcept {
+  constexpr auto into_string() const noexcept {
     return cte::into_string<_value>();
   }
 };
 
-template <auto repr>
-struct DefaultValue<repr, DefaultValueType::Float> {
+template <auto repr> struct DefaultValue<repr, DefaultValueType::Float> {
   using value_type = float;
   using repr_type = typename cte::FloatingPoint<float>::repr_type;
   static_assert(std::is_same_v<repr_type, decltype(repr)>);
   constexpr static bool is_available = true;
 
   constexpr DefaultValue() = default;
-  template <typename... Ts>
-  constexpr DefaultValue(Ts...) noexcept {}
+  template <typename... Ts> constexpr DefaultValue(Ts...) noexcept {}
 
-  constexpr value_type
-  value() const noexcept {
+  constexpr value_type value() const noexcept {
     return static_cast<value_type>(
         cte::FloatingPoint<float>::from_representation(repr));
   }
 
-  constexpr auto
-  into_string() const noexcept {
+  constexpr auto into_string() const noexcept {
     return cte::into_string<repr, cte::StringArgType::Float>();
   }
 };
 
-template <auto repr>
-struct DefaultValue<repr, DefaultValueType::Double> {
+template <auto repr> struct DefaultValue<repr, DefaultValueType::Double> {
   using value_type = double;
   using repr_type = typename cte::FloatingPoint<double>::repr_type;
   static_assert(std::is_same_v<repr_type, decltype(repr)>);
   constexpr static bool is_available = true;
 
   constexpr DefaultValue() = default;
-  template <typename... Ts>
-  constexpr DefaultValue(Ts...) noexcept {}
+  template <typename... Ts> constexpr DefaultValue(Ts...) noexcept {}
 
-  constexpr value_type
-  value() const noexcept {
+  constexpr value_type value() const noexcept {
     return static_cast<value_type>(
         cte::FloatingPoint<double>::from_representation(repr));
   }
 
-  constexpr auto
-  into_string() const noexcept {
+  constexpr auto into_string() const noexcept {
     return cte::into_string<repr, cte::StringArgType::Double>();
   }
 };
@@ -95,28 +80,20 @@ struct DefaultValue<size, DefaultValueType::String> {
   constexpr DefaultValue(char const (&value)[size + 1]) noexcept
       : _value(cte::string(value)) {}
 
-  constexpr value_type
-  value() const noexcept {
-    return _value;
-  }
+  constexpr value_type value() const noexcept { return _value; }
 
-  constexpr auto
-  into_string() const noexcept {
-    return _value;
-  }
+  constexpr auto into_string() const noexcept { return _value; }
 
 private:
   cte::string<size> _value;
 };
 
-template <>
-struct DefaultValue<0, DefaultValueType::None> {
+template <> struct DefaultValue<0, DefaultValueType::None> {
   constexpr static bool is_available = false;
   constexpr DefaultValue() = default;
 };
 
-template <typename T>
-struct is_default_value : std::false_type {};
+template <typename T> struct is_default_value : std::false_type {};
 
 template <auto value, DefaultValueType value_type>
 struct is_default_value<DefaultValue<value, value_type>> : std::true_type {};
@@ -137,7 +114,7 @@ struct is_convertible_from_default_value<
 template <typename T, std::size_t size>
 struct is_convertible_from_default_value<
     T, DefaultValue<size, DefaultValueType::String>,
-    std::enable_if_t<std::is_convertible_v<char const*, T>>> : std::true_type {
+    std::enable_if_t<std::is_convertible_v<char const *, T>>> : std::true_type {
 };
 
 template <typename T, typename D>
@@ -146,22 +123,18 @@ constexpr bool is_convertible_from_default_value_v =
 
 namespace detail {
 
-template <typename T, typename = void>
-struct DefaultValueArgValue;
+template <typename T, typename = void> struct DefaultValueArgValue;
 
 template <typename T>
 struct DefaultValueArgValue<
     T, std::enable_if_t<std::is_integral_v<T> and
-                        not std::is_same_v<std::decay_t<T>, char const*>>> {
+                        not std::is_same_v<std::decay_t<T>, char const *>>> {
   using value_type = T;
   constexpr static DefaultValueType type = DefaultValueType::Integral;
 
   constexpr DefaultValueArgValue(T t) noexcept : _value(t) {}
 
-  constexpr value_type
-  value() const noexcept {
-    return _value;
-  }
+  constexpr value_type value() const noexcept { return _value; }
 
 private:
   value_type _value;
@@ -179,17 +152,13 @@ struct DefaultValueArgValue<T, std::enable_if_t<std::is_floating_point_v<T>>> {
   constexpr DefaultValueArgValue(T t) noexcept
       : _value(floating_point_type(t).representation()) {}
 
-  constexpr value_type
-  value() const noexcept {
-    return _value;
-  }
+  constexpr value_type value() const noexcept { return _value; }
 
 private:
   value_type _value;
 };
 
-template <std::size_t N>
-struct DefaultValueArgValue<char const (&)[N], void> {
+template <std::size_t N> struct DefaultValueArgValue<char const (&)[N], void> {
   using value_type = std::size_t;
   constexpr static DefaultValueType type = DefaultValueType::String;
 
@@ -197,23 +166,16 @@ struct DefaultValueArgValue<char const (&)[N], void> {
     assert(s[N - 1] == '\0');
   }
 
-  constexpr value_type
-  value() const noexcept {
-    return N - 1;
-  }
+  constexpr value_type value() const noexcept { return N - 1; }
 };
 
-template <std::size_t N>
-struct DefaultValueArgValue<cte::string<N>, void> {
+template <std::size_t N> struct DefaultValueArgValue<cte::string<N>, void> {
   using value_type = std::size_t;
   constexpr static DefaultValueType type = DefaultValueType::String;
 
   constexpr DefaultValueArgValue(cte::string<N>) noexcept {}
 
-  constexpr value_type
-  value() const noexcept {
-    return N;
-  }
+  constexpr value_type value() const noexcept { return N; }
 };
 
 } // namespace detail

@@ -4,17 +4,16 @@
 
 template <typename T>
 WeightedClustersClustersWrapper<T>::WeightedClustersClustersWrapper(
-    weighted_clusters_type& weightedClusters) noexcept
+    weighted_clusters_type &weightedClusters) noexcept
     : weightedClusters(&weightedClusters) {
   assert(this->weightedClusters);
 }
 
 template <typename T>
-auto
-WeightedClustersClustersWrapper<T>::
-operator=(concrete_type const& concrete_clusters) const
+auto WeightedClustersClustersWrapper<T>::operator=(
+    concrete_type const &concrete_clusters) const
     noexcept(std::is_nothrow_copy_assignable_v<T>)
-        -> WeightedClustersClustersWrapper& {
+        -> WeightedClustersClustersWrapper & {
   assert(concrete_clusters.size() == weightedClusters->_clusters);
   assert(concrete_clusters.elements_size() == weightedClusters->_elements);
 
@@ -23,11 +22,10 @@ operator=(concrete_type const& concrete_clusters) const
 }
 
 template <typename T>
-auto
-WeightedClustersClustersWrapper<T>::
-operator=(concrete_type&& concrete_clusters) const
+auto WeightedClustersClustersWrapper<T>::operator=(
+    concrete_type &&concrete_clusters) const
     noexcept(std::is_nothrow_move_assignable_v<T>)
-        -> WeightedClustersClustersWrapper& {
+        -> WeightedClustersClustersWrapper & {
   assert(concrete_clusters.size() == weightedClusters->_clusters);
   assert(concrete_clusters.elements_size() == weightedClusters->_elements);
 
@@ -36,22 +34,19 @@ operator=(concrete_type&& concrete_clusters) const
 }
 
 template <typename T>
-auto
-WeightedClustersClustersWrapper<T>::begin() const noexcept -> iterator {
+auto WeightedClustersClustersWrapper<T>::begin() const noexcept -> iterator {
   assert(weightedClusters);
   return {*weightedClusters, 0};
 }
 
 template <typename T>
-auto
-WeightedClustersClustersWrapper<T>::end() const noexcept -> iterator {
+auto WeightedClustersClustersWrapper<T>::end() const noexcept -> iterator {
   assert(weightedClusters);
   return iterator{*weightedClusters};
 }
 
 template <typename T>
-std::size_t
-WeightedClustersClustersWrapper<T>::size() const noexcept {
+std::size_t WeightedClustersClustersWrapper<T>::size() const noexcept {
   assert(weightedClusters);
   return weightedClusters->getClustersSize();
 }

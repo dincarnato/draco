@@ -10,13 +10,11 @@
 
 namespace windows_merger {
 
-template <typename>
-struct WindowsMergerWindowWeightsAccessor;
+template <typename> struct WindowsMergerWindowWeightsAccessor;
 
-template <typename Window>
-struct WindowsMergerWindowWeightsIterator {
+template <typename Window> struct WindowsMergerWindowWeightsIterator {
   using window_type = std::decay_t<Window>;
-  using window_pointer_type = std::remove_reference_t<Window>*;
+  using window_pointer_type = std::remove_reference_t<Window> *;
   using traits_type = WindowsMergerTraits;
   using bases_size_type = typename traits_type::bases_size_type;
   using weight_type = typename traits_type::weight_type;
@@ -33,87 +31,79 @@ struct WindowsMergerWindowWeightsIterator {
   using value_type = weight_type;
   using difference_type = signed_bases_size_type;
   using reference = std::conditional_t<
-      std::is_rvalue_reference_v<Window>, weight_type&&,
-      std::conditional_t<std::is_const_v<Window>, weight_type const&,
-                         weight_type&>>;
+      std::is_rvalue_reference_v<Window>, weight_type &&,
+      std::conditional_t<std::is_const_v<Window>, weight_type const &,
+                         weight_type &>>;
   using pointer =
-      nostd::copy_const_t<std::remove_reference_t<Window>, weight_type>*;
+      nostd::copy_const_t<std::remove_reference_t<Window>, weight_type> *;
   using iterator_category = ranges::random_access_iterator_tag;
 
   WindowsMergerWindowWeightsIterator() = default;
   explicit WindowsMergerWindowWeightsIterator(
-      Window& window,
+      Window &window,
       signed_bases_size_type weight_index = signed_bases_size_type(0)) noexcept;
 
   reference operator*() const noexcept;
   reference operator[](difference_type index) const noexcept;
 
-  self& operator++() noexcept;
+  self &operator++() noexcept;
   self operator++(int) noexcept;
-  self& operator--() noexcept;
+  self &operator--() noexcept;
   self operator--(int) noexcept;
 
-  self& operator+=(difference_type offset) noexcept;
-  self& operator-=(difference_type offset) noexcept;
+  self &operator+=(difference_type offset) noexcept;
+  self &operator-=(difference_type offset) noexcept;
 
   // In-situ friend declarations
-  friend self
-  operator+(const self& lhs, difference_type offset) noexcept {
+  friend self operator+(const self &lhs, difference_type offset) noexcept {
     return self(*lhs.window,
                 static_cast<bases_size_type>(lhs.weight_index + offset));
   }
 
-  friend self
-  operator+(typename self::difference_type offset, const self& lhs) noexcept {
+  friend self operator+(typename self::difference_type offset,
+                        const self &lhs) noexcept {
     return lhs + offset;
   }
 
-  friend self
-  operator-(const self& lhs, typename self::difference_type offset) noexcept {
+  friend self operator-(const self &lhs,
+                        typename self::difference_type offset) noexcept {
     return self(*lhs.window,
                 static_cast<bases_size_type>(lhs.weight_index - offset));
   }
 
-  friend difference_type
-  operator-(const self& lhs, const self& rhs) noexcept {
+  friend difference_type operator-(const self &lhs, const self &rhs) noexcept {
     assert(lhs.window == rhs.window);
 
     return static_cast<difference_type>(lhs.weight_index) -
            static_cast<difference_type>(rhs.weight_index);
   }
 
-  friend bool
-  operator==(const self& lhs, const self& rhs) noexcept {
+  friend bool operator==(const self &lhs, const self &rhs) noexcept {
     assert(lhs.window == rhs.window);
     return lhs.weight_index == rhs.weight_index;
   }
 
-  friend bool
-  operator!=(const self& lhs, const self& rhs) noexcept {
+  friend bool operator!=(const self &lhs, const self &rhs) noexcept {
     assert(lhs.window == rhs.window);
     return lhs.weight_index != rhs.weight_index;
   }
 
-  friend bool
-  operator<(const self& lhs, const self& rhs) noexcept {
+  friend bool operator<(const self &lhs, const self &rhs) noexcept {
     assert(lhs.window == rhs.window);
     return lhs.weight_index < rhs.weight_index;
   }
 
-  friend bool
-  operator<=(const self& lhs, const self& rhs) noexcept {
+  friend bool operator<=(const self &lhs, const self &rhs) noexcept {
     assert(lhs.window == rhs.window);
     return lhs.weight_index <= rhs.weight_index;
   }
 
-  friend bool
-  operator>=(const self& lhs, const self& rhs) noexcept {
+  friend bool operator>=(const self &lhs, const self &rhs) noexcept {
     assert(lhs.window == rhs.window);
     return lhs.weight_index >= rhs.weight_index;
   }
 
-  friend bool
-  operator>(const self& lhs, const self& rhs) noexcept {
+  friend bool operator>(const self &lhs, const self &rhs) noexcept {
     assert(lhs.window == rhs.window);
     return lhs.weight_index > rhs.weight_index;
   }

@@ -1,8 +1,8 @@
 #pragma once
 
+#include "../../nostd/utility.hpp"
 #include "vec2d_element_builder_rt_common.hpp"
 #include "vec2d_element_builder_rt_construction_base.hpp"
-#include "../../nostd/utility.hpp"
 
 #include <boost/callable_traits.hpp>
 
@@ -10,16 +10,16 @@ namespace het::detail {
 
 template <typename Alloc, typename BuildParts>
 vec2d_element_builder_rt_move_to(
-    const BuildParts& build_parts,
-    typename allocator_traits<Alloc>::first_pointer, Alloc&)
-    ->vec2d_element_builder_rt_move_to<std::decay_t<Alloc>,
-                                       std::decay_t<BuildParts>>;
+    const BuildParts &build_parts,
+    typename allocator_traits<Alloc>::first_pointer, Alloc &)
+    -> vec2d_element_builder_rt_move_to<std::decay_t<Alloc>,
+                                        std::decay_t<BuildParts>>;
 
 template <typename Alloc, typename BuildParts, typename InitParts>
 vec2d_element_builder_rt_move_to(
-    const BuildParts& build_parts,
-    typename allocator_traits<Alloc>::first_pointer, Alloc&, InitParts &&)
-    ->vec2d_element_builder_rt_move_to<
+    const BuildParts &build_parts,
+    typename allocator_traits<Alloc>::first_pointer, Alloc &, InitParts &&)
+    -> vec2d_element_builder_rt_move_to<
         std::decay_t<Alloc>, std::decay_t<BuildParts>, std::decay_t<InitParts>>;
 
 template <typename Alloc, typename BuildParts, typename InitParts>
@@ -56,8 +56,7 @@ struct vec2d_element_builder_rt_move_to
   using base_type::unwind_destroy_line_partial;
 
   template <std::size_t Index>
-  static constexpr std::size_t
-  get_element_index_for_init() noexcept {
+  static constexpr std::size_t get_element_index_for_init() noexcept {
     static_assert(Index >= 1);
 
     if constexpr (Index <= build_parts_type::arity)
@@ -71,8 +70,7 @@ struct vec2d_element_builder_rt_move_to
     }
   }
 
-  static constexpr bool
-  is_lines_init() noexcept {
+  static constexpr bool is_lines_init() noexcept {
     return init_parts_type::arity == 1 or
            init_parts_type::arity == build_parts_type::arity * 2 + 2;
   }
@@ -81,7 +79,7 @@ struct vec2d_element_builder_rt_move_to
   from(typename allocator_traits<Alloc>::template pointer<0> address) noexcept(
       noexcept(this->new_replaced_last(vec2d_rt_part_from_address(
           std::declval<vec2d_rt_part_with_lines<
-              typename allocator_traits<Alloc>::lines_size_type>&&>(),
+              typename allocator_traits<Alloc>::lines_size_type> &&>(),
           address)))) {
 
     static_assert(init_parts_type::arity == build_parts_type::arity * 2 + 2 and
@@ -95,8 +93,7 @@ struct vec2d_element_builder_rt_move_to
         vec2d_rt_part_from_address(init_parts.take_last(), address));
   }
 
-  [[nodiscard]] inline auto
-  remaining() noexcept(
+  [[nodiscard]] inline auto remaining() noexcept(
       noexcept(this->new_appended(vec2d_rt_part_construction_placeholder()))) {
     static_assert(init_parts_type::arity >= 2);
     static_assert(init_parts_type::arity == build_parts_type::arity + 1,
@@ -183,10 +180,9 @@ struct vec2d_element_builder_rt_move_to
   }
 
   template <typename Fun>
-  [[nodiscard]] inline auto
-  transform(Fun&& fun) noexcept(noexcept(this->new_replaced_last(
-      vec2d_rt_part_transform(init_parts.take_last(),
-                              std::forward<Fun>(fun))))) {
+  [[nodiscard]] inline auto transform(Fun &&fun) noexcept(
+      noexcept(this->new_replaced_last(vec2d_rt_part_transform(
+          init_parts.take_last(), std::forward<Fun>(fun))))) {
     static_assert(init_parts_type::arity >= 2);
     static_assert(
         init_parts_type::arity > build_parts_type::arity * 2 + 2,
@@ -251,7 +247,7 @@ struct vec2d_element_builder_rt_move_to
                     element_index>,
                 std::decay_t<Fun>,
                 std::array<typename allocator_traits<allocator_type>::
-                               template value_type<element_index> const&,
+                               template value_type<element_index> const &,
                            1>> or
                 nostd::is_applicable_r_v<
                     std::array<typename allocator_traits<allocator_type>::
@@ -259,7 +255,7 @@ struct vec2d_element_builder_rt_move_to
                                1>,
                     std::decay_t<Fun>,
                     std::array<typename allocator_traits<allocator_type>::
-                                   template value_type<element_index> const&,
+                                   template value_type<element_index> const &,
                                1>>,
             "transform() for parts built with static_size() and set_size<1>() "
             "must be a callable object taking 1 const reference to the "
@@ -274,7 +270,7 @@ struct vec2d_element_builder_rt_move_to
                            last_build_part_type::size>,
                 std::decay_t<Fun>,
                 std::array<typename allocator_traits<allocator_type>::
-                               template value_type<element_index> const&,
+                               template value_type<element_index> const &,
                            last_build_part_type::size>>,
             "transform() for parts built with static_size() must be a "
             "callable object taking N const references to the relative "
@@ -358,8 +354,7 @@ struct vec2d_element_builder_rt_move_to
     return new_appended(vec2d_rt_part_empty());
   }
 
-  inline auto
-  done() {
+  inline auto done() {
     static_assert(init_parts_type::arity >= 2);
     static_assert(init_parts_type::arity != build_parts_type::arity + 1,
                   "done() cannot be called on the last element after "
@@ -425,8 +420,7 @@ struct vec2d_element_builder_rt_move_to
     }
   }
 
-  inline void
-  unwind() noexcept {
+  inline void unwind() noexcept {
     static_assert(
         is_vec2d_rt_part_unwinder_v<typename init_parts_type::last_type>,
         "unwind() can be called only after the last done()");
@@ -437,8 +431,7 @@ struct vec2d_element_builder_rt_move_to
 private:
   // TODO noexcept specifier
   template <std::size_t... Idx>
-  inline void
-  perform_move(std::index_sequence<Idx...>) {
+  inline void perform_move(std::index_sequence<Idx...>) {
 
     constexpr std::size_t init_part_from_index =
         build_parts_type::arity * 2 + 1;
@@ -462,8 +455,8 @@ private:
 
     using lines_type = typename init_part_from::size_type;
     static_assert(std::is_same_v<lines_type, typename init_part_to::size_type>);
-    auto&& from_lines = std::get<init_part_from_index>(init_parts).lines;
-    auto&& to_lines = std::get<0>(init_parts).lines;
+    auto &&from_lines = std::get<init_part_from_index>(init_parts).lines;
+    auto &&to_lines = std::get<0>(init_parts).lines;
 
     const auto from_zero_line = [&] {
       if constexpr (is_vec2d_rt_part_with_lines_v<
@@ -527,7 +520,7 @@ private:
         std::size_t constructed_elements = 0;
         try {
           (std::apply(
-               [&, this](auto&&... sizes) {
+               [&, this](auto &&...sizes) {
                  constexpr std::size_t remaining_part_index =
                      build_parts_type::arity + 1 + Idx;
 
@@ -542,7 +535,7 @@ private:
            ...);
         } catch (...) {
           std::apply(
-              [&, this](auto&&... sizes) {
+              [&, this](auto &&...sizes) {
                 unwind_destroy_line_partial(
                     to_line_index, constructed_elements,
                     nostd::make_index_sequence_rev<sizeof...(Idx)>(),
@@ -552,7 +545,7 @@ private:
 
           while (remaining_line_index > remaining_line_zero) {
             std::apply(
-                [&, this](auto&&... sizes) {
+                [&, this](auto &&...sizes) {
                   unwind_destroy_line(
                       --to_line_index,
                       nostd::make_index_sequence_rev<sizeof...(Idx)>(),
@@ -579,14 +572,13 @@ private:
   template <std::size_t Index, typename FromAddress, typename FromLineSize,
             typename ToLineSize, typename FromElementSizes,
             typename ToElementSizes>
-  inline void
-  perform_element_move(FromAddress&& from_address,
-                       FromLineSize&& from_line_index,
-                       ToLineSize&& to_line_index,
-                       FromElementSizes&& from_element_sizes,
-                       ToElementSizes&& to_element_sizes) {
+  inline void perform_element_move(FromAddress &&from_address,
+                                   FromLineSize &&from_line_index,
+                                   ToLineSize &&to_line_index,
+                                   FromElementSizes &&from_element_sizes,
+                                   ToElementSizes &&to_element_sizes) {
     const auto first_pointer_from = std::apply(
-        [&, this](auto&&... sizes) {
+        [&, this](auto &&...sizes) {
           return allocator_traits<Alloc>::template first_pointer_of<Index>(
               *alloc, from_address, from_line_index,
               std::forward<decltype(sizes)>(sizes)...);
@@ -594,7 +586,7 @@ private:
         from_element_sizes);
 
     const auto first_pointer_to = std::apply(
-        [&, this](auto&&... sizes) {
+        [&, this](auto &&...sizes) {
           return allocator_traits<Alloc>::template first_pointer_of<Index>(
               *alloc, address, to_line_index,
               std::forward<decltype(sizes)>(sizes)...);
@@ -609,8 +601,8 @@ private:
     constexpr std::size_t from_init_part_index =
         init_parts_from_index + 1 + Index;
 
-    auto&& n_from_elements = std::apply(
-        [&, this](auto&&... sizes) {
+    auto &&n_from_elements = std::apply(
+        [&, this](auto &&...sizes) {
           return base_type::template get_init_part_n_elements_at<
               from_init_part_index>(from_address,
                                     std::forward<FromLineSize>(from_line_index),
@@ -618,8 +610,8 @@ private:
         },
         from_element_sizes);
 
-    auto&& n_to_elements = std::apply(
-        [&, this](auto&&... sizes) {
+    auto &&n_to_elements = std::apply(
+        [&, this](auto &&...sizes) {
           return base_type::template get_init_part_n_elements<Index + 1>(
               std::forward<ToLineSize>(to_line_index),
               std::forward<decltype(sizes)>(sizes)...);
@@ -629,7 +621,7 @@ private:
     using NElementsType = std::decay_t<decltype(n_to_elements)>;
     static_assert(
         std::is_same_v<NElementsType, std::decay_t<decltype(n_from_elements)>>);
-    auto&& moving_n_elements = std::min(n_from_elements, n_to_elements);
+    auto &&moving_n_elements = std::min(n_from_elements, n_to_elements);
     auto remaining_n_elements = [&] {
       if (n_to_elements > n_from_elements)
         return n_to_elements - n_from_elements;
@@ -701,10 +693,10 @@ private:
   template <std::size_t Index, typename T, typename ElementSizeT_A,
             typename ElementSizeT_B>
   inline void
-  unwind_element_move(T* from_element_exception_ptr [[maybe_unused]],
-                      T* to_element_exception_ptr,
+  unwind_element_move(T *from_element_exception_ptr [[maybe_unused]],
+                      T *to_element_exception_ptr,
                       ElementSizeT_A exception_index,
-                      ElementSizeT_B&& first_element_index) noexcept {
+                      ElementSizeT_B &&first_element_index) noexcept {
     static_assert(std::is_same_v<std::decay_t<ElementSizeT_A>,
                                  std::decay_t<ElementSizeT_B>>);
 
@@ -733,14 +725,13 @@ private:
   template <typename FromAddress, typename FromLineSize, typename ToLineSize,
             typename FromElementSizes, typename ToElementSizes,
             std::size_t... Idx>
-  inline void
-  unwind_line_partial(FromAddress&& from_address,
-                      FromLineSize&& from_line_index,
-                      ToLineSize&& to_line_index,
-                      std::size_t element_exception_index,
-                      FromElementSizes&& from_element_sizes,
-                      ToElementSizes&& to_element_sizes,
-                      std::index_sequence<Idx...>) const noexcept {
+  inline void unwind_line_partial(FromAddress &&from_address,
+                                  FromLineSize &&from_line_index,
+                                  ToLineSize &&to_line_index,
+                                  std::size_t element_exception_index,
+                                  FromElementSizes &&from_element_sizes,
+                                  ToElementSizes &&to_element_sizes,
+                                  std::index_sequence<Idx...>) const noexcept {
     static_assert(sizeof...(Idx) < 2 or std::get<0>(std::array{Idx...}) >
                                             std::get<1>(std::array{Idx...}));
     (
@@ -757,9 +748,9 @@ private:
             typename FromElementSizes, typename ToElementSizes,
             std::size_t... Idx>
   inline void
-  unwind_line(FromAddress&& from_address, FromLineSize&& from_line_index,
-              ToLineSize&& to_line_index, FromElementSizes&& from_element_sizes,
-              ToElementSizes&& to_element_sizes,
+  unwind_line(FromAddress &&from_address, FromLineSize &&from_line_index,
+              ToLineSize &&to_line_index, FromElementSizes &&from_element_sizes,
+              ToElementSizes &&to_element_sizes,
               std::index_sequence<Idx...>) const noexcept {
     static_assert(sizeof...(Idx) < 2 or std::get<0>(std::array{Idx...}) >
                                             std::get<1>(std::array{Idx...}));
@@ -774,15 +765,15 @@ private:
   template <std::size_t Index, typename FromAddress, typename FromLineSize,
             typename ToLineSize, typename FromElementSizes,
             typename ToElementSizes>
-  inline void
-  unwind_element(FromAddress&& from_address, FromLineSize&& from_line_index,
-                 ToLineSize&& to_line_index,
-                 FromElementSizes&& from_element_sizes,
-                 ToElementSizes&& to_element_sizes) const noexcept {
+  inline void unwind_element(FromAddress &&from_address,
+                             FromLineSize &&from_line_index,
+                             ToLineSize &&to_line_index,
+                             FromElementSizes &&from_element_sizes,
+                             ToElementSizes &&to_element_sizes) const noexcept {
 
     using element_type = typename build_parts_type::template type<Index>;
     auto n_elements = std::apply(
-        [&, this](auto&&... sizes) {
+        [&, this](auto &&...sizes) {
           return base_type::template get_init_part_n_elements<Index + 1>(
               to_line_index, sizes...);
         },
@@ -790,7 +781,7 @@ private:
 
     auto data_ptr_from =
         std::apply(
-            [&, this](auto&&... sizes) {
+            [&, this](auto &&...sizes) {
               return allocator_traits<Alloc>::template first_pointer_of<Index>(
                   *alloc, from_address, from_line_index, sizes...);
             },
@@ -799,7 +790,7 @@ private:
 
     auto data_ptr_to =
         std::apply(
-            [&, this](auto&&... sizes) {
+            [&, this](auto &&...sizes) {
               return allocator_traits<Alloc>::template first_pointer_of<Index>(
                   *alloc, address, to_line_index, sizes...);
             },
@@ -820,8 +811,7 @@ private:
   }
 
   template <std::size_t... Idx>
-  inline void
-  unwind_impl(std::index_sequence<Idx...>) noexcept {
+  inline void unwind_impl(std::index_sequence<Idx...>) noexcept {
     constexpr std::size_t init_parts_from_index =
         build_parts_type::arity * 2 + 1;
     using to_init_type = typename init_parts_type::template type<0>;
@@ -868,8 +858,7 @@ private:
   }
 
   template <std::size_t... InitsIdx, std::size_t... SkipIdx>
-  inline auto
-  skip_remaning_impl(
+  inline auto skip_remaning_impl(
       std::index_sequence<InitsIdx...>,
       std::index_sequence<
           SkipIdx...>) noexcept((std::

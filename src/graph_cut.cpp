@@ -7,7 +7,7 @@
 #include <range/v3/core.hpp>
 #include <stdexcept>
 
-GraphCut::GraphCut(const arma::mat& adjacency, Graph type)
+GraphCut::GraphCut(const arma::mat &adjacency, Graph type)
     : graphType(type), adjacency(adjacency) {
   for (std::size_t row = 0; row < adjacency.n_rows; ++row) {
     if (arma::all(arma::abs(adjacency.row(row)) < 1e-6)) {
@@ -28,8 +28,7 @@ GraphCut::GraphCut(const arma::mat& adjacency, Graph type)
   }
 }
 
-arma::mat
-GraphCut::createGraph(const arma::mat& adjacency) const {
+arma::mat GraphCut::createGraph(const arma::mat &adjacency) const {
   switch (graphType) {
   case Graph::symmetricLaplacian: {
     arma::mat symLaplacian = createSymmetricLaplacian(adjacency);
@@ -43,8 +42,7 @@ GraphCut::createGraph(const arma::mat& adjacency) const {
   }
 }
 
-arma::mat
-GraphCut::createSymmetricLaplacian(const arma::mat& adjacency) const {
+arma::mat GraphCut::createSymmetricLaplacian(const arma::mat &adjacency) const {
   arma::mat adjacency_zero_diag = arma::log(adjacency + 1.);
   adjacency_zero_diag.diag() = arma::zeros(adjacency_zero_diag.n_cols);
   arma::vec degree = arma::sum(adjacency_zero_diag, 1);
@@ -62,59 +60,55 @@ GraphCut::createSymmetricLaplacian(const arma::mat& adjacency) const {
   return invSqrtDiagonal * laplacian * invSqrtDiagonal;
 }
 
-arma::mat
-GraphCut::getGraphWithNoLoops(const arma::mat& matrix) const {
+arma::mat GraphCut::getGraphWithNoLoops(const arma::mat &matrix) const {
   arma::mat symLaplacian = createGraph(matrix);
   symLaplacian.diag() = arma::zeros(symLaplacian.n_rows);
   return symLaplacian;
 }
 
-auto
-GraphCut::run(std::uint8_t nClusters, FuzzyCut) const -> WeightedClusters {
+auto GraphCut::run(std::uint8_t nClusters, FuzzyCut) const -> WeightedClusters {
   if (nClusters < 2)
     throw std::logic_error("nClusters must be at least 2");
 
-  auto clusters = partitionGraph(nClusters, [this](const auto& matrix) {
+  auto clusters = partitionGraph(nClusters, [this](const auto &matrix) {
     return getGraphWithNoLoops(matrix);
   });
 
   return clusters;
 }
 
-auto
-GraphCut::run(std::uint8_t nClusters, HardCut) const -> HardClusters {
+auto GraphCut::run(std::uint8_t nClusters, HardCut) const -> HardClusters {
   if (nClusters < 2)
     throw std::logic_error("nClusters must be at least 2");
 
-  auto clusters = partitionGraphHard(nClusters, [this](const auto& matrix) {
+  auto clusters = partitionGraphHard(nClusters, [this](const auto &matrix) {
     return getGraphWithNoLoops(matrix);
   });
 
   return clusters;
 }
 
-double
-GraphCut::calculateClustersScore(
-    const std::vector<std::vector<bool>>& rawClusters) const {
+double GraphCut::calculateClustersScore(
+    const std::vector<std::vector<bool>> &rawClusters) const {
   assert(not rawClusters.empty());
   const std::size_t nElements = adjacency.n_cols;
 
 #ifndef NDEBUG
-  for (const auto& cluster : rawClusters)
+  for (const auto &cluster : rawClusters)
     assert(cluster.size() == nElements);
 #endif
 
   HardClusters hardClusters(nElements,
                             static_cast<std::uint8_t>(rawClusters.size()));
   {
-    auto&& clusters = hardClusters.clusters();
+    auto &&clusters = hardClusters.clusters();
     auto clusterIter = ranges::begin(clusters);
     const auto clustersEnd = ranges::end(clusters);
     auto rawClusterIter = ranges::begin(rawClusters);
 
     for (; clusterIter < clustersEnd; ++clusterIter, ++rawClusterIter) {
-      auto&& cluster = *clusterIter;
-      auto&& rawCluster = *rawClusterIter;
+      auto &&cluster = *clusterIter;
+      auto &&rawCluster = *rawClusterIter;
 
       auto baseIter = ranges::begin(cluster);
       const auto clusterEnd = ranges::end(cluster);
@@ -132,7 +126,6 @@ GraphCut::calculateClustersScore(
   return calculateCutScore(getGraphWithNoLoops(adjacency), hardClusters);
 }
 
-double
-GraphCut::calculateClustersScore(const HardClusters& clusters) const {
+double GraphCut::calculateClustersScore(const HardClusters &clusters) const {
   return calculateCutScore(getGraphWithNoLoops(adjacency), clusters);
 }

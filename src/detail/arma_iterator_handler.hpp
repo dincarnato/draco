@@ -6,8 +6,7 @@
 
 namespace detail {
 
-template <typename, ArmaIteratorDirection>
-class ArmaIteratorHelper;
+template <typename, ArmaIteratorDirection> class ArmaIteratorHelper;
 
 template <typename Mat, ArmaIteratorDirection direction>
 class ArmaIteratorHandler {
@@ -16,7 +15,7 @@ public:
   using value_type = typename iterator::value_type;
   using reference = typename iterator::reference;
 
-  explicit ArmaIteratorHandler(Mat* matrix) noexcept;
+  explicit ArmaIteratorHandler(Mat *matrix) noexcept;
 
   iterator begin() const noexcept;
   iterator end() const noexcept;
@@ -24,7 +23,7 @@ public:
   std::size_t size() const noexcept;
 
 private:
-  Mat* matrix;
+  Mat *matrix;
 };
 
 } // namespace detail

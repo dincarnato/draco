@@ -8,30 +8,29 @@
 
 template <typename Cluster, bool complemented>
 HardClustersWrapper<Cluster, complemented>::HardClustersWrapper(
-    Cluster& clusters) noexcept
+    Cluster &clusters) noexcept
     : _clusters(&clusters) {}
 
 template <typename Cluster, bool complemented>
-auto HardClustersWrapper<Cluster, complemented>::
-operator[](index_type index) const noexcept -> cluster_wrapper {
+auto HardClustersWrapper<Cluster, complemented>::operator[](
+    index_type index) const noexcept -> cluster_wrapper {
   return {*_clusters, index};
 }
 
 template <typename Cluster, bool complemented>
-auto
-HardClustersWrapper<Cluster, complemented>::begin() const noexcept -> iterator {
+auto HardClustersWrapper<Cluster, complemented>::begin() const noexcept
+    -> iterator {
   return iterator{*_clusters, 0};
 }
 
 template <typename Cluster, bool complemented>
-auto
-HardClustersWrapper<Cluster, complemented>::end() const noexcept -> iterator {
+auto HardClustersWrapper<Cluster, complemented>::end() const noexcept
+    -> iterator {
   return iterator{*_clusters, _clusters->nClusters};
 }
 
 template <typename Cluster, bool complemented>
-std::size_t
-HardClustersWrapper<Cluster, complemented>::size() const noexcept {
+std::size_t HardClustersWrapper<Cluster, complemented>::size() const noexcept {
   assert(_clusters);
   return _clusters->getClustersSize();
 }

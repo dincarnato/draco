@@ -13,51 +13,45 @@
 
 template <typename Matrix>
 RingmapMatrixColAccessor<Matrix>::RingmapMatrixColAccessor(
-    Matrix& matrix, unsigned col) noexcept
+    Matrix &matrix, unsigned col) noexcept
     : matrix(&matrix), col(col) {}
 
 template <typename Matrix>
-unsigned
-RingmapMatrixColAccessor<Matrix>::size() const noexcept {
+unsigned RingmapMatrixColAccessor<Matrix>::size() const noexcept {
   return matrix->readsCount;
 }
 
 template <typename Matrix>
-std::size_t
-RingmapMatrixColAccessor<Matrix>::sum() const noexcept {
+std::size_t RingmapMatrixColAccessor<Matrix>::sum() const noexcept {
   return ranges::accumulate(*this, 0u);
 }
 
 template <typename Matrix>
-double
-RingmapMatrixColAccessor<Matrix>::mean() const noexcept {
+double RingmapMatrixColAccessor<Matrix>::mean() const noexcept {
   return static_cast<double>(sum()) / matrix->readsCount;
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixColAccessor<Matrix>::begin() const noexcept -> iterator {
+auto RingmapMatrixColAccessor<Matrix>::begin() const noexcept -> iterator {
   return {*matrix, matrix->data.data(), col};
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixColAccessor<Matrix>::end() const noexcept -> iterator {
+auto RingmapMatrixColAccessor<Matrix>::end() const noexcept -> iterator {
   return {*matrix, matrix->data.data() + matrix->readsCount, col};
 }
 
 template <typename Matrix>
 template <typename URBG>
-void
-RingmapMatrixColAccessor<Matrix>::shuffle(URBG&& g) const noexcept(false) {
+void RingmapMatrixColAccessor<Matrix>::shuffle(URBG &&g) const noexcept(false) {
   std::uniform_int_distribution<unsigned> distribution(0,
                                                        matrix->readsCount - 1);
-  for (auto&& row : matrix->data) {
+  for (auto &&row : matrix->data) {
     auto colIter = ranges::lower_bound(row, col);
     if (colIter == ranges::end(row) or *colIter != col)
       continue;
 
-    auto& otherRow = matrix->data[distribution(g)];
+    auto &otherRow = matrix->data[distribution(g)];
     if (ranges::binary_search(otherRow, col))
       continue;
 
@@ -67,69 +61,62 @@ RingmapMatrixColAccessor<Matrix>::shuffle(URBG&& g) const noexcept(false) {
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixColAccessor<Matrix>::
-operator=(RingmapMatrixColAccessor<RingmapMatrix> const& rhs) const
-    noexcept(false) -> RingmapMatrixColAccessor const& {
+auto RingmapMatrixColAccessor<Matrix>::operator=(
+    RingmapMatrixColAccessor<RingmapMatrix> const &rhs) const noexcept(false)
+    -> RingmapMatrixColAccessor const & {
   copy_from_accessor(rhs);
   return *this;
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixColAccessor<Matrix>::
-operator=(RingmapMatrixColAccessor<const RingmapMatrix> const& rhs) const
-    noexcept(false) -> RingmapMatrixColAccessor const& {
+auto RingmapMatrixColAccessor<Matrix>::operator=(
+    RingmapMatrixColAccessor<const RingmapMatrix> const &rhs) const
+    noexcept(false) -> RingmapMatrixColAccessor const & {
   copy_from_accessor(rhs);
   return *this;
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixColAccessor<Matrix>::
-operator=(RingmapMatrixColAccessor<RingmapMatrix&&> const& rhs) const
-    noexcept(false) -> RingmapMatrixColAccessor const& {
+auto RingmapMatrixColAccessor<Matrix>::operator=(
+    RingmapMatrixColAccessor<RingmapMatrix &&> const &rhs) const noexcept(false)
+    -> RingmapMatrixColAccessor const & {
   copy_from_accessor(rhs);
   return *this;
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixColAccessor<Matrix>::
-operator=(RingmapMatrixColAccessor<RingmapMatrix>&& rhs) const noexcept(false)
-    -> RingmapMatrixColAccessor const& {
+auto RingmapMatrixColAccessor<Matrix>::operator=(
+    RingmapMatrixColAccessor<RingmapMatrix> &&rhs) const noexcept(false)
+    -> RingmapMatrixColAccessor const & {
   copy_from_accessor(std::move(rhs));
   return *this;
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixColAccessor<Matrix>::
-operator=(RingmapMatrixColAccessor<const RingmapMatrix>&& rhs) const
-    noexcept(false) -> RingmapMatrixColAccessor const& {
+auto RingmapMatrixColAccessor<Matrix>::operator=(
+    RingmapMatrixColAccessor<const RingmapMatrix> &&rhs) const noexcept(false)
+    -> RingmapMatrixColAccessor const & {
   copy_from_accessor(std::move(rhs));
   return *this;
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixColAccessor<Matrix>::
-operator=(RingmapMatrixColAccessor<RingmapMatrix&&>&& rhs) const noexcept(false)
-    -> RingmapMatrixColAccessor const& {
+auto RingmapMatrixColAccessor<Matrix>::operator=(
+    RingmapMatrixColAccessor<RingmapMatrix &&> &&rhs) const noexcept(false)
+    -> RingmapMatrixColAccessor const & {
   copy_from_accessor(std::move(rhs));
   return *this;
 }
 
 template <typename Matrix>
-RingmapMatrixAccessor<Matrix> RingmapMatrixColAccessor<Matrix>::
-operator[](std::size_t index) const noexcept {
+RingmapMatrixAccessor<Matrix>
+RingmapMatrixColAccessor<Matrix>::operator[](std::size_t index) const noexcept {
   return {matrix->data.data() + index, col};
 }
 
 template <typename Matrix>
 template <typename Accessor>
-void
-RingmapMatrixColAccessor<Matrix>::copy_from_accessor(Accessor&& rhs) const
+void RingmapMatrixColAccessor<Matrix>::copy_from_accessor(Accessor &&rhs) const
     noexcept(false) {
   if (matrix->data.size() < rhs.matrix->data.size())
     matrix->data.resize(rhs.matrix->data.size());
@@ -141,8 +128,8 @@ RingmapMatrixColAccessor<Matrix>::copy_from_accessor(Accessor&& rhs) const
   auto const rowEnd = ranges::end(matrix->data);
   auto rhsRowIter = ranges::begin(std::as_const(rhs.matrix->data));
   for (; rowIter < rowEnd; ++rowIter, ++rhsRowIter) {
-    auto&& rhsRow = *rhsRowIter;
-    auto& row = *rowIter;
+    auto &&rhsRow = *rhsRowIter;
+    auto &row = *rowIter;
     if (ranges::find(rhsRow, rhs.col) == ranges::end(rhsRow))
       row.erase(ranges::remove(row, col), ranges::end(row));
     else if (ranges::find(row, col) == ranges::end(row)) {
@@ -153,15 +140,14 @@ RingmapMatrixColAccessor<Matrix>::copy_from_accessor(Accessor&& rhs) const
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixColAccessor<Matrix>::operator=(value_type const& column) const
-    noexcept(false) -> RingmapMatrixColAccessor const& {
+auto RingmapMatrixColAccessor<Matrix>::operator=(value_type const &column) const
+    noexcept(false) -> RingmapMatrixColAccessor const & {
   assert(matrix);
   if (column.size() != matrix->readsCount)
     throw std::runtime_error("invalid column size");
 
   ranges::view::zip(column, *this) |
-      ranges::for_each([](bool element, auto&& accessor) {
+      ranges::for_each([](bool element, auto &&accessor) {
         if (element)
           accessor.set();
         else
@@ -175,7 +161,7 @@ template <typename Matrix>
 RingmapMatrixColAccessor<Matrix>::operator value_type() const noexcept(false) {
   value_type out(matrix->readsCount, false);
   ranges::view::zip(*this, out) |
-      ranges::for_each([](auto&& accessor, bool& value) {
+      ranges::for_each([](auto &&accessor, bool &value) {
         if (accessor.get())
           value = true;
       });

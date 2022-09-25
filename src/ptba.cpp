@@ -16,7 +16,7 @@ namespace fs = std::experimental::filesystem;
 #error "Missing filesystem header"
 #endif
 
-Ptba::Ptba(const RingmapData& data, Args const& args)
+Ptba::Ptba(const RingmapData &data, Args const &args)
     : ringmapData(&data), minFilteredReads(args.min_filtered_reads()),
       maxPermutations(args.max_permutations()),
       minPermutations(args.min_permutations()),
@@ -32,7 +32,7 @@ Ptba::Ptba(const RingmapData& data, Args const& args)
       extended_search_eigengaps(args.extended_search_eigengaps()) {}
 
 std::tuple<arma::mat, arma::vec, arma::vec, arma::mat>
-Ptba::calculateEigenGaps(const RingmapData& data) {
+Ptba::calculateEigenGaps(const RingmapData &data) {
   arma::mat normalizedLaplacian;
   arma::mat adjacency = data.data().covariance(data.getBaseWeights());
   {
@@ -63,14 +63,10 @@ Ptba::calculateEigenGaps(const RingmapData& data) {
                          std::move(adjacency));
 }
 
-unsigned
-Ptba::getNumberOfClusters() const {
-  return run();
-}
+unsigned Ptba::getNumberOfClusters() const { return run(); }
 
-void
-Ptba::dumpEigenVecs(const arma::mat& eigenVecs,
-                    std::string_view eigenVecsFilename) {
+void Ptba::dumpEigenVecs(const arma::mat &eigenVecs,
+                         std::string_view eigenVecsFilename) {
   std::ofstream eigenVecsStream{fs::path{eigenVecsFilename}};
   eigenVecsStream << std::setprecision(10) << std::scientific;
   for (std::size_t col = 0; col < eigenVecs.n_cols; ++col) {
@@ -81,9 +77,8 @@ Ptba::dumpEigenVecs(const arma::mat& eigenVecs,
   }
 }
 
-void
-Ptba::dumpEigenGaps(const arma::vec& eigenGaps,
-                    std::string_view eigenGapsFilename) {
+void Ptba::dumpEigenGaps(const arma::vec &eigenGaps,
+                         std::string_view eigenGapsFilename) {
   std::ofstream eigenGapsStream{fs::path{eigenGapsFilename}};
   eigenGapsStream << std::setprecision(10) << std::scientific;
   unsigned dataIndex = 1;
@@ -91,22 +86,20 @@ Ptba::dumpEigenGaps(const arma::vec& eigenGaps,
     eigenGapsStream << dataIndex++ << ' ' << eigenGap << '\n';
 }
 
-void
-Ptba::dumpPerturbedEigenGaps(PerturbedEigengaps const& perturbed_eigengaps,
-                             std::string_view perturbedEigenGapsFilename) {
+void Ptba::dumpPerturbedEigenGaps(PerturbedEigengaps const &perturbed_eigengaps,
+                                  std::string_view perturbedEigenGapsFilename) {
   std::ofstream eigenGapsStream{fs::path{perturbedEigenGapsFilename}};
   eigenGapsStream << std::setprecision(10) << std::scientific;
   unsigned eigengap_index = 1;
-  for (auto&& perturbed_eigengap : perturbed_eigengaps) {
-    for (auto&& value : perturbed_eigengap)
+  for (auto &&perturbed_eigengap : perturbed_eigengaps) {
+    for (auto &&value : perturbed_eigengap)
       eigenGapsStream << eigengap_index << ' ' << value << '\n';
 
     ++eigengap_index;
   }
 }
 
-unsigned
-Ptba::getNumberOfClustersAndDumpData(
+unsigned Ptba::getNumberOfClustersAndDumpData(
     std::string_view eigenVecsFilename, std::string_view eigenGapsFilename,
     std::string_view perturbedEigenGapsFilename) const {
   PtbaResult result = result_from_run();
@@ -136,23 +129,17 @@ Ptba::getNumberOfClustersAndSignificantIndicesAndDumpData(
   return {result.nClusters, std::move(result.significantIndices)};
 }
 
-void
-Ptba::setMaxClusters(unsigned value) {
-  maxClusters = value;
-}
+void Ptba::setMaxClusters(unsigned value) { maxClusters = value; }
 
-std::vector<unsigned>
-Ptba::getAllSignificantEigenGapIndices() const {
+std::vector<unsigned> Ptba::getAllSignificantEigenGapIndices() const {
   return result_from_run().significantIndices;
 }
 
-void
-Ptba::setMinEigenGapThreshold(double value) {
+void Ptba::setMinEigenGapThreshold(double value) {
   minEigenGapThreshold = value;
 }
 
-unsigned
-Ptba::run() const noexcept(false) {
+unsigned Ptba::run() const noexcept(false) {
   auto result = result_from_run();
 
   /*
@@ -166,8 +153,7 @@ Ptba::run() const noexcept(false) {
   return result.significantIndices.size();
 }
 
-auto
-Ptba::result_from_run() const noexcept(false) -> PtbaResult {
+auto Ptba::result_from_run() const noexcept(false) -> PtbaResult {
   enum class PValueResult { significant, nonsignificant, inf, alternative };
 
   arma::mat dataEigenVecs;
@@ -215,7 +201,7 @@ Ptba::result_from_run() const noexcept(false) -> PtbaResult {
 #endif
   std::vector<WeibullFitter> weibull_fitters;
   weibull_fitters.reserve(dataEigenGaps.size());
-  for (auto const& perturbed_eigengap : perturbed_eigengaps) {
+  for (auto const &perturbed_eigengap : perturbed_eigengaps) {
     weibull_fitters.emplace_back(perturbed_eigengap);
   }
   std::vector<WeibullParams> weibull_params(dataEigenGaps.size(), {-1., -1.});
@@ -256,13 +242,13 @@ Ptba::result_from_run() const noexcept(false) -> PtbaResult {
 
     assert(std::all_of(
         std::begin(perturbed_eigengaps), std::end(perturbed_eigengaps),
-        [&](auto&& perturbed_eigengap) {
+        [&](auto &&perturbed_eigengap) {
           return perturbed_eigengap.size() == perturbed_eigengaps[0].size();
         }));
 
     auto isPValueSignificative =
         [&, this](unsigned eigenGapIndex) -> std::pair<PValueResult, bool> {
-      auto&& perturbed_eigengap =
+      auto &&perturbed_eigengap =
           std::as_const(perturbed_eigengaps)[eigenGapIndex];
 
       if (not null_dist_is_valid[eigenGapIndex]) {
@@ -297,7 +283,7 @@ Ptba::result_from_run() const noexcept(false) -> PtbaResult {
           return std::pair(PValueResult::significant, false);
       }
 
-      auto& params = weibull_params[eigenGapIndex];
+      auto &params = weibull_params[eigenGapIndex];
       params = weibull_fitters[eigenGapIndex].fit();
       boost::math::weibull_distribution<double> distribution(params.shape,
                                                              params.scale);
@@ -347,7 +333,7 @@ Ptba::result_from_run() const noexcept(false) -> PtbaResult {
         if (permutation < maxPermutations - 1)
           continue;
         else {
-          auto const& perturbed_eigengap = perturbed_eigengaps[0];
+          auto const &perturbed_eigengap = perturbed_eigengaps[0];
           double shifted_mean;
           double first_stddev;
           {
@@ -398,7 +384,7 @@ Ptba::result_from_run() const noexcept(false) -> PtbaResult {
           std::transform(
               std::cbegin(perturbed_eigengaps[0]),
               std::cend(perturbed_eigengaps[0]),
-              std::begin(shiftedFirstEigengap), [&](auto&& value) {
+              std::begin(shiftedFirstEigengap), [&](auto &&value) {
                 return std::max(
                     value - (1. - firstEigengapThreshold) * first_mean, 1e-5);
               });
@@ -440,7 +426,7 @@ Ptba::result_from_run() const noexcept(false) -> PtbaResult {
         }
       } else {
         // Approximated evaluation
-        auto const& perturbed_eigengap = perturbed_eigengaps[0];
+        auto const &perturbed_eigengap = perturbed_eigengaps[0];
         double shifted_mean;
         double first_stddev;
         {
@@ -486,14 +472,14 @@ Ptba::result_from_run() const noexcept(false) -> PtbaResult {
                                                  bool evaluated_distribution) {
       double mean, stddev;
       if (evaluated_distribution) {
-        auto& params = weibull_params[eigengap_index];
+        auto &params = weibull_params[eigengap_index];
         params = weibull_fitters[eigengap_index].fit();
         double const common = std::tgamma(1. + 1. / params.shape);
         mean = params.scale * common;
         stddev = params.scale * std::sqrt(std::tgamma(1. + 2. / params.shape) -
                                           std::pow(common, 2.));
       } else {
-        auto const& perturbed_eigengap = perturbed_eigengaps[eigengap_index];
+        auto const &perturbed_eigengap = perturbed_eigengaps[eigengap_index];
         mean = std::accumulate(
             std::begin(perturbed_eigengap), std::end(perturbed_eigengap), 0.,
             [n = static_cast<double>(perturbed_eigengap.size())](
@@ -570,19 +556,19 @@ Ptba::result_from_run() const noexcept(false) -> PtbaResult {
       "/tmp/perturbed_eigengaps_thrown.txt";
   try {
     dumpEigenVecs(dataEigenVecs, eigenVecsFilename);
-  } catch (const std::exception&) {
+  } catch (const std::exception &) {
     std::cerr << "WARNING: eigenvecs data cannot be written\n";
   }
 
   try {
     dumpEigenGaps(dataEigenGaps, eigenGapsFilename);
-  } catch (const std::exception&) {
+  } catch (const std::exception &) {
     std::cerr << "WARNING: eigengaps data cannot be written\n";
   }
 
   try {
     dumpPerturbedEigenGaps(perturbed_eigengaps, perturbedEigenGapsFilename);
-  } catch (const std::exception&) {
+  } catch (const std::exception &) {
     std::cerr << "WARNING: perturbed eigengaps data cannot be written\n";
   }
 

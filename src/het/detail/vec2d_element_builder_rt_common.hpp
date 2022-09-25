@@ -26,9 +26,9 @@ struct vec2d_element_builder_rt_common {
   friend struct vec2d_element_builder_rt_common;
 
 protected:
-  const build_parts_type* build_parts;
+  const build_parts_type *build_parts;
   base_address_type address;
-  allocator_type* alloc;
+  allocator_type *alloc;
   init_parts_type init_parts;
 
   template <typename Part>
@@ -42,8 +42,7 @@ protected:
       typename init_parts_type::template replace_last_with_t<Part>>;
 
   template <typename Part>
-  [[nodiscard]] inline auto
-  new_appended(Part&& part) noexcept(
+  [[nodiscard]] inline auto new_appended(Part &&part) noexcept(
       noexcept(new_appended_t<std::decay_t<Part>>(
           *build_parts, address, *alloc,
           init_parts.append(std::forward<Part>(part))))) {
@@ -54,8 +53,7 @@ protected:
   }
 
   template <typename Part>
-  [[nodiscard]] inline auto
-  new_replaced_last(Part&& part) noexcept(
+  [[nodiscard]] inline auto new_replaced_last(Part &&part) noexcept(
       noexcept(new_replaced_last_t<std::decay_t<Part>>(
           *build_parts, address, *alloc,
           init_parts.replace_last_with(std::forward<Part>(part))))) {
@@ -68,11 +66,11 @@ protected:
 private:
   // TODO: noexcept specifier
   template <std::size_t Index, typename T, std::size_t... Idx>
-  inline auto
-  call_transform_on_fixed_impl(T* first_pointer, std::index_sequence<Idx...>) {
+  inline auto call_transform_on_fixed_impl(T *first_pointer,
+                                           std::index_sequence<Idx...>) {
     using init_part_type = typename init_parts_type::template type<Index>;
-    auto& init_part = std::get<Index>(init_parts);
-    return static_cast<typename init_part_type::function_type&>(init_part)(
+    auto &init_part = std::get<Index>(init_parts);
+    return static_cast<typename init_part_type::function_type &>(init_part)(
         first_pointer[Idx]...);
   }
 
@@ -80,11 +78,11 @@ public:
   inline vec2d_element_builder_rt_common() = default;
   inline vec2d_element_builder_rt_common(vec2d_element_builder_rt_common &&) =
       default;
-  inline vec2d_element_builder_rt_common& operator=(
-      vec2d_element_builder_rt_common&&) = default;
+  inline vec2d_element_builder_rt_common &
+  operator=(vec2d_element_builder_rt_common &&) = default;
   inline vec2d_element_builder_rt_common(
-      const build_parts_type& build_parts, base_address_type address,
-      Alloc& alloc) noexcept(std::
+      const build_parts_type &build_parts, base_address_type address,
+      Alloc &alloc) noexcept(std::
                                  is_nothrow_copy_constructible_v<
                                      base_address_type>)
       : build_parts(&build_parts), address(address), alloc(&alloc) {
@@ -95,18 +93,18 @@ public:
   }
   template <typename _InitParts>
   inline vec2d_element_builder_rt_common(
-      const build_parts_type& build_parts, base_address_type address,
-      Alloc& alloc,
-      _InitParts&&
-          init_parts) noexcept(std::
-                                   is_nothrow_copy_constructible_v<base_address_type>and noexcept(
-                                       init_parts_type(std::forward<_InitParts>(
-                                           init_parts))))
+      const build_parts_type &build_parts, base_address_type address,
+      Alloc &alloc,
+      _InitParts &&init_parts) noexcept(std::
+                                            is_nothrow_copy_constructible_v<
+                                                base_address_type>
+                                                and noexcept(init_parts_type(
+                                                    std::forward<_InitParts>(
+                                                        init_parts))))
       : build_parts(&build_parts), address(address), alloc(&alloc),
         init_parts(std::forward<_InitParts>(init_parts)) {}
 
-  static constexpr std::size_t
-  get_element_index() noexcept {
+  static constexpr std::size_t get_element_index() noexcept {
     static_assert(init_parts_type::arity > 0);
     return builder_type::template get_element_index_for_init<
         init_parts_type::arity - 1>();
@@ -114,7 +112,7 @@ public:
 
   template <typename SizeT>
   [[nodiscard]] inline auto
-  with_lines(SizeT&& n) noexcept(noexcept(new_replaced_last(
+  with_lines(SizeT &&n) noexcept(noexcept(new_replaced_last(
       vec2d_rt_part_with_lines<std::decay_t<SizeT>>{std::forward<SizeT>(n)}))) {
     static_assert(builder_type::is_lines_init());
     static_assert(
@@ -126,8 +124,7 @@ public:
   }
 
   template <typename SizeT>
-  [[nodiscard]] inline auto
-  skip_lines(SizeT&& n) noexcept(noexcept(
+  [[nodiscard]] inline auto skip_lines(SizeT &&n) noexcept(noexcept(
       new_replaced_last(vec2d_rt_part_skip_first_lines<std::decay_t<SizeT>>{
           init_parts.take_last(), std::forward<SizeT>(n)}))) {
     static_assert(builder_type::is_lines_init());
@@ -152,9 +149,7 @@ public:
   }
 
   // TODO noexcept specifications
-  template <typename SizeT>
-  [[nodiscard]] inline auto
-  with_max_size(SizeT&& n) {
+  template <typename SizeT> [[nodiscard]] inline auto with_max_size(SizeT &&n) {
     static constexpr std::size_t element_index =
         builder_type::get_element_index();
 
@@ -177,9 +172,7 @@ public:
   }
 
   // TODO noexcept specifications
-  template <typename SizeT>
-  [[nodiscard]] inline auto
-  with_size(SizeT&& n) {
+  template <typename SizeT> [[nodiscard]] inline auto with_size(SizeT &&n) {
     static constexpr std::size_t element_index =
         builder_type::get_element_index();
 
@@ -208,9 +201,7 @@ public:
   }
 
   // TODO noexcept specifications
-  template <typename Fun>
-  [[nodiscard]] inline auto
-  with_fun_size(Fun&& fun) {
+  template <typename Fun> [[nodiscard]] inline auto with_fun_size(Fun &&fun) {
     static constexpr std::size_t element_index =
         builder_type::get_element_index();
 
@@ -241,8 +232,8 @@ protected:
   // TODO noexcept specifier
   template <std::size_t Index, typename LineSizeT, typename... Sizes>
   [[nodiscard]] inline auto
-  get_init_part_n_elements_at(base_address_type address, LineSizeT&& line_index,
-                              Sizes&&... sizes) const noexcept {
+  get_init_part_n_elements_at(base_address_type address, LineSizeT &&line_index,
+                              Sizes &&...sizes) const noexcept {
     using init_part_type = typename init_parts_type::template type<Index>;
     static constexpr std::size_t build_part_index =
         builder_type::template get_element_index_for_init<Index>();
@@ -272,7 +263,7 @@ protected:
                                build_part_type>) {
         namespace ct = boost::callable_traits;
 
-        const auto& build_part = std::get<build_part_index>(*build_parts);
+        const auto &build_part = std::get<build_part_index>(*build_parts);
         const element_size_type size = call_dynamic_size_from_callable_at(
             address, std::forward<LineSizeT>(line_index), build_part,
             std::make_index_sequence<
@@ -289,8 +280,8 @@ protected:
   }
 
   template <std::size_t Index, typename LineSizeT, typename... Sizes>
-  [[nodiscard]] inline auto
-  get_init_part_n_elements(LineSizeT&& line_index, Sizes&&... sizes) const
+  [[nodiscard]] inline auto get_init_part_n_elements(LineSizeT &&line_index,
+                                                     Sizes &&...sizes) const
       noexcept(noexcept(get_init_part_n_elements_at<Index>(
           address, std::forward<LineSizeT>(line_index),
           std::forward<Sizes>(sizes)...))) {
@@ -301,9 +292,8 @@ protected:
   }
 
   template <std::size_t Index>
-  [[nodiscard]] inline auto
-  get_init_part_max_size() const noexcept {
-    const auto& init_part = std::get<Index>(init_parts);
+  [[nodiscard]] inline auto get_init_part_max_size() const noexcept {
+    const auto &init_part = std::get<Index>(init_parts);
 
     using build_part_type = typename build_parts_type::template type<
         builder_type::template get_element_index_for_init<Index>()>;
@@ -324,9 +314,9 @@ protected:
   template <typename LineIndexT, typename Fun, std::size_t... Idx,
             typename... Sizes>
   [[nodiscard]] inline auto
-  call_dynamic_size_from_callable(LineIndexT&& line_index, Fun&& fun,
+  call_dynamic_size_from_callable(LineIndexT &&line_index, Fun &&fun,
                                   std::index_sequence<Idx...> idx,
-                                  Sizes&&... sizes) const {
+                                  Sizes &&...sizes) const {
 
     return call_dynamic_size_from_callable_at(
         address, std::forward<LineIndexT>(line_index), std::forward<Fun>(fun),
@@ -335,36 +325,32 @@ protected:
 
   template <typename LineIndexT, typename Fun, std::size_t... Idx,
             typename... Sizes>
-  [[nodiscard]] inline auto
-  call_dynamic_size_from_callable_at(base_address_type address,
-                                     LineIndexT&& line_index, Fun&& fun,
-                                     std::index_sequence<Idx...>,
-                                     Sizes&&... sizes) const {
+  [[nodiscard]] inline auto call_dynamic_size_from_callable_at(
+      base_address_type address, LineIndexT &&line_index, Fun &&fun,
+      std::index_sequence<Idx...>, Sizes &&...sizes) const {
 
     return fun(allocator_traits<Alloc>::template first_pointer_of<Idx>(
         *alloc, address, line_index, sizes...)...);
   }
 
-  template <typename T>
-  inline void destroy_element(T * ptr) const noexcept {
+  template <typename T> inline void destroy_element(T *ptr) const noexcept {
     allocator_traits<Alloc>::destroy(*alloc, ptr);
   }
 
   template <typename LineIndexT, std::size_t... Idx, typename... Sizes>
-  inline void
-  unwind_destroy_line(LineIndexT&& line_index, std::index_sequence<Idx...>,
-                      Sizes&&... sizes) const noexcept {
+  inline void unwind_destroy_line(LineIndexT &&line_index,
+                                  std::index_sequence<Idx...>,
+                                  Sizes &&...sizes) const noexcept {
     static_assert(sizeof...(Idx) < 2 or std::get<0>(std::array{Idx...}) >
                                             std::get<1>(std::array{Idx...}));
     ([&] { unwind_destroy_element<Idx>(line_index, sizes...); }(), ...);
   }
 
   template <typename LineIndexT, std::size_t... Idx, typename... Sizes>
-  inline void
-  unwind_destroy_line_partial(LineIndexT&& line_index,
-                              std::size_t element_exception_index,
-                              std::index_sequence<Idx...>,
-                              Sizes&&... sizes) const noexcept {
+  inline void unwind_destroy_line_partial(LineIndexT &&line_index,
+                                          std::size_t element_exception_index,
+                                          std::index_sequence<Idx...>,
+                                          Sizes &&...sizes) const noexcept {
     static_assert(sizeof...(Idx) < 2 or std::get<0>(std::array{Idx...}) >
                                             std::get<1>(std::array{Idx...}));
     (
@@ -377,9 +363,8 @@ protected:
   }
 
   template <std::size_t Index, typename LineIndexT, typename... Sizes>
-  inline void
-  unwind_destroy_element(LineIndexT&& line_index, Sizes&&... sizes) const
-      noexcept {
+  inline void unwind_destroy_element(LineIndexT &&line_index,
+                                     Sizes &&...sizes) const noexcept {
 
     auto n_elements = get_init_part_n_elements<Index + 1>(line_index, sizes...);
     auto data_ptr = allocator_traits<Alloc>::template first_pointer_of<Index>(
@@ -395,8 +380,7 @@ protected:
   }
 
   template <std::size_t Index, typename T>
-  inline auto
-  call_transform_on_fixed(T* first_pointer) noexcept(
+  inline auto call_transform_on_fixed(T *first_pointer) noexcept(
       noexcept(call_transform_on_fixed_impl<Index>(
           std::move(first_pointer),
           std::make_index_sequence<build_parts_type::template type<
@@ -405,8 +389,8 @@ protected:
     constexpr std::size_t build_part_index =
         builder_type::template get_element_index_for_init<Index>();
     static_assert(
-        std::is_same_v<T*, typename allocator_traits<Alloc>::template pointer<
-                               build_part_index>>);
+        std::is_same_v<T *, typename allocator_traits<Alloc>::template pointer<
+                                build_part_index>>);
 
     using build_part_type =
         typename build_parts_type::template type<build_part_index>;
@@ -417,4 +401,4 @@ protected:
   }
 };
 
-} // namespace het::detail;
+} // namespace het::detail

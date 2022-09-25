@@ -8,17 +8,16 @@
 #include <range/v3/algorithm.hpp>
 
 template <typename Iterable>
-void
-RingmapMatrix::addRead(
-    Iterable&& iterable,
-    std::enable_if_t<
-        not std::is_same<std::decay_t<Iterable>,
-                         MutationMapTranscriptRead>::value>*) noexcept(false) {
+void RingmapMatrix::addRead(
+    Iterable &&iterable,
+    std::enable_if_t<not std::is_same<std::decay_t<Iterable>,
+                                      MutationMapTranscriptRead>::value>
+        *) noexcept(false) {
   while (readsCount >= data.size())
     data.emplace_back();
-  auto& read = data[readsCount++];
+  auto &read = data[readsCount++];
   unsigned baseIndex = 0;
-  for (auto&& element : iterable) {
+  for (auto &&element : iterable) {
     if (element == 1)
       read.emplace_back(baseIndex);
     ++baseIndex;
@@ -26,12 +25,11 @@ RingmapMatrix::addRead(
 }
 
 template <typename TranscriptRead>
-void
-RingmapMatrix::addRead(
-    TranscriptRead&& transcriptRead,
-    std::enable_if_t<
-        std::is_same<std::decay_t<TranscriptRead>,
-                     MutationMapTranscriptRead>::value>*) noexcept(false) {
+void RingmapMatrix::addRead(
+    TranscriptRead &&transcriptRead,
+    std::enable_if_t<std::is_same<std::decay_t<TranscriptRead>,
+                                  MutationMapTranscriptRead>::value>
+        *) noexcept(false) {
   assert(ranges::is_sorted(transcriptRead.indices));
   while (readsCount >= data.size())
     data.emplace_back();
@@ -42,10 +40,9 @@ RingmapMatrix::addRead(
 }
 
 template <typename Iterable>
-void
-RingmapMatrix::keepOnlyIndices(Iterable&& iterable) noexcept(false) {
+void RingmapMatrix::keepOnlyIndices(Iterable &&iterable) noexcept(false) {
   using iterable_type = std::decay_t<Iterable>;
-  const iterable_type* sortedIterable;
+  const iterable_type *sortedIterable;
   std::unique_ptr<iterable_type> localIterable;
   if (ranges::is_sorted(iterable))
     sortedIterable = &iterable;
@@ -70,8 +67,8 @@ RingmapMatrix::keepOnlyIndices(Iterable&& iterable) noexcept(false) {
 }
 
 template <typename Weights>
-arma::mat
-RingmapMatrix::covariance(Weights&& baseWeights) const noexcept(false) {
+arma::mat RingmapMatrix::covariance(Weights &&baseWeights) const
+    noexcept(false) {
   RingmapMatrix transposed = t();
   assert(transposed.t() == *this);
   arma::mat out(bases, bases, arma::fill::zeros);
@@ -80,13 +77,13 @@ RingmapMatrix::covariance(Weights&& baseWeights) const noexcept(false) {
     if (rowBaseWeight == 0)
       continue;
 
-    const auto& rowVector = transposed.data[row];
+    const auto &rowVector = transposed.data[row];
     for (unsigned col = row; col < bases; ++col) {
       double colBaseWeight = baseWeights[col];
       if (colBaseWeight == 0)
         continue;
 
-      const auto& colVector = transposed.data[col];
+      const auto &colVector = transposed.data[col];
       std::size_t count =
           count_intersections(ranges::begin(rowVector), ranges::end(rowVector),
                               ranges::begin(colVector), ranges::end(colVector));

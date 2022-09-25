@@ -14,18 +14,16 @@ WeightedClustersSpan<T>::WeightedClustersSpan(weights_reference weights,
 }
 
 template <typename T>
-auto
-WeightedClustersSpan<T>::operator=(concrete_type const& concrete_span) const
-    noexcept -> WeightedClustersSpan const& {
+auto WeightedClustersSpan<T>::operator=(concrete_type const &concrete_span)
+    const noexcept -> WeightedClustersSpan const & {
   assert(concrete_span.size() == _span);
   ranges::copy(concrete_span, ranges::begin(*this));
   return *this;
 }
 
 template <typename T>
-auto
-WeightedClustersSpan<T>::operator=(concrete_type&& concrete_span) const noexcept
-    -> WeightedClustersSpan const& {
+auto WeightedClustersSpan<T>::operator=(concrete_type &&concrete_span)
+    const noexcept -> WeightedClustersSpan const & {
   assert(concrete_span.size() == _span);
   ranges::move(concrete_span, ranges::begin(*this));
   return *this;
@@ -44,22 +42,19 @@ auto WeightedClustersSpan<T>::operator[](std::size_t index) const noexcept
 }
 
 template <typename T>
-auto
-WeightedClustersSpan<T>::begin() const noexcept -> iterator {
+auto WeightedClustersSpan<T>::begin() const noexcept -> iterator {
   assert(_data);
   return _data + getIndex();
 }
 
 template <typename T>
-auto
-WeightedClustersSpan<T>::end() const noexcept -> iterator {
+auto WeightedClustersSpan<T>::end() const noexcept -> iterator {
   assert(_data);
   return _data + getIndex(_span);
 }
 
 template <typename T>
-std::size_t
-WeightedClustersSpan<T>::data_size() const noexcept {
+std::size_t WeightedClustersSpan<T>::data_size() const noexcept {
   assert(_data);
   return _size + getIndex();
 }
@@ -78,9 +73,7 @@ WeightedClustersSpan<T>::getIndex(std::size_t offset) const noexcept {
   return getIndex(static_cast<std::ptrdiff_t>(offset));
 }
 
-template <typename T>
-const T*
-WeightedClustersSpan<T>::data() const noexcept {
+template <typename T> const T *WeightedClustersSpan<T>::data() const noexcept {
   return data;
 }
 
@@ -91,8 +84,7 @@ auto WeightedClustersSpan<T>::operator*() const noexcept -> reference {
 }
 
 template <typename T>
-std::size_t
-WeightedClustersSpan<T>::span_size() const noexcept {
+std::size_t WeightedClustersSpan<T>::span_size() const noexcept {
   return _span;
 }
 

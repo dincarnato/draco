@@ -17,23 +17,17 @@ inline WeightedClusters::WeightedClusters(std::size_t nElements,
   }
 }
 
-inline auto
-WeightedClusters::begin() -> iterator {
-  return iterator{*this, 0};
-}
+inline auto WeightedClusters::begin() -> iterator { return iterator{*this, 0}; }
 
-inline auto
-WeightedClusters::end() -> iterator {
+inline auto WeightedClusters::end() -> iterator {
   return iterator(*this, static_cast<std::ptrdiff_t>(elements));
 }
 
-inline auto
-WeightedClusters::begin() const -> const_iterator {
+inline auto WeightedClusters::begin() const -> const_iterator {
   return const_iterator{*this, 0};
 }
 
-inline auto
-WeightedClusters::end() const -> const_iterator {
+inline auto WeightedClusters::end() const -> const_iterator {
   return const_iterator(*this, static_cast<std::ptrdiff_t>(elements));
 }
 
@@ -52,18 +46,16 @@ inline auto WeightedClusters::operator[](std::size_t index) const
               static_cast<std::ptrdiff_t>(_clusters)};
 }
 
-inline auto
-WeightedClusters::cluster(std::size_t index) -> cluster_wrapper {
+inline auto WeightedClusters::cluster(std::size_t index) -> cluster_wrapper {
   return {*this, static_cast<std::ptrdiff_t>(index)};
 }
 
-inline auto
-WeightedClusters::cluster(std::size_t index) const -> const_cluster_wrapper {
+inline auto WeightedClusters::cluster(std::size_t index) const
+    -> const_cluster_wrapper {
   return {*this, static_cast<std::ptrdiff_t>(index)};
 }
 
-inline void
-WeightedClusters::setOnlyFirstCluster() {
+inline void WeightedClusters::setOnlyFirstCluster() {
   std::fill(std::begin(weights), std::end(weights), 0);
   auto endWeights = std::end(weights);
   for (auto iter = std::begin(weights); iter < endWeights;
@@ -71,33 +63,27 @@ WeightedClusters::setOnlyFirstCluster() {
     *iter = 1.f;
 }
 
-inline void
-WeightedClusters::removeWeights() {
+inline void WeightedClusters::removeWeights() {
   std::fill(std::begin(weights), std::end(weights), 0);
 }
 
-inline auto
-WeightedClusters::clusters() -> clusters_wrapper {
+inline auto WeightedClusters::clusters() -> clusters_wrapper {
   return clusters_wrapper{*this};
 }
 
-inline auto
-WeightedClusters::clusters() const -> const_clusters_wrapper {
+inline auto WeightedClusters::clusters() const -> const_clusters_wrapper {
   return const_clusters_wrapper{*this};
 }
 
-inline std::size_t
-WeightedClusters::getClustersSize() const {
+inline std::size_t WeightedClusters::getClustersSize() const {
   return _clusters;
 }
 
-inline std::size_t
-WeightedClusters::getElementsSize() const {
+inline std::size_t WeightedClusters::getElementsSize() const {
   return elements;
 }
 
-inline WeightedClusters
-WeightedClusters::complement() const {
+inline WeightedClusters WeightedClusters::complement() const {
   WeightedClusters complement(elements, _clusters, false);
   std::transform(std::begin(weights), std::end(weights),
                  std::begin(complement.weights),
@@ -107,14 +93,14 @@ WeightedClusters::complement() const {
 }
 
 inline bool
-WeightedClusters::operator==(const WeightedClusters& other) const noexcept {
+WeightedClusters::operator==(const WeightedClusters &other) const noexcept {
   return elements == other.elements and _clusters == other._clusters and
          std::equal(std::begin(weights), std::end(weights),
                     std::begin(other.weights), std::end(other.weights));
 }
 
 inline bool
-WeightedClusters::operator<(const WeightedClusters& other) const noexcept {
+WeightedClusters::operator<(const WeightedClusters &other) const noexcept {
   if (elements < other.elements)
     return true;
   else if (elements == other.elements) {

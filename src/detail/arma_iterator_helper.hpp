@@ -8,13 +8,11 @@
 
 namespace detail {
 
-template <typename, ArmaIteratorDirection>
-class ArmaAccessor;
+template <typename, ArmaIteratorDirection> class ArmaAccessor;
 
 template <typename Mat, ArmaIteratorDirection direction>
 class ArmaIteratorHelper {
-  template <typename, ArmaIteratorDirection>
-  friend class ArmaIteratorHandler;
+  template <typename, ArmaIteratorDirection> friend class ArmaIteratorHandler;
 
 public:
   using value_type =
@@ -26,31 +24,31 @@ public:
   using self = ArmaIteratorHelper;
 
   ArmaIteratorHelper() = default;
-  ArmaIteratorHelper(Mat* matrix) noexcept;
-  ArmaIteratorHelper(Mat* matrix, int) noexcept;
+  ArmaIteratorHelper(Mat *matrix) noexcept;
+  ArmaIteratorHelper(Mat *matrix, int) noexcept;
 
-  self& operator++() noexcept;
+  self &operator++() noexcept;
   self operator++(int) noexcept;
-  self& operator--() noexcept;
+  self &operator--() noexcept;
   self operator--(int) noexcept;
-  self& operator+=(difference_type offset) noexcept;
+  self &operator+=(difference_type offset) noexcept;
   self operator+(difference_type offset) const noexcept;
 
   template <typename _Mat, ArmaIteratorDirection _direction>
   friend ArmaIteratorHelper<_Mat, _direction> operator+(
       typename ArmaIteratorHelper<_Mat, _direction>::difference_type offset,
-      ArmaIteratorHelper<_Mat, _direction> const& iter) noexcept;
+      ArmaIteratorHelper<_Mat, _direction> const &iter) noexcept;
 
-  self& operator-=(difference_type offset) noexcept;
+  self &operator-=(difference_type offset) noexcept;
   self operator-(difference_type offset) const noexcept;
-  difference_type operator-(self const& rhs) const noexcept;
+  difference_type operator-(self const &rhs) const noexcept;
 
-  bool operator==(const self& other) const noexcept;
-  bool operator!=(const self& other) const noexcept;
-  bool operator<(const self& other) const noexcept;
-  bool operator<=(const self& other) const noexcept;
-  bool operator>=(const self& other) const noexcept;
-  bool operator>(const self& other) const noexcept;
+  bool operator==(const self &other) const noexcept;
+  bool operator!=(const self &other) const noexcept;
+  bool operator<(const self &other) const noexcept;
+  bool operator<=(const self &other) const noexcept;
+  bool operator>=(const self &other) const noexcept;
+  bool operator>(const self &other) const noexcept;
 
   reference operator*() const noexcept;
   reference operator[](difference_type offset) const noexcept;

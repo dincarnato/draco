@@ -4,8 +4,7 @@
 #include <cmath>
 #include <numeric>
 
-arma::mat
-SpectralPartitioner::getNormalizedLaplacian(arma::mat adjacency) {
+arma::mat SpectralPartitioner::getNormalizedLaplacian(arma::mat adjacency) {
   assert(not adjacency.has_nan());
   assert(adjacency.n_rows == adjacency.n_cols);
   adjacency.diag() = arma::zeros(adjacency.n_rows);
@@ -28,7 +27,7 @@ SpectralPartitioner::getNormalizedLaplacian(arma::mat adjacency) {
 }
 
 std::pair<arma::mat, arma::vec>
-SpectralPartitioner::getDecomposition(const arma::mat& normalizedLaplacian) {
+SpectralPartitioner::getDecomposition(const arma::mat &normalizedLaplacian) {
   std::pair<arma::mat, arma::vec> eigenDecomposition;
   assert(not normalizedLaplacian.has_nan());
   arma::eig_sym(eigenDecomposition.second, eigenDecomposition.first,
@@ -41,7 +40,7 @@ SpectralPartitioner::getDecomposition(const arma::mat& normalizedLaplacian) {
 }
 
 std::array<std::vector<std::size_t>, 2>
-SpectralPartitioner::bipartite(const arma::mat& adjacency) {
+SpectralPartitioner::bipartite(const arma::mat &adjacency) {
   constexpr unsigned maxIterations = 1000;
 
   arma::vec secondEigenVec;
@@ -93,7 +92,7 @@ SpectralPartitioner::bipartite(const arma::mat& adjacency) {
           std::min_element(std::begin(distances), std::end(distances));
       const auto centroidIndex = static_cast<std::size_t>(
           std::distance(std::begin(distances), bestCentroidIter));
-      auto& assignment = assignments[centroidIndex];
+      auto &assignment = assignments[centroidIndex];
       std::size_t assignmentSize = assignment.size();
       *bestCentroidIter =
           (*bestCentroidIter * static_cast<double>(assignmentSize) + value) /
@@ -103,7 +102,7 @@ SpectralPartitioner::bipartite(const arma::mat& adjacency) {
 
     assert(std::all_of(
         std::begin(assignments), std::end(assignments),
-        [](const auto& assignment) { return not assignment.empty(); }));
+        [](const auto &assignment) { return not assignment.empty(); }));
   }
 
   for (unsigned iterationIndex = 0; iterationIndex < maxIterations;
@@ -124,14 +123,14 @@ SpectralPartitioner::bipartite(const arma::mat& adjacency) {
     }
     assert(std::all_of(
         std::begin(newAssignments), std::end(newAssignments),
-        [](const auto& assignment) { return not assignment.empty(); }));
+        [](const auto &assignment) { return not assignment.empty(); }));
 
     if (newAssignments == assignments)
       return assignments;
 
     assignments = std::move(newAssignments);
     for (unsigned clusterIndex = 0; clusterIndex < 2; ++clusterIndex) {
-      const auto& assignment = assignments[clusterIndex];
+      const auto &assignment = assignments[clusterIndex];
       centroids[clusterIndex] =
           std::accumulate(std::begin(assignment), std::end(assignment), 0.,
                           [&](double accumulator, std::size_t index) {
@@ -147,6 +146,6 @@ SpectralPartitioner::bipartite(const arma::mat& adjacency) {
 
   assert(std::all_of(
       std::begin(assignments), std::end(assignments),
-      [](const auto& assignment) { return not assignment.empty(); }));
+      [](const auto &assignment) { return not assignment.empty(); }));
   return assignments;
 }

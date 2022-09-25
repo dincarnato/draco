@@ -13,7 +13,7 @@ namespace ct = boost::callable_traits;
 #define REFLECT_IF_VISIT(name, value, variable, visitor)                       \
   if (name == #variable)                                                       \
     std::visit(                                                                \
-        [&](auto&& v) { visitor(variable, std::forward<decltype(v)>(v)); },    \
+        [&](auto &&v) { visitor(variable, std::forward<decltype(v)>(v)); },    \
         value);
 
 #define REFLECT_ELSE_IF_VISIT(name, value, variable, visitor)                  \
@@ -31,21 +31,20 @@ namespace ct = boost::callable_traits;
 
 #define REFLECT_IF(name, value, variable)                                      \
   if (name == #variable)                                                       \
-  std::visit([&](auto&& value) { variable = value }, value)
+  std::visit([&](auto &&value) { variable = value }, value)
 
 #define REFLECT_ELSE_IF(name, value, variable)                                 \
   else REFLECT_IF(name, value, variable)
 
 #define REFLECT_IF_MOVE(name, value, variable)                                 \
   if (name == #variable)                                                       \
-  std::visit([&](auto&& value) { variable = std::move(value) }, value)
+  std::visit([&](auto &&value) { variable = std::move(value) }, value)
 
 #define REFLECT_ELSE_IF_MOVE(name, value, variable)                            \
   else REFLECT_IF_MOVE(name, value, variable)
 
-void
-weighted_clusters_from_json(WeightedClusters& weighted_clusters,
-                            json_deserializer::Array const& json_data) {
+void weighted_clusters_from_json(WeightedClusters &weighted_clusters,
+                                 json_deserializer::Array const &json_data) {
   namespace jsonde = json_deserializer;
   assert(std::size(json_data) == weighted_clusters.getClustersSize());
 
@@ -56,42 +55,39 @@ weighted_clusters_from_json(WeightedClusters& weighted_clusters,
 
   for (; weighted_cluster_iter < weighted_clusters_end;
        ++weighted_cluster_iter, ++json_cluster_iter) {
-    auto&& weighted_cluster = *weighted_cluster_iter;
-    auto&& json_cluster = std::get<jsonde::Array>(*json_cluster_iter);
+    auto &&weighted_cluster = *weighted_cluster_iter;
+    auto &&json_cluster = std::get<jsonde::Array>(*json_cluster_iter);
 
     ranges::transform(
-        json_cluster, weighted_cluster.begin(), [](auto&& json_weight) {
+        json_cluster, weighted_cluster.begin(), [](auto &&json_weight) {
           return static_cast<float>(
               std::get<double>(std::get<jsonde::Number>(json_weight)));
         });
   }
 }
 
-void
-coverages_from_json(std::vector<unsigned>& coverages,
-                    json_deserializer::Array const& json_data) noexcept {
+void coverages_from_json(std::vector<unsigned> &coverages,
+                         json_deserializer::Array const &json_data) noexcept {
   coverages.resize(json_data.size());
   ranges::transform(
-      json_data, ranges::begin(coverages), [](auto&& json_number) {
+      json_data, ranges::begin(coverages), [](auto &&json_number) {
         return static_cast<unsigned>(
             std::get<long>(std::get<json_deserializer::Number>(json_number)));
       });
 }
 
 template <typename T>
-void
-from_json_number(T& t, json_deserializer::Number const& json_number) {
-  std::visit([&](auto&& value) { t = static_cast<T>(value); }, json_number);
+void from_json_number(T &t, json_deserializer::Number const &json_number) {
+  std::visit([&](auto &&value) { t = static_cast<T>(value); }, json_number);
 }
 
 template <typename T>
-void
-from_json_number_value(T& t, json_deserializer::Value const& json_value) {
+void from_json_number_value(T &t, json_deserializer::Value const &json_value) {
   namespace jsonde = json_deserializer;
 
   if (auto json_number_ptr = std::get_if<jsonde::Number>(&json_value);
       json_number_ptr != nullptr)
-    std::visit([&](auto&& value) { t = static_cast<T>(value); },
+    std::visit([&](auto &&value) { t = static_cast<T>(value); },
                *json_number_ptr);
   else if (std::holds_alternative<jsonde::Null>(json_value)) {
     if constexpr (std::is_floating_point_v<T>)
@@ -104,16 +100,15 @@ from_json_number_value(T& t, json_deserializer::Value const& json_value) {
 
 namespace json_deserializer {
 
-bool
-deserialize(std::istream& is,
-            std::tuple<WeightedClusters, std::vector<unsigned>, unsigned short>&
-                window) {
+bool deserialize(std::istream &is,
+                 std::tuple<WeightedClusters, std::vector<unsigned>,
+                            unsigned short> &window) {
   Object raw_obj;
   deserialize(is, raw_obj);
 
-  auto& [weighted_clusters, coverages, start_base_index] = window;
+  auto &[weighted_clusters, coverages, start_base_index] = window;
 
-  for (auto&& [name, value] : raw_obj) {
+  for (auto &&[name, value] : raw_obj) {
     REFLECT_IF_FUN(name, value, weighted_clusters, weighted_clusters_from_json)
     REFLECT_ELSE_IF_FUN(name, value, coverages, coverages_from_json)
     REFLECT_ELSE_IF_FUN(name, value, start_base_index,
@@ -127,7 +122,7 @@ deserialize(std::istream& is,
 } // namespace json_deserializer
 
 static std::tuple<WeightedClusters, std::vector<unsigned>, unsigned short>
-deserialize_initial_window(std::istream& is, unsigned n_clusters,
+deserialize_initial_window(std::istream &is, unsigned n_clusters,
                            unsigned n_elements) {
   namespace jsonde = json_deserializer;
 
@@ -151,11 +146,10 @@ struct Window {
   Window(unsigned char n_clusters)
       : clusters_weights(std::vector<Weights>(n_clusters)) {}
 
-  void
-  from_json(json_deserializer::Object const& obj) {
-    auto& clusters = clusters_weights;
+  void from_json(json_deserializer::Object const &obj) {
+    auto &clusters = clusters_weights;
 
-    for (auto&& [name, value] : obj) {
+    for (auto &&[name, value] : obj) {
       REFLECT_IF_FUN(name, value, clusters, Window::clusters_from_json)
       REFLECT_ELSE_IF_FUN(name, value, coverages, coverages_from_json)
       REFLECT_ELSE_IF_FUN(name, value, begin, from_json_number<unsigned short>)
@@ -165,9 +159,8 @@ struct Window {
   }
 
 private:
-  static void
-  clusters_from_json(std::vector<Weights>& clusters,
-                     json_deserializer::Array const& raw_clusters) {
+  static void clusters_from_json(std::vector<Weights> &clusters,
+                                 json_deserializer::Array const &raw_clusters) {
     namespace jsonde = json_deserializer;
     assert(std::size(clusters) == std::size(raw_clusters));
 
@@ -175,12 +168,12 @@ private:
     auto const clusters_end = ranges::end(clusters);
     auto raw_cluster_iter = ranges::begin(raw_clusters);
     for (; cluster_iter < clusters_end; ++cluster_iter, ++raw_cluster_iter) {
-      auto&& cluster = *cluster_iter;
-      auto&& raw_cluster = std::get<jsonde::Array>(*raw_cluster_iter);
+      auto &&cluster = *cluster_iter;
+      auto &&raw_cluster = std::get<jsonde::Array>(*raw_cluster_iter);
 
       cluster.resize(raw_cluster.size());
       ranges::transform(
-          raw_cluster, ranges::begin(cluster), [](auto&& json_number) {
+          raw_cluster, ranges::begin(cluster), [](auto &&json_number) {
             double weight;
             from_json_number(weight, std::get<jsonde::Number>(json_number));
             return weight;
@@ -189,9 +182,8 @@ private:
   }
 };
 
-inline bool
-operator==(Window const& a,
-           windows_merger::WindowsMergerWindow const& b) noexcept {
+inline bool operator==(Window const &a,
+                       windows_merger::WindowsMergerWindow const &b) noexcept {
   using clusters_size_type =
       windows_merger::WindowsMergerTraits::clusters_size_type;
   using bases_size_type = windows_merger::WindowsMergerTraits::bases_size_type;
@@ -211,7 +203,7 @@ operator==(Window const& a,
   assert(bases_size == a.coverages.size());
   for (clusters_size_type cluster_index = 0; cluster_index < clusters_size;
        ++cluster_index) {
-    auto&& a_cluster_weights = a.clusters_weights[cluster_index];
+    auto &&a_cluster_weights = a.clusters_weights[cluster_index];
     for (bases_size_type base_index = 0; base_index < bases_size;
          ++base_index) {
       TinyFraction const a_weight(a_cluster_weights[base_index]);
@@ -223,28 +215,25 @@ operator==(Window const& a,
   return true;
 }
 
-inline bool
-operator==(windows_merger::WindowsMergerWindow const& a,
-           Window const& b) noexcept {
+inline bool operator==(windows_merger::WindowsMergerWindow const &a,
+                       Window const &b) noexcept {
   return operator==(b, a);
 }
 
-inline bool
-operator!=(Window const& a,
-           windows_merger::WindowsMergerWindow const& b) noexcept {
+inline bool operator!=(Window const &a,
+                       windows_merger::WindowsMergerWindow const &b) noexcept {
   return not(a == b);
 }
 
-inline bool
-operator!=(windows_merger::WindowsMergerWindow const& a,
-           Window const& b) noexcept {
+inline bool operator!=(windows_merger::WindowsMergerWindow const &a,
+                       Window const &b) noexcept {
   return not(a == b);
 }
 
 } // namespace
 
-static std::vector<Window>
-deserialize_windows(std::istream& is, unsigned char n_clusters) {
+static std::vector<Window> deserialize_windows(std::istream &is,
+                                               unsigned char n_clusters) {
   namespace jsonde = json_deserializer;
 
   jsonde::Array raw_windows;
@@ -263,8 +252,7 @@ deserialize_windows(std::istream& is, unsigned char n_clusters) {
   return windows;
 }
 
-static Window
-deserialize_window(std::istream& is, unsigned char n_clusters) {
+static Window deserialize_window(std::istream &is, unsigned char n_clusters) {
   namespace jsonde = json_deserializer;
 
   jsonde::Object raw_window;

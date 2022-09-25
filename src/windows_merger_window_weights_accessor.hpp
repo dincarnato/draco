@@ -7,25 +7,23 @@
 
 namespace windows_merger {
 
-template <typename>
-struct WindowsMergerWindowWeightsIterator;
+template <typename> struct WindowsMergerWindowWeightsIterator;
 
-template <typename Window>
-struct WindowsMergerWindowWeightsAccessor {
+template <typename Window> struct WindowsMergerWindowWeightsAccessor {
   using window_type = Window;
   using decay_window_type = std::decay_t<Window>;
-  using window_pointer_type = std::remove_reference_t<Window>*;
+  using window_pointer_type = std::remove_reference_t<Window> *;
   using traits_type = WindowsMergerTraits;
   using bases_size_type = typename traits_type::bases_size_type;
   using weight_type = typename traits_type::weight_type;
   using reference = std::conditional_t<
-      std::is_rvalue_reference_v<Window>, weight_type&&,
-      std::conditional_t<std::is_const_v<Window>, weight_type const&,
-                         weight_type&>>;
+      std::is_rvalue_reference_v<Window>, weight_type &&,
+      std::conditional_t<std::is_const_v<Window>, weight_type const &,
+                         weight_type &>>;
   using iterator = WindowsMergerWindowWeightsIterator<Window>;
   using reverse_iterator = ranges::reverse_iterator<iterator>;
 
-  WindowsMergerWindowWeightsAccessor(Window& window) noexcept;
+  WindowsMergerWindowWeightsAccessor(Window &window) noexcept;
 
   bases_size_type size() const noexcept;
 

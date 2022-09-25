@@ -29,8 +29,8 @@ generate_random_ringmap() {
   std::tuple<std::vector<RingmapMatrixRow>, RingmapData> out{
       std::vector<RingmapMatrixRow>(n_reads, RingmapMatrixRow(read_size)), {}};
 
-  auto& rows = std::get<0>(out);
-  auto& ringmap_data = std::get<1>(out);
+  auto &rows = std::get<0>(out);
+  auto &ringmap_data = std::get<1>(out);
   test::RingmapData::m_data(ringmap_data) = RingmapMatrix(sequence_length);
   test::RingmapData::sequence(ringmap_data) = sequence;
   test::RingmapData::startIndex(ringmap_data) = 0;
@@ -48,7 +48,7 @@ generate_random_ringmap() {
     }
   }
 
-  for (auto&& row : rows) {
+  for (auto &&row : rows) {
     row.begin_index = read_begin_dist(random_gen);
     row.end_index = row.begin_index + read_size;
 
@@ -72,16 +72,16 @@ generate_random_ringmap() {
 }
 
 static std::tuple<std::vector<RingmapMatrixRow>, RingmapData>
-get_window(RingmapData const& ringmap_data,
-           std::vector<RingmapMatrixRow> const& rows, unsigned start_base) {
+get_window(RingmapData const &ringmap_data,
+           std::vector<RingmapMatrixRow> const &rows, unsigned start_base) {
   unsigned end_base = start_base + window_size;
   std::tuple<std::vector<RingmapMatrixRow>, RingmapData> out{
       {}, ringmap_data.get_new_range(start_base, end_base)};
 
-  auto& filtered_rows = std::get<0>(out);
+  auto &filtered_rows = std::get<0>(out);
 
   filtered_rows.reserve(n_reads);
-  for (auto&& row : rows) {
+  for (auto &&row : rows) {
     if (row.begin_index <= start_base and row.end_index >= end_base) {
       RingmapMatrixRow new_row;
       new_row.begin_index = start_base;
@@ -99,16 +99,15 @@ get_window(RingmapData const& ringmap_data,
   return out;
 }
 
-static void
-test_get_window() {
+static void test_get_window() {
   constexpr std::size_t n_tests = 10;
   for (std::size_t test_index = 0; test_index < n_tests; ++test_index) {
-    auto&& [rows, ringmap_data] = generate_random_ringmap();
+    auto &&[rows, ringmap_data] = generate_random_ringmap();
 
     for (unsigned start_base = 0; start_base < sequence_length - window_size;
          ++start_base) {
 
-      auto&& [filtered_rows, ringmap_window] =
+      auto &&[filtered_rows, ringmap_window] =
           get_window(ringmap_data, rows, start_base);
 
       assert(test::RingmapData::m_data(ringmap_window).rows_size() ==
@@ -123,11 +122,10 @@ test_get_window() {
   }
 }
 
-static void
-test_filter_window() {
+static void test_filter_window() {
   constexpr std::size_t n_tests = 10;
   for (std::size_t test_index = 0; test_index < n_tests; ++test_index) {
-    auto&& [rows, ringmap_data] = generate_random_ringmap();
+    auto &&[rows, ringmap_data] = generate_random_ringmap();
 
     unsigned const minimumModificationsPerRead =
         test::RingmapData::minimumModificationsPerRead(ringmap_data);
@@ -140,7 +138,7 @@ test_filter_window() {
     for (unsigned start_base = 0; start_base < sequence_length - window_size;
          start_base += 10) {
 
-      auto&& [filtered_rows, ringmap_window] =
+      auto &&[filtered_rows, ringmap_window] =
           get_window(ringmap_data, rows, start_base);
 
       {
@@ -172,7 +170,7 @@ test_filter_window() {
 
           auto const base_modifications = static_cast<std::size_t>(
               std::count_if(std::begin(filtered_rows), std::end(filtered_rows),
-                            [&](auto&& row) {
+                            [&](auto &&row) {
                               return std::binary_search(
                                   std::begin(row), std::end(row), base_index);
                             }));
@@ -189,11 +187,11 @@ test_filter_window() {
         ringmap_window.filterBases();
 
         {
-          auto const& old_cols_to_new =
+          auto const &old_cols_to_new =
               ringmap_window.getNonFilteredToFilteredMap();
           std::vector<unsigned> old_cols(old_cols_to_new.size());
           std::transform(std::begin(old_cols_to_new), std::end(old_cols_to_new),
-                         std::begin(old_cols), [](auto&& old_col_to_new) {
+                         std::begin(old_cols), [](auto &&old_col_to_new) {
                            return std::get<0>(old_col_to_new);
                          });
           std::sort(std::begin(old_cols), std::end(old_cols));
@@ -206,7 +204,7 @@ test_filter_window() {
         std::vector<RingmapMatrixRow> new_filtered_rows;
         new_filtered_rows.reserve(filtered_rows.size());
 
-        for (auto&& row : filtered_rows) {
+        for (auto &&row : filtered_rows) {
           RingmapMatrixRow new_row;
           new_row.begin_index = row.begin_index;
           new_row.end_index = row.end_index;
@@ -227,12 +225,12 @@ test_filter_window() {
       auto const new_cols_to_old = ringmap_window.getFilteredToNonFilteredMap();
       for (unsigned row_index = 0; row_index < filtered_rows.size();
            ++row_index) {
-        auto const& ringmap_row =
+        auto const &ringmap_row =
             test::RingmapData::m_data(ringmap_window).getIndices(row_index);
-        auto const& filtered_row = filtered_rows[row_index];
+        auto const &filtered_row = filtered_rows[row_index];
         assert(std::equal(std::begin(ringmap_row), std::end(ringmap_row),
                           std::begin(filtered_row), std::end(filtered_row),
-                          [&](auto&& ringmap_col_index, auto&& base_index) {
+                          [&](auto &&ringmap_col_index, auto &&base_index) {
                             auto col_iter =
                                 new_cols_to_old.find(ringmap_col_index);
                             assert(col_iter != std::end(new_cols_to_old));
@@ -243,8 +241,7 @@ test_filter_window() {
   }
 }
 
-static void
-test_window_covariance() {
+static void test_window_covariance() {
   auto ringmap_data = std::get<1>(generate_random_ringmap());
   std::string const sequence = ringmap_data.getSequence();
 
@@ -258,12 +255,12 @@ test_window_covariance() {
 
     arma::mat cov_mat;
     {
-      auto const& ringmap_mat = ringmap_window.data();
+      auto const &ringmap_mat = ringmap_window.data();
       arma::mat data =
           arma::zeros(ringmap_mat.rows_size(), ringmap_mat.cols_size());
       for (unsigned row_index = 0; row_index < ringmap_mat.rows_size();
            ++row_index) {
-        auto const& row_indices = ringmap_mat.getIndices(row_index);
+        auto const &row_indices = ringmap_mat.getIndices(row_index);
         for (auto col_index : row_indices)
           data(row_index, col_index) = 1.;
       }
@@ -276,8 +273,7 @@ test_window_covariance() {
   }
 }
 
-int
-main() {
+int main() {
   test_get_window();
   test_filter_window();
   test_window_covariance();

@@ -11,15 +11,14 @@
 
 namespace windows_merger {
 
-template <typename>
-struct WindowsMergerCacheIndicesIterator;
+template <typename> struct WindowsMergerCacheIndicesIterator;
 
-struct WindowsMergerCacheIndices : het::allocator<WindowsMergerTraits::windows_size_type, WindowsMergerTraits::windows_size_type> {
-  template <typename>
-  friend struct WindowsMergerCacheIndicesAccessor;
+struct WindowsMergerCacheIndices
+    : het::allocator<WindowsMergerTraits::windows_size_type,
+                     WindowsMergerTraits::windows_size_type> {
+  template <typename> friend struct WindowsMergerCacheIndicesAccessor;
 
-  template <typename>
-  friend struct WindowsMergerCacheIndicesIterator;
+  template <typename> friend struct WindowsMergerCacheIndicesIterator;
 
   using traits_type = WindowsMergerTraits;
   using windows_size_type = typename traits_type::windows_size_type;
@@ -45,25 +44,25 @@ struct WindowsMergerCacheIndices : het::allocator<WindowsMergerTraits::windows_s
                                      windows_size_type lines) noexcept(false);
   ~WindowsMergerCacheIndices() noexcept;
 
-  WindowsMergerCacheIndices(WindowsMergerCacheIndices const&) = delete;
-  WindowsMergerCacheIndices&
-  operator=(WindowsMergerCacheIndices const&) = delete;
+  WindowsMergerCacheIndices(WindowsMergerCacheIndices const &) = delete;
+  WindowsMergerCacheIndices &
+  operator=(WindowsMergerCacheIndices const &) = delete;
 
-  WindowsMergerCacheIndices(WindowsMergerCacheIndices&&) noexcept;
-  WindowsMergerCacheIndices& operator=(WindowsMergerCacheIndices&&) noexcept;
+  WindowsMergerCacheIndices(WindowsMergerCacheIndices &&) noexcept;
+  WindowsMergerCacheIndices &operator=(WindowsMergerCacheIndices &&) noexcept;
 
   windows_size_type size() const noexcept;
   windows_size_type capacity() const noexcept;
   windows_size_type line_capacity() const noexcept;
 
   indices_accessor operator[](windows_size_type line_index) noexcept;
-  const_indices_accessor operator[](windows_size_type line_index) const
-      noexcept;
+  const_indices_accessor
+  operator[](windows_size_type line_index) const noexcept;
 
   template <template <typename> typename LinesReshaper>
   void
   reshape(windows_size_type line_capacity,
-          LinesReshaper<windows_size_type>&& lines_reshaper) noexcept(false);
+          LinesReshaper<windows_size_type> &&lines_reshaper) noexcept(false);
 
   iterator begin() noexcept;
   iterator end() noexcept;
@@ -86,7 +85,7 @@ private:
           .next()
           .dynamic_size()
           .size_from_callable(
-              [](windows_size_type const* size) { return *size; })
+              [](windows_size_type const *size) { return *size; })
           .default_uninitialized()
           .done();
 
@@ -98,7 +97,7 @@ private:
   template <std::size_t Index>
   auto get_indices_first_pointer(windows_size_type line_index) const noexcept;
 
-  windows_size_type& index_emplace_back(windows_size_type line_index,
+  windows_size_type &index_emplace_back(windows_size_type line_index,
                                         windows_size_type index) noexcept;
   void deallocate_and_destroy() noexcept;
 

@@ -9,8 +9,8 @@ namespace results {
 
 template <typename CharT, typename Traits, typename T>
 std::enable_if_t<detail::is_jsonificable_v<std::decay_t<T>>,
-                 std::basic_ostream<CharT, Traits>&>
-jsonify(std::basic_ostream<CharT, Traits>& os, T&& t) {
+                 std::basic_ostream<CharT, Traits> &>
+jsonify(std::basic_ostream<CharT, Traits> &os, T &&t) {
   namespace rng = ::ranges;
   using t_nocvref = std::remove_cv_t<std::remove_reference_t<T>>;
 
@@ -37,15 +37,15 @@ jsonify(std::basic_ostream<CharT, Traits>& os, T&& t) {
     os << '{';
     const auto last = rng::prev(rng::end(t));
 
-    auto streamElement = [&](const auto& element) {
-      const auto& [key, value] = element;
+    auto streamElement = [&](const auto &element) {
+      const auto &[key, value] = element;
       jsonify(os, key, value);
     };
 
     auto iter = rng::begin(t);
     if (iter != rng::end(t)) {
       streamElement(*iter++);
-      rng::for_each(iter, rng::end(t), [&](const auto& element) {
+      rng::for_each(iter, rng::end(t), [&](const auto &element) {
         os << ',';
         streamElement(element);
       });
@@ -58,7 +58,7 @@ jsonify(std::basic_ostream<CharT, Traits>& os, T&& t) {
     auto iter = rng::begin(t);
     if (iter != rng::end(t)) {
       jsonify(os, *iter++);
-      rng::for_each(iter, rng::end(t), [&](const auto& element) {
+      rng::for_each(iter, rng::end(t), [&](const auto &element) {
         os << ',';
         jsonify(os, element);
       });
@@ -73,8 +73,8 @@ jsonify(std::basic_ostream<CharT, Traits>& os, T&& t) {
 }
 
 template <typename CharT, typename Traits, typename Key, typename Value>
-std::basic_ostream<CharT, Traits>&
-jsonify(std::basic_ostream<CharT, Traits>& os, Key&& key, Value&& value) {
+std::basic_ostream<CharT, Traits> &
+jsonify(std::basic_ostream<CharT, Traits> &os, Key &&key, Value &&value) {
   static_assert(detail::is_stringlike_v<std::decay_t<Key>>);
 
   jsonify(os, std::forward<Key>(key)) << ':';
@@ -87,9 +87,9 @@ namespace detail {
 
 template <typename CharT, typename Traits, typename Arg1, typename Arg2,
           typename... Args>
-std::basic_ostream<CharT, Traits>&
-jsonify(std::basic_ostream<CharT, Traits>& os, Arg1&& arg1, Arg2&& arg2,
-        Args&&... args) {
+std::basic_ostream<CharT, Traits> &
+jsonify(std::basic_ostream<CharT, Traits> &os, Arg1 &&arg1, Arg2 &&arg2,
+        Args &&...args) {
   static_assert(detail::is_stringlike_v<std::decay_t<Arg1>>);
 
   results::jsonify(os, std::forward<Arg1>(arg1), std::forward<Arg2>(arg2));
@@ -104,8 +104,8 @@ jsonify(std::basic_ostream<CharT, Traits>& os, Arg1&& arg1, Arg2&& arg2,
 
 template <typename CharT, typename Traits, typename... Args>
 std::enable_if_t<(sizeof...(Args) > 3) and (sizeof...(Args) % 2) == 0,
-                 std::basic_ostream<CharT, Traits>&>
-jsonify(std::basic_ostream<CharT, Traits>& os, Args&&... args) {
+                 std::basic_ostream<CharT, Traits> &>
+jsonify(std::basic_ostream<CharT, Traits> &os, Args &&...args) {
   return detail::jsonify(os, std::forward<Args>(args)...);
 }
 

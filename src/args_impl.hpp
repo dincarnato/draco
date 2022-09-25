@@ -64,8 +64,7 @@ struct Arg {
   }
 
   template <std::size_t ArgSize>
-  constexpr auto
-  description(char const (&description)[ArgSize]) noexcept {
+  constexpr auto description(char const (&description)[ArgSize]) noexcept {
     return Arg<Type, Default, TypenameSize, VariableSize, ParameterSize,
                ArgSize - 1>{
         std::move(_type_name),        std::move(_variable_name),
@@ -73,30 +72,26 @@ struct Arg {
         std::move(_optionality),      std::move(_default_value)};
   }
 
-  constexpr auto
-  optional() noexcept {
+  constexpr auto optional() noexcept {
     return Arg{std::move(_type_name),      std::move(_variable_name),
                std::move(_parameter_name), std::move(_description),
                Optionality::Optional,      std::move(_default_value)};
   }
 
-  constexpr auto
-  mandatory() noexcept {
+  constexpr auto mandatory() noexcept {
     return Arg{std::move(_type_name),      std::move(_variable_name),
                std::move(_parameter_name), std::move(_description),
                Optionality::Mandatory,     std::move(_default_value)};
   }
 
-  constexpr auto
-  optionality(Optionality optionality) noexcept {
+  constexpr auto optionality(Optionality optionality) noexcept {
     return Arg{std::move(_type_name),      std::move(_variable_name),
                std::move(_parameter_name), std::move(_description),
                std::move(optionality),     std::move(_default_value)};
   }
 
   template <typename _Default>
-  constexpr auto
-  default_value(_Default value) noexcept {
+  constexpr auto default_value(_Default value) noexcept {
     return Arg<Type, _Default, TypenameSize, VariableSize, ParameterSize,
                DescriptionSize>{
         std::move(_type_name),      std::move(_variable_name),
@@ -104,43 +99,38 @@ struct Arg {
         std::move(_optionality),    value};
   }
 
-  constexpr cte::string<TypenameSize> const&
-  get_type_name() const noexcept {
+  constexpr cte::string<TypenameSize> const &get_type_name() const noexcept {
     return _type_name;
   }
 
-  constexpr cte::string<VariableSize> const&
+  constexpr cte::string<VariableSize> const &
   get_variable_name() const noexcept {
     return _variable_name;
   }
 
-  constexpr cte::string<ParameterSize> const&
+  constexpr cte::string<ParameterSize> const &
   get_parameter_name() const noexcept {
     return _parameter_name;
   }
 
-  constexpr cte::string<DescriptionSize> const&
+  constexpr cte::string<DescriptionSize> const &
   get_description() const noexcept {
     return _description;
   }
 
-  constexpr bool
-  is_optional() const noexcept {
+  constexpr bool is_optional() const noexcept {
     return _optionality == Optionality::Optional;
   }
 
-  constexpr bool
-  is_mandatory() const noexcept {
+  constexpr bool is_mandatory() const noexcept {
     return _optionality == Optionality::Mandatory;
   }
 
-  constexpr auto
-  get_default_value() const noexcept {
+  constexpr auto get_default_value() const noexcept {
     return _default_value.value();
   }
 
-  constexpr auto
-  get_default_string() const noexcept {
+  constexpr auto get_default_string() const noexcept {
     return _default_value.into_string();
   }
 
@@ -165,8 +155,7 @@ protected:
   Default _default_value;
 };
 
-template <typename T>
-struct is_arg : std::false_type {};
+template <typename T> struct is_arg : std::false_type {};
 
 template <typename Type, typename Default, std::size_t TypenameSize,
           std::size_t VariableSize, std::size_t ParameterSize,
@@ -174,24 +163,22 @@ template <typename Type, typename Default, std::size_t TypenameSize,
 struct is_arg<Arg<Type, Default, TypenameSize, VariableSize, ParameterSize,
                   DescriptionSize>> : std::true_type {};
 
-template <typename T>
-constexpr bool is_arg_v = is_arg<T>::value;
+template <typename T> constexpr bool is_arg_v = is_arg<T>::value;
 
-template <std::size_t DescriptionSize, typename... Args>
-struct Group {
+template <std::size_t DescriptionSize, typename... Args> struct Group {
   static_assert(std::conjunction_v<is_arg<Args>...>);
   static constexpr std::size_t description_size = DescriptionSize;
   using args_type = std::tuple<Args...>;
 
   template <typename... _Args>
   constexpr Group(cte::string<DescriptionSize> description,
-                  _Args&&... args) noexcept
+                  _Args &&...args) noexcept
       : description(std::move(description)),
         args(std::forward<_Args>(args)...) {}
 
   template <typename... _Args>
   constexpr Group(char const (&description)[DescriptionSize + 1],
-                  _Args&&... args) noexcept
+                  _Args &&...args) noexcept
       : description(cte::string(description)),
         args(std::forward<_Args>(args)...) {}
 
@@ -200,37 +187,34 @@ struct Group {
 };
 
 template <std::size_t DescriptionSize, typename... Args>
-Group(cte::string<DescriptionSize>, Args&&...)
-    ->Group<DescriptionSize, std::decay_t<Args>...>;
+Group(cte::string<DescriptionSize>, Args &&...)
+    -> Group<DescriptionSize, std::decay_t<Args>...>;
 
 template <std::size_t StringSize, typename... Args>
-Group(char const (&)[StringSize], Args&&...)
-    ->Group<StringSize - 1, std::decay_t<Args>...>;
+Group(char const (&)[StringSize], Args &&...)
+    -> Group<StringSize - 1, std::decay_t<Args>...>;
 
-template <typename T>
-struct is_group : std::false_type {};
+template <typename T> struct is_group : std::false_type {};
 
 template <std::size_t DescriptionSize, typename... Args>
 struct is_group<Group<DescriptionSize, Args...>> : std::true_type {};
 
-template <typename T>
-constexpr bool is_group_v = is_group<T>::value;
+template <typename T> constexpr bool is_group_v = is_group<T>::value;
 
-template <std::size_t DescriptionSize, typename... Groups>
-struct Opts {
+template <std::size_t DescriptionSize, typename... Groups> struct Opts {
   static_assert(std::conjunction_v<is_group<Groups>...>);
   static constexpr std::size_t description_size = DescriptionSize;
   using groups_type = std::tuple<Groups...>;
 
   template <typename... _Groups>
   constexpr Opts(cte::string<DescriptionSize> description,
-                 _Groups&&... groups) noexcept
+                 _Groups &&...groups) noexcept
       : description(std::move(description)),
         groups(std::forward<_Groups>(groups)...) {}
 
   template <typename... _Groups>
   constexpr Opts(char const (&description)[DescriptionSize + 1],
-                 _Groups&&... groups) noexcept
+                 _Groups &&...groups) noexcept
       : description(description), groups(std::forward<_Groups>(groups)...) {}
 
   cte::string<DescriptionSize> description;
@@ -238,12 +222,12 @@ struct Opts {
 };
 
 template <std::size_t DescriptionSize, typename... Groups>
-Opts(cte::string<DescriptionSize> description, Groups&&... groups)
-    ->Opts<DescriptionSize, Groups...>;
+Opts(cte::string<DescriptionSize> description, Groups &&...groups)
+    -> Opts<DescriptionSize, Groups...>;
 
 template <std::size_t DescriptionSize, typename... Groups>
-Opts(char const (&description)[DescriptionSize], Groups&&... groups)
-    ->Opts<DescriptionSize - 1, Groups...>;
+Opts(char const (&description)[DescriptionSize], Groups &&...groups)
+    -> Opts<DescriptionSize - 1, Groups...>;
 
 } // namespace args
 

@@ -9,11 +9,11 @@ namespace windows_merger {
 WindowsMerger::WindowsMerger(clusters_size_type n_clusters) noexcept
     : windows(n_clusters), cache(n_clusters) {}
 
-WindowsMerger::WindowsMerger(WindowsMerger&& other) noexcept(
-    std::is_nothrow_move_constructible_v<queue_type>and
-        std::is_nothrow_move_constructible_v<WindowsMergerWindows>and
-            std::is_nothrow_move_constructible_v<WindowsMergerCacheIndices>and
-                std::is_nothrow_move_constructible_v<distances_type>)
+WindowsMerger::WindowsMerger(WindowsMerger &&other) noexcept(
+    std::is_nothrow_move_constructible_v<queue_type>
+        and std::is_nothrow_move_constructible_v<WindowsMergerWindows>
+            and std::is_nothrow_move_constructible_v<WindowsMergerCacheIndices>
+                and std::is_nothrow_move_constructible_v<distances_type>)
     : dequeueing(other.dequeueing.load(std::memory_order_acquire)),
       queue(std::move(other.queue)), windows(std::move(other.windows)),
       cache(std::move(other.cache)),
@@ -21,12 +21,11 @@ WindowsMerger::WindowsMerger(WindowsMerger&& other) noexcept(
       windows_distances(std::move(other.windows_distances)),
       non_overlap_penalty(other.non_overlap_penalty) {}
 
-WindowsMerger&
-WindowsMerger::operator=(WindowsMerger&& other) noexcept(
-    std::is_nothrow_move_assignable_v<queue_type>and
-        std::is_nothrow_move_assignable_v<WindowsMergerWindows>and
-            std::is_nothrow_move_assignable_v<WindowsMergerCacheIndices>and
-                std::is_nothrow_move_assignable_v<distances_type>) {
+WindowsMerger &WindowsMerger::operator=(WindowsMerger &&other) noexcept(
+    std::is_nothrow_move_assignable_v<queue_type>
+        and std::is_nothrow_move_assignable_v<WindowsMergerWindows>
+            and std::is_nothrow_move_assignable_v<WindowsMergerCacheIndices>
+                and std::is_nothrow_move_assignable_v<distances_type>) {
   dequeueing.store(other.dequeueing.load(std::memory_order_acquire),
                    std::memory_order_release);
   queue = std::move(other.queue);
@@ -39,13 +38,12 @@ WindowsMerger::operator=(WindowsMerger&& other) noexcept(
   return *this;
 }
 
-void
-WindowsMerger::process_queue() {
+void WindowsMerger::process_queue() {
   for (;;) {
     auto maybe_window = queue.try_pop();
     if (maybe_window) {
       std::apply(
-          [this](auto&&... args) {
+          [this](auto &&...args) {
             transform_window_to_native(std::forward<decltype(args)>(args)...);
           },
           std::move(*maybe_window));
@@ -56,8 +54,7 @@ WindowsMerger::process_queue() {
   }
 }
 
-void
-WindowsMerger::wait_queue() {
+void WindowsMerger::wait_queue() {
   queue.finished();
   if (bool expected = false; dequeueing.compare_exchange_strong(
           expected, true, std::memory_order::memory_order_acq_rel)) {
@@ -66,13 +63,12 @@ WindowsMerger::wait_queue() {
 
   queue.finish();
   ranges::sort(windows, ranges::less{},
-               [](auto&& window) { return window.begin_index(); });
+               [](auto &&window) { return window.begin_index(); });
 }
 
-void
-WindowsMerger::transform_window_to_native(
-    bases_size_type start_offset, const input_weights_type& weights,
-    const input_coverages_type& coverages) {
+void WindowsMerger::transform_window_to_native(
+    bases_size_type start_offset, const input_weights_type &weights,
+    const input_coverages_type &coverages) {
 
   const auto bases_size =
       static_cast<typename WindowsMergerTraits::bases_size_type>(
@@ -89,25 +85,23 @@ WindowsMerger::transform_window_to_native(
     auto window_iter = ranges::begin(new_window);
 
     for (; weights_iter < weights_end; ++weights_iter, ++window_iter) {
-      auto&& weights_span = *weights_iter;
-      auto&& base_accessor = *window_iter;
-      auto&& base_weights = base_accessor.weights();
+      auto &&weights_span = *weights_iter;
+      auto &&base_accessor = *window_iter;
+      auto &&base_weights = base_accessor.weights();
       ranges::transform(weights_span, ranges::begin(base_weights),
-                        [](auto&& weight) { return TinyFraction(weight); });
+                        [](auto &&weight) { return TinyFraction(weight); });
     }
   }
 
-  auto&& window_coverages = new_window.coverages();
+  auto &&window_coverages = new_window.coverages();
   ranges::copy(coverages, ranges::begin(window_coverages));
 }
 
-const WindowsMergerWindows&
-WindowsMerger::get_windows() const noexcept {
+const WindowsMergerWindows &WindowsMerger::get_windows() const noexcept {
   return windows;
 }
 
-WindowsMergerWindow
-WindowsMerger::merge() noexcept(false) {
+WindowsMergerWindow WindowsMerger::merge() noexcept(false) {
   wait_queue();
   prepare_cache();
   prepare_indices();
@@ -119,8 +113,8 @@ WindowsMerger::merge() noexcept(false) {
     if (best_pair_indices[1] == std::numeric_limits<windows_size_type>::max()) {
       auto last_window_index = best_pair_indices[0];
       assert(ranges::count_if(
-                 cache, [](auto&& window) { return not window.empty(); }) == 1);
-      assert(ranges::count_if(cache_indices, [](auto&& indices) {
+                 cache, [](auto &&window) { return not window.empty(); }) == 1);
+      assert(ranges::count_if(cache_indices, [](auto &&indices) {
                return not indices.empty();
              }) == 1);
 
@@ -131,28 +125,25 @@ WindowsMerger::merge() noexcept(false) {
   }
 }
 
-void
-WindowsMerger::prepare_cache() {
+void WindowsMerger::prepare_cache() {
   cache.reshape(windows.bases_capacity(),
                 WindowsMergerWindows::resizer_type(windows.windows_size()));
 
   ranges::copy(windows, ranges::begin(cache));
 }
 
-void
-WindowsMerger::prepare_indices() {
+void WindowsMerger::prepare_indices() {
   const auto windows_size = cache.windows_size();
   cache_indices.reshape(initial_cache_bases_capacity,
                         WindowsMergerCacheIndices::resizer_type(windows_size));
   for (windows_size_type window_index = 0; window_index < windows_size;
        ++window_index) {
-    auto&& accessor = cache_indices[window_index];
+    auto &&accessor = cache_indices[window_index];
     accessor.emplace_back(window_index);
   }
 }
 
-void
-WindowsMerger::prepare_distances() {
+void WindowsMerger::prepare_distances() {
   const auto windows_size = cache.windows_size();
   windows_distances = distances_type(
       windows_size, std::numeric_limits<distance_type>::infinity());
@@ -175,8 +166,7 @@ WindowsMerger::prepare_distances() {
   }
 }
 
-void
-WindowsMerger::prepare_high_coverages() {
+void WindowsMerger::prepare_high_coverages() {
   const auto cache_size = cache.windows_size();
   cache_high_coverages.resize(cache_size);
   for (windows_size_type cache_window_index = 0;
@@ -185,18 +175,16 @@ WindowsMerger::prepare_high_coverages() {
   }
 }
 
-void
-WindowsMerger::update_distance_between(
+void WindowsMerger::update_distance_between(
     windows_size_type cache_index_a, windows_size_type cache_index_b) noexcept {
   windows_distances[cache_index_a][cache_index_b] = std::get<0>(
       get_best_distance_and_permutation_between(cache_index_a, cache_index_b));
 }
 
-auto
-WindowsMerger::get_best_distance_and_permutation_between(
-    windows_size_type cache_index_a, windows_size_type cache_index_b) const
-    noexcept
-    -> std::pair<distance_type, std::vector<clusters_size_type> const&> {
+auto WindowsMerger::get_best_distance_and_permutation_between(
+    windows_size_type cache_index_a,
+    windows_size_type cache_index_b) const noexcept
+    -> std::pair<distance_type, std::vector<clusters_size_type> const &> {
   thread_local std::vector<clusters_size_type> permutation_indices;
   thread_local std::vector<clusters_size_type> best_permutation;
 
@@ -207,8 +195,8 @@ WindowsMerger::get_best_distance_and_permutation_between(
   assert(not cache_indices[cache_index_a].empty());
   assert(not cache_indices[cache_index_b].empty());
 
-  auto&& cache_window_a = std::as_const(cache)[cache_index_a];
-  auto&& cache_window_b = std::as_const(cache)[cache_index_b];
+  auto &&cache_window_a = std::as_const(cache)[cache_index_a];
+  auto &&cache_window_b = std::as_const(cache)[cache_index_b];
   assert(not cache_indices[cache_index_a].empty());
   assert(not cache_indices[cache_index_b].empty());
 
@@ -229,7 +217,7 @@ WindowsMerger::get_best_distance_and_permutation_between(
   const auto window_a_high_coverage = cache_high_coverages[cache_index_a];
   const auto window_b_high_coverage = cache_high_coverages[cache_index_b];
 
-  auto& best_distance = std::get<0>(best_result);
+  auto &best_distance = std::get<0>(best_result);
 
   const auto permutation_begin = ranges::begin(permutation_indices);
   const auto permutation_end = ranges::end(permutation_indices);
@@ -259,8 +247,8 @@ WindowsMerger::get_best_distance_and_permutation_between(
       const double base_b_normalizer =
           static_cast<double>(cache_base_b_coverage) / cum_coverage;
 
-      auto&& cache_base_a = std::as_const(cache_window_a)[base_a_index];
-      auto&& cache_base_b = std::as_const(cache_window_b)[base_b_index];
+      auto &&cache_base_a = std::as_const(cache_window_a)[base_a_index];
+      auto &&cache_base_b = std::as_const(cache_window_b)[base_b_index];
 
       for (clusters_size_type first_cluster_index = 0;
            first_cluster_index < clusters_size; ++first_cluster_index) {
@@ -279,12 +267,12 @@ WindowsMerger::get_best_distance_and_permutation_between(
         auto get_window_distance = [&](windows_size_type cache_window_index,
                                        clusters_size_type cluster_index,
                                        double weight) -> double {
-          auto&& window_indices =
+          auto &&window_indices =
               std::as_const(cache_indices)[cache_window_index];
-          auto&& retval = ranges::accumulate(
+          auto &&retval = ranges::accumulate(
               window_indices, 0.,
               [&](double acc, windows_size_type window_index) {
-                auto&& window = std::as_const(windows)[window_index];
+                auto &&window = std::as_const(windows)[window_index];
                 if (base_index < window.begin_index() or
                     base_index >= window.end_index())
                   return acc;
@@ -343,15 +331,14 @@ WindowsMerger::get_best_distance_and_permutation_between(
   return best_result;
 }
 
-void
-WindowsMerger::update_high_coverage_cache(
+void WindowsMerger::update_high_coverage_cache(
     windows_size_type cache_window_index) noexcept {
   thread_local std::vector<coverage_type> temp_coverages;
 
   assert(cache_window_index < cache_high_coverages.size());
 
-  auto&& cache_window = std::as_const(cache)[cache_window_index];
-  auto&& coverages = cache_window.coverages();
+  auto &&cache_window = std::as_const(cache)[cache_window_index];
+  auto &&coverages = cache_window.coverages();
 
   const auto coverages_size = coverages.size();
   if (coverages_size == 0) {
@@ -377,12 +364,11 @@ WindowsMerger::update_high_coverage_cache(
   }
 }
 
-auto
-WindowsMerger::distance_between_bases(
-    typename WindowsMergerWindows::const_base_accessor const& base_a,
-    typename WindowsMergerWindows::const_base_accessor const& base_b,
-    std::vector<clusters_size_type> const& cluster_matching_indices) const
-    noexcept -> distance_type {
+auto WindowsMerger::distance_between_bases(
+    typename WindowsMergerWindows::const_base_accessor const &base_a,
+    typename WindowsMergerWindows::const_base_accessor const &base_b,
+    std::vector<clusters_size_type> const &cluster_matching_indices)
+    const noexcept -> distance_type {
 
   distance_type distance = 0;
   const auto total_coverage =
@@ -416,8 +402,7 @@ WindowsMerger::distance_between_bases(
   return distance;
 }
 
-auto
-WindowsMerger::find_best_cached_pair() const noexcept
+auto WindowsMerger::find_best_cached_pair() const noexcept
     -> std::array<windows_size_type, 2> {
   auto best_pair = std::array<windows_size_type, 2>{
       std::numeric_limits<windows_size_type>::max(),
@@ -432,7 +417,7 @@ WindowsMerger::find_best_cached_pair() const noexcept
       continue;
 
     ++usable_windows;
-    auto&& distances_line =
+    auto &&distances_line =
         std::as_const(windows_distances)[first_window_index];
     for (windows_size_type second_window_index = first_window_index + 1;
          second_window_index < cache_size; ++second_window_index) {
@@ -467,7 +452,7 @@ WindowsMerger::find_best_cached_pair() const noexcept
     auto const n_windows = cache.windows_size();
     for (std::size_t first_window_index = 0; first_window_index < n_windows - 1;
          ++first_window_index) {
-      auto&& first_window = cache[first_window_index];
+      auto &&first_window = cache[first_window_index];
 
       if (first_window.empty()) {
         continue;
@@ -475,7 +460,7 @@ WindowsMerger::find_best_cached_pair() const noexcept
 
       for (std::size_t second_window_index = first_window_index + 1;
            second_window_index < n_windows; ++second_window_index) {
-        auto&& second_window = cache[second_window_index];
+        auto &&second_window = cache[second_window_index];
 
         if (second_window.empty()) {
           continue;
@@ -510,14 +495,13 @@ WindowsMerger::find_best_cached_pair() const noexcept
   return best_pair;
 }
 
-void
-WindowsMerger::merge_cached_windows_into_first(
+void WindowsMerger::merge_cached_windows_into_first(
     windows_size_type first_index,
     windows_size_type second_index) noexcept(false) {
 
   const auto new_window_size = [&] {
-    auto&& first_cached_window = cache[first_index];
-    auto&& second_cached_window = cache[second_index];
+    auto &&first_cached_window = cache[first_index];
+    auto &&second_cached_window = cache[second_index];
 
     assert(first_index < second_index);
     assert(first_cached_window.begin_index() <
@@ -538,8 +522,8 @@ WindowsMerger::merge_cached_windows_into_first(
     return new_window_size;
   }();
 
-  auto&& first_cached_window = cache[first_index];
-  auto&& second_cached_window = cache[second_index];
+  auto &&first_cached_window = cache[first_index];
+  auto &&second_cached_window = cache[second_index];
 
   const auto first_cached_window_old_end_index =
       first_cached_window.end_index();
@@ -561,10 +545,10 @@ WindowsMerger::merge_cached_windows_into_first(
 
   for (; second_win_base_index < intersection_size;
        ++first_win_base_index, ++second_win_base_index) {
-    auto&& first_win_base = first_cached_window[first_win_base_index];
-    auto&& second_win_base = second_cached_window[second_win_base_index];
-    auto&& first_win_weights = first_win_base.weights();
-    auto&& second_win_weights = second_win_base.weights();
+    auto &&first_win_base = first_cached_window[first_win_base_index];
+    auto &&second_win_base = second_cached_window[second_win_base_index];
+    auto &&first_win_weights = first_win_base.weights();
+    auto &&second_win_weights = second_win_base.weights();
     const auto first_win_base_coverage = first_win_base.coverage();
     const auto second_win_base_coverage = second_win_base.coverage();
     const auto coverages_sum =
@@ -600,10 +584,10 @@ WindowsMerger::merge_cached_windows_into_first(
   for (auto second_cached_window_size = second_cached_window.size();
        second_win_base_index < second_cached_window_size;
        ++second_win_base_index, ++first_win_base_index) {
-    auto&& first_win_base = first_cached_window[first_win_base_index];
-    auto&& second_win_base = second_cached_window[second_win_base_index];
-    auto&& first_win_weights = first_win_base.weights();
-    auto&& second_win_weights = second_win_base.weights();
+    auto &&first_win_base = first_cached_window[first_win_base_index];
+    auto &&second_win_base = second_cached_window[second_win_base_index];
+    auto &&first_win_weights = first_win_base.weights();
+    auto &&second_win_weights = second_win_base.weights();
 
     for (clusters_size_type first_cluster_index = 0;
          first_cluster_index < clusters_size; ++first_cluster_index) {
@@ -619,7 +603,7 @@ WindowsMerger::merge_cached_windows_into_first(
   second_cached_window.clear();
 
   for (windows_size_type window_index : cache_indices[second_index]) {
-    auto&& window = windows[window_index];
+    auto &&window = windows[window_index];
     window.reorder_clusters(permutation_indices);
   }
 
@@ -630,8 +614,8 @@ WindowsMerger::merge_cached_windows_into_first(
     cache_indices.reshape(
         0, typename WindowsMergerCacheIndices::reserver_type(new_line_size));
 
-    auto&& first_cache_indices = cache_indices[first_index];
-    auto&& second_cache_indices = cache_indices[second_index];
+    auto &&first_cache_indices = cache_indices[first_index];
+    auto &&second_cache_indices = cache_indices[second_index];
     first_cache_indices.resize(new_line_size);
     using diff_t =
         typename WindowsMergerCacheIndices::iterator::difference_type;
@@ -662,9 +646,8 @@ WindowsMerger::merge_cached_windows_into_first(
   }
 }
 
-void
-WindowsMerger::update_indices_for_post_collapsing(
-    windows_size_type& index_a, windows_size_type& index_b) const noexcept {
+void WindowsMerger::update_indices_for_post_collapsing(
+    windows_size_type &index_a, windows_size_type &index_b) const noexcept {
   bool updated_one_index = false;
   windows_size_type available_indices = 0;
 
@@ -699,16 +682,15 @@ WindowsMerger::update_indices_for_post_collapsing(
   std::terminate();
 }
 
-void
-WindowsMerger::resize_and_collapse_cache(bases_size_type new_capacity) noexcept(
-    false) {
+void WindowsMerger::resize_and_collapse_cache(
+    bases_size_type new_capacity) noexcept(false) {
   assert(new_capacity > cache.bases_capacity());
 
   const auto new_windows_size = static_cast<windows_size_type>(ranges::count_if(
-      cache_indices, [](auto&& indices) { return not indices.empty(); }));
+      cache_indices, [](auto &&indices) { return not indices.empty(); }));
   assert(new_windows_size ==
          static_cast<windows_size_type>(ranges::count_if(
-             cache, [](auto&& window) { return not window.empty(); })));
+             cache, [](auto &&window) { return not window.empty(); })));
 
   const auto n_clusters = cache.clusters_size();
   WindowsMergerWindows new_cache(n_clusters, new_capacity, new_windows_size);
@@ -732,7 +714,7 @@ WindowsMerger::resize_and_collapse_cache(bases_size_type new_capacity) noexcept(
          ++cache_indices_iter, ++cache_iter, ++cache_high_coverages_iter,
                            ++window_index) {
 
-      auto&& cache_indices_line = *cache_indices_iter;
+      auto &&cache_indices_line = *cache_indices_iter;
       if (not cache_indices_line.empty()) {
 
         *new_cache_iter++ = *cache_iter;
@@ -780,8 +762,8 @@ WindowsMerger::resize_and_collapse_cache(bases_size_type new_capacity) noexcept(
   cache_high_coverages = std::move(new_cache_high_coverages);
 
   assert(ranges::none_of(cache_indices,
-                         [](auto&& indices) { return indices.empty(); }));
-  assert(ranges::none_of(cache, [](auto&& window) { return window.empty(); }));
+                         [](auto &&indices) { return indices.empty(); }));
+  assert(ranges::none_of(cache, [](auto &&window) { return window.empty(); }));
 }
 
 } // namespace windows_merger

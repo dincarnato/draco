@@ -25,8 +25,7 @@ static const std::array<std::vector<int>, 3> expectedResults{
     std::vector{0, 4, 6, 8, 9}, std::vector{1, 5, 10},
     std::vector{2, 3, 7, 11, 12}};
 
-int
-main() {
+int main() {
   namespace rng = ::ranges;
 
   GraphCut graphCut(arma::symmatu(adjacency));
@@ -37,7 +36,7 @@ main() {
   {
     auto clustersWrapper = results.clusters();
     if (rng::any_of(rng::begin(clustersWrapper), rng::end(clustersWrapper),
-                    [](const auto& cluster) {
+                    [](const auto &cluster) {
                       return rng::distance(rng::begin(cluster),
                                            rng::end(cluster)) == 0;
                     }))
@@ -52,7 +51,7 @@ main() {
     parsedResults[assignment].push_back(elementIndex);
   }
 
-  for (const auto& parsedResult : parsedResults) {
+  for (const auto &parsedResult : parsedResults) {
     if (std::find(std::begin(expectedResults), std::end(expectedResults),
                   parsedResult) == std::end(expectedResults))
       return -1;

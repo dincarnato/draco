@@ -26,11 +26,11 @@ class Ptba /* Permutation test-based analysis */
 {
 public:
   struct exception : std::runtime_error {
-    explicit exception(const std::string& what) : std::runtime_error(what){};
-    explicit exception(const char* what) : std::runtime_error(what){};
+    explicit exception(const std::string &what) : std::runtime_error(what){};
+    explicit exception(const char *what) : std::runtime_error(what){};
   };
 
-  Ptba(const RingmapData& data, Args const& args);
+  Ptba(const RingmapData &data, Args const &args);
 
   unsigned getNumberOfClusters() const;
   unsigned getNumberOfClustersAndDumpData(
@@ -49,24 +49,24 @@ public:
   unsigned run() const noexcept(false);
   PtbaResult result_from_run() const noexcept(false);
 
-  static void dumpEigenVecs(const arma::mat& eigenVecs,
+  static void dumpEigenVecs(const arma::mat &eigenVecs,
                             std::string_view eigenVecsFilename);
-  static void dumpEigenGaps(const arma::vec& eigenGaps,
+  static void dumpEigenGaps(const arma::vec &eigenGaps,
                             std::string_view eigenGapsFilename);
   static void
-  dumpPerturbedEigenGaps(PerturbedEigengaps const& perturbed_eigengaps,
+  dumpPerturbedEigenGaps(PerturbedEigengaps const &perturbed_eigengaps,
                          std::string_view perturbedEigenGapsFilename);
 
 private:
   static std::tuple<arma::mat, arma::vec, arma::vec, arma::mat>
-  calculateEigenGaps(const RingmapData& data);
+  calculateEigenGaps(const RingmapData &data);
 
   template <typename Distribution>
   static bool
-  is_distribution(Distribution&& distribution,
-                  PerturbedEigengap const& perturbed_data) noexcept(false);
+  is_distribution(Distribution &&distribution,
+                  PerturbedEigengap const &perturbed_data) noexcept(false);
 
-  const RingmapData* ringmapData;
+  const RingmapData *ringmapData;
   unsigned minFilteredReads = 5;
   unsigned maxPermutations = 400;
   unsigned minPermutations = 8;
@@ -82,6 +82,5 @@ private:
   unsigned minBasesSize = 10;
   unsigned char extended_search_eigengaps;
 };
-
 
 #include "ptba_impl.hpp"

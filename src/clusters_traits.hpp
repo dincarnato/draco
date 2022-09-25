@@ -9,14 +9,11 @@ using weighted_clusters_weight_type = float;
 using weighted_clusters_weights_type =
     std::vector<weighted_clusters_weight_type>;
 
-template <typename>
-struct HardClustersBase;
+template <typename> struct HardClustersBase;
 
-template <typename, typename = void>
-struct HardClustersTraits {};
+template <typename, typename = void> struct HardClustersTraits {};
 
-template <typename Type>
-struct HardClustersTraits<HardClustersBase<Type>> {
+template <typename Type> struct HardClustersTraits<HardClustersBase<Type>> {
   using cluster_type = HardClustersBase<Type>;
   using index_type = Type;
 };
@@ -49,5 +46,4 @@ struct is_clusters<T, std::void_t<decltype(std::declval<T>().clusters()),
                                       decltype(std::declval<T>().cluster(0))>>>>
     : std::bool_constant<true> {};
 
-template <typename T>
-constexpr bool is_clusters_v = is_clusters<T>::value;
+template <typename T> constexpr bool is_clusters_v = is_clusters<T>::value;

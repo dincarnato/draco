@@ -16,22 +16,22 @@ public:
   using base_type = std::vector<BaseSecondaryStructure>;
 
   RnaSecondaryStructure() = default;
-  explicit RnaSecondaryStructure(const std::string& rawStructure);
-  explicit RnaSecondaryStructure(const char* const rawStructure);
+  explicit RnaSecondaryStructure(const std::string &rawStructure);
+  explicit RnaSecondaryStructure(const char *const rawStructure);
   RnaSecondaryStructure(std::size_t length);
 
-  RnaSecondaryStructure(const RnaSecondaryStructure&) noexcept;
-  RnaSecondaryStructure(RnaSecondaryStructure&&) noexcept;
-  RnaSecondaryStructure& operator=(const RnaSecondaryStructure&) noexcept;
-  RnaSecondaryStructure& operator=(RnaSecondaryStructure&&) noexcept;
+  RnaSecondaryStructure(const RnaSecondaryStructure &) noexcept;
+  RnaSecondaryStructure(RnaSecondaryStructure &&) noexcept;
+  RnaSecondaryStructure &operator=(const RnaSecondaryStructure &) noexcept;
+  RnaSecondaryStructure &operator=(RnaSecondaryStructure &&) noexcept;
 
-  RnaSecondaryStructure& operator+=(const RnaSecondaryStructure&);
-  RnaSecondaryStructure& operator+=(RnaSecondaryStructure&&);
-  RnaSecondaryStructure operator+(const RnaSecondaryStructure&) const;
-  RnaSecondaryStructure operator+(RnaSecondaryStructure&&) const;
+  RnaSecondaryStructure &operator+=(const RnaSecondaryStructure &);
+  RnaSecondaryStructure &operator+=(RnaSecondaryStructure &&);
+  RnaSecondaryStructure operator+(const RnaSecondaryStructure &) const;
+  RnaSecondaryStructure operator+(RnaSecondaryStructure &&) const;
 
-  unsigned distance(const RnaSecondaryStructure& other) const;
-  const std::string& raw() const;
+  unsigned distance(const RnaSecondaryStructure &other) const;
+  const std::string &raw() const;
   std::string str() const;
   void regenRaw();
 

@@ -9,14 +9,10 @@
 #include <vector>
 
 class WeightedClusters {
-  template <typename, bool>
-  friend class WeightedClustersIterator;
-  template <typename>
-  friend class WeightedClustersClusterWrapper;
-  template <typename>
-  friend class WeightedClustersSpan;
-  template <typename>
-  friend class WeightedClustersClusterIterator;
+  template <typename, bool> friend class WeightedClustersIterator;
+  template <typename> friend class WeightedClustersClusterWrapper;
+  template <typename> friend class WeightedClustersSpan;
+  template <typename> friend class WeightedClustersClusterIterator;
 
   using weight_type = weighted_clusters_weight_type;
   using weights_type = weighted_clusters_weights_type;
@@ -60,8 +56,8 @@ public:
 
   WeightedClusters complement() const;
 
-  bool operator==(const WeightedClusters& other) const noexcept;
-  bool operator<(const WeightedClusters& other) const noexcept;
+  bool operator==(const WeightedClusters &other) const noexcept;
+  bool operator<(const WeightedClusters &other) const noexcept;
 
 private:
   std::size_t elements = 0;

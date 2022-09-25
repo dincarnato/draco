@@ -8,20 +8,18 @@ namespace het::detail {
 
 struct vec2d_element_empty {};
 
-template <auto Size>
-struct vec2d_element_fixed_size {
+template <auto Size> struct vec2d_element_fixed_size {
   using size_type = decltype(Size);
   static constexpr size_type size = Size;
 };
 
 struct vec2d_element_dynamic_size {};
 
-template <typename Fun>
-struct vec2d_element_dynamic_size_from_callable : Fun {
+template <typename Fun> struct vec2d_element_dynamic_size_from_callable : Fun {
   using Fun::operator();
 
   template <typename _Fun>
-  constexpr vec2d_element_dynamic_size_from_callable(_Fun&& fun)
+  constexpr vec2d_element_dynamic_size_from_callable(_Fun &&fun)
       : Fun(std::forward<_Fun>(fun)) {}
 };
 
@@ -41,7 +39,7 @@ struct vec2d_element_default_uninitialized
     : checked_vec2d_size_type_t<SizeType> {
 
   template <typename _SizeType>
-  constexpr vec2d_element_default_uninitialized(_SizeType&& sizeType)
+  constexpr vec2d_element_default_uninitialized(_SizeType &&sizeType)
       : checked_vec2d_size_type_t<SizeType>(std::forward<_SizeType>(sizeType)) {
   }
 };
@@ -51,7 +49,7 @@ struct vec2d_element_default_construction_default
     : checked_vec2d_size_type_t<SizeType> {
 
   template <typename _SizeType>
-  constexpr vec2d_element_default_construction_default(_SizeType&& sizeType)
+  constexpr vec2d_element_default_construction_default(_SizeType &&sizeType)
       : checked_vec2d_size_type_t<SizeType>(std::forward<_SizeType>(sizeType)) {
   }
 };
@@ -66,15 +64,15 @@ struct vec2d_element_default_construction
 
   constexpr vec2d_element_default_construction() = default;
   constexpr vec2d_element_default_construction(
-      const vec2d_element_default_construction&) = default;
+      const vec2d_element_default_construction &) = default;
   constexpr vec2d_element_default_construction(
-      vec2d_element_default_construction&&) = default;
+      vec2d_element_default_construction &&) = default;
 
   template <typename _SizeType, typename... Us,
             typename = std::enable_if_t<not std::is_same_v<
                 std::decay_t<_SizeType>, vec2d_element_default_construction>>>
-  constexpr vec2d_element_default_construction(_SizeType&& sizeType,
-                                               Us&&... values)
+  constexpr vec2d_element_default_construction(_SizeType &&sizeType,
+                                               Us &&...values)
       : checked_vec2d_size_type_t<SizeType>(std::forward<_SizeType>(sizeType)),
         init_values(std::forward<Us>(values)...) {}
 
@@ -83,7 +81,7 @@ struct vec2d_element_default_construction
 
 template <typename SizeType, typename... Values>
 inline auto
-make_vec2d_element_default_construction(Values&&... values) noexcept(
+make_vec2d_element_default_construction(Values &&...values) noexcept(
     noexcept(std::tuple(std::forward<Values>(values)...))) {
   // TODO: handle reference_wrapper
   return vec2d_element_default_construction<SizeType, std::decay_t<Values>...>(
@@ -98,53 +96,46 @@ struct vec2d_build_parts_common : std::tuple<Ts...> {
   using last_type = type<arity - 1>;
 
   constexpr vec2d_build_parts_common() = default;
-  constexpr vec2d_build_parts_common(const vec2d_build_parts_common&) = default;
-  constexpr vec2d_build_parts_common(vec2d_build_parts_common&&) = default;
+  constexpr vec2d_build_parts_common(const vec2d_build_parts_common &) =
+      default;
+  constexpr vec2d_build_parts_common(vec2d_build_parts_common &&) = default;
 
   template <typename... Us>
-  explicit constexpr vec2d_build_parts_common(Us&&... us)
+  explicit constexpr vec2d_build_parts_common(Us &&...us)
       : std::tuple<Ts...>(std::forward<Us>(us)...) {
     static_assert(sizeof...(Us) == sizeof...(Ts));
   }
 
-  template <typename T>
-  constexpr auto
-  replace_last_with(T&& t) {
+  template <typename T> constexpr auto replace_last_with(T &&t) {
     static_assert(sizeof...(Ts) > 0);
     return replace_last_with_impl(
         std::forward<T>(t), std::make_index_sequence<sizeof...(Ts) - 1>());
   }
 
-  constexpr decltype(auto)
-  take_last() {
+  constexpr decltype(auto) take_last() {
     if constexpr (std::is_reference_v<last_type>)
       return std::get<sizeof...(Ts) - 1>(*this);
     else
       return std::move(std::get<sizeof...(Ts) - 1>(*this));
   }
 
-  template <typename T>
-  constexpr auto
-  append(T&& t) {
+  template <typename T> constexpr auto append(T &&t) {
     return append_impl(std::forward<T>(t), std::index_sequence_for<Ts...>());
   }
 
 private:
-  template <typename Indices, typename T>
-  struct replace_last_with_impl_t;
+  template <typename Indices, typename T> struct replace_last_with_impl_t;
 
 public:
   template <typename T>
   using replace_last_with_t = typename replace_last_with_impl_t<
       std::make_index_sequence<sizeof...(Ts) - 1>, T>::type;
 
-  template <typename T>
-  using append_t = Parent<Ts..., T>;
+  template <typename T> using append_t = Parent<Ts..., T>;
 
 private:
   template <typename T, std::size_t... Idx>
-  constexpr auto
-  replace_last_with_impl(T&& t, std::index_sequence<Idx...>) {
+  constexpr auto replace_last_with_impl(T &&t, std::index_sequence<Idx...>) {
     static_assert(sizeof...(Idx) == sizeof...(Ts) - 1);
 
     return Parent<type<Idx>..., std::decay_t<T>>(
@@ -152,8 +143,7 @@ private:
   }
 
   template <typename T, std::size_t... Idx>
-  constexpr append_t<T>
-  append_impl(T&& t, std::index_sequence<Idx...>) {
+  constexpr append_t<T> append_impl(T &&t, std::index_sequence<Idx...>) {
     return append_t<std::decay_t<T>>(std::get<Idx>(std::move(*this))...,
                                      std::forward<T>(t));
   }
@@ -168,21 +158,17 @@ private:
 
 template <template <typename...> typename Parent>
 struct vec2d_build_parts_common<Parent> : std::tuple<> {
-  template <std::size_t>
-  using type = void;
+  template <std::size_t> using type = void;
   static constexpr std::size_t arity = 0;
   using last_type = void;
 
   constexpr vec2d_build_parts_common() = default;
 
-  template <typename T>
-  constexpr auto
-  append(T&& t) {
+  template <typename T> constexpr auto append(T &&t) {
     return Parent<std::decay_t<T>>(std::forward<T>(t));
   }
 
-  template <typename T>
-  using append_t = Parent<T>;
+  template <typename T> using append_t = Parent<T>;
 };
 
 template <typename... Ts>

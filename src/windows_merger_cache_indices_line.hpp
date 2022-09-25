@@ -6,8 +6,7 @@
 
 namespace windows_merger {
 
-template <typename>
-struct WindowsMergerCacheIndicesAccessor;
+template <typename> struct WindowsMergerCacheIndicesAccessor;
 
 struct WindowsMergerCacheIndicesLine
     : std::vector<typename WindowsMergerTraits::windows_size_type> {
@@ -17,15 +16,15 @@ struct WindowsMergerCacheIndicesLine
   WindowsMergerCacheIndicesLine() = default;
 
   template <typename Merger>
-  WindowsMergerCacheIndicesLine(WindowsMergerCacheIndicesAccessor<Merger> const&
-                                    accessor) noexcept(false);
+  WindowsMergerCacheIndicesLine(WindowsMergerCacheIndicesAccessor<Merger> const
+                                    &accessor) noexcept(false);
   template <typename Merger>
   WindowsMergerCacheIndicesLine(
-      WindowsMergerCacheIndicesAccessor<Merger>&& accessor) noexcept(false);
+      WindowsMergerCacheIndicesAccessor<Merger> &&accessor) noexcept(false);
 
 private:
   template <typename Accessor>
-  void init_from_accessor(Accessor&& accessor) noexcept(false);
+  void init_from_accessor(Accessor &&accessor) noexcept(false);
 };
 
 } // namespace windows_merger

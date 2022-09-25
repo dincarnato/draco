@@ -9,7 +9,7 @@
 
 #include <iostream>
 
-RnaSecondaryStructure::RnaSecondaryStructure(const std::string& rawStructure)
+RnaSecondaryStructure::RnaSecondaryStructure(const std::string &rawStructure)
     : base_type(), rawStructure(rawStructure) {
   base_type::reserve(rawStructure.size());
   for (char baseRawStructure : rawStructure) {
@@ -24,10 +24,10 @@ RnaSecondaryStructure::RnaSecondaryStructure(const std::string& rawStructure)
   }
 }
 
-RnaSecondaryStructure::RnaSecondaryStructure(const char* const rawStructure)
+RnaSecondaryStructure::RnaSecondaryStructure(const char *const rawStructure)
     : base_type(), rawStructure(rawStructure) {
   base_type::reserve(std::strlen(rawStructure));
-  for (const char* baseRawStructure = rawStructure; *baseRawStructure != '\0';
+  for (const char *baseRawStructure = rawStructure; *baseRawStructure != '\0';
        ++baseRawStructure) {
     if (*baseRawStructure == '.' or *baseRawStructure == ',')
       base_type::push_back(BaseSecondaryStructure::single_strand);
@@ -44,16 +44,16 @@ RnaSecondaryStructure::RnaSecondaryStructure(std::size_t length)
     : base_type(length), rawStructure(length, '.') {}
 
 RnaSecondaryStructure::RnaSecondaryStructure(
-    const RnaSecondaryStructure& other) noexcept
+    const RnaSecondaryStructure &other) noexcept
     : base_type(other), rawStructure(other.rawStructure) {}
 
 RnaSecondaryStructure::RnaSecondaryStructure(
-    RnaSecondaryStructure&& other) noexcept
+    RnaSecondaryStructure &&other) noexcept
     : base_type(std::move(other)), rawStructure(std::move(other.rawStructure)) {
 }
 
 unsigned
-RnaSecondaryStructure::distance(const RnaSecondaryStructure& other) const {
+RnaSecondaryStructure::distance(const RnaSecondaryStructure &other) const {
   auto thisIter = std::begin(*this);
   auto otherIter = std::begin(other);
 
@@ -66,29 +66,26 @@ RnaSecondaryStructure::distance(const RnaSecondaryStructure& other) const {
   return distance;
 }
 
-const std::string&
-RnaSecondaryStructure::raw() const {
-  return rawStructure;
-}
+const std::string &RnaSecondaryStructure::raw() const { return rawStructure; }
 
-RnaSecondaryStructure&
-RnaSecondaryStructure::operator=(const RnaSecondaryStructure& other) noexcept {
+RnaSecondaryStructure &
+RnaSecondaryStructure::operator=(const RnaSecondaryStructure &other) noexcept {
   base_type::operator=(other);
   rawStructure = other.rawStructure;
 
   return *this;
 }
 
-RnaSecondaryStructure&
-RnaSecondaryStructure::operator=(RnaSecondaryStructure&& other) noexcept {
+RnaSecondaryStructure &
+RnaSecondaryStructure::operator=(RnaSecondaryStructure &&other) noexcept {
   base_type::operator=(std::move(other));
   rawStructure = std::move(other.rawStructure);
 
   return *this;
 }
 
-RnaSecondaryStructure&
-RnaSecondaryStructure::operator+=(const RnaSecondaryStructure& other) {
+RnaSecondaryStructure &
+RnaSecondaryStructure::operator+=(const RnaSecondaryStructure &other) {
   std::size_t oldSize = size();
   resize(oldSize + other.size());
   std::copy(std::begin(other), std::end(other),
@@ -98,8 +95,8 @@ RnaSecondaryStructure::operator+=(const RnaSecondaryStructure& other) {
   return *this;
 }
 
-RnaSecondaryStructure&
-RnaSecondaryStructure::operator+=(RnaSecondaryStructure&& other) {
+RnaSecondaryStructure &
+RnaSecondaryStructure::operator+=(RnaSecondaryStructure &&other) {
   std::size_t oldSize = size();
   resize(oldSize + other.size());
   std::move(std::begin(other), std::end(other),
@@ -110,19 +107,18 @@ RnaSecondaryStructure::operator+=(RnaSecondaryStructure&& other) {
 }
 
 RnaSecondaryStructure
-RnaSecondaryStructure::operator+(const RnaSecondaryStructure& other) const {
+RnaSecondaryStructure::operator+(const RnaSecondaryStructure &other) const {
   RnaSecondaryStructure out(*this);
   return out += other;
 }
 
 RnaSecondaryStructure
-RnaSecondaryStructure::operator+(RnaSecondaryStructure&& other) const {
+RnaSecondaryStructure::operator+(RnaSecondaryStructure &&other) const {
   RnaSecondaryStructure out(*this);
   return out += std::move(other);
 }
 
-std::string
-RnaSecondaryStructure::str() const {
+std::string RnaSecondaryStructure::str() const {
   auto strandness = std::begin(*this);
   std::string rawStructure;
   rawStructure.resize(size());
@@ -140,13 +136,9 @@ RnaSecondaryStructure::str() const {
   return rawStructure;
 }
 
-void
-RnaSecondaryStructure::regenRaw() {
-  rawStructure = str();
-}
+void RnaSecondaryStructure::regenRaw() { rawStructure = str(); }
 
-bool
-RnaSecondaryStructure::isBalanced() const noexcept {
+bool RnaSecondaryStructure::isBalanced() const noexcept {
   return std::count(std::begin(*this), std::end(*this),
                     BaseSecondaryStructure::double_strand_open) ==
          std::count(std::begin(*this), std::end(*this),

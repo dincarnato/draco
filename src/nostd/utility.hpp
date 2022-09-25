@@ -9,8 +9,7 @@ namespace nostd {
 
 namespace detail {
 
-template <typename Seq>
-struct make_integer_sequence_rev;
+template <typename Seq> struct make_integer_sequence_rev;
 
 template <typename T, T... Ns>
 struct make_integer_sequence_rev<std::integer_sequence<T, Ns...>>
@@ -75,30 +74,27 @@ call_enumerated_args(Fn fn, Ts&&... ts) {
 */
 
 template <typename T>
-constexpr std::make_signed_t<T>
-as_signed(const T& t) noexcept {
+constexpr std::make_signed_t<T> as_signed(const T &t) noexcept {
   using signed_type = std::make_signed_t<T>;
   assert(t <= std::numeric_limits<signed_type>::max());
   return static_cast<signed_type>(t);
 }
 
 template <typename T>
-constexpr std::make_unsigned_t<T>
-as_unsigned(const T& t) noexcept {
+constexpr std::make_unsigned_t<T> as_unsigned(const T &t) noexcept {
   assert(t >= 0);
   return static_cast<std::make_unsigned_t<T>>(t);
 }
 
 template <typename T>
-constexpr make_signed_upcast_t<T>
-as_signed_upcast(const T& t) noexcept {
+constexpr make_signed_upcast_t<T> as_signed_upcast(const T &t) noexcept {
   using signed_type = make_signed_upcast_t<T>;
   return static_cast<signed_type>(t);
 }
 
 template <typename T>
 constexpr make_unsigned_downcast_t<T>
-as_unsigned_downcast(const T& t) noexcept {
+as_unsigned_downcast(const T &t) noexcept {
   using unsigned_type = make_unsigned_downcast_t<T>;
   assert(t >= 0);
   assert(t <= std::numeric_limits<unsigned_type>::max());

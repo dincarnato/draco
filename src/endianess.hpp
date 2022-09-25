@@ -16,14 +16,12 @@ struct system_is_big_endian {
 namespace detail {
 
 template <std::size_t index, class T>
-inline constexpr std::enable_if_t<index == 0, T>
-swapBytes(const T&) {
+inline constexpr std::enable_if_t<index == 0, T> swapBytes(const T &) {
   return 0;
 }
 
 template <std::size_t index, class T>
-inline constexpr std::enable_if_t<index != 0, T>
-swapBytes(const T& t) {
+inline constexpr std::enable_if_t<index != 0, T> swapBytes(const T &t) {
   return swapBytes<index - 1>(t) |
          (((t >> ((sizeof(T) - index) * 8)) & 0xff) << ((index - 1) * 8)) |
          (((t >> ((index - 1) * 8)) & 0xff) << ((sizeof(T) - index) * 8));
@@ -32,7 +30,6 @@ swapBytes(const T& t) {
 } /* namespace detail */
 
 template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
-constexpr void
-swapBytes(T& t) {
+constexpr void swapBytes(T &t) {
   t = detail::swapBytes<sizeof(T) / 2>(t);
 }

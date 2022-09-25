@@ -18,8 +18,7 @@ enum class StringArgType {
 namespace detail {
 
 template <auto n, StringArgType arg_type>
-constexpr std::size_t
-get_float_integral_part_size() noexcept {
+constexpr std::size_t get_float_integral_part_size() noexcept {
   static_assert(arg_type != StringArgType::Literal);
 
   using value_type =
@@ -56,7 +55,7 @@ struct AdjustIntegralPartSizeResult {
 
 template <auto n, StringArgType arg_type>
 constexpr AdjustIntegralPartSizeResult
-adjust_integral_part_size(std::size_t& integral_part_size) noexcept {
+adjust_integral_part_size(std::size_t &integral_part_size) noexcept {
   constexpr std::size_t integral_part_max_size = 8;
 
   AdjustIntegralPartSizeResult result{0, 0};
@@ -131,8 +130,7 @@ get_float_exponent_part_size(std::size_t exponent_part) noexcept {
 }
 
 template <auto n, StringArgType arg_type>
-constexpr std::size_t
-string_representation_size() noexcept {
+constexpr std::size_t string_representation_size() noexcept {
   if constexpr (arg_type == StringArgType::Literal) {
     using n_type = std::decay_t<decltype(n)>;
     auto repr_size = [&] {
@@ -176,31 +174,29 @@ string_representation_size() noexcept {
 
 } // namespace detail
 
-template <std::size_t N>
-struct string {
-  template <std::size_t>
-  friend struct string;
+template <std::size_t N> struct string {
+  template <std::size_t> friend struct string;
 
-  using iterator = char*;
-  using const_iterator = char const*;
+  using iterator = char *;
+  using const_iterator = char const *;
   using reverse_iterator = iterator;
   using const_reverse_iterator = const_iterator;
   static constexpr std::size_t max_size = N;
 
   constexpr string() noexcept : data() {}
   constexpr string(char const (&s)[N + 1]) noexcept : data() {
-    char const* s_iter = &s[0];
+    char const *s_iter = &s[0];
     for (auto iter = std::begin(data), end = std::end(data); iter < end;
          ++iter, ++s_iter) {
       *iter = *s_iter;
     }
   }
 
-  constexpr string(std::array<char, N + 1> const& data) noexcept : data(data) {
+  constexpr string(std::array<char, N + 1> const &data) noexcept : data(data) {
     assert(data.back() == '\0');
   }
 
-  constexpr string(std::array<char, N + 1>&& data) noexcept
+  constexpr string(std::array<char, N + 1> &&data) noexcept
       : data(std::move(data)) {
     assert(data.back() == '\0');
   }
@@ -209,13 +205,9 @@ struct string {
     return std::string_view(data.data(), N);
   }
 
-  constexpr char const*
-  c_str() const noexcept {
-    return data.data();
-  }
+  constexpr char const *c_str() const noexcept { return data.data(); }
 
-  constexpr string<N>
-  replace(char old_char, char new_char) const noexcept {
+  constexpr string<N> replace(char old_char, char new_char) const noexcept {
     string<N> new_string;
     auto old_iter = std::begin(data);
     auto const old_iter_end = std::prev(std::end(data));
@@ -233,15 +225,13 @@ struct string {
   }
 
   template <std::size_t M>
-  constexpr string<M + N - 1>
-  append(char const (&other)[M]) const noexcept {
+  constexpr string<M + N - 1> append(char const (&other)[M]) const noexcept {
     // literal strings includes the null terminator
     return append(string<M - 1>(other));
   }
 
   template <std::size_t M>
-  constexpr string<M + N>
-  append(string<M> const& other) const noexcept {
+  constexpr string<M + N> append(string<M> const &other) const noexcept {
     string<M + N> new_string;
 
     auto new_iter = std::begin(new_string.data);
@@ -263,27 +253,14 @@ struct string {
     return new_string;
   }
 
-  constexpr iterator
-  begin() noexcept {
-    return data.begin();
-  }
-  constexpr const_iterator
-  begin() const noexcept {
-    return data.begin();
-  }
+  constexpr iterator begin() noexcept { return data.begin(); }
+  constexpr const_iterator begin() const noexcept { return data.begin(); }
 
-  constexpr iterator
-  end() noexcept {
-    return data.end();
-  }
+  constexpr iterator end() noexcept { return data.end(); }
 
-  constexpr const_iterator
-  end() const noexcept {
-    return data.end();
-  }
+  constexpr const_iterator end() const noexcept { return data.end(); }
 
-  constexpr std::size_t
-  size() const noexcept {
+  constexpr std::size_t size() const noexcept {
     for (std::size_t index = 0; index < N; ++index) {
       if (data[index] == '\0')
         return index;
@@ -292,8 +269,7 @@ struct string {
     return N;
   }
 
-  constexpr bool
-  is_empty() const noexcept {
+  constexpr bool is_empty() const noexcept {
     if constexpr (N == 0)
       return true;
     else
@@ -305,12 +281,10 @@ private:
 };
 
 // literal strings includes the null terminator
-template <std::size_t N>
-string(char const (&)[N])->string<N - 1>;
+template <std::size_t N> string(char const (&)[N]) -> string<N - 1>;
 
 template <auto t, StringArgType arg_type = StringArgType::Literal>
-constexpr auto
-into_string() {
+constexpr auto into_string() {
   constexpr std::size_t string_size =
       detail::string_representation_size<t, arg_type>();
   std::array<char, string_size + 1> data = {};
@@ -443,8 +417,7 @@ into_string() {
 }
 
 template <std::size_t N, std::size_t M>
-constexpr bool
-operator==(string<N> const& lhs, string<M> const& rhs) noexcept {
+constexpr bool operator==(string<N> const &lhs, string<M> const &rhs) noexcept {
   auto lhs_iter = std::begin(lhs);
   auto const lhs_end_iter = std::end(lhs);
   auto rhs_iter = std::begin(rhs);
@@ -464,15 +437,13 @@ operator==(string<N> const& lhs, string<M> const& rhs) noexcept {
 }
 
 template <std::size_t N, std::size_t M>
-constexpr bool
-operator!=(string<N> const& lhs, string<M> const& rhs) noexcept {
+constexpr bool operator!=(string<N> const &lhs, string<M> const &rhs) noexcept {
   return not(lhs == rhs);
 }
 
 namespace detail {
 
-template <typename T, typename = void>
-struct into_string_helper;
+template <typename T, typename = void> struct into_string_helper;
 
 template <typename T>
 struct into_string_helper<T, std::enable_if_t<std::is_floating_point_v<T>>> {
@@ -482,21 +453,18 @@ struct into_string_helper<T, std::enable_if_t<std::is_floating_point_v<T>>> {
   static_assert(arg_type == StringArgType::Float or std::is_same_v<T, double>,
                 "only float and double types are supported for now");
 
-  static constexpr typename type::repr_type
-  representation(T t) noexcept {
+  static constexpr typename type::repr_type representation(T t) noexcept {
     return type(t).representation();
   }
 };
 
 template <typename T>
-struct into_string_helper<T, std::enable_if_t<std::is_default_constructible_v<T>>> {
+struct into_string_helper<
+    T, std::enable_if_t<std::is_default_constructible_v<T>>> {
   using type = T;
   static constexpr StringArgType arg_type = StringArgType::Literal;
 
-  static constexpr T
-  representation(T t) noexcept {
-    return t;
-  }
+  static constexpr T representation(T t) noexcept { return t; }
 };
 
 } // namespace detail

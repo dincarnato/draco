@@ -7,59 +7,45 @@ namespace het::detail {
 
 // Forward delarations
 //
-template <typename... Ts>
-struct vec2d_init_parts;
+template <typename... Ts> struct vec2d_init_parts;
 
 struct vec2d_rt_part_empty;
 struct vec2d_rt_part_skip;
 
-template <typename>
-struct vec2d_rt_part_with_lines;
+template <typename> struct vec2d_rt_part_with_lines;
 
-template <typename>
-struct vec2d_rt_part_skip_first_lines;
+template <typename> struct vec2d_rt_part_skip_first_lines;
 
-template <typename>
-struct vec2d_rt_part_with_max_size;
+template <typename> struct vec2d_rt_part_with_max_size;
 
-template <typename>
-struct vec2d_rt_part_with_size;
+template <typename> struct vec2d_rt_part_with_size;
 
-template <typename, typename>
-struct vec2d_rt_part_with_fun_size;
+template <typename, typename> struct vec2d_rt_part_with_fun_size;
 
-template <typename, typename>
-struct vec2d_rt_part_transform;
+template <typename, typename> struct vec2d_rt_part_transform;
 
 struct vec2d_rt_part_construction_placeholder;
 
-template <typename T>
-struct vec2d_rt_part_construct_default;
+template <typename T> struct vec2d_rt_part_construct_default;
 
-template <typename T>
-struct vec2d_rt_part_uninitialized;
+template <typename T> struct vec2d_rt_part_uninitialized;
 
-template <typename T, typename Value>
-struct vec2d_rt_part_construct_copies;
+template <typename T, typename Value> struct vec2d_rt_part_construct_copies;
 
-template <typename T, typename... ArgsTuples>
-struct vec2d_rt_part_construct;
+template <typename T, typename... ArgsTuples> struct vec2d_rt_part_construct;
 
-template <typename T, typename Iter>
-struct vec2d_rt_part_construct_from_iter;
+template <typename T, typename Iter> struct vec2d_rt_part_construct_from_iter;
 
 template <typename T, typename Iter>
 struct vec2d_rt_part_construct_from_args_iter;
 
-template <typename SizeT, typename T>
-struct vec2d_rt_part_from_address;
+template <typename SizeT, typename T> struct vec2d_rt_part_from_address;
 
 struct vec2d_rt_part_unwinder;
 
 // End of forward declarations
 
-template <typename T>
-struct is_vec2d_init_parts : std::false_type {};
+template <typename T> struct is_vec2d_init_parts : std::false_type {};
 
 template <typename... Ts>
 struct is_vec2d_init_parts<vec2d_init_parts<Ts...>> : std::true_type {};
@@ -67,8 +53,7 @@ struct is_vec2d_init_parts<vec2d_init_parts<Ts...>> : std::true_type {};
 template <typename... Ts>
 constexpr bool is_vec2d_init_parts_v = is_vec2d_init_parts<Ts...>::value;
 
-template <typename T>
-struct is_vec2d_rt_part_empty : std::false_type {};
+template <typename T> struct is_vec2d_rt_part_empty : std::false_type {};
 
 template <>
 struct is_vec2d_rt_part_empty<vec2d_rt_part_empty> : std::true_type {};
@@ -80,8 +65,7 @@ struct is_vec2d_rt_part_empty<vec2d_rt_part_transform<vec2d_rt_part_empty, Fun>>
 template <typename T>
 constexpr bool is_vec2d_rt_part_empty_v = is_vec2d_rt_part_empty<T>::value;
 
-template <typename T>
-struct is_vec2d_rt_part_skip : std::false_type {};
+template <typename T> struct is_vec2d_rt_part_skip : std::false_type {};
 
 template <>
 struct is_vec2d_rt_part_skip<vec2d_rt_part_skip> : std::true_type {};
@@ -89,8 +73,7 @@ struct is_vec2d_rt_part_skip<vec2d_rt_part_skip> : std::true_type {};
 template <typename T>
 constexpr bool is_vec2d_rt_part_skip_v = is_vec2d_rt_part_skip<T>::value;
 
-template <typename T>
-struct is_vec2d_rt_part_with_lines : std::false_type {};
+template <typename T> struct is_vec2d_rt_part_with_lines : std::false_type {};
 
 template <typename SizeT>
 struct is_vec2d_rt_part_with_lines<vec2d_rt_part_with_lines<SizeT>>
@@ -127,8 +110,7 @@ template <typename T>
 constexpr bool is_vec2d_rt_part_with_max_size_v =
     is_vec2d_rt_part_with_max_size<T>::value;
 
-template <typename T>
-struct is_vec2d_rt_part_with_size : std::false_type {};
+template <typename T> struct is_vec2d_rt_part_with_size : std::false_type {};
 
 template <typename SizeT>
 struct is_vec2d_rt_part_with_size<vec2d_rt_part_with_size<SizeT>>
@@ -154,8 +136,7 @@ template <typename T>
 constexpr bool is_vec2d_rt_part_with_fun_size_v =
     is_vec2d_rt_part_with_fun_size<T>::value;
 
-template <typename T>
-struct is_vec2d_rt_part_transform : std::false_type {};
+template <typename T> struct is_vec2d_rt_part_transform : std::false_type {};
 
 template <typename Fun, typename Base>
 struct is_vec2d_rt_part_transform<vec2d_rt_part_transform<Fun, Base>>
@@ -209,8 +190,7 @@ template <typename T>
 constexpr bool is_vec2d_rt_part_construct_copies_v =
     is_vec2d_rt_part_construct_copies<T>::value;
 
-template <typename T>
-struct is_vec2d_rt_part_construct : std::false_type {};
+template <typename T> struct is_vec2d_rt_part_construct : std::false_type {};
 
 template <typename T, typename... ArgsTuples>
 struct is_vec2d_rt_part_construct<vec2d_rt_part_construct<T, ArgsTuples...>>
@@ -411,8 +391,7 @@ template <typename T>
 constexpr bool is_vec2d_rt_part_generic_construct_with_max_size_v =
     is_vec2d_rt_part_generic_construct_with_max_size<T>::value;
 
-template <typename T>
-struct is_vec2d_rt_part_from_address : std::false_type {};
+template <typename T> struct is_vec2d_rt_part_from_address : std::false_type {};
 
 template <typename SizeT, typename T>
 struct is_vec2d_rt_part_from_address<vec2d_rt_part_from_address<SizeT, T>>
@@ -544,8 +523,7 @@ template <typename T>
 constexpr bool is_vec2d_rt_part_generic_with_max_size_v =
     is_vec2d_rt_part_generic_with_max_size<T>::value;
 
-template <typename T>
-struct is_vec2d_rt_part_unwinder : std::false_type {};
+template <typename T> struct is_vec2d_rt_part_unwinder : std::false_type {};
 
 template <>
 struct is_vec2d_rt_part_unwinder<vec2d_rt_part_unwinder> : std::true_type {};

@@ -18,7 +18,7 @@ struct Analysis final {
   Analysis(std::string_view jsonFilename);
   ~Analysis() noexcept;
 
-  void addTranscript(Transcript&& transcript);
+  void addTranscript(Transcript &&transcript);
 
   std::string filename;
 

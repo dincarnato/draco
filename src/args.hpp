@@ -9,8 +9,8 @@
 
 struct Args : ArgsGenerated {
   Args() = default;
-  Args(int argc, char* argv[]) noexcept;
+  Args(int argc, char *argv[]) noexcept;
 
 private:
-  void parse_options(int argc, char* argv[]) noexcept;
+  void parse_options(int argc, char *argv[]) noexcept;
 };

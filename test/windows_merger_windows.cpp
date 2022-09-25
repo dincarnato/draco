@@ -11,8 +11,7 @@
 
 using namespace windows_merger;
 
-static void
-test_default_construction() {
+static void test_default_construction() {
   WindowsMergerWindows wmw;
   assert(wmw.clusters_size() == 0);
   assert(wmw.bases_capacity() == 0);
@@ -20,8 +19,7 @@ test_default_construction() {
   assert(wmw.windows_capacity() == 0);
 }
 
-static void
-test_construction_with_clusters() {
+static void test_construction_with_clusters() {
   WindowsMergerWindows wmw(5);
   assert(wmw.clusters_size() == 5);
   assert(wmw.bases_capacity() == 0);
@@ -29,8 +27,7 @@ test_construction_with_clusters() {
   assert(wmw.windows_capacity() == 0);
 }
 
-static void
-test_construction_with_clusters_and_bases() {
+static void test_construction_with_clusters_and_bases() {
   WindowsMergerWindows wmw(5, 70);
   assert(wmw.clusters_size() == 5);
   assert(wmw.bases_capacity() == 70);
@@ -38,8 +35,7 @@ test_construction_with_clusters_and_bases() {
   assert(wmw.windows_capacity() == 0);
 }
 
-static void
-test_construction_with_clusters_bases_and_windows() {
+static void test_construction_with_clusters_bases_and_windows() {
   WindowsMergerWindows wmw(5, 70, 100);
   assert(wmw.clusters_size() == 5);
   assert(wmw.bases_capacity() == 70);
@@ -47,8 +43,7 @@ test_construction_with_clusters_bases_and_windows() {
   assert(wmw.windows_capacity() == 100);
 }
 
-static void
-test_simple_const_accessor() {
+static void test_simple_const_accessor() {
   const WindowsMergerWindows wmw(5, 70, 20);
   for (std::size_t index = 0; index < 20; ++index) {
     auto accessor = wmw[index];
@@ -78,7 +73,7 @@ create_random_bases(std::size_t n_clusters, std::size_t n_bases) {
       n_bases,
       WindowsMergerWindowBase(
           static_cast<WindowsMergerTraits::clusters_size_type>(n_clusters)));
-  for (auto& window_base : out_bases) {
+  for (auto &window_base : out_bases) {
     std::generate(ranges::begin(weights), ranges::end(weights),
                   [&] { return real_dist(random_gen); });
     std::transform(ranges::begin(weights), ranges::end(weights),
@@ -113,8 +108,7 @@ create_random_starts(WindowsMergerTraits::windows_size_type n_windows,
   return all_starts;
 }
 
-static void
-test_simple_accessor_emplace_back() {
+static void test_simple_accessor_emplace_back() {
   constexpr std::size_t n_clusters = 5;
   constexpr std::size_t n_bases_to_add = 30;
 
@@ -122,7 +116,7 @@ test_simple_accessor_emplace_back() {
   WindowsMergerWindows wmw(5, 70, 20);
   {
     auto accessor = wmw[0];
-    for (const auto& window_base : bases_to_add) {
+    for (const auto &window_base : bases_to_add) {
       auto new_base_accessor = accessor.emplace_back(window_base);
       assert(new_base_accessor == window_base);
       assert(new_base_accessor == accessor.back());
@@ -134,7 +128,7 @@ test_simple_accessor_emplace_back() {
     auto accessor = wmw[1];
     auto bases_copied = bases_to_add;
     std::size_t window_base_index = 0;
-    for (auto& window_base : bases_copied) {
+    for (auto &window_base : bases_copied) {
       auto new_base_accessor = accessor.emplace_back(std::move(window_base));
       assert(new_base_accessor == bases_to_add[window_base_index]);
       assert(new_base_accessor == accessor.back());
@@ -144,8 +138,7 @@ test_simple_accessor_emplace_back() {
   }
 }
 
-static void
-test_simple_accessor_push_back() {
+static void test_simple_accessor_push_back() {
   constexpr std::size_t n_clusters = 5;
   constexpr std::size_t n_bases_to_add = 30;
 
@@ -153,7 +146,7 @@ test_simple_accessor_push_back() {
   WindowsMergerWindows wmw(5, 70, 20);
   {
     auto accessor = wmw[0];
-    for (const auto& window_base : bases_to_add) {
+    for (const auto &window_base : bases_to_add) {
       accessor.push_back(window_base);
       assert(accessor.back() == window_base);
       assert(std::size(accessor.back().weights()) == n_clusters);
@@ -164,7 +157,7 @@ test_simple_accessor_push_back() {
     auto accessor = wmw[1];
     auto bases_copied = bases_to_add;
     std::size_t window_base_index = 0;
-    for (auto& window_base : bases_copied) {
+    for (auto &window_base : bases_copied) {
       accessor.push_back(std::move(window_base));
       assert(accessor.back() == bases_to_add[window_base_index]);
       assert(std::size(accessor.back().weights()) == n_clusters);
@@ -173,8 +166,7 @@ test_simple_accessor_push_back() {
   }
 }
 
-static void
-test_front_back_accessors() {
+static void test_front_back_accessors() {
   constexpr std::size_t n_clusters = 5;
   constexpr std::size_t n_bases_to_add = 30;
 
@@ -183,13 +175,13 @@ test_front_back_accessors() {
 
   {
     auto accessor = wmw[0];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.push_back(window_base);
   }
 
   {
     auto accessor = wmw[19];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.push_back(window_base);
   }
 
@@ -201,8 +193,7 @@ test_front_back_accessors() {
          &std::as_const(wmw)[19][0].weight(0));
 }
 
-static void
-test_base_accessor_const_iterator() {
+static void test_base_accessor_const_iterator() {
   constexpr std::size_t n_clusters = 5;
   constexpr std::size_t n_bases_to_add = 30;
 
@@ -210,20 +201,20 @@ test_base_accessor_const_iterator() {
   WindowsMergerWindows wmw(5, 70, 20);
 
   auto accessor = wmw[0];
-  for (const auto& window_base : bases_to_add)
+  for (const auto &window_base : bases_to_add)
     accessor.emplace_back(window_base);
 
   for (typename WindowsMergerTraits::bases_size_type window_base_index = 0;
        window_base_index < n_bases_to_add; ++window_base_index) {
-    const auto& window_base = accessor[window_base_index];
+    const auto &window_base = accessor[window_base_index];
     auto weights_accessor = window_base.weights();
     assert(std::size(weights_accessor) == n_clusters);
-    auto&& base_added = bases_to_add[window_base_index];
+    auto &&base_added = bases_to_add[window_base_index];
 
     {
       typename WindowsMergerTraits::clusters_size_type cluster_index = 0;
       std::size_t parsed_weights = 0;
-      for (auto&& weight : weights_accessor) {
+      for (auto &&weight : weights_accessor) {
         assert(weight == base_added.weight(cluster_index++));
         ++parsed_weights;
       }
@@ -235,7 +226,7 @@ test_base_accessor_const_iterator() {
       typename WindowsMergerTraits::clusters_size_type cluster_index = 0;
       std::size_t parsed_weights = 0;
       auto weights_accessor = std::as_const(base_added).weights();
-      for (auto&& weight : weights_accessor) {
+      for (auto &&weight : weights_accessor) {
         assert(weight == base_added.weight(cluster_index++));
         ++parsed_weights;
       }
@@ -245,8 +236,7 @@ test_base_accessor_const_iterator() {
   }
 }
 
-static void
-test_base_accessor_iterator() {
+static void test_base_accessor_iterator() {
   constexpr std::size_t n_clusters = 5;
   constexpr std::size_t n_bases_to_add = 30;
 
@@ -254,17 +244,17 @@ test_base_accessor_iterator() {
   WindowsMergerWindows wmw(5, 70, 20);
 
   auto accessor = wmw[0];
-  for (const auto& window_base : bases_to_add)
+  for (const auto &window_base : bases_to_add)
     accessor.emplace_back(window_base);
 
   for (typename WindowsMergerTraits::bases_size_type window_base_index = 0;
        window_base_index < n_bases_to_add; ++window_base_index) {
-    const auto& window_base = accessor[window_base_index];
+    const auto &window_base = accessor[window_base_index];
     auto weights_accessor = window_base.weights();
 
     ranges::fill(ranges::begin(weights_accessor), ranges::end(weights_accessor),
                  TinyFraction(0.2));
-    assert(ranges::all_of(weights_accessor, [](auto&& weight) {
+    assert(ranges::all_of(weights_accessor, [](auto &&weight) {
       return weight == TinyFraction(0.2);
     }));
 
@@ -273,15 +263,14 @@ test_base_accessor_iterator() {
       auto weights_accessor = base_added.weights();
       ranges::fill(ranges::begin(weights_accessor),
                    ranges::end(weights_accessor), TinyFraction(0.3));
-      assert(ranges::all_of(weights_accessor, [](auto&& weight) {
+      assert(ranges::all_of(weights_accessor, [](auto &&weight) {
         return weight == TinyFraction(0.3);
       }));
     }
   }
 }
 
-static void
-test_base_accessor_weights_accessor() {
+static void test_base_accessor_weights_accessor() {
   constexpr std::size_t n_clusters = 5;
   constexpr std::size_t n_bases_to_add = 30;
 
@@ -289,12 +278,12 @@ test_base_accessor_weights_accessor() {
   WindowsMergerWindows wmw(5, 70, 20);
 
   auto accessor = wmw[0];
-  for (const auto& window_base : bases_to_add)
+  for (const auto &window_base : bases_to_add)
     accessor.emplace_back(window_base);
 
   for (typename WindowsMergerTraits::bases_size_type window_base_index = 0;
        window_base_index < n_bases_to_add; ++window_base_index) {
-    const auto& window_base = accessor[window_base_index];
+    const auto &window_base = accessor[window_base_index];
     auto weights_accessor = window_base.weights();
 
     for (WindowsMergerTraits::clusters_size_type cluster_index = 0;
@@ -310,10 +299,9 @@ test_base_accessor_weights_accessor() {
   }
 }
 
-static void
-test_base_comparisons() {
+static void test_base_comparisons() {
   WindowsMergerWindowBase base(3);
-  auto&& weights = base.weights();
+  auto &&weights = base.weights();
   weights[0] = TinyFraction(0.5);
   weights[1] = TinyFraction(0.3);
   weights[2] = TinyFraction(0.2);
@@ -424,7 +412,7 @@ test_base_comparisons() {
 
   WindowsMergerWindowBase test_base(5);
   {
-    auto&& weights = test_base.weights();
+    auto &&weights = test_base.weights();
     weights[0] = TinyFraction(0.5);
     weights[1] = TinyFraction(0.3);
     weights[2] = TinyFraction(0.2);
@@ -434,7 +422,7 @@ test_base_comparisons() {
   }
 
   {
-    auto&& accessor = new_wmw[0];
+    auto &&accessor = new_wmw[0];
     accessor.push_back(test_base);
     assert(accessor[0] == test_base);
     assert(!(accessor[0] != test_base));
@@ -444,13 +432,13 @@ test_base_comparisons() {
     assert(!(accessor[0] != accessor[0]));
 
     {
-      auto&& wmw_accessor = wmw[0];
+      auto &&wmw_accessor = wmw[0];
       assert(accessor[0] != wmw_accessor[0]);
       assert(accessor[0] != wmw_accessor[1]);
       assert(accessor[0] != wmw_accessor[2]);
     }
     {
-      auto&& wmw_accessor = std::as_const(wmw)[0];
+      auto &&wmw_accessor = std::as_const(wmw)[0];
       assert(accessor[0] != wmw_accessor[0]);
       assert(accessor[0] != wmw_accessor[1]);
       assert(accessor[0] != wmw_accessor[2]);
@@ -458,7 +446,7 @@ test_base_comparisons() {
   }
 
   {
-    auto&& accessor = std::as_const(new_wmw)[0];
+    auto &&accessor = std::as_const(new_wmw)[0];
     assert(accessor[0] == test_base);
     assert(!(accessor[0] != test_base));
     assert(!(accessor[0] == base));
@@ -467,13 +455,13 @@ test_base_comparisons() {
     assert(!(accessor[0] != accessor[0]));
 
     {
-      auto&& wmw_accessor = wmw[0];
+      auto &&wmw_accessor = wmw[0];
       assert(accessor[0] != wmw_accessor[0]);
       assert(accessor[0] != wmw_accessor[1]);
       assert(accessor[0] != wmw_accessor[2]);
     }
     {
-      auto&& wmw_accessor = std::as_const(wmw)[0];
+      auto &&wmw_accessor = std::as_const(wmw)[0];
       assert(accessor[0] != wmw_accessor[0]);
       assert(accessor[0] != wmw_accessor[1]);
       assert(accessor[0] != wmw_accessor[2]);
@@ -484,8 +472,8 @@ test_base_comparisons() {
     WindowsMergerWindows new_wmw(wmw.clusters_size(), wmw.bases_capacity(),
                                  wmw.windows_capacity());
     {
-      auto&& accessor = std::as_const(wmw)[0];
-      auto&& new_accessor = new_wmw[0];
+      auto &&accessor = std::as_const(wmw)[0];
+      auto &&new_accessor = new_wmw[0];
       for (WindowsMergerTraits::bases_size_type base_index = 0; base_index < 3;
            ++base_index) {
         WindowsMergerWindowBase base(wmw.clusters_size());
@@ -500,8 +488,8 @@ test_base_comparisons() {
     }
 
     {
-      auto&& accessor_a = wmw[0];
-      auto&& accessor_b = new_wmw[0];
+      auto &&accessor_a = wmw[0];
+      auto &&accessor_b = new_wmw[0];
 
       assert(accessor_a[0] == accessor_b[0]);
       assert(accessor_a[0] != accessor_b[1]);
@@ -512,8 +500,8 @@ test_base_comparisons() {
     }
 
     {
-      auto&& accessor_a = std::as_const(wmw)[0];
-      auto&& accessor_b = new_wmw[0];
+      auto &&accessor_a = std::as_const(wmw)[0];
+      auto &&accessor_b = new_wmw[0];
 
       assert(accessor_a[0] == accessor_b[0]);
       assert(accessor_a[0] != accessor_b[1]);
@@ -524,8 +512,8 @@ test_base_comparisons() {
     }
 
     {
-      auto&& accessor_a = wmw[0];
-      auto&& accessor_b = std::as_const(new_wmw)[0];
+      auto &&accessor_a = wmw[0];
+      auto &&accessor_b = std::as_const(new_wmw)[0];
 
       assert(accessor_a[0] == accessor_b[0]);
       assert(accessor_a[0] != accessor_b[1]);
@@ -536,8 +524,8 @@ test_base_comparisons() {
     }
 
     {
-      auto&& accessor_a = std::as_const(wmw)[0];
-      auto&& accessor_b = std::as_const(new_wmw)[0];
+      auto &&accessor_a = std::as_const(wmw)[0];
+      auto &&accessor_b = std::as_const(new_wmw)[0];
 
       assert(accessor_a[0] == accessor_b[0]);
       assert(accessor_a[0] != accessor_b[1]);
@@ -549,15 +537,14 @@ test_base_comparisons() {
   }
 }
 
-static void
-test_accessor_resizing_push() {
+static void test_accessor_resizing_push() {
   constexpr std::size_t n_clusters = 5;
   constexpr std::size_t n_bases_to_add = 30;
 
   auto bases_to_add = create_random_bases(n_clusters, n_bases_to_add);
   WindowsMergerWindows wmw(5, 1, 20);
   auto accessor = wmw[0];
-  for (const auto& window_base : bases_to_add) {
+  for (const auto &window_base : bases_to_add) {
     auto new_base_accessor = accessor.emplace_back(window_base);
     assert(new_base_accessor == window_base);
     assert(new_base_accessor == accessor.back());
@@ -569,8 +556,7 @@ test_accessor_resizing_push() {
     assert(accessor[base_index] == bases_to_add[base_index]);
 }
 
-static void
-test_accessor_resizing_push_on_empty() {
+static void test_accessor_resizing_push_on_empty() {
   constexpr std::size_t n_clusters = 5;
   constexpr std::size_t n_bases_to_add = 30;
 
@@ -614,7 +600,7 @@ test_accessor_resizing_push_on_empty() {
     assert(accessor.size() == 0);
     assert(accessor.coverages().size() == 0);
 
-    for (const auto& window_base : bases_to_add) {
+    for (const auto &window_base : bases_to_add) {
       auto new_base_accessor = accessor.emplace_back(window_base);
       assert(new_base_accessor == window_base);
       assert(new_base_accessor == accessor.back());
@@ -629,7 +615,7 @@ test_accessor_resizing_push_on_empty() {
   {
     WindowsMergerWindows wmw(5, 0, 20);
     auto accessor = wmw[0];
-    for (const auto& window_base : bases_to_add) {
+    for (const auto &window_base : bases_to_add) {
       accessor.push_back(window_base);
       assert(accessor.back() == window_base);
     }
@@ -643,7 +629,7 @@ test_accessor_resizing_push_on_empty() {
   {
     WindowsMergerWindows wmw(5, 0, 20);
     auto accessor = wmw[0];
-    for (auto& window_base : bases_to_add) {
+    for (auto &window_base : bases_to_add) {
       accessor.push_back(window_base);
       assert(accessor.back() == window_base);
     }
@@ -655,8 +641,7 @@ test_accessor_resizing_push_on_empty() {
   }
 }
 
-static void
-test_windows_reshape_noreshape() {
+static void test_windows_reshape_noreshape() {
   constexpr std::size_t n_clusters = 5;
   constexpr std::size_t n_bases_to_add = 30;
 
@@ -675,54 +660,53 @@ test_windows_reshape_noreshape() {
 
   {
     auto accessor = wmw[0];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
   }
 
   {
     auto first_element_address =
-        std::addressof(static_cast<TinyFraction&>(wmw[0].front().weight(0)));
+        std::addressof(static_cast<TinyFraction &>(wmw[0].front().weight(0)));
     wmw.reshape(0, typename WindowsMergerWindows::reserver_type(0));
-    assert(first_element_address == std::addressof(static_cast<TinyFraction&>(
+    assert(first_element_address == std::addressof(static_cast<TinyFraction &>(
                                         wmw[0].front().weight(0))));
   }
 
   {
     auto first_element_address =
-        std::addressof(static_cast<TinyFraction&>(wmw[0].front().weight(0)));
+        std::addressof(static_cast<TinyFraction &>(wmw[0].front().weight(0)));
     wmw.reshape(70, typename WindowsMergerWindows::reserver_type(20));
-    assert(first_element_address == std::addressof(static_cast<TinyFraction&>(
+    assert(first_element_address == std::addressof(static_cast<TinyFraction &>(
                                         wmw[0].front().weight(0))));
   }
 
   {
     auto first_element_address =
-        std::addressof(static_cast<TinyFraction&>(wmw[0].front().weight(0)));
+        std::addressof(static_cast<TinyFraction &>(wmw[0].front().weight(0)));
     wmw.reshape(70, typename WindowsMergerWindows::resizer_type(20));
-    assert(first_element_address == std::addressof(static_cast<TinyFraction&>(
+    assert(first_element_address == std::addressof(static_cast<TinyFraction &>(
                                         wmw[0].front().weight(0))));
   }
 }
 
-static void
-test_windows_reshape_from_empty() {
+static void test_windows_reshape_from_empty() {
   constexpr std::size_t n_clusters = 5;
   constexpr std::size_t n_bases_to_add = 20;
 
   auto bases_to_add = create_random_bases(n_clusters, n_bases_to_add);
-  auto add_to_wmw = [&](WindowsMergerWindows& wmw) {
+  auto add_to_wmw = [&](WindowsMergerWindows &wmw) {
     if (wmw.windows_size() == 0)
       wmw.reshape(0, WindowsMergerWindows::resizer_type(1));
 
     auto accessor = wmw[0];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
 
     assert(wmw.bases_capacity() == 70);
     assert(wmw.windows_capacity() == 20);
   };
 
-  auto check_wmw = [&](const WindowsMergerWindows& wmw) {
+  auto check_wmw = [&](const WindowsMergerWindows &wmw) {
     auto accessor = wmw[0];
     assert(std::size(accessor) == n_bases_to_add);
     for (WindowsMergerTraits::bases_size_type base_index = 0;
@@ -784,8 +768,7 @@ test_windows_reshape_from_empty() {
   }
 }
 
-static void
-test_windows_reshape_shrink() {
+static void test_windows_reshape_shrink() {
   constexpr std::size_t n_clusters = 5;
   constexpr WindowsMergerTraits::windows_size_type n_windows = 20;
   constexpr std::size_t n_bases_to_add = 30;
@@ -796,7 +779,7 @@ test_windows_reshape_shrink() {
   for (WindowsMergerTraits::windows_size_type window_index = 0;
        window_index < n_windows; ++window_index) {
     auto accessor = wmw[window_index];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
   }
 
@@ -815,8 +798,7 @@ test_windows_reshape_shrink() {
   }
 }
 
-static void
-test_windows_emplace_back() {
+static void test_windows_emplace_back() {
   constexpr WindowsMergerTraits::clusters_size_type n_clusters = 5;
   {
     WindowsMergerWindows wmw(n_clusters);
@@ -862,8 +844,7 @@ test_windows_emplace_back() {
   }
 }
 
-static void
-test_window_set_begin_index() {
+static void test_window_set_begin_index() {
   constexpr WindowsMergerTraits::clusters_size_type n_clusters = 5;
   WindowsMergerWindows wmw(n_clusters);
 
@@ -895,8 +876,7 @@ test_window_set_begin_index() {
     assert(new_window[base_index] == new_bases[base_index]);
 }
 
-static void
-test_window_coverage_accessor() {
+static void test_window_coverage_accessor() {
   constexpr std::size_t n_clusters = 5;
   const auto new_bases = create_random_bases(n_clusters, 30);
 
@@ -922,14 +902,14 @@ test_window_coverage_accessor() {
        ++base_index)
     new_window.emplace_back(new_bases[base_index]);
 
-  auto perform_test = [&new_bases](auto&& new_window) {
+  auto perform_test = [&new_bases](auto &&new_window) {
     auto new_window_coverages = new_window.coverages();
     assert(ranges::equal(
         new_bases, new_window_coverages, {},
-        [](auto&& base_accessor) { return base_accessor.coverage(); }));
+        [](auto &&base_accessor) { return base_accessor.coverage(); }));
     assert(ranges::equal(
         std::as_const(new_bases), new_window_coverages, {},
-        [](auto&& base_accessor) { return base_accessor.coverage(); }));
+        [](auto &&base_accessor) { return base_accessor.coverage(); }));
     for (typename WindowsMergerTraits::bases_size_type base_index = 0;
          base_index < 30; ++base_index) {
       assert(new_window_coverages[base_index] ==
@@ -943,8 +923,7 @@ test_window_coverage_accessor() {
   perform_test(std::as_const(wmw).back());
 }
 
-static void
-test_window_accessor_iterator() {
+static void test_window_accessor_iterator() {
   using bases_size_type = typename WindowsMergerTraits::bases_size_type;
   using windows_size_type = typename WindowsMergerTraits::windows_size_type;
 
@@ -957,18 +936,18 @@ test_window_accessor_iterator() {
                 [] { return create_random_bases(n_clusters, n_bases); });
 
   WindowsMergerWindows wmw(n_clusters);
-  for (auto&& window : std::as_const(raw_windows)) {
-    auto&& new_window = wmw.emplace_back();
+  for (auto &&window : std::as_const(raw_windows)) {
+    auto &&new_window = wmw.emplace_back();
     // Cannot use std::back_inserter :(
-    for (auto&& base : std::as_const(window))
+    for (auto &&base : std::as_const(window))
       new_window.push_back(base);
   }
 
-  auto perform_test = [&raw_windows](auto&& wmw) {
+  auto perform_test = [&raw_windows](auto &&wmw) {
     for (windows_size_type window_index = 0; window_index < n_windows;
          ++window_index) {
       auto accessor = wmw[window_index];
-      const auto& raw_window = raw_windows[window_index];
+      const auto &raw_window = raw_windows[window_index];
 
       {
         auto accessor_iter = ranges::begin(accessor);
@@ -1041,8 +1020,7 @@ test_window_accessor_iterator() {
   perform_test(std::as_const(wmw));
 }
 
-static void
-test_accessor_assignment() {
+static void test_accessor_assignment() {
   using bases_size_type = typename WindowsMergerTraits::bases_size_type;
 
   constexpr std::size_t n_clusters = 5;
@@ -1055,7 +1033,7 @@ test_accessor_assignment() {
       auto starts = create_random_starts(1, initial_capacity, 300);
       auto bases_to_add = create_random_bases(n_clusters, initial_capacity);
       auto accessor = wmw_lhs[0];
-      for (const auto& window_base : bases_to_add)
+      for (const auto &window_base : bases_to_add)
         accessor.emplace_back(window_base);
       accessor.set_begin_index(starts[0]);
     }
@@ -1065,7 +1043,7 @@ test_accessor_assignment() {
       auto starts = create_random_starts(1, n_bases_to_add, 300);
       auto bases_to_add = create_random_bases(n_clusters, n_bases_to_add);
       auto accessor = wmw_rhs[0];
-      for (const auto& window_base : bases_to_add)
+      for (const auto &window_base : bases_to_add)
         accessor.emplace_back(window_base);
       accessor.set_begin_index(starts[0]);
     }
@@ -1085,85 +1063,88 @@ test_accessor_assignment() {
        std::array{bases_size_type(70), bases_size_type(13)}) {
 
     perform_test(
-        bases_initial_capacity, [](auto& wmw) -> decltype(auto) { return wmw; },
-        [](auto& wmw) -> decltype(auto) { return wmw; },
-        [](auto&& accessor_a, auto&& accessor_b) { accessor_a = accessor_b; });
+        bases_initial_capacity, [](auto &wmw) -> decltype(auto) { return wmw; },
+        [](auto &wmw) -> decltype(auto) { return wmw; },
+        [](auto &&accessor_a, auto &&accessor_b) { accessor_a = accessor_b; });
 
-    perform_test(bases_initial_capacity,
-                 [](auto& wmw) -> decltype(auto) { return wmw; },
-                 [](auto& wmw) -> decltype(auto) { return wmw; },
-                 [](auto&& accessor_a, auto&& accessor_b) {
-                   accessor_a = std::move(accessor_b);
-                 });
+    perform_test(
+        bases_initial_capacity, [](auto &wmw) -> decltype(auto) { return wmw; },
+        [](auto &wmw) -> decltype(auto) { return wmw; },
+        [](auto &&accessor_a, auto &&accessor_b) {
+          accessor_a = std::move(accessor_b);
+        });
 
     perform_test(
         bases_initial_capacity,
-        [](auto& wmw) -> decltype(auto) { return std::as_const(wmw); },
-        [](auto& wmw) -> decltype(auto) { return wmw; },
-        [](auto&& accessor_a, auto&& accessor_b) { accessor_a = accessor_b; });
-
-    perform_test(bases_initial_capacity,
-                 [](auto& wmw) -> decltype(auto) { return std::as_const(wmw); },
-                 [](auto& wmw) -> decltype(auto) { return wmw; },
-                 [](auto&& accessor_a, auto&& accessor_b) {
-                   accessor_a = std::move(accessor_b);
-                 });
-
-    perform_test(
-        bases_initial_capacity, [](auto& wmw) -> decltype(auto) { return wmw; },
-        [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-        [](auto&& accessor_a, auto&& accessor_b) { accessor_a = accessor_b; });
-
-    perform_test(bases_initial_capacity,
-                 [](auto& wmw) -> decltype(auto) { return wmw; },
-                 [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-                 [](auto&& accessor_a, auto&& accessor_b) {
-                   accessor_a = std::move(accessor_b);
-                 });
+        [](auto &wmw) -> decltype(auto) { return std::as_const(wmw); },
+        [](auto &wmw) -> decltype(auto) { return wmw; },
+        [](auto &&accessor_a, auto &&accessor_b) { accessor_a = accessor_b; });
 
     perform_test(
         bases_initial_capacity,
-        [](auto& wmw) -> decltype(auto) { return std::as_const(wmw); },
-        [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-        [](auto&& accessor_a, auto&& accessor_b) { accessor_a = accessor_b; });
+        [](auto &wmw) -> decltype(auto) { return std::as_const(wmw); },
+        [](auto &wmw) -> decltype(auto) { return wmw; },
+        [](auto &&accessor_a, auto &&accessor_b) {
+          accessor_a = std::move(accessor_b);
+        });
 
-    perform_test(bases_initial_capacity,
-                 [](auto& wmw) -> decltype(auto) { return std::as_const(wmw); },
-                 [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-                 [](auto&& accessor_a, auto&& accessor_b) {
-                   accessor_a = std::move(accessor_b);
-                 });
+    perform_test(
+        bases_initial_capacity, [](auto &wmw) -> decltype(auto) { return wmw; },
+        [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+        [](auto &&accessor_a, auto &&accessor_b) { accessor_a = accessor_b; });
+
+    perform_test(
+        bases_initial_capacity, [](auto &wmw) -> decltype(auto) { return wmw; },
+        [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+        [](auto &&accessor_a, auto &&accessor_b) {
+          accessor_a = std::move(accessor_b);
+        });
 
     perform_test(
         bases_initial_capacity,
-        [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-        [](auto& wmw) -> decltype(auto) { return wmw; },
-        [](auto&& accessor_a, auto&& accessor_b) { accessor_a = accessor_b; });
-
-    perform_test(bases_initial_capacity,
-                 [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-                 [](auto& wmw) -> decltype(auto) { return wmw; },
-                 [](auto&& accessor_a, auto&& accessor_b) {
-                   accessor_a = std::move(accessor_b);
-                 });
+        [](auto &wmw) -> decltype(auto) { return std::as_const(wmw); },
+        [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+        [](auto &&accessor_a, auto &&accessor_b) { accessor_a = accessor_b; });
 
     perform_test(
         bases_initial_capacity,
-        [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-        [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-        [](auto&& accessor_a, auto&& accessor_b) { accessor_a = accessor_b; });
+        [](auto &wmw) -> decltype(auto) { return std::as_const(wmw); },
+        [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+        [](auto &&accessor_a, auto &&accessor_b) {
+          accessor_a = std::move(accessor_b);
+        });
 
-    perform_test(bases_initial_capacity,
-                 [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-                 [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-                 [](auto&& accessor_a, auto&& accessor_b) {
-                   accessor_a = std::move(accessor_b);
-                 });
+    perform_test(
+        bases_initial_capacity,
+        [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+        [](auto &wmw) -> decltype(auto) { return wmw; },
+        [](auto &&accessor_a, auto &&accessor_b) { accessor_a = accessor_b; });
+
+    perform_test(
+        bases_initial_capacity,
+        [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+        [](auto &wmw) -> decltype(auto) { return wmw; },
+        [](auto &&accessor_a, auto &&accessor_b) {
+          accessor_a = std::move(accessor_b);
+        });
+
+    perform_test(
+        bases_initial_capacity,
+        [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+        [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+        [](auto &&accessor_a, auto &&accessor_b) { accessor_a = accessor_b; });
+
+    perform_test(
+        bases_initial_capacity,
+        [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+        [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+        [](auto &&accessor_a, auto &&accessor_b) {
+          accessor_a = std::move(accessor_b);
+        });
   }
 }
 
-static void
-test_accessor_swap() {
+static void test_accessor_swap() {
   constexpr std::size_t n_clusters = 5;
   constexpr WindowsMergerTraits::windows_size_type n_windows = 20;
   constexpr std::size_t n_bases_to_add = 30;
@@ -1178,7 +1159,7 @@ test_accessor_swap() {
        window_index < n_windows; ++window_index) {
     auto bases_to_add = create_random_bases(n_clusters, n_bases_to_add);
     auto accessor = wmw[window_index];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
     accessor.set_begin_index(added_windows_starts[window_index]);
     added_windows.emplace_back(std::move(bases_to_add));
@@ -1187,8 +1168,8 @@ test_accessor_swap() {
   {
     auto wmw_0 = wmw[0];
     auto wmw_1 = wmw[1];
-    auto&& added_windows_0 = added_windows[0];
-    auto&& added_windows_1 = added_windows[1];
+    auto &&added_windows_0 = added_windows[0];
+    auto &&added_windows_1 = added_windows[1];
     assert(
         not ranges::equal(wmw[0], wmw_1 | ranges::view::take(wmw[0].size())));
     assert(ranges::equal(wmw_0,
@@ -1202,14 +1183,14 @@ test_accessor_swap() {
   ranges::swap(wmw[0], wmw[1]);
 
   {
-    auto&& wmw_0 = wmw[0];
-    auto&& wmw_1 = wmw[1];
+    auto &&wmw_0 = wmw[0];
+    auto &&wmw_1 = wmw[1];
     assert(wmw_0.index() == 0);
     assert(wmw_1.index() == 1);
     assert(wmw_0.begin_index() == added_windows_starts[1]);
     assert(wmw_1.begin_index() == added_windows_starts[0]);
-    auto&& added_windows_0 = added_windows[0];
-    auto&& added_windows_1 = added_windows[1];
+    auto &&added_windows_0 = added_windows[0];
+    auto &&added_windows_1 = added_windows[1];
     assert(ranges::equal(wmw_0,
                          added_windows_1 | ranges::view::take(wmw_0.size())));
     assert(ranges::equal(wmw_1,
@@ -1217,15 +1198,14 @@ test_accessor_swap() {
   }
 }
 
-static void
-test_accessor_assignment_reshape() {
+static void test_accessor_assignment_reshape() {
   constexpr std::size_t n_clusters = 5;
 
   WindowsMergerWindows wmw_a(5, 30, 1);
   {
     auto bases_to_add = create_random_bases(n_clusters, 30);
     auto accessor = wmw_a[0];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
   }
 
@@ -1233,34 +1213,33 @@ test_accessor_assignment_reshape() {
   {
     auto bases_to_add = create_random_bases(n_clusters, 70);
     auto accessor = wmw_b[0];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
   }
 
   {
-    auto&& wmw_a0 = wmw_a[0];
-    auto&& wmw_b0 = wmw_b[0];
+    auto &&wmw_a0 = wmw_a[0];
+    auto &&wmw_b0 = wmw_b[0];
     assert(
         not ranges::equal(wmw_a0, wmw_b0 | ranges::view::take(wmw_a0.size())));
   }
   wmw_a[0] = wmw_b[0];
   assert(wmw_a.bases_capacity() == 70);
   {
-    auto&& wmw_a0 = wmw_a[0];
-    auto&& wmw_b0 = wmw_b[0];
+    auto &&wmw_a0 = wmw_a[0];
+    auto &&wmw_b0 = wmw_b[0];
     assert(ranges::equal(wmw_a0, wmw_b0 | ranges::view::take(wmw_a0.size())));
   }
 }
 
-static void
-test_accessor_assignment_destroy() {
+static void test_accessor_assignment_destroy() {
   constexpr std::size_t n_clusters = 5;
 
   WindowsMergerWindows wmw_a(5, 70, 1);
   {
     auto bases_to_add = create_random_bases(n_clusters, 70);
     auto accessor = wmw_a[0];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
   }
 
@@ -1268,13 +1247,13 @@ test_accessor_assignment_destroy() {
   {
     auto bases_to_add = create_random_bases(n_clusters, 30);
     auto accessor = wmw_b[0];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
   }
 
   {
-    auto&& wmw_a0 = wmw_a[0];
-    auto&& wmw_b0 = wmw_b[0];
+    auto &&wmw_a0 = wmw_a[0];
+    auto &&wmw_b0 = wmw_b[0];
     assert(
         not ranges::equal(wmw_a0, wmw_b0 | ranges::view::take(wmw_a0.size())));
     assert(wmw_a0.size() == 70);
@@ -1288,15 +1267,14 @@ test_accessor_assignment_destroy() {
   }
 }
 
-static void
-test_accessor_move_assignment_reshape() {
+static void test_accessor_move_assignment_reshape() {
   constexpr std::size_t n_clusters = 5;
 
   WindowsMergerWindows wmw_a(5, 30, 1);
   {
     auto bases_to_add = create_random_bases(n_clusters, 30);
     auto accessor = wmw_a[0];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
   }
 
@@ -1304,13 +1282,13 @@ test_accessor_move_assignment_reshape() {
   {
     auto bases_to_add = create_random_bases(n_clusters, 70);
     auto accessor = wmw_b[0];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
   }
 
   {
-    auto&& wmw_a0 = wmw_a[0];
-    auto&& wmw_b0 = wmw_b[0];
+    auto &&wmw_a0 = wmw_a[0];
+    auto &&wmw_b0 = wmw_b[0];
 
     assert(
         not ranges::equal(wmw_a0, wmw_b0 | ranges::view::take(wmw_a0.size())));
@@ -1320,15 +1298,14 @@ test_accessor_move_assignment_reshape() {
   }
 }
 
-static void
-test_accessor_move_assignment_destroy() {
+static void test_accessor_move_assignment_destroy() {
   constexpr std::size_t n_clusters = 5;
 
   WindowsMergerWindows wmw_a(5, 70, 1);
   {
     auto bases_to_add = create_random_bases(n_clusters, 70);
     auto accessor = wmw_a[0];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
   }
 
@@ -1336,13 +1313,13 @@ test_accessor_move_assignment_destroy() {
   {
     auto bases_to_add = create_random_bases(n_clusters, 30);
     auto accessor = wmw_b[0];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
   }
 
   {
-    auto&& wmw_a0 = wmw_a[0];
-    auto&& wmw_b0 = wmw_b[0];
+    auto &&wmw_a0 = wmw_a[0];
+    auto &&wmw_b0 = wmw_b[0];
 
     assert(
         not ranges::equal(wmw_a0, wmw_b0 | ranges::view::take(wmw_a0.size())));
@@ -1357,8 +1334,7 @@ test_accessor_move_assignment_destroy() {
   }
 }
 
-static void
-test_accessor_swap_reshape_lhs() {
+static void test_accessor_swap_reshape_lhs() {
   constexpr std::size_t n_clusters = 5;
 
   std::vector<std::vector<WindowsMergerWindowBase>> added_windows;
@@ -1368,7 +1344,7 @@ test_accessor_swap_reshape_lhs() {
   {
     auto bases_to_add = create_random_bases(n_clusters, 30);
     auto accessor = wmw_a[0];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
     added_windows.emplace_back(std::move(bases_to_add));
   }
@@ -1376,16 +1352,16 @@ test_accessor_swap_reshape_lhs() {
   {
     auto bases_to_add = create_random_bases(n_clusters, 70);
     auto accessor = wmw_b[0];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
     added_windows.emplace_back(std::move(bases_to_add));
   }
 
   {
-    auto&& wmw_a0 = wmw_a[0];
-    auto&& wmw_b0 = wmw_b[0];
-    auto&& added_windows_0 = added_windows[0];
-    auto&& added_windows_1 = added_windows[1];
+    auto &&wmw_a0 = wmw_a[0];
+    auto &&wmw_b0 = wmw_b[0];
+    auto &&added_windows_0 = added_windows[0];
+    auto &&added_windows_1 = added_windows[1];
 
     assert(wmw_a.bases_capacity() == 30);
     assert(wmw_b.bases_capacity() == 70);
@@ -1402,10 +1378,10 @@ test_accessor_swap_reshape_lhs() {
   ranges::swap(wmw_a[0], wmw_b[0]);
 
   {
-    auto&& wmw_a0 = wmw_a[0];
-    auto&& wmw_b0 = wmw_b[0];
-    auto&& added_windows_0 = added_windows[0];
-    auto&& added_windows_1 = added_windows[1];
+    auto &&wmw_a0 = wmw_a[0];
+    auto &&wmw_b0 = wmw_b[0];
+    auto &&added_windows_0 = added_windows[0];
+    auto &&added_windows_1 = added_windows[1];
 
     assert(wmw_a.bases_capacity() == 70);
     assert(wmw_b.bases_capacity() == 70);
@@ -1418,8 +1394,7 @@ test_accessor_swap_reshape_lhs() {
   }
 }
 
-static void
-test_accessor_swap_reshape_rhs() {
+static void test_accessor_swap_reshape_rhs() {
   constexpr std::size_t n_clusters = 5;
 
   std::vector<std::vector<WindowsMergerWindowBase>> added_windows;
@@ -1429,7 +1404,7 @@ test_accessor_swap_reshape_rhs() {
   {
     auto bases_to_add = create_random_bases(n_clusters, 70);
     auto accessor = wmw_a[0];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
     added_windows.emplace_back(std::move(bases_to_add));
   }
@@ -1437,16 +1412,16 @@ test_accessor_swap_reshape_rhs() {
   {
     auto bases_to_add = create_random_bases(n_clusters, 30);
     auto accessor = wmw_b[0];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
     added_windows.emplace_back(std::move(bases_to_add));
   }
 
   {
-    auto&& wmw_a0 = wmw_a[0];
-    auto&& wmw_b0 = wmw_b[0];
-    auto&& added_windows_0 = added_windows[0];
-    auto&& added_windows_1 = added_windows[1];
+    auto &&wmw_a0 = wmw_a[0];
+    auto &&wmw_b0 = wmw_b[0];
+    auto &&added_windows_0 = added_windows[0];
+    auto &&added_windows_1 = added_windows[1];
 
     assert(wmw_a.bases_capacity() == 70);
     assert(wmw_b.bases_capacity() == 30);
@@ -1463,10 +1438,10 @@ test_accessor_swap_reshape_rhs() {
   ranges::swap(wmw_a[0], wmw_b[0]);
 
   {
-    auto&& wmw_a0 = wmw_a[0];
-    auto&& wmw_b0 = wmw_b[0];
-    auto&& added_windows_0 = added_windows[0];
-    auto&& added_windows_1 = added_windows[1];
+    auto &&wmw_a0 = wmw_a[0];
+    auto &&wmw_b0 = wmw_b[0];
+    auto &&added_windows_0 = added_windows[0];
+    auto &&added_windows_1 = added_windows[1];
 
     assert(wmw_a.bases_capacity() == 70);
     assert(wmw_b.bases_capacity() == 70);
@@ -1479,8 +1454,7 @@ test_accessor_swap_reshape_rhs() {
   }
 }
 
-static void
-test_base_accessor_assignment() {
+static void test_base_accessor_assignment() {
   constexpr std::size_t n_clusters = 5;
   constexpr WindowsMergerTraits::windows_size_type n_windows = 20;
   constexpr std::size_t n_bases_to_add = 30;
@@ -1492,7 +1466,7 @@ test_base_accessor_assignment() {
          window_index < n_windows; ++window_index) {
       auto bases_to_add = create_random_bases(n_clusters, n_bases_to_add);
       auto accessor = wmw[window_index];
-      for (const auto& window_base : bases_to_add)
+      for (const auto &window_base : bases_to_add)
         accessor.emplace_back(window_base);
       accessor.set_begin_index(starts[window_index]);
     }
@@ -1514,81 +1488,80 @@ test_base_accessor_assignment() {
     assert(ranges::equal(wmw[0], wmw[1]));
   };
 
-  perform_test([](auto& wmw) -> decltype(auto) { return wmw; },
-               [](auto& wmw) -> decltype(auto) { return wmw; },
-               [](auto&& lhs, auto&& rhs) { lhs = rhs; });
+  perform_test([](auto &wmw) -> decltype(auto) { return wmw; },
+               [](auto &wmw) -> decltype(auto) { return wmw; },
+               [](auto &&lhs, auto &&rhs) { lhs = rhs; });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return std::as_const(wmw); },
-               [](auto& wmw) -> decltype(auto) { return wmw; },
-               [](auto&& lhs, auto&& rhs) { lhs = rhs; });
+  perform_test([](auto &wmw) -> decltype(auto) { return std::as_const(wmw); },
+               [](auto &wmw) -> decltype(auto) { return wmw; },
+               [](auto &&lhs, auto &&rhs) { lhs = rhs; });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return wmw; },
-               [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto&& lhs, auto&& rhs) { lhs = rhs; });
+  perform_test([](auto &wmw) -> decltype(auto) { return wmw; },
+               [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &&lhs, auto &&rhs) { lhs = rhs; });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return std::as_const(wmw); },
-               [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto&& lhs, auto&& rhs) { lhs = rhs; });
+  perform_test([](auto &wmw) -> decltype(auto) { return std::as_const(wmw); },
+               [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &&lhs, auto &&rhs) { lhs = rhs; });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto& wmw) -> decltype(auto) { return wmw; },
-               [](auto&& lhs, auto&& rhs) { lhs = rhs; });
+  perform_test([](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &wmw) -> decltype(auto) { return wmw; },
+               [](auto &&lhs, auto &&rhs) { lhs = rhs; });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto&& lhs, auto&& rhs) { lhs = rhs; });
+  perform_test([](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &&lhs, auto &&rhs) { lhs = rhs; });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return wmw; },
-               [](auto& wmw) -> decltype(auto) { return wmw; },
-               [](auto&& lhs, auto&& rhs) { lhs = std::as_const(rhs); });
+  perform_test([](auto &wmw) -> decltype(auto) { return wmw; },
+               [](auto &wmw) -> decltype(auto) { return wmw; },
+               [](auto &&lhs, auto &&rhs) { lhs = std::as_const(rhs); });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return std::as_const(wmw); },
-               [](auto& wmw) -> decltype(auto) { return wmw; },
-               [](auto&& lhs, auto&& rhs) { lhs = std::as_const(rhs); });
+  perform_test([](auto &wmw) -> decltype(auto) { return std::as_const(wmw); },
+               [](auto &wmw) -> decltype(auto) { return wmw; },
+               [](auto &&lhs, auto &&rhs) { lhs = std::as_const(rhs); });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return wmw; },
-               [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto&& lhs, auto&& rhs) { lhs = std::as_const(rhs); });
+  perform_test([](auto &wmw) -> decltype(auto) { return wmw; },
+               [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &&lhs, auto &&rhs) { lhs = std::as_const(rhs); });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return std::as_const(wmw); },
-               [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto&& lhs, auto&& rhs) { lhs = std::as_const(rhs); });
+  perform_test([](auto &wmw) -> decltype(auto) { return std::as_const(wmw); },
+               [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &&lhs, auto &&rhs) { lhs = std::as_const(rhs); });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto& wmw) -> decltype(auto) { return wmw; },
-               [](auto&& lhs, auto&& rhs) { lhs = std::as_const(rhs); });
+  perform_test([](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &wmw) -> decltype(auto) { return wmw; },
+               [](auto &&lhs, auto &&rhs) { lhs = std::as_const(rhs); });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto&& lhs, auto&& rhs) { lhs = std::as_const(rhs); });
+  perform_test([](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &&lhs, auto &&rhs) { lhs = std::as_const(rhs); });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return wmw; },
-               [](auto& wmw) -> decltype(auto) { return wmw; },
-               [](auto&& lhs, auto&& rhs) { lhs = std::move(rhs); });
+  perform_test([](auto &wmw) -> decltype(auto) { return wmw; },
+               [](auto &wmw) -> decltype(auto) { return wmw; },
+               [](auto &&lhs, auto &&rhs) { lhs = std::move(rhs); });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return std::as_const(wmw); },
-               [](auto& wmw) -> decltype(auto) { return wmw; },
-               [](auto&& lhs, auto&& rhs) { lhs = std::move(rhs); });
+  perform_test([](auto &wmw) -> decltype(auto) { return std::as_const(wmw); },
+               [](auto &wmw) -> decltype(auto) { return wmw; },
+               [](auto &&lhs, auto &&rhs) { lhs = std::move(rhs); });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return wmw; },
-               [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto&& lhs, auto&& rhs) { lhs = std::move(rhs); });
+  perform_test([](auto &wmw) -> decltype(auto) { return wmw; },
+               [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &&lhs, auto &&rhs) { lhs = std::move(rhs); });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return std::as_const(wmw); },
-               [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto&& lhs, auto&& rhs) { lhs = std::move(rhs); });
+  perform_test([](auto &wmw) -> decltype(auto) { return std::as_const(wmw); },
+               [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &&lhs, auto &&rhs) { lhs = std::move(rhs); });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto& wmw) -> decltype(auto) { return wmw; },
-               [](auto&& lhs, auto&& rhs) { lhs = std::move(rhs); });
+  perform_test([](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &wmw) -> decltype(auto) { return wmw; },
+               [](auto &&lhs, auto &&rhs) { lhs = std::move(rhs); });
 
-  perform_test([](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto&& lhs, auto&& rhs) { lhs = std::move(rhs); });
+  perform_test([](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &&lhs, auto &&rhs) { lhs = std::move(rhs); });
 }
 
-static void
-test_window_accessor_to_window_constructor() {
+static void test_window_accessor_to_window_constructor() {
   using windows_size_type = WindowsMergerTraits::windows_size_type;
   constexpr std::size_t n_clusters = 5;
   constexpr WindowsMergerTraits::windows_size_type n_windows = 20;
@@ -1603,7 +1576,7 @@ test_window_accessor_to_window_constructor() {
          window_index < n_windows; ++window_index) {
       auto bases_to_add = create_random_bases(n_clusters, n_bases_to_add);
       auto accessor = wmw[window_index];
-      for (const auto& window_base : bases_to_add)
+      for (const auto &window_base : bases_to_add)
         accessor.emplace_back(window_base);
       added_windows.emplace_back(bases_to_add);
     }
@@ -1617,13 +1590,12 @@ test_window_accessor_to_window_constructor() {
     }
   };
 
-  perform_test([](auto&& wmw) -> decltype(auto) { return wmw; });
-  perform_test([](auto&& wmw) -> decltype(auto) { return std::as_const(wmw); });
-  perform_test([](auto&& wmw) -> decltype(auto) { return std::move(wmw); });
+  perform_test([](auto &&wmw) -> decltype(auto) { return wmw; });
+  perform_test([](auto &&wmw) -> decltype(auto) { return std::as_const(wmw); });
+  perform_test([](auto &&wmw) -> decltype(auto) { return std::move(wmw); });
 }
 
-static void
-test_window_accessor_to_window_assignment() {
+static void test_window_accessor_to_window_assignment() {
   using windows_size_type = WindowsMergerTraits::windows_size_type;
   constexpr std::size_t n_clusters = 5;
   constexpr WindowsMergerTraits::windows_size_type n_windows = 20;
@@ -1638,7 +1610,7 @@ test_window_accessor_to_window_assignment() {
          window_index < n_windows; ++window_index) {
       auto bases_to_add = create_random_bases(n_clusters, n_bases_to_add);
       auto accessor = wmw[window_index];
-      for (const auto& window_base : bases_to_add)
+      for (const auto &window_base : bases_to_add)
         accessor.emplace_back(window_base);
       added_windows.emplace_back(std::move(bases_to_add));
     }
@@ -1654,37 +1626,36 @@ test_window_accessor_to_window_assignment() {
     }
   };
 
-  perform_test([](auto&& wmw) -> decltype(auto) { return wmw; },
-               [](auto&& accessor) -> decltype(auto) { return accessor; });
-  perform_test([](auto&& wmw) -> decltype(auto) { return std::as_const(wmw); },
-               [](auto&& accessor) -> decltype(auto) { return accessor; });
-  perform_test([](auto&& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto&& accessor) -> decltype(auto) { return accessor; });
-  perform_test([](auto&& wmw) -> decltype(auto) { return wmw; },
-               [](auto&& accessor) -> decltype(auto) {
+  perform_test([](auto &&wmw) -> decltype(auto) { return wmw; },
+               [](auto &&accessor) -> decltype(auto) { return accessor; });
+  perform_test([](auto &&wmw) -> decltype(auto) { return std::as_const(wmw); },
+               [](auto &&accessor) -> decltype(auto) { return accessor; });
+  perform_test([](auto &&wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &&accessor) -> decltype(auto) { return accessor; });
+  perform_test([](auto &&wmw) -> decltype(auto) { return wmw; },
+               [](auto &&accessor) -> decltype(auto) {
                  return std::as_const(accessor);
                });
-  perform_test([](auto&& wmw) -> decltype(auto) { return std::as_const(wmw); },
-               [](auto&& accessor) -> decltype(auto) {
+  perform_test([](auto &&wmw) -> decltype(auto) { return std::as_const(wmw); },
+               [](auto &&accessor) -> decltype(auto) {
                  return std::as_const(accessor);
                });
-  perform_test([](auto&& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto&& accessor) -> decltype(auto) {
+  perform_test([](auto &&wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &&accessor) -> decltype(auto) {
                  return std::as_const(accessor);
                });
   perform_test(
-      [](auto&& wmw) -> decltype(auto) { return wmw; },
-      [](auto&& accessor) -> decltype(auto) { return std::move(accessor); });
+      [](auto &&wmw) -> decltype(auto) { return wmw; },
+      [](auto &&accessor) -> decltype(auto) { return std::move(accessor); });
   perform_test(
-      [](auto&& wmw) -> decltype(auto) { return std::as_const(wmw); },
-      [](auto&& accessor) -> decltype(auto) { return std::move(accessor); });
+      [](auto &&wmw) -> decltype(auto) { return std::as_const(wmw); },
+      [](auto &&accessor) -> decltype(auto) { return std::move(accessor); });
   perform_test(
-      [](auto&& wmw) -> decltype(auto) { return std::move(wmw); },
-      [](auto&& accessor) -> decltype(auto) { return std::move(accessor); });
+      [](auto &&wmw) -> decltype(auto) { return std::move(wmw); },
+      [](auto &&accessor) -> decltype(auto) { return std::move(accessor); });
 }
 
-static void
-test_window_base_accessor_to_base_constructor() {
+static void test_window_base_accessor_to_base_constructor() {
   using windows_size_type = WindowsMergerTraits::windows_size_type;
   using bases_size_type = WindowsMergerTraits::bases_size_type;
 
@@ -1701,7 +1672,7 @@ test_window_base_accessor_to_base_constructor() {
          window_index < n_windows; ++window_index) {
       auto bases_to_add = create_random_bases(n_clusters, n_bases_to_add);
       auto accessor = wmw[window_index];
-      for (const auto& window_base : bases_to_add)
+      for (const auto &window_base : bases_to_add)
         accessor.emplace_back(window_base);
       added_windows.emplace_back(bases_to_add);
     }
@@ -1709,7 +1680,7 @@ test_window_base_accessor_to_base_constructor() {
     for (windows_size_type window_index = 0; window_index < n_windows;
          ++window_index) {
       auto window_accessor = wmw_get(wmw)[window_index];
-      const auto& added_window = added_windows[window_index];
+      const auto &added_window = added_windows[window_index];
       for (bases_size_type base_index = 0; base_index < n_bases_to_add;
            ++base_index) {
         WindowsMergerWindowBase base(window_accessor[base_index]);
@@ -1718,13 +1689,12 @@ test_window_base_accessor_to_base_constructor() {
     }
   };
 
-  perform_test([](auto&& wmw) -> decltype(auto) { return wmw; });
-  perform_test([](auto&& wmw) -> decltype(auto) { return std::as_const(wmw); });
-  perform_test([](auto&& wmw) -> decltype(auto) { return std::move(wmw); });
+  perform_test([](auto &&wmw) -> decltype(auto) { return wmw; });
+  perform_test([](auto &&wmw) -> decltype(auto) { return std::as_const(wmw); });
+  perform_test([](auto &&wmw) -> decltype(auto) { return std::move(wmw); });
 }
 
-static void
-test_window_base_accessor_to_base_assignment() {
+static void test_window_base_accessor_to_base_assignment() {
   using windows_size_type = WindowsMergerTraits::windows_size_type;
   using bases_size_type = WindowsMergerTraits::bases_size_type;
 
@@ -1741,7 +1711,7 @@ test_window_base_accessor_to_base_assignment() {
          window_index < n_windows; ++window_index) {
       auto bases_to_add = create_random_bases(n_clusters, n_bases_to_add);
       auto accessor = wmw[window_index];
-      for (const auto& window_base : bases_to_add)
+      for (const auto &window_base : bases_to_add)
         accessor.emplace_back(window_base);
       added_windows.emplace_back(bases_to_add);
     }
@@ -1749,7 +1719,7 @@ test_window_base_accessor_to_base_assignment() {
     for (windows_size_type window_index = 0; window_index < n_windows;
          ++window_index) {
       auto window_accessor = wmw_get(wmw)[window_index];
-      const auto& added_window = added_windows[window_index];
+      const auto &added_window = added_windows[window_index];
       for (bases_size_type base_index = 0; base_index < n_bases_to_add;
            ++base_index) {
         WindowsMergerWindowBase base;
@@ -1760,37 +1730,36 @@ test_window_base_accessor_to_base_assignment() {
     }
   };
 
-  perform_test([](auto&& wmw) -> decltype(auto) { return wmw; },
-               [](auto&& accessor) -> decltype(auto) { return accessor; });
-  perform_test([](auto&& wmw) -> decltype(auto) { return std::as_const(wmw); },
-               [](auto&& accessor) -> decltype(auto) { return accessor; });
-  perform_test([](auto&& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto&& accessor) -> decltype(auto) { return accessor; });
-  perform_test([](auto&& wmw) -> decltype(auto) { return wmw; },
-               [](auto&& accessor) -> decltype(auto) {
+  perform_test([](auto &&wmw) -> decltype(auto) { return wmw; },
+               [](auto &&accessor) -> decltype(auto) { return accessor; });
+  perform_test([](auto &&wmw) -> decltype(auto) { return std::as_const(wmw); },
+               [](auto &&accessor) -> decltype(auto) { return accessor; });
+  perform_test([](auto &&wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &&accessor) -> decltype(auto) { return accessor; });
+  perform_test([](auto &&wmw) -> decltype(auto) { return wmw; },
+               [](auto &&accessor) -> decltype(auto) {
                  return std::as_const(accessor);
                });
-  perform_test([](auto&& wmw) -> decltype(auto) { return std::as_const(wmw); },
-               [](auto&& accessor) -> decltype(auto) {
+  perform_test([](auto &&wmw) -> decltype(auto) { return std::as_const(wmw); },
+               [](auto &&accessor) -> decltype(auto) {
                  return std::as_const(accessor);
                });
-  perform_test([](auto&& wmw) -> decltype(auto) { return std::move(wmw); },
-               [](auto&& accessor) -> decltype(auto) {
+  perform_test([](auto &&wmw) -> decltype(auto) { return std::move(wmw); },
+               [](auto &&accessor) -> decltype(auto) {
                  return std::as_const(accessor);
                });
   perform_test(
-      [](auto&& wmw) -> decltype(auto) { return wmw; },
-      [](auto&& accessor) -> decltype(auto) { return std::move(accessor); });
+      [](auto &&wmw) -> decltype(auto) { return wmw; },
+      [](auto &&accessor) -> decltype(auto) { return std::move(accessor); });
   perform_test(
-      [](auto&& wmw) -> decltype(auto) { return std::as_const(wmw); },
-      [](auto&& accessor) -> decltype(auto) { return std::move(accessor); });
+      [](auto &&wmw) -> decltype(auto) { return std::as_const(wmw); },
+      [](auto &&accessor) -> decltype(auto) { return std::move(accessor); });
   perform_test(
-      [](auto&& wmw) -> decltype(auto) { return std::move(wmw); },
-      [](auto&& accessor) -> decltype(auto) { return std::move(accessor); });
+      [](auto &&wmw) -> decltype(auto) { return std::move(wmw); },
+      [](auto &&accessor) -> decltype(auto) { return std::move(accessor); });
 }
 
-static void
-test_windows_iterators() {
+static void test_windows_iterators() {
   constexpr std::size_t n_clusters = 5;
   constexpr WindowsMergerTraits::windows_size_type n_windows = 20;
   constexpr std::size_t n_bases_to_add = 30;
@@ -1803,12 +1772,12 @@ test_windows_iterators() {
        window_index < n_windows; ++window_index) {
     auto bases_to_add = create_random_bases(n_clusters, n_bases_to_add);
     auto accessor = wmw[window_index];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
     added_windows.emplace_back(std::move(bases_to_add));
   }
 
-  auto perform_test = [&added_windows](auto&& wmw) {
+  auto perform_test = [&added_windows](auto &&wmw) {
     auto test_with_iterators = [](auto wmw_begin, auto wmw_end,
                                   auto added_windows_begin,
                                   auto added_windows_end) {
@@ -1843,7 +1812,7 @@ test_windows_iterators() {
 
         auto added_windows_iter = added_windows_begin;
         for (; wmw_iter < wmw_end; ++wmw_iter, ++added_windows_iter, ++index) {
-          auto&& wmw_window = *wmw_iter;
+          auto &&wmw_window = *wmw_iter;
           assert(wmw_begin[index].index() == (*wmw_iter).index() and
                  wmw_begin[index].begin_index() == (*wmw_iter).begin_index() and
                  wmw_begin[index].end_index() == (*wmw_iter).end_index() and
@@ -1854,7 +1823,7 @@ test_windows_iterators() {
           if (added_windows_iter == added_windows_end)
             return false;
 
-          auto&& added_window = *added_windows_iter;
+          auto &&added_window = *added_windows_iter;
           if (not ranges::equal(wmw_window, added_window))
             return false;
         }
@@ -1873,8 +1842,8 @@ test_windows_iterators() {
           if (added_windows_iter == added_windows_end)
             return false;
 
-          auto&& wmw_window = *wmw_iter;
-          auto&& added_window = *added_windows_iter;
+          auto &&wmw_window = *wmw_iter;
+          auto &&added_window = *added_windows_iter;
           if (not ranges::equal(wmw_window, added_window))
             return false;
         }
@@ -1890,8 +1859,8 @@ test_windows_iterators() {
           if (added_windows_iter == added_windows_end)
             return false;
 
-          auto&& wmw_window = *wmw_iter;
-          auto&& added_window = *added_windows_iter;
+          auto &&wmw_window = *wmw_iter;
+          auto &&added_window = *added_windows_iter;
           if (not ranges::equal(wmw_window, added_window))
             return false;
         }
@@ -1910,8 +1879,8 @@ test_windows_iterators() {
           if (added_windows_iter == added_windows_end)
             return false;
 
-          auto&& wmw_window = *wmw_iter;
-          auto&& added_window = *added_windows_iter;
+          auto &&wmw_window = *wmw_iter;
+          auto &&added_window = *added_windows_iter;
           if (not ranges::equal(wmw_window, added_window))
             return false;
         }
@@ -1927,8 +1896,8 @@ test_windows_iterators() {
           if (added_windows_iter == added_windows_end)
             return false;
 
-          auto&& wmw_window = *wmw_iter;
-          auto&& added_window = *added_windows_iter;
+          auto &&wmw_window = *wmw_iter;
+          auto &&added_window = *added_windows_iter;
           if (not ranges::equal(wmw_window, added_window))
             return false;
         }
@@ -1947,8 +1916,8 @@ test_windows_iterators() {
           if (added_windows_iter == added_windows_end)
             return false;
 
-          auto&& wmw_window = *wmw_iter;
-          auto&& added_window = *added_windows_iter;
+          auto &&wmw_window = *wmw_iter;
+          auto &&added_window = *added_windows_iter;
           if (not ranges::equal(wmw_window, added_window))
             return false;
         }
@@ -1968,7 +1937,7 @@ test_windows_iterators() {
             std::is_const_v<std::remove_reference_t<wmw_type>>,
             WindowsMergerWindowsIterator<const WindowsMergerWindows>,
             WindowsMergerWindowsIterator<WindowsMergerWindows>>,
-        WindowsMergerWindowsIterator<WindowsMergerWindows&&>>;
+        WindowsMergerWindowsIterator<WindowsMergerWindows &&>>;
 
     using wmw_deref_iter_type = decltype(*std::forward<wmw_type>(wmw).begin());
     using wmw_deref_iter_expected_type = std::conditional_t<
@@ -1977,7 +1946,7 @@ test_windows_iterators() {
             std::is_const_v<std::remove_reference_t<wmw_type>>,
             WindowsMergerWindowAccessor<const WindowsMergerWindows>,
             WindowsMergerWindowAccessor<WindowsMergerWindows>>,
-        WindowsMergerWindowAccessor<WindowsMergerWindows&&>>;
+        WindowsMergerWindowAccessor<WindowsMergerWindows &&>>;
 
     static_assert(std::is_same_v<wmw_iter_type, wmw_iter_expected_type>);
     static_assert(
@@ -1998,8 +1967,7 @@ test_windows_iterators() {
   assert(perform_test(std::move(wmw)));
 }
 
-static void
-test_concrete_base() {
+static void test_concrete_base() {
   using bases_size_type = typename WindowsMergerTraits::bases_size_type;
 
   constexpr std::size_t n_clusters = 5;
@@ -2009,7 +1977,7 @@ test_concrete_base() {
   const auto accessor = wmw[0];
 
   auto bases = create_random_bases(n_clusters, n_bases);
-  for (auto&& base : bases)
+  for (auto &&base : bases)
     accessor.emplace_back(std::move(base));
 
   bases = create_random_bases(n_clusters, n_bases);
@@ -2029,8 +1997,7 @@ test_concrete_base() {
   assert(ranges::equal(accessor, bases));
 }
 
-static void
-test_concrete_window() {
+static void test_concrete_window() {
   using bases_size_type = typename WindowsMergerTraits::bases_size_type;
   using windows_size_type = typename WindowsMergerTraits::windows_size_type;
 
@@ -2046,7 +2013,7 @@ test_concrete_window() {
           [window_index = windows_size_type(0), use_push_back]() mutable {
             WindowsMergerWindow window(n_clusters);
             auto random_bases = create_random_bases(n_clusters, n_bases_to_add);
-            for (auto&& base : random_bases) {
+            for (auto &&base : random_bases) {
               if (use_push_back)
                 window.push_back(base);
               else
@@ -2083,7 +2050,7 @@ test_concrete_window() {
                                                                                \
     auto random_bases =                                                        \
         create_random_bases(n_clusters, initial_bases_capacity);               \
-    for (auto& window_base : random_bases) {                                   \
+    for (auto &window_base : random_bases) {                                   \
       accessor.emplace_back(window_base);                                      \
       assert(accessor.back() == window_base);                                  \
     }                                                                          \
@@ -2158,8 +2125,7 @@ test_concrete_window() {
   perform_test(13);
 }
 
-static void
-test_concrete_window_iterator() {
+static void test_concrete_window_iterator() {
   using bases_size_type = typename WindowsMergerTraits::bases_size_type;
 
   constexpr std::size_t n_clusters = 5;
@@ -2168,7 +2134,7 @@ test_concrete_window_iterator() {
   auto perform_test = [](auto get_begin, auto get_end) {
     WindowsMergerWindow window(n_clusters);
     auto random_bases = create_random_bases(n_clusters, n_bases_to_add);
-    for (auto&& base : random_bases)
+    for (auto &&base : random_bases)
       window.emplace_back(base);
 
     assert(ranges::equal(get_begin(window), get_end(window),
@@ -2181,33 +2147,32 @@ test_concrete_window_iterator() {
     }
   };
 
-  perform_test([](auto&& data) -> decltype(auto) { return data.begin(); },
-               [](auto&& data) -> decltype(auto) { return data.end(); });
+  perform_test([](auto &&data) -> decltype(auto) { return data.begin(); },
+               [](auto &&data) -> decltype(auto) { return data.end(); });
 
-  perform_test([](auto&& data) -> decltype(auto) { return data.rbegin(); },
-               [](auto&& data) -> decltype(auto) { return data.rend(); });
-
-  perform_test(
-      [](auto&& data) -> decltype(auto) { return std::as_const(data).begin(); },
-      [](auto&& data) -> decltype(auto) { return std::as_const(data).end(); });
+  perform_test([](auto &&data) -> decltype(auto) { return data.rbegin(); },
+               [](auto &&data) -> decltype(auto) { return data.rend(); });
 
   perform_test(
-      [](auto&& data) -> decltype(auto) {
+      [](auto &&data) -> decltype(auto) { return std::as_const(data).begin(); },
+      [](auto &&data) -> decltype(auto) { return std::as_const(data).end(); });
+
+  perform_test(
+      [](auto &&data) -> decltype(auto) {
         return std::as_const(data).rbegin();
       },
-      [](auto&& data) -> decltype(auto) { return std::as_const(data).rend(); });
+      [](auto &&data) -> decltype(auto) { return std::as_const(data).rend(); });
 
   perform_test(
-      [](auto&& data) -> decltype(auto) { return std::move(data).begin(); },
-      [](auto&& data) -> decltype(auto) { return std::move(data).end(); });
+      [](auto &&data) -> decltype(auto) { return std::move(data).begin(); },
+      [](auto &&data) -> decltype(auto) { return std::move(data).end(); });
 
   perform_test(
-      [](auto&& data) -> decltype(auto) { return std::move(data).rbegin(); },
-      [](auto&& data) -> decltype(auto) { return std::move(data).rend(); });
+      [](auto &&data) -> decltype(auto) { return std::move(data).rbegin(); },
+      [](auto &&data) -> decltype(auto) { return std::move(data).rend(); });
 }
 
-static void
-test_concrete_window_coverage_accessor() {
+static void test_concrete_window_coverage_accessor() {
   using bases_size_type = WindowsMergerWindow::bases_size_type;
 
   constexpr std::size_t n_clusters = 5;
@@ -2216,7 +2181,7 @@ test_concrete_window_coverage_accessor() {
   const auto added_bases = create_random_bases(n_clusters, n_bases_to_add);
 
   WindowsMergerWindow window(n_clusters);
-  for (auto&& base : added_bases)
+  for (auto &&base : added_bases)
     window.emplace_back(std::move(base));
 
   auto perform_test = [&](auto window_get) {
@@ -2242,15 +2207,14 @@ test_concrete_window_coverage_accessor() {
       assert(coverages[base_index] == added_bases[base_index].coverage());
   };
 
-  perform_test([](auto&& window) -> decltype(auto) { return window; });
+  perform_test([](auto &&window) -> decltype(auto) { return window; });
   perform_test(
-      [](auto&& window) -> decltype(auto) { return std::as_const(window); });
+      [](auto &&window) -> decltype(auto) { return std::as_const(window); });
   perform_test(
-      [](auto&& window) -> decltype(auto) { return std::move(window); });
+      [](auto &&window) -> decltype(auto) { return std::move(window); });
 }
 
-static void
-test_concrete_window_coverage_iterator() {
+static void test_concrete_window_coverage_iterator() {
   using bases_size_type = typename WindowsMergerTraits::bases_size_type;
 
   constexpr std::size_t n_clusters = 5;
@@ -2261,7 +2225,7 @@ test_concrete_window_coverage_iterator() {
   auto perform_test = [&](auto window_get, auto get_begin, auto get_end) {
     {
       WindowsMergerWindow window(n_clusters);
-      for (auto&& base : added_bases)
+      for (auto &&base : added_bases)
         window.emplace_back(base);
 
       auto coverages = window_get(window).coverages();
@@ -2293,7 +2257,7 @@ test_concrete_window_coverage_iterator() {
 
     {
       WindowsMergerWindow window(n_clusters);
-      for (auto&& base : added_bases)
+      for (auto &&base : added_bases)
         window.emplace_back(base);
 
       auto coverages = window_get(window).coverages();
@@ -2313,7 +2277,7 @@ test_concrete_window_coverage_iterator() {
 
     {
       WindowsMergerWindow window(n_clusters);
-      for (auto&& base : added_bases)
+      for (auto &&base : added_bases)
         window.emplace_back(base);
 
       auto coverages = window_get(window).coverages();
@@ -2331,7 +2295,7 @@ test_concrete_window_coverage_iterator() {
 
     {
       WindowsMergerWindow window(n_clusters);
-      for (auto&& base : added_bases)
+      for (auto &&base : added_bases)
         window.emplace_back(base);
 
       auto coverages = window_get(window).coverages();
@@ -2351,7 +2315,7 @@ test_concrete_window_coverage_iterator() {
 
     {
       WindowsMergerWindow window(n_clusters);
-      for (auto&& base : added_bases)
+      for (auto &&base : added_bases)
         window.emplace_back(base);
 
       auto coverages = window_get(window).coverages();
@@ -2369,7 +2333,7 @@ test_concrete_window_coverage_iterator() {
 
     {
       WindowsMergerWindow window(n_clusters);
-      for (auto&& base : added_bases)
+      for (auto &&base : added_bases)
         window.emplace_back(base);
 
       auto coverages = window_get(window).coverages();
@@ -2389,7 +2353,7 @@ test_concrete_window_coverage_iterator() {
 
     {
       WindowsMergerWindow window(n_clusters);
-      for (auto&& base : added_bases)
+      for (auto &&base : added_bases)
         window.emplace_back(base);
 
       auto coverages = window_get(window).coverages();
@@ -2403,33 +2367,32 @@ test_concrete_window_coverage_iterator() {
     }
   };
 
-  perform_test([](auto&& window) -> decltype(auto) { return window; },
-               [](auto&& data) -> decltype(auto) { return data.begin(); },
-               [](auto&& data) -> decltype(auto) { return data.end(); });
+  perform_test([](auto &&window) -> decltype(auto) { return window; },
+               [](auto &&data) -> decltype(auto) { return data.begin(); },
+               [](auto &&data) -> decltype(auto) { return data.end(); });
   perform_test(
-      [](auto&& window) -> decltype(auto) { return std::as_const(window); },
-      [](auto&& data) -> decltype(auto) { return data.begin(); },
-      [](auto&& data) -> decltype(auto) { return data.end(); });
+      [](auto &&window) -> decltype(auto) { return std::as_const(window); },
+      [](auto &&data) -> decltype(auto) { return data.begin(); },
+      [](auto &&data) -> decltype(auto) { return data.end(); });
   perform_test(
-      [](auto&& window) -> decltype(auto) { return std::move(window); },
-      [](auto&& data) -> decltype(auto) { return data.begin(); },
-      [](auto&& data) -> decltype(auto) { return data.end(); });
+      [](auto &&window) -> decltype(auto) { return std::move(window); },
+      [](auto &&data) -> decltype(auto) { return data.begin(); },
+      [](auto &&data) -> decltype(auto) { return data.end(); });
 
-  perform_test([](auto&& window) -> decltype(auto) { return window; },
-               [](auto&& data) -> decltype(auto) { return data.rbegin(); },
-               [](auto&& data) -> decltype(auto) { return data.rend(); });
+  perform_test([](auto &&window) -> decltype(auto) { return window; },
+               [](auto &&data) -> decltype(auto) { return data.rbegin(); },
+               [](auto &&data) -> decltype(auto) { return data.rend(); });
   perform_test(
-      [](auto&& window) -> decltype(auto) { return std::as_const(window); },
-      [](auto&& data) -> decltype(auto) { return data.rbegin(); },
-      [](auto&& data) -> decltype(auto) { return data.rend(); });
+      [](auto &&window) -> decltype(auto) { return std::as_const(window); },
+      [](auto &&data) -> decltype(auto) { return data.rbegin(); },
+      [](auto &&data) -> decltype(auto) { return data.rend(); });
   perform_test(
-      [](auto&& window) -> decltype(auto) { return std::move(window); },
-      [](auto&& data) -> decltype(auto) { return data.rbegin(); },
-      [](auto&& data) -> decltype(auto) { return data.rend(); });
+      [](auto &&window) -> decltype(auto) { return std::move(window); },
+      [](auto &&data) -> decltype(auto) { return data.rbegin(); },
+      [](auto &&data) -> decltype(auto) { return data.rend(); });
 }
 
-static void
-test_concrete_window_weights_accessor() {
+static void test_concrete_window_weights_accessor() {
   using clusters_size_type = WindowsMergerWindow::clusters_size_type;
   using bases_size_type = WindowsMergerWindow::bases_size_type;
 
@@ -2439,7 +2402,7 @@ test_concrete_window_weights_accessor() {
   auto perform_test = [&](auto window_get) {
     const auto added_bases = create_random_bases(n_clusters, n_bases_to_add);
     WindowsMergerWindow window(n_clusters);
-    for (auto&& base : added_bases)
+    for (auto &&base : added_bases)
       window.emplace_back(base);
 
     auto linear_weights = window_get(window).linear_weights();
@@ -2471,7 +2434,7 @@ test_concrete_window_weights_accessor() {
       bases_size_type linear_weight_index = 0;
       for (bases_size_type base_index = 0; base_index < n_bases_to_add;
            ++base_index) {
-        const auto& base = added_bases[base_index];
+        const auto &base = added_bases[base_index];
         for (clusters_size_type cluster_index = 0; cluster_index < n_clusters;
              ++cluster_index) {
           assert(linear_weights[linear_weight_index++] ==
@@ -2481,15 +2444,14 @@ test_concrete_window_weights_accessor() {
     }
   };
 
-  perform_test([](auto&& window) -> decltype(auto) { return window; });
+  perform_test([](auto &&window) -> decltype(auto) { return window; });
   perform_test(
-      [](auto&& window) -> decltype(auto) { return std::as_const(window); });
+      [](auto &&window) -> decltype(auto) { return std::as_const(window); });
   perform_test(
-      [](auto&& window) -> decltype(auto) { return std::move(window); });
+      [](auto &&window) -> decltype(auto) { return std::move(window); });
 }
 
-static void
-test_concrete_window_weights_iterator() {
+static void test_concrete_window_weights_iterator() {
   using bases_size_type = typename WindowsMergerTraits::bases_size_type;
   using weight_type = typename WindowsMergerTraits::weight_type;
 
@@ -2501,8 +2463,8 @@ test_concrete_window_weights_iterator() {
     std::vector<weight_type> linear_weights;
     linear_weights.reserve(n_clusters * n_bases_to_add);
 
-    for (const auto& base : added_bases) {
-      for (auto&& weight : base.weights()) {
+    for (const auto &base : added_bases) {
+      for (auto &&weight : base.weights()) {
         linear_weights.emplace_back(weight);
       }
     }
@@ -2513,7 +2475,7 @@ test_concrete_window_weights_iterator() {
   auto perform_test = [&](auto window_get, auto get_begin, auto get_end) {
     {
       WindowsMergerWindow window(n_clusters);
-      for (auto&& base : added_bases)
+      for (auto &&base : added_bases)
         window.emplace_back(base);
 
       auto linear_weights = window_get(window).linear_weights();
@@ -2546,7 +2508,7 @@ test_concrete_window_weights_iterator() {
 
     {
       WindowsMergerWindow window(n_clusters);
-      for (auto&& base : added_bases)
+      for (auto &&base : added_bases)
         window.emplace_back(base);
 
       auto linear_weights = window_get(window).linear_weights();
@@ -2566,7 +2528,7 @@ test_concrete_window_weights_iterator() {
 
     {
       WindowsMergerWindow window(n_clusters);
-      for (auto&& base : added_bases)
+      for (auto &&base : added_bases)
         window.emplace_back(base);
 
       auto linear_weights = window_get(window).linear_weights();
@@ -2584,7 +2546,7 @@ test_concrete_window_weights_iterator() {
 
     {
       WindowsMergerWindow window(n_clusters);
-      for (auto&& base : added_bases)
+      for (auto &&base : added_bases)
         window.emplace_back(base);
 
       auto linear_weights = window_get(window).linear_weights();
@@ -2604,7 +2566,7 @@ test_concrete_window_weights_iterator() {
 
     {
       WindowsMergerWindow window(n_clusters);
-      for (auto&& base : added_bases)
+      for (auto &&base : added_bases)
         window.emplace_back(base);
 
       auto linear_weights = window_get(window).linear_weights();
@@ -2622,7 +2584,7 @@ test_concrete_window_weights_iterator() {
 
     {
       WindowsMergerWindow window(n_clusters);
-      for (auto&& base : added_bases)
+      for (auto &&base : added_bases)
         window.emplace_back(base);
 
       auto linear_weights = window_get(window).linear_weights();
@@ -2642,7 +2604,7 @@ test_concrete_window_weights_iterator() {
 
     {
       WindowsMergerWindow window(n_clusters);
-      for (auto&& base : added_bases)
+      for (auto &&base : added_bases)
         window.emplace_back(base);
 
       auto linear_weights = window_get(window).linear_weights();
@@ -2656,33 +2618,32 @@ test_concrete_window_weights_iterator() {
     }
   };
 
-  perform_test([](auto&& window) -> decltype(auto) { return window; },
-               [](auto&& data) -> decltype(auto) { return data.begin(); },
-               [](auto&& data) -> decltype(auto) { return data.end(); });
+  perform_test([](auto &&window) -> decltype(auto) { return window; },
+               [](auto &&data) -> decltype(auto) { return data.begin(); },
+               [](auto &&data) -> decltype(auto) { return data.end(); });
   perform_test(
-      [](auto&& window) -> decltype(auto) { return std::as_const(window); },
-      [](auto&& data) -> decltype(auto) { return data.begin(); },
-      [](auto&& data) -> decltype(auto) { return data.end(); });
+      [](auto &&window) -> decltype(auto) { return std::as_const(window); },
+      [](auto &&data) -> decltype(auto) { return data.begin(); },
+      [](auto &&data) -> decltype(auto) { return data.end(); });
   perform_test(
-      [](auto&& window) -> decltype(auto) { return std::move(window); },
-      [](auto&& data) -> decltype(auto) { return data.begin(); },
-      [](auto&& data) -> decltype(auto) { return data.end(); });
+      [](auto &&window) -> decltype(auto) { return std::move(window); },
+      [](auto &&data) -> decltype(auto) { return data.begin(); },
+      [](auto &&data) -> decltype(auto) { return data.end(); });
 
-  perform_test([](auto&& window) -> decltype(auto) { return window; },
-               [](auto&& data) -> decltype(auto) { return data.rbegin(); },
-               [](auto&& data) -> decltype(auto) { return data.rend(); });
+  perform_test([](auto &&window) -> decltype(auto) { return window; },
+               [](auto &&data) -> decltype(auto) { return data.rbegin(); },
+               [](auto &&data) -> decltype(auto) { return data.rend(); });
   perform_test(
-      [](auto&& window) -> decltype(auto) { return std::as_const(window); },
-      [](auto&& data) -> decltype(auto) { return data.rbegin(); },
-      [](auto&& data) -> decltype(auto) { return data.rend(); });
+      [](auto &&window) -> decltype(auto) { return std::as_const(window); },
+      [](auto &&data) -> decltype(auto) { return data.rbegin(); },
+      [](auto &&data) -> decltype(auto) { return data.rend(); });
   perform_test(
-      [](auto&& window) -> decltype(auto) { return std::move(window); },
-      [](auto&& data) -> decltype(auto) { return data.rbegin(); },
-      [](auto&& data) -> decltype(auto) { return data.rend(); });
+      [](auto &&window) -> decltype(auto) { return std::move(window); },
+      [](auto &&data) -> decltype(auto) { return data.rbegin(); },
+      [](auto &&data) -> decltype(auto) { return data.rend(); });
 }
 
-static void
-test_windows_sort() {
+static void test_windows_sort() {
   using bases_size_type = typename WindowsMergerTraits::bases_size_type;
   using windows_size_type = typename WindowsMergerTraits::windows_size_type;
 
@@ -2699,10 +2660,10 @@ test_windows_sort() {
 
   {
     windows_size_type window_index = 0;
-    for (const auto& window : raw_windows) {
+    for (const auto &window : raw_windows) {
       auto window_accessor = wmw[window_index];
       window_accessor.set_begin_index(all_starts[window_index]);
-      for (const auto& base : window)
+      for (const auto &base : window)
         window_accessor.emplace_back(base);
 
       ++window_index;
@@ -2728,14 +2689,14 @@ test_windows_sort() {
   }
 
   ranges::stable_sort(wmw, ranges::less{},
-                      [](auto&& window) { return window.begin_index(); });
+                      [](auto &&window) { return window.begin_index(); });
   assert(ranges::is_sorted(wmw, ranges::less{},
-                           [](auto&& window) { return window.begin_index(); }));
+                           [](auto &&window) { return window.begin_index(); }));
 
   for (windows_size_type window_index = 0; window_index < n_windows;
        ++window_index) {
-    auto&& window_accessor = wmw[window_index];
-    auto&& raw_window = raw_windows[window_index];
+    auto &&window_accessor = wmw[window_index];
+    auto &&raw_window = raw_windows[window_index];
 
     assert(window_accessor.begin_index() == all_starts[window_index]);
     assert(window_accessor.end_index() == all_starts[window_index] + n_bases);
@@ -2743,8 +2704,7 @@ test_windows_sort() {
   }
 }
 
-static void
-test_window_accessor_resize() {
+static void test_window_accessor_resize() {
   using bases_size_type = typename WindowsMergerTraits::bases_size_type;
 
   constexpr std::size_t n_clusters = 5;
@@ -2754,7 +2714,7 @@ test_window_accessor_resize() {
   const auto accessor = wmw[0];
 
   auto bases = create_random_bases(n_clusters, n_bases);
-  for (auto&& base : bases)
+  for (auto &&base : bases)
     accessor.emplace_back(base);
   assert(ranges::equal(bases, accessor));
 
@@ -2770,7 +2730,7 @@ test_window_accessor_resize() {
 
   assert(ranges::all_of(
       ranges::next(ranges::begin(accessor), n_bases), ranges::end(accessor),
-      [&default_base](auto&& base) { return base == default_base; }));
+      [&default_base](auto &&base) { return base == default_base; }));
 
   accessor.resize(20);
   assert(wmw.bases_capacity() == 60);
@@ -2781,8 +2741,7 @@ test_window_accessor_resize() {
                        ranges::begin(accessor), ranges::end(accessor)));
 }
 
-static void
-test_move_constructor() {
+static void test_move_constructor() {
   {
     WindowsMergerWindows wmw;
     WindowsMergerWindows new_wmw(std::move(wmw));
@@ -2844,9 +2803,9 @@ test_move_constructor() {
                   [] { return create_random_bases(n_clusters, n_bases); });
 
     WindowsMergerWindows wmw(n_clusters);
-    for (auto&& window : std::as_const(raw_windows)) {
-      auto&& new_window = wmw.emplace_back();
-      for (auto&& base : std::as_const(window))
+    for (auto &&window : std::as_const(raw_windows)) {
+      auto &&new_window = wmw.emplace_back();
+      for (auto &&base : std::as_const(window))
         new_window.push_back(base);
     }
 
@@ -2862,8 +2821,8 @@ test_move_constructor() {
 
     for (windows_size_type window_index = 0; window_index < n_windows;
          ++window_index) {
-      const auto& raw_window = raw_windows[window_index];
-      auto&& wmw_window = std::as_const(new_wmw)[window_index];
+      const auto &raw_window = raw_windows[window_index];
+      auto &&wmw_window = std::as_const(new_wmw)[window_index];
 
       for (bases_size_type base_index = 0; base_index < n_bases; ++base_index)
         assert(wmw_window[base_index] == raw_window[base_index]);
@@ -2871,9 +2830,8 @@ test_move_constructor() {
   }
 }
 
-static void
-test_move_assignment() {
-  auto perform_test = [](auto&& create_wmw) {
+static void test_move_assignment() {
+  auto perform_test = [](auto &&create_wmw) {
     {
       WindowsMergerWindows wmw;
       WindowsMergerWindows new_wmw = create_wmw();
@@ -2939,9 +2897,9 @@ test_move_assignment() {
                     [] { return create_random_bases(n_clusters, n_bases); });
 
       WindowsMergerWindows wmw(n_clusters);
-      for (auto&& window : std::as_const(raw_windows)) {
-        auto&& new_window = wmw.emplace_back();
-        for (auto&& base : std::as_const(window))
+      for (auto &&window : std::as_const(raw_windows)) {
+        auto &&new_window = wmw.emplace_back();
+        for (auto &&base : std::as_const(window))
           new_window.push_back(base);
       }
 
@@ -2959,8 +2917,8 @@ test_move_assignment() {
 
       for (windows_size_type window_index = 0; window_index < n_windows;
            ++window_index) {
-        const auto& raw_window = raw_windows[window_index];
-        auto&& wmw_window = std::as_const(new_wmw)[window_index];
+        const auto &raw_window = raw_windows[window_index];
+        auto &&wmw_window = std::as_const(new_wmw)[window_index];
 
         for (bases_size_type base_index = 0; base_index < n_bases; ++base_index)
           assert(wmw_window[base_index] == raw_window[base_index]);
@@ -2984,8 +2942,8 @@ test_move_assignment() {
     for (windows_size_type window_index = 0; window_index < n_windows;
          ++window_index) {
       auto bases = create_random_bases(n_clusters, n_bases);
-      auto&& new_window = wmw.emplace_back();
-      for (auto&& base : bases)
+      auto &&new_window = wmw.emplace_back();
+      for (auto &&base : bases)
         new_window.push_back(std::move(base));
     }
 
@@ -2993,8 +2951,7 @@ test_move_assignment() {
   });
 }
 
-static void
-test_window_accessor_clear() {
+static void test_window_accessor_clear() {
   using bases_size_type = typename WindowsMergerTraits::bases_size_type;
   using windows_size_type = typename WindowsMergerTraits::windows_size_type;
 
@@ -3007,9 +2964,9 @@ test_window_accessor_clear() {
                 [] { return create_random_bases(n_clusters, n_bases); });
 
   WindowsMergerWindows wmw(n_clusters);
-  for (auto&& window : std::as_const(raw_windows)) {
-    auto&& new_window = wmw.emplace_back();
-    for (auto&& base : std::as_const(window))
+  for (auto &&window : std::as_const(raw_windows)) {
+    auto &&new_window = wmw.emplace_back();
+    for (auto &&base : std::as_const(window))
       new_window.push_back(base);
   }
 
@@ -3019,8 +2976,7 @@ test_window_accessor_clear() {
   assert(window.coverages().size() == 0);
 }
 
-static void
-test_reorder_clusters() {
+static void test_reorder_clusters() {
   using clusters_size_type = WindowsMergerWindow::clusters_size_type;
   using bases_size_type = WindowsMergerWindow::bases_size_type;
 
@@ -3036,7 +2992,7 @@ test_reorder_clusters() {
        window_index < n_windows; ++window_index) {
     auto bases_to_add = create_random_bases(n_clusters, n_bases);
     auto accessor = wmw[window_index];
-    for (const auto& window_base : bases_to_add)
+    for (const auto &window_base : bases_to_add)
       accessor.emplace_back(window_base);
     accessor.set_begin_index(added_windows_starts[window_index]);
     added_windows.emplace_back(std::move(bases_to_add));
@@ -3049,7 +3005,7 @@ test_reorder_clusters() {
     ranges::shuffle(new_clusters_order, random_gen);
   }
 
-  for (auto&& window : wmw) {
+  for (auto &&window : wmw) {
     window.reorder_clusters(new_clusters_order);
   }
 
@@ -3059,15 +3015,15 @@ test_reorder_clusters() {
     auto added_windows_iter = ranges::cbegin(added_windows);
 
     for (; wmw_window_iter < wmw_end; ++wmw_window_iter, ++added_windows_iter) {
-      auto&& window = *wmw_window_iter;
-      auto&& added_window = *added_windows_iter;
+      auto &&window = *wmw_window_iter;
+      auto &&added_window = *added_windows_iter;
 
       auto window_iter = ranges::cbegin(window);
       auto const window_end = ranges::cend(window);
       auto added_window_iter = ranges::cbegin(added_window);
       for (; window_iter < window_end; ++window_iter, ++added_window_iter) {
-        auto&& base = *window_iter;
-        auto&& added_window_base = *added_window_iter;
+        auto &&base = *window_iter;
+        auto &&added_window_base = *added_window_iter;
 
         for (auto cluster_index = clusters_size_type(0);
              cluster_index < n_clusters; ++cluster_index) {
@@ -3079,8 +3035,7 @@ test_reorder_clusters() {
   }
 }
 
-int
-main() {
+int main() {
   static_assert(std::is_nothrow_default_constructible_v<WindowsMergerWindows>);
   static_assert(std::is_move_constructible_v<WindowsMergerWindows>);
   static_assert(std::is_move_assignable_v<WindowsMergerWindows>);

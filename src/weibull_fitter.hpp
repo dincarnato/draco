@@ -21,7 +21,7 @@ struct WeibullFitter {
   using params_type = dlib::matrix<double, 0, 1>;
   using data_iterator = PerturbedEigengap::const_iterator;
 
-  WeibullFitter(PerturbedEigengap const& perturbed_eigengap) noexcept;
+  WeibullFitter(PerturbedEigengap const &perturbed_eigengap) noexcept;
   WeibullParams fit() noexcept(false);
 
   static constexpr std::size_t search_points = 30;
@@ -35,9 +35,9 @@ private:
     double x_k_log_x;
   };
 
-  double pdf_log_likelihood_slow(params_type const& params) noexcept;
-  double pdf_log_likelihood(params_type const& params) noexcept;
-  params_type pdf_log_likelihood_deriv(params_type const& params) noexcept;
+  double pdf_log_likelihood_slow(params_type const &params) noexcept;
+  double pdf_log_likelihood(params_type const &params) noexcept;
+  params_type pdf_log_likelihood_deriv(params_type const &params) noexcept;
 
   void update_k_expressions(std::size_t start_index,
                             KExpr initial_data) noexcept;

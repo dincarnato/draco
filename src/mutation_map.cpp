@@ -15,15 +15,14 @@ MutationMap::MutationMap(std::string_view filename) : filename(filename) {
   loadIndexFile();
 }
 
-void
-MutationMap::checkEofMarker() noexcept(false) {
+void MutationMap::checkEofMarker() noexcept(false) {
   std::ifstream fileStream(filename, std::ios::binary bitor std::ios::in);
   fileStream.seekg(-static_cast<std::ptrdiff_t>(eofMarker.size()),
                    std::ios::end);
   streamEndPos = fileStream.tellg();
 
   std::decay_t<decltype(eofMarker)> marker;
-  for (auto& value : marker) {
+  for (auto &value : marker) {
     int stream_char = fileStream.get();
     if (stream_char < 0)
       break;
@@ -34,11 +33,10 @@ MutationMap::checkEofMarker() noexcept(false) {
     throw std::runtime_error("end-of-file magic marker not found");
 }
 
-unsigned
-MutationMap::loadOtherTranscripts(unsigned n) noexcept(false) {
+unsigned MutationMap::loadOtherTranscripts(unsigned n) noexcept(false) {
   std::streampos offset;
   if (transcripts.size() > 0) {
-    auto& transcript = transcripts.back();
+    auto &transcript = transcripts.back();
     transcript.skip();
     offset = transcript.getEndOffset();
   } else
@@ -57,40 +55,29 @@ MutationMap::loadOtherTranscripts(unsigned n) noexcept(false) {
   return transcriptIndex;
 }
 
-auto
-MutationMap::begin() noexcept -> iterator {
-  return iterator(*this);
-}
+auto MutationMap::begin() noexcept -> iterator { return iterator(*this); }
 
-auto
-MutationMap::end() noexcept -> iterator {
-  return iterator();
-}
+auto MutationMap::end() noexcept -> iterator { return iterator(); }
 
-auto
-MutationMap::begin() const noexcept -> const_iterator {
+auto MutationMap::begin() const noexcept -> const_iterator {
   return const_iterator(*this);
 }
 
-auto
-MutationMap::end() const noexcept -> const_iterator {
+auto MutationMap::end() const noexcept -> const_iterator {
   return const_iterator();
 }
 
-void
-MutationMap::load() noexcept(false) {
+void MutationMap::load() noexcept(false) {
   auto iter = begin();
   while (iter != end())
     ++iter;
 }
 
-const std::string&
-MutationMap::getFilename() const noexcept {
+const std::string &MutationMap::getFilename() const noexcept {
   return filename;
 }
 
-void
-MutationMap::loadIndexFile() noexcept(false) {
+void MutationMap::loadIndexFile() noexcept(false) {
   std::string_view filename(this->filename);
   if (filename.substr(std::size(filename) - 3) != ".mm")
     return;
@@ -102,12 +89,12 @@ MutationMap::loadIndexFile() noexcept(false) {
   }();
 
   MutationMapIndex mutationMapIndex(indexFilename);
-  auto& entries = mutationMapIndex.entries;
+  auto &entries = mutationMapIndex.entries;
   if (entries.empty())
     return;
 
   ranges::transform(entries, ranges::back_inserter(transcripts),
-                    [this](auto& entry) {
+                    [this](auto &entry) {
                       return MutationMapTranscript(*this, entry.offset);
                     });
 }

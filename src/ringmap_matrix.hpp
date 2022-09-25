@@ -15,22 +15,15 @@
 #include <armadillo>
 
 class RingmapMatrix {
-  template <typename>
-  friend class RingmapMatrixRowIterator;
-  template <typename>
-  friend class RingmapMatrixRowAccessor;
-  template <typename>
-  friend class RingmapMatrixColIterator;
-  template <typename>
-  friend class RingmapMatrixColAccessor;
+  template <typename> friend class RingmapMatrixRowIterator;
+  template <typename> friend class RingmapMatrixRowAccessor;
+  template <typename> friend class RingmapMatrixColIterator;
+  template <typename> friend class RingmapMatrixColAccessor;
   template <typename, RingmapMatrixIteratorType>
   friend class RingmapMatrixIterator;
-  template <typename>
-  friend class RingmapMatrixAccessor;
-  template <typename>
-  friend class detail::RingmapMatrixRowIteratorHelper;
-  template <typename>
-  friend class detail::RingmapMatrixColIteratorHelper;
+  template <typename> friend class RingmapMatrixAccessor;
+  template <typename> friend class detail::RingmapMatrixRowIteratorHelper;
+  template <typename> friend class detail::RingmapMatrixColIteratorHelper;
 
 public:
   using value_type = ringmap_matrix::value_type;
@@ -63,19 +56,20 @@ public:
   const_accessor_type operator()(unsigned row, unsigned col) const noexcept;
 
   template <typename Iterable>
-  void addRead(Iterable&& iterable,
-               std::enable_if_t<not std::is_same<
-                   std::decay_t<Iterable>, MutationMapTranscriptRead>::value>* =
-                   nullptr) noexcept(false);
+  void addRead(
+      Iterable &&iterable,
+      std::enable_if_t<not std::is_same<std::decay_t<Iterable>,
+                                        MutationMapTranscriptRead>::value> * =
+          nullptr) noexcept(false);
   template <typename TranscriptRead>
   void
-  addRead(TranscriptRead&& transcriptRead,
+  addRead(TranscriptRead &&transcriptRead,
           std::enable_if_t<std::is_same<std::decay_t<TranscriptRead>,
-                                        MutationMapTranscriptRead>::value>* =
+                                        MutationMapTranscriptRead>::value> * =
               nullptr) noexcept(false);
 
-  void addModifiedIndicesRow(row_type const& row) noexcept(false);
-  void addModifiedIndicesRow(row_type&& row) noexcept(false);
+  void addModifiedIndicesRow(row_type const &row) noexcept(false);
+  void addModifiedIndicesRow(row_type &&row) noexcept(false);
 
   unsigned rows_size() const noexcept;
   unsigned cols_size() const noexcept;
@@ -91,26 +85,26 @@ public:
   col_iterator_helper cols() noexcept;
   const_col_iterator_helper cols() const noexcept;
 
-  bool operator==(const RingmapMatrix& other) const noexcept;
-  bool operator!=(const RingmapMatrix& other) const noexcept;
+  bool operator==(const RingmapMatrix &other) const noexcept;
+  bool operator!=(const RingmapMatrix &other) const noexcept;
   arma::vec mean(unsigned char axis = 0) const noexcept(false);
   arma::vec sum(unsigned char axis = 0) const noexcept(false);
   RingmapMatrix t() const noexcept(false);
   arma::mat covariance() const noexcept(false);
   template <typename Weights>
-  arma::mat covariance(Weights&& baseWeights) const noexcept(false);
+  arma::mat covariance(Weights &&baseWeights) const noexcept(false);
 
   void remove_rows(unsigned begin, unsigned end) noexcept(false);
   void remove_cols(unsigned begin, unsigned end) noexcept;
   void shrink() noexcept;
   void shuffle() noexcept(std::is_nothrow_swappable_v<row_type>);
   void resize(unsigned size) noexcept(false);
-  const row_type& getIndices(unsigned rowIndex) const noexcept;
+  const row_type &getIndices(unsigned rowIndex) const noexcept;
 
   template <typename Iterable>
-  void keepOnlyIndices(Iterable&& iterable) noexcept(false);
+  void keepOnlyIndices(Iterable &&iterable) noexcept(false);
 
-  void append(const RingmapMatrix& other) noexcept(false);
+  void append(const RingmapMatrix &other) noexcept(false);
 
 private:
   unsigned bases;

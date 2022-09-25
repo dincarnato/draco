@@ -7,7 +7,7 @@
 
 template <typename Cluster, bool complemented>
 HardClustersElementWrapper<Cluster, complemented>::HardClustersElementWrapper(
-    Cluster& cluster, std::size_t index) noexcept
+    Cluster &cluster, std::size_t index) noexcept
     : _element(&cluster._clusters[index])
 #ifndef NDEBUG
       ,
@@ -17,16 +17,14 @@ HardClustersElementWrapper<Cluster, complemented>::HardClustersElementWrapper(
 }
 
 template <typename Cluster, bool complemented>
-auto
-HardClustersElementWrapper<Cluster, complemented>::get() const noexcept
+auto HardClustersElementWrapper<Cluster, complemented>::get() const noexcept
     -> index_type {
   static_assert(not complemented);
   return *_element;
 }
 
 template <typename Cluster, bool complemented>
-void
-HardClustersElementWrapper<Cluster, complemented>::set(
+void HardClustersElementWrapper<Cluster, complemented>::set(
     index_type clusterIndex) const noexcept {
   static_assert(not complemented);
   assert(clusterIndex < _cluster->nClusters);
@@ -34,15 +32,13 @@ HardClustersElementWrapper<Cluster, complemented>::set(
 }
 
 template <typename Cluster, bool complemented>
-void
-HardClustersElementWrapper<Cluster, complemented>::clear() const noexcept {
+void HardClustersElementWrapper<Cluster, complemented>::clear() const noexcept {
   static_assert(not complemented);
   *_element = std::numeric_limits<index_type>::max();
 }
 
 template <typename Cluster, bool complemented>
-bool
-HardClustersElementWrapper<Cluster, complemented>::isCluster(
+bool HardClustersElementWrapper<Cluster, complemented>::isCluster(
     index_type index) const noexcept {
   if constexpr (not complemented)
     return *_element == index;

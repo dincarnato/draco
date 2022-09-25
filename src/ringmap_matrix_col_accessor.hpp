@@ -5,19 +5,16 @@
 
 #include <type_traits>
 
-template <typename, RingmapMatrixIteratorType>
-class RingmapMatrixIterator;
+template <typename, RingmapMatrixIteratorType> class RingmapMatrixIterator;
 class RingmapMatrix;
 
-template <typename Matrix>
-class RingmapMatrixColAccessor {
-  template <typename>
-  friend class RingmapMatrixColIterator;
+template <typename Matrix> class RingmapMatrixColAccessor {
+  template <typename> friend class RingmapMatrixColIterator;
   friend class RingmapMatrix;
 
 public:
   using matrix_type = Matrix;
-  using pointer = std::remove_reference_t<Matrix>*;
+  using pointer = std::remove_reference_t<Matrix> *;
   using value_type = std::vector<bool>;
   using iterator =
       RingmapMatrixIterator<Matrix, RingmapMatrixIteratorType::rows>;
@@ -26,31 +23,31 @@ public:
                                       ringmap_matrix::row_type>;
 
   RingmapMatrixColAccessor() = default;
-  RingmapMatrixColAccessor(Matrix& matrix, unsigned col) noexcept;
-  RingmapMatrixColAccessor(RingmapMatrixColAccessor const&) = default;
-  RingmapMatrixColAccessor(RingmapMatrixColAccessor&&) = default;
+  RingmapMatrixColAccessor(Matrix &matrix, unsigned col) noexcept;
+  RingmapMatrixColAccessor(RingmapMatrixColAccessor const &) = default;
+  RingmapMatrixColAccessor(RingmapMatrixColAccessor &&) = default;
 
-  RingmapMatrixColAccessor const& operator=(value_type const& column) const
+  RingmapMatrixColAccessor const &operator=(value_type const &column) const
       noexcept(false);
   operator value_type() const noexcept(false);
 
-  RingmapMatrixColAccessor const&
-  operator=(RingmapMatrixColAccessor<RingmapMatrix> const& rhs) const
+  RingmapMatrixColAccessor const &
+  operator=(RingmapMatrixColAccessor<RingmapMatrix> const &rhs) const
       noexcept(false);
-  RingmapMatrixColAccessor const&
-  operator=(RingmapMatrixColAccessor<const RingmapMatrix> const& rhs) const
+  RingmapMatrixColAccessor const &
+  operator=(RingmapMatrixColAccessor<const RingmapMatrix> const &rhs) const
       noexcept(false);
-  RingmapMatrixColAccessor const&
-  operator=(RingmapMatrixColAccessor<RingmapMatrix&&> const& rhs) const
+  RingmapMatrixColAccessor const &
+  operator=(RingmapMatrixColAccessor<RingmapMatrix &&> const &rhs) const
       noexcept(false);
-  RingmapMatrixColAccessor const&
-  operator=(RingmapMatrixColAccessor<RingmapMatrix>&& rhs) const
+  RingmapMatrixColAccessor const &
+  operator=(RingmapMatrixColAccessor<RingmapMatrix> &&rhs) const
       noexcept(false);
-  RingmapMatrixColAccessor const&
-  operator=(RingmapMatrixColAccessor<const RingmapMatrix>&& rhs) const
+  RingmapMatrixColAccessor const &
+  operator=(RingmapMatrixColAccessor<const RingmapMatrix> &&rhs) const
       noexcept(false);
-  RingmapMatrixColAccessor const&
-  operator=(RingmapMatrixColAccessor<RingmapMatrix&&>&& rhs) const
+  RingmapMatrixColAccessor const &
+  operator=(RingmapMatrixColAccessor<RingmapMatrix &&> &&rhs) const
       noexcept(false);
 
   iterator begin() const noexcept;
@@ -59,14 +56,13 @@ public:
   unsigned size() const noexcept;
   std::size_t sum() const noexcept;
   double mean() const noexcept;
-  template <typename URBG>
-  void shuffle(URBG&& g) const noexcept(false);
+  template <typename URBG> void shuffle(URBG &&g) const noexcept(false);
 
   RingmapMatrixAccessor<Matrix> operator[](std::size_t index) const noexcept;
 
 private:
   template <typename Accessor>
-  void copy_from_accessor(Accessor&& accessor) const noexcept(false);
+  void copy_from_accessor(Accessor &&accessor) const noexcept(false);
 
   pointer matrix = nullptr;
   unsigned col;

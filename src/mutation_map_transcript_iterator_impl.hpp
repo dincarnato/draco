@@ -9,14 +9,14 @@
 
 template <typename Stream>
 MutationMapTranscriptIterator<Stream>::MutationMapTranscriptIterator(
-    const MutationMapTranscript& mutationMapTranscript,
+    const MutationMapTranscript &mutationMapTranscript,
     MutationMapTranscriptEndTag) noexcept
     : mutationMapTranscript(&mutationMapTranscript),
       index(mutationMapTranscript.getReadsSize()) {}
 
 template <typename Stream>
 MutationMapTranscriptIterator<Stream>::MutationMapTranscriptIterator(
-    const MutationMapTranscript& mutationMapTranscript,
+    const MutationMapTranscript &mutationMapTranscript,
     unsigned indexOffset) noexcept(false)
     : mutationMapTranscript(&mutationMapTranscript), index(indexOffset) {
 
@@ -33,9 +33,8 @@ MutationMapTranscriptIterator<Stream>::MutationMapTranscriptIterator(
 }
 
 template <typename Stream>
-void
-MutationMapTranscriptIterator<Stream>::nextRead() noexcept(false) {
-  auto& stream = mutationMapTranscript->getStream();
+void MutationMapTranscriptIterator<Stream>::nextRead() noexcept(false) {
+  auto &stream = mutationMapTranscript->getStream();
   BinaryStream<Stream> binaryStream(stream);
   {
     std::uint32_t startIndex;
@@ -55,7 +54,7 @@ MutationMapTranscriptIterator<Stream>::nextRead() noexcept(false) {
     std::uint32_t nReads;
     binaryStream >> nReads;
     currentRead.indices.resize(nReads);
-    for (auto& readIndex : currentRead.indices) {
+    for (auto &readIndex : currentRead.indices) {
       std::uint32_t mutationIndex;
       binaryStream >> mutationIndex;
       readIndex = mutationIndex;
@@ -73,15 +72,15 @@ auto MutationMapTranscriptIterator<Stream>::operator*() const noexcept
 }
 
 template <typename Stream>
-auto MutationMapTranscriptIterator<Stream>::operator-> () const noexcept
+auto MutationMapTranscriptIterator<Stream>::operator->() const noexcept
     -> pointer {
   assert(index < mutationMapTranscript->getReadsSize());
   return &currentRead;
 }
 
 template <typename Stream>
-auto
-MutationMapTranscriptIterator<Stream>::operator++() noexcept(false) -> self& {
+auto MutationMapTranscriptIterator<Stream>::operator++() noexcept(false)
+    -> self & {
   if (++index < mutationMapTranscript->getReadsSize())
     nextRead();
   else
@@ -92,30 +91,27 @@ MutationMapTranscriptIterator<Stream>::operator++() noexcept(false) -> self& {
 }
 
 template <typename Stream>
-auto
-MutationMapTranscriptIterator<Stream>::operator++(int) noexcept(false) -> self {
+auto MutationMapTranscriptIterator<Stream>::operator++(int) noexcept(false)
+    -> self {
   auto copy = *this;
   operator++();
   return copy;
 }
 
 template <typename Stream>
-auto
-MutationMapTranscriptIterator<Stream>::operator-(const self& other) const
-    noexcept -> difference_type {
+auto MutationMapTranscriptIterator<Stream>::operator-(
+    const self &other) const noexcept -> difference_type {
   return index - other.index;
 }
 
 template <typename Stream>
-bool
-MutationMapTranscriptIterator<Stream>::operator==(const self& other) const
-    noexcept {
+bool MutationMapTranscriptIterator<Stream>::operator==(
+    const self &other) const noexcept {
   return index == other.index;
 }
 
 template <typename Stream>
-bool
-MutationMapTranscriptIterator<Stream>::operator!=(const self& other) const
-    noexcept {
+bool MutationMapTranscriptIterator<Stream>::operator!=(
+    const self &other) const noexcept {
   return index != other.index;
 }

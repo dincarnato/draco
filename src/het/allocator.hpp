@@ -6,24 +6,20 @@
 
 namespace het {
 
-template <typename... Ts>
-struct allocator {
+template <typename... Ts> struct allocator {
   using allocator_type = allocator;
 
-  template <typename... _Ts>
-  using generic_allocator_type = allocator<_Ts...>;
+  template <typename... _Ts> using generic_allocator_type = allocator<_Ts...>;
   using args_arity = std::integral_constant<std::size_t, sizeof...(Ts)>;
   using is_packed = std::false_type;
 
   template <std::size_t Idx>
   using value_type = std::tuple_element_t<Idx, std::tuple<Ts...>>;
 
-  template <std::size_t>
-  using difference_type = std::ptrdiff_t;
+  template <std::size_t> using difference_type = std::ptrdiff_t;
   using lines_difference_type = std::ptrdiff_t;
 
-  template <std::size_t>
-  using size_type = std::size_t;
+  template <std::size_t> using size_type = std::size_t;
   using lines_size_type = std::size_t;
 
   using propagate_on_container_copy_assignment = std::true_type;
@@ -32,8 +28,7 @@ struct allocator {
   using is_always_equal = std::true_type;
 
   template <typename... Sizes>
-  constexpr lines_size_type
-  size_of_line(Sizes... sizes) const noexcept {
+  constexpr lines_size_type size_of_line(Sizes... sizes) const noexcept {
     static_assert(sizeof...(Sizes) == sizeof...(Ts),
                   "the number of passed Sizes must be the same as the "
                   "templated arguments");
@@ -45,20 +40,19 @@ struct allocator {
   }
 
   template <typename... Sizes>
-  [[nodiscard]] inline value_type<0>*
-  allocate(lines_size_type count, Sizes... sizes) {
+  [[nodiscard]] inline value_type<0> *allocate(lines_size_type count,
+                                               Sizes... sizes) {
     static_assert(sizeof...(Sizes) == args_arity::value,
                   "the number of passed Sizes must be the same as the "
                   "templated arguments");
 
-    return reinterpret_cast<value_type<0>*>(
+    return reinterpret_cast<value_type<0> *>(
         ::operator new(size_of_line(sizes...) * count,
                        std::align_val_t(alignof(value_type<0>))));
   }
 
   template <typename T, typename... Sizes>
-  inline void
-  deallocate(T* p, lines_size_type, Sizes...) {
+  inline void deallocate(T *p, lines_size_type, Sizes...) {
     static_assert(sizeof...(Sizes) == args_arity::value,
                   "the number of passed Sizes must be the same as the "
                   "templated arguments");
@@ -80,30 +74,28 @@ struct allocator {
   }
 
   template <std::size_t Idx, typename... Sizes>
-  constexpr value_type<Idx>*
-  first_pointer_of(value_type<0>* first, lines_size_type line_index,
-                   Sizes... sizes) const noexcept {
-    return reinterpret_cast<value_type<Idx>*>(
-        reinterpret_cast<char*>(first) + size_of_line(sizes...) * line_index +
+  constexpr value_type<Idx> *first_pointer_of(value_type<0> *first,
+                                              lines_size_type line_index,
+                                              Sizes... sizes) const noexcept {
+    return reinterpret_cast<value_type<Idx> *>(
+        reinterpret_cast<char *>(first) + size_of_line(sizes...) * line_index +
         offset_of<Idx>(sizes...));
   }
 
   template <typename... Rhs>
-  constexpr bool
-  operator==(const allocator<Rhs...>&) const noexcept {
+  constexpr bool operator==(const allocator<Rhs...> &) const noexcept {
     return true;
   }
 
   template <typename... Rhs>
-  constexpr bool
-  operator!=(const allocator<Rhs...>&) noexcept {
+  constexpr bool operator!=(const allocator<Rhs...> &) noexcept {
     return false;
   }
 
 private:
   template <std::size_t Idx, std::size_t... Indices, typename... Sizes>
-  constexpr lines_difference_type
-  offset_of(std::index_sequence<Indices...>, Sizes... sizes) const noexcept {
+  constexpr lines_difference_type offset_of(std::index_sequence<Indices...>,
+                                            Sizes... sizes) const noexcept {
     lines_size_type size = 0;
     ((void)(size =
                 size +
@@ -129,9 +121,8 @@ private:
   }
 
   template <std::size_t... Idx, typename... Sizes>
-  constexpr lines_size_type
-  size_of_line_impl(std::index_sequence<Idx...>, Sizes... sizes) const
-      noexcept {
+  constexpr lines_size_type size_of_line_impl(std::index_sequence<Idx...>,
+                                              Sizes... sizes) const noexcept {
     lines_size_type size = 0;
     ((void)(size =
                 size +

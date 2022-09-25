@@ -22,8 +22,7 @@ struct Value : public std::variant<Number, String, Bool, Null, Array, Object> {
   using base_type::base_type;
 };
 
-inline void
-skip_spaces(std::istream& is) {
+inline void skip_spaces(std::istream &is) {
   while (std::isspace(is.peek()))
     is.get();
 
@@ -31,8 +30,7 @@ skip_spaces(std::istream& is) {
     throw std::invalid_argument("unexpected end of stream");
 }
 
-bool
-deserialize(std::istream& is, Number& number) {
+bool deserialize(std::istream &is, Number &number) {
   using int_type = std::istream::int_type;
   bool is_float = false;
   bool has_exp = false;
@@ -89,8 +87,7 @@ deserialize(std::istream& is, Number& number) {
   return true;
 }
 
-bool
-deserialize(std::istream& is, String& out) {
+bool deserialize(std::istream &is, String &out) {
   using int_type = std::istream::int_type;
 
   std::stringstream ss;
@@ -116,8 +113,7 @@ deserialize(std::istream& is, String& out) {
   return true;
 }
 
-bool
-deserialize(std::istream& is, Bool& out) {
+bool deserialize(std::istream &is, Bool &out) {
   std::stringstream ss;
   skip_spaces(is);
 
@@ -154,8 +150,7 @@ deserialize(std::istream& is, Bool& out) {
   return true;
 }
 
-bool
-deserialize(std::istream& is, Null) {
+bool deserialize(std::istream &is, Null) {
   skip_spaces(is);
 
   constexpr std::size_t bufsize = 4;
@@ -182,10 +177,9 @@ deserialize(std::istream& is, Null) {
   }
 }
 
-bool deserialize(std::istream& is, Value& value);
+bool deserialize(std::istream &is, Value &value);
 
-bool
-deserialize(std::istream& is, Object& object) {
+bool deserialize(std::istream &is, Object &object) {
   using int_type = std::istream::int_type;
   object.clear();
   skip_spaces(is);
@@ -230,8 +224,7 @@ deserialize(std::istream& is, Object& object) {
   return true;
 }
 
-bool
-deserialize(std::istream& is, Array& array) {
+bool deserialize(std::istream &is, Array &array) {
   using int_type = std::istream::int_type;
   array.clear();
   skip_spaces(is);
@@ -264,8 +257,7 @@ deserialize(std::istream& is, Array& array) {
   return true;
 }
 
-bool
-deserialize(std::istream& is, Value& value) {
+bool deserialize(std::istream &is, Value &value) {
   if (Array array; deserialize(is, array))
     value = std::move(array);
   else if (Object object; deserialize(is, object))

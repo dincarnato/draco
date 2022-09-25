@@ -11,8 +11,7 @@
 class MutationMapTranscriptHelper;
 
 class MutationMap {
-  template <typename>
-  friend class MutationMapIterator;
+  template <typename> friend class MutationMapIterator;
   friend class MutationMapTranscriptHelper;
 
 public:
@@ -29,7 +28,7 @@ public:
   const_iterator end() const noexcept;
   void load() noexcept(false);
 
-  const std::string& getFilename() const noexcept;
+  const std::string &getFilename() const noexcept;
   void loadIndexFile() noexcept(false);
 
 private:

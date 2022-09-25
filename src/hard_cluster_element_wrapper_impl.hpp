@@ -9,7 +9,7 @@
 template <typename Cluster, bool complemented>
 template <typename OtherCluster>
 HardClusterElementWrapper<Cluster, complemented>::HardClusterElementWrapper(
-    const HardClusterWrapper<OtherCluster, complemented>& clusterWrapper,
+    const HardClusterWrapper<OtherCluster, complemented> &clusterWrapper,
     std::size_t elementIndex) noexcept
     : _element(&clusterWrapper._cluster->_clusters[elementIndex]),
       clusterIndex(clusterWrapper._index)
@@ -22,9 +22,8 @@ HardClusterElementWrapper<Cluster, complemented>::HardClusterElementWrapper(
 }
 
 template <typename Cluster, bool complemented>
-auto
-HardClusterElementWrapper<Cluster, complemented>::operator=(bool value) const
-    noexcept -> HardClusterElementWrapper const& {
+auto HardClusterElementWrapper<Cluster, complemented>::operator=(
+    bool value) const noexcept -> HardClusterElementWrapper const & {
   if (value)
     set();
   else
@@ -32,8 +31,7 @@ HardClusterElementWrapper<Cluster, complemented>::operator=(bool value) const
 }
 
 template <typename Cluster, bool complemented>
-bool
-HardClusterElementWrapper<Cluster, complemented>::get() const noexcept {
+bool HardClusterElementWrapper<Cluster, complemented>::get() const noexcept {
   assert(_element < _cluster->_clusters.data() + _cluster->_clusters.size());
 
   if constexpr (not complemented)
@@ -43,8 +41,7 @@ HardClusterElementWrapper<Cluster, complemented>::get() const noexcept {
 }
 
 template <typename Cluster, bool complemented>
-void
-HardClusterElementWrapper<Cluster, complemented>::set() const noexcept {
+void HardClusterElementWrapper<Cluster, complemented>::set() const noexcept {
   static_assert(not complemented);
 
   assert(_element < _cluster->_clusters.data() + _cluster->_clusters.size());
@@ -52,8 +49,7 @@ HardClusterElementWrapper<Cluster, complemented>::set() const noexcept {
 }
 
 template <typename Cluster, bool complemented>
-void
-HardClusterElementWrapper<Cluster, complemented>::clear() const noexcept {
+void HardClusterElementWrapper<Cluster, complemented>::clear() const noexcept {
   static_assert(not complemented);
 
   assert(_element < _cluster->_clusters.data() + _cluster->_clusters.size());
@@ -61,14 +57,13 @@ HardClusterElementWrapper<Cluster, complemented>::clear() const noexcept {
 }
 
 template <typename Cluster, bool complemented>
-HardClusterElementWrapper<Cluster, complemented>::operator bool() const
-    noexcept {
+HardClusterElementWrapper<Cluster, complemented>::operator bool()
+    const noexcept {
   return get();
 }
 
 template <typename Cluster, bool complemented>
-void
-HardClusterElementWrapper<Cluster, complemented>::swap(
+void HardClusterElementWrapper<Cluster, complemented>::swap(
     HardClusterElementWrapper other) const noexcept {
   static_assert(not complemented);
   static_assert(not other.isComplemented);
@@ -110,8 +105,7 @@ HardClusterElementWrapper<Cluster, complemented>::swap(
 }
 
 template <typename Cluster, bool complemented>
-void
-HardClusterElementWrapper<Cluster, complemented>::swapMatched(
+void HardClusterElementWrapper<Cluster, complemented>::swapMatched(
     HardClusterElementWrapper other) const noexcept {
   static_assert(not complemented);
   static_assert(not other.isComplemented);

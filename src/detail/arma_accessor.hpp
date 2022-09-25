@@ -32,28 +32,28 @@ public:
   using base_type::operator();
 
   ArmaAccessor() = default;
-  ArmaAccessor(self const&) = default;
-  ArmaAccessor(self&&) = default;
-  ArmaAccessor(Mat* matrix, std::size_t index) noexcept;
+  ArmaAccessor(self const &) = default;
+  ArmaAccessor(self &&) = default;
+  ArmaAccessor(Mat *matrix, std::size_t index) noexcept;
 
-  self const& operator=(self const& accessor) const noexcept;
-  self const& operator=(self&& accessor) const noexcept;
-
-  template <typename _Mat>
-  self const& operator=(ArmaAccessor<_Mat, direction> const& accessor) const
-      noexcept;
+  self const &operator=(self const &accessor) const noexcept;
+  self const &operator=(self &&accessor) const noexcept;
 
   template <typename _Mat>
-  self const& operator=(ArmaAccessor<_Mat, direction>&& accessor) const
-      noexcept;
+  self const &
+  operator=(ArmaAccessor<_Mat, direction> const &accessor) const noexcept;
 
-  ArmaAccessor const& operator=(concrete_type const& concrete) const noexcept;
-  ArmaAccessor const& operator=(concrete_type&& concrete) const noexcept;
+  template <typename _Mat>
+  self const &
+  operator=(ArmaAccessor<_Mat, direction> &&accessor) const noexcept;
+
+  ArmaAccessor const &operator=(concrete_type const &concrete) const noexcept;
+  ArmaAccessor const &operator=(concrete_type &&concrete) const noexcept;
 
   std::size_t size() const noexcept;
 
 private:
-  Mat* matrix = nullptr;
+  Mat *matrix = nullptr;
 };
 
 } // namespace detail

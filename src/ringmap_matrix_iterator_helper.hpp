@@ -1,20 +1,17 @@
 #pragma once
 
 class RingmapMatrix;
-template <typename>
-class RingmapMatrixRowIterator;
-template <typename>
-class RingmapMatrixColIterator;
+template <typename> class RingmapMatrixRowIterator;
+template <typename> class RingmapMatrixColIterator;
 
 namespace detail {
 
-template <typename Matrix>
-class RingmapMatrixRowIteratorHelper {
+template <typename Matrix> class RingmapMatrixRowIteratorHelper {
 public:
   RingmapMatrixRowIteratorHelper() = default;
-  RingmapMatrixRowIteratorHelper(Matrix& matrix) noexcept;
+  RingmapMatrixRowIteratorHelper(Matrix &matrix) noexcept;
 
-  using pointer = std::remove_reference_t<Matrix>*;
+  using pointer = std::remove_reference_t<Matrix> *;
   using iterator = RingmapMatrixRowIterator<Matrix>;
 
   iterator begin() const noexcept;
@@ -24,13 +21,12 @@ private:
   pointer matrix;
 };
 
-template <typename Matrix>
-class RingmapMatrixColIteratorHelper {
+template <typename Matrix> class RingmapMatrixColIteratorHelper {
 public:
   RingmapMatrixColIteratorHelper() = default;
-  RingmapMatrixColIteratorHelper(Matrix& matrix) noexcept;
+  RingmapMatrixColIteratorHelper(Matrix &matrix) noexcept;
 
-  using pointer = std::remove_reference_t<Matrix>*;
+  using pointer = std::remove_reference_t<Matrix> *;
   using iterator = RingmapMatrixColIterator<Matrix>;
 
   iterator begin() const noexcept;

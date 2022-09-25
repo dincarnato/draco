@@ -8,8 +8,7 @@
 
 namespace parallel {
 
-template <typename T>
-using blocked_range = tbb::blocked_range<T>;
+template <typename T> using blocked_range = tbb::blocked_range<T>;
 
 } /* namespace parallel */
 
@@ -19,31 +18,20 @@ using blocked_range = tbb::blocked_range<T>;
 
 namespace parallel {
 
-template <typename T>
-class blocked_range {
+template <typename T> class blocked_range {
 public:
   using value_type = T;
   using const_iterator = T;
 
   blocked_range(T first, T last) : first(first), last(last) {}
 
-  const_iterator
-  begin() const {
-    return first;
-  }
+  const_iterator begin() const { return first; }
 
-  const_iterator
-  end() const {
-    return last;
-  }
+  const_iterator end() const { return last; }
 
-  T
-  size() const {
-    return last - first;
-  }
+  T size() const { return last - first; }
 
-  std::vector<blocked_range>
-  split(unsigned divisor, unsigned step = 1) const {
+  std::vector<blocked_range> split(unsigned divisor, unsigned step = 1) const {
     std::vector<blocked_range> out;
     out.reserve(divisor);
     T divisorStep = size() / divisor;

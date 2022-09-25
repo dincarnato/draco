@@ -9,10 +9,8 @@
 
 namespace detail {
 
-template <typename T>
-struct TinyFractionBase {
-  template <typename>
-  friend struct TinyFractionBase;
+template <typename T> struct TinyFractionBase {
+  template <typename> friend struct TinyFractionBase;
 
   using value_type = T;
   using higher_value_type = std::conditional_t<
@@ -20,10 +18,9 @@ struct TinyFractionBase {
       std::conditional_t<std::is_same_v<T, std::int8_t>, std::int16_t,
                          std::conditional_t<std::is_same_v<T, std::int16_t>,
                                             std::int32_t, std::int64_t>>,
-      std::conditional_t<
-          std::is_same_v<T, std::uint8_t>, std::uint16_t,
-          std::conditional_t<std::is_same_v<T, std::uint16_t>, std::uint32_t,
-                             std::uint64_t>>>;
+      std::conditional_t<std::is_same_v<T, std::uint8_t>, std::uint16_t,
+                         std::conditional_t<std::is_same_v<T, std::uint16_t>,
+                                            std::uint32_t, std::uint64_t>>>;
   using lower_value_type = std::conditional_t<
       std::is_signed_v<T>,
       std::conditional_t<std::is_same_v<T, std::int64_t>, std::int32_t,
@@ -39,8 +36,8 @@ struct TinyFractionBase {
   static constexpr auto min_value = std::numeric_limits<value_type>::lowest();
 
   constexpr TinyFractionBase() = default;
-  constexpr TinyFractionBase(const TinyFractionBase&) = default;
-  constexpr TinyFractionBase(TinyFractionBase&&) = default;
+  constexpr TinyFractionBase(const TinyFractionBase &) = default;
+  constexpr TinyFractionBase(TinyFractionBase &&) = default;
 
   constexpr explicit TinyFractionBase(float value)
       : _value([&] {
@@ -65,10 +62,10 @@ struct TinyFractionBase {
           return static_cast<value_type>(higher._value);
         }()) {}
 
-  constexpr TinyFractionBase& operator=(const TinyFractionBase&) = default;
-  constexpr TinyFractionBase& operator=(TinyFractionBase&&) = default;
+  constexpr TinyFractionBase &operator=(const TinyFractionBase &) = default;
+  constexpr TinyFractionBase &operator=(TinyFractionBase &&) = default;
 
-  constexpr TinyFractionBase&
+  constexpr TinyFractionBase &
   operator=(TinyFractionBase<higher_value_type> higher) {
     if (higher._value < min_value or higher._value > max_value)
       throw std::out_of_range("value cannot be represented from higher kind");
@@ -77,8 +74,7 @@ struct TinyFractionBase {
     return *this;
   }
 
-  constexpr TinyFractionBase&
-  operator=(float value) {
+  constexpr TinyFractionBase &operator=(float value) {
     if (value < 0.f or value > 1.f)
       throw std::out_of_range("value must be between 0 and 1");
 
@@ -86,8 +82,7 @@ struct TinyFractionBase {
     return *this;
   }
 
-  constexpr TinyFractionBase&
-  operator=(double value) {
+  constexpr TinyFractionBase &operator=(double value) {
     if (value < 0. or value > 1.)
       throw std::out_of_range("value must be between 0 and 1");
 
@@ -103,8 +98,7 @@ struct TinyFractionBase {
     return static_cast<double>(_value) / normalizer_value;
   }
 
-  constexpr auto
-  operator+(const TinyFractionBase& other) const noexcept {
+  constexpr auto operator+(const TinyFractionBase &other) const noexcept {
     if constexpr (std::is_same_v<value_type, std::uint8_t> or
                   std::is_same_v<value_type, std::int8_t>)
       return TinyFractionBase<higher_value_type>{static_cast<higher_value_type>(
@@ -122,19 +116,18 @@ struct TinyFractionBase {
           not std::is_same_v<value_type, std::uint8_t> and
           not std::is_same_v<value_type, std::int8_t>,
       TinyFractionBase>
-  operator+(const TinyFractionBase<U>& other) const noexcept {
+  operator+(const TinyFractionBase<U> &other) const noexcept {
     assert(max_value - other._value >= _value);
     return TinyFractionBase{static_cast<value_type>(
         _value + static_cast<value_type>(other._value))};
   }
 
-  constexpr auto
-  operator-(const TinyFractionBase& other) const noexcept {
+  constexpr auto operator-(const TinyFractionBase &other) const noexcept {
     assert(min_value + other._value <= _value);
     return TinyFractionBase{static_cast<value_type>(_value - other._value)};
   }
 
-  constexpr auto operator*(const TinyFractionBase& other) const noexcept {
+  constexpr auto operator*(const TinyFractionBase &other) const noexcept {
     return TinyFractionBase<higher_value_type>{static_cast<higher_value_type>(
         static_cast<higher_value_type>(_value) *
         static_cast<higher_value_type>(other._value) / normalizer_value)};
@@ -192,8 +185,7 @@ struct TinyFractionBase {
     }
   }
 
-  constexpr auto
-  upcast() const noexcept {
+  constexpr auto upcast() const noexcept {
     static_assert(not std::is_same_v<value_type, std::uint64_t> and
                       not std::is_same_v<value_type, std::int64_t>,
                   "cannot explicitly upcast type anymore");
@@ -201,8 +193,7 @@ struct TinyFractionBase {
         static_cast<higher_value_type>(_value)};
   }
 
-  constexpr auto
-  downcast() const noexcept {
+  constexpr auto downcast() const noexcept {
     static_assert(not std::is_same_v<value_type, std::uint8_t> and
                       not std::is_same_v<value_type, std::int8_t>,
                   "cannot explicitly downcast type anymore");
@@ -210,33 +201,27 @@ struct TinyFractionBase {
         static_cast<lower_value_type>(_value)};
   }
 
-  constexpr bool
-  operator==(const TinyFractionBase& rhs) const noexcept {
+  constexpr bool operator==(const TinyFractionBase &rhs) const noexcept {
     return _value == rhs._value;
   }
 
-  constexpr bool
-  operator!=(const TinyFractionBase& rhs) const noexcept {
+  constexpr bool operator!=(const TinyFractionBase &rhs) const noexcept {
     return _value != rhs._value;
   }
 
-  constexpr bool
-  operator<(const TinyFractionBase& rhs) const noexcept {
+  constexpr bool operator<(const TinyFractionBase &rhs) const noexcept {
     return _value < rhs._value;
   }
 
-  constexpr bool
-  operator<=(const TinyFractionBase& rhs) const noexcept {
+  constexpr bool operator<=(const TinyFractionBase &rhs) const noexcept {
     return _value <= rhs._value;
   }
 
-  constexpr bool
-  operator>=(const TinyFractionBase& rhs) const noexcept {
+  constexpr bool operator>=(const TinyFractionBase &rhs) const noexcept {
     return _value >= rhs._value;
   }
 
-  constexpr bool
-  operator>(const TinyFractionBase& rhs) const noexcept {
+  constexpr bool operator>(const TinyFractionBase &rhs) const noexcept {
     return _value > rhs._value;
   }
 
@@ -246,9 +231,7 @@ protected:
   constexpr explicit TinyFractionBase(value_type value) noexcept
       : _value(value) {}
 
-  template <typename U>
-  constexpr static std::decay_t<U>
-  round(U u) noexcept {
+  template <typename U> constexpr static std::decay_t<U> round(U u) noexcept {
     using u_type = std::decay_t<U>;
     static_assert(std::is_floating_point_v<u_type>);
     auto const trunc = static_cast<u_type>(static_cast<long>(u));

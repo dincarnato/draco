@@ -10,16 +10,16 @@ namespace het::detail {
 
 template <typename Alloc, typename BuildParts>
 vec2d_element_builder_rt_build_at(
-    const BuildParts& build_parts,
-    typename allocator_traits<Alloc>::first_pointer, Alloc&)
-    ->vec2d_element_builder_rt_build_at<std::decay_t<Alloc>,
-                                        std::decay_t<BuildParts>>;
+    const BuildParts &build_parts,
+    typename allocator_traits<Alloc>::first_pointer, Alloc &)
+    -> vec2d_element_builder_rt_build_at<std::decay_t<Alloc>,
+                                         std::decay_t<BuildParts>>;
 
 template <typename Alloc, typename BuildParts, typename InitParts>
 vec2d_element_builder_rt_build_at(
-    const BuildParts& build_parts,
-    typename allocator_traits<Alloc>::first_pointer, Alloc&, InitParts &&)
-    ->vec2d_element_builder_rt_build_at<
+    const BuildParts &build_parts,
+    typename allocator_traits<Alloc>::first_pointer, Alloc &, InitParts &&)
+    -> vec2d_element_builder_rt_build_at<
         std::decay_t<Alloc>, std::decay_t<BuildParts>, std::decay_t<InitParts>>;
 
 template <typename Alloc, typename BuildParts, typename InitParts>
@@ -55,14 +55,12 @@ struct vec2d_element_builder_rt_build_at
   using base_type::unwind_destroy_line_partial;
 
   template <std::size_t Index>
-  static constexpr std::size_t
-  get_element_index_for_init() noexcept {
+  static constexpr std::size_t get_element_index_for_init() noexcept {
     static_assert(Index >= 1);
     return Index - 1;
   }
 
-  static constexpr bool
-  is_lines_init() noexcept {
+  static constexpr bool is_lines_init() noexcept {
     return init_parts_type::arity == 1;
   }
 
@@ -102,8 +100,7 @@ struct vec2d_element_builder_rt_build_at
     return new_appended(vec2d_rt_part_empty());
   }
 
-  inline auto
-  done() {
+  inline auto done() {
     static_assert(init_parts_type::arity >= 2);
 
     using last_init_part_type = typename init_parts_type::last_type;
@@ -135,8 +132,7 @@ struct vec2d_element_builder_rt_build_at
     return new_appended(vec2d_rt_part_unwinder());
   }
 
-  inline void
-  unwind() noexcept {
+  inline void unwind() noexcept {
     static_assert(
         is_vec2d_rt_part_unwinder_v<typename init_parts_type::last_type>,
         "unwind() can be called only after the last done()");
@@ -146,13 +142,12 @@ struct vec2d_element_builder_rt_build_at
 
 private:
   template <std::size_t... Idx>
-  inline void
-  perform_build(std::index_sequence<Idx...>) const {
+  inline void perform_build(std::index_sequence<Idx...>) const {
     using init_type = typename init_parts_type::template type<0>;
     static_assert(is_vec2d_rt_part_with_lines_v<init_type> or
                   is_vec2d_rt_part_skip_first_lines_v<init_type>);
     using lines_type = typename init_type::size_type;
-    auto&& lines = std::get<0>(init_parts).lines;
+    auto &&lines = std::get<0>(init_parts).lines;
 
     const auto element_max_sizes =
         std::tuple(base_type::template get_init_part_max_size<Idx + 1>()...);
@@ -170,7 +165,7 @@ private:
       std::size_t constructed_elements = 0;
       try {
         (std::apply(
-             [&, this](auto&&... sizes) {
+             [&, this](auto &&...sizes) {
                construction_base_type::
                    template perform_all_elements_build_from_init<Idx + 1>(
                        line_index, std::forward<decltype(sizes)>(sizes)...);
@@ -180,7 +175,7 @@ private:
          ...);
       } catch (...) {
         std::apply(
-            [&, this](auto&&... sizes) {
+            [&, this](auto &&...sizes) {
               unwind_destroy_line_partial(
                   line_index, constructed_elements,
                   nostd::make_index_sequence_rev<sizeof...(Idx)>(),
@@ -190,7 +185,7 @@ private:
 
         while (line_index > zero_line) {
           std::apply(
-              [&, this](auto&&... sizes) {
+              [&, this](auto &&...sizes) {
                 unwind_destroy_line(
                     --line_index,
                     nostd::make_index_sequence_rev<sizeof...(Idx)>(),
@@ -205,8 +200,7 @@ private:
   }
 
   template <std::size_t... Idx>
-  inline void
-  unwind_impl(std::index_sequence<Idx...>) noexcept {
+  inline void unwind_impl(std::index_sequence<Idx...>) noexcept {
     using init_type = typename init_parts_type::template type<0>;
     using lines_type = typename init_type::size_type;
     const auto element_max_sizes =
@@ -224,7 +218,7 @@ private:
     lines_type line_index = std::get<0>(init_parts).lines;
     while (line_index > zero_line) {
       std::apply(
-          [&, this](auto&&... sizes) {
+          [&, this](auto &&...sizes) {
             unwind_destroy_line(
                 --line_index,
                 nostd::make_index_sequence_rev<build_parts_type::arity>(),

@@ -21,29 +21,28 @@ struct one_based_vector {
       typename zero_based_type::const_reverse_iterator;
 
   one_based_vector() noexcept(noexcept(Allocator())) = default;
-  explicit one_based_vector(const Allocator& alloc) noexcept;
-  explicit one_based_vector(size_type count, const T& value,
-                            const Allocator& alloc = Allocator());
+  explicit one_based_vector(const Allocator &alloc) noexcept;
+  explicit one_based_vector(size_type count, const T &value,
+                            const Allocator &alloc = Allocator());
   explicit one_based_vector(size_type count,
-                            const Allocator& alloc = Allocator());
+                            const Allocator &alloc = Allocator());
   template <typename InputIt>
   one_based_vector(InputIt first, InputIt last,
-                   const Allocator& alloc = Allocator());
-  one_based_vector(const one_based_vector& other) = default;
-  one_based_vector(const one_based_vector& other, const Allocator& alloc);
-  one_based_vector(one_based_vector&& other) noexcept = default;
-  one_based_vector(one_based_vector&& other, const Allocator& alloc);
+                   const Allocator &alloc = Allocator());
+  one_based_vector(const one_based_vector &other) = default;
+  one_based_vector(const one_based_vector &other, const Allocator &alloc);
+  one_based_vector(one_based_vector &&other) noexcept = default;
+  one_based_vector(one_based_vector &&other, const Allocator &alloc);
   one_based_vector(std::initializer_list<T> init,
-                   const Allocator& alloc = Allocator());
+                   const Allocator &alloc = Allocator());
 
-  one_based_vector& operator=(const one_based_vector& other) = default;
-  one_based_vector& operator=(one_based_vector&& other) noexcept(noexcept(
-      std::declval<zero_based_type&>() = std::move(other.vec))) = default;
-  one_based_vector& operator=(std::initializer_list<T> ilist);
+  one_based_vector &operator=(const one_based_vector &other) = default;
+  one_based_vector &operator=(one_based_vector &&other) noexcept(noexcept(
+      std::declval<zero_based_type &>() = std::move(other.vec))) = default;
+  one_based_vector &operator=(std::initializer_list<T> ilist);
 
-  void assign(size_type count, const T& value);
-  template <typename InputIt>
-  void assign(InputIt first, InputIt last);
+  void assign(size_type count, const T &value);
+  template <typename InputIt> void assign(InputIt first, InputIt last);
   void assign(std::initializer_list<T> ilist);
 
   Allocator get_allocator() const;
@@ -60,8 +59,8 @@ struct one_based_vector {
   reference back();
   const_reference back() const;
 
-  T* data() noexcept;
-  const T* data() const noexcept;
+  T *data() noexcept;
+  const T *data() const noexcept;
 
   iterator begin() noexcept;
   const_iterator begin() const noexcept;
@@ -87,39 +86,38 @@ struct one_based_vector {
   void shrink_to_fit();
   void clear() noexcept;
 
-  iterator insert(const_iterator pos, const T& value);
-  iterator insert(const_iterator pos, T&& value);
-  iterator insert(const_iterator pos, size_type count, const T& value);
+  iterator insert(const_iterator pos, const T &value);
+  iterator insert(const_iterator pos, T &&value);
+  iterator insert(const_iterator pos, size_type count, const T &value);
   template <typename InputIt>
   iterator insert(const_iterator pos, InputIt first, InputIt last);
   iterator insert(const_iterator pos, std::initializer_list<T> ilist);
 
   template <typename... Args>
-  iterator emplace(const_iterator pos, Args&&... args);
+  iterator emplace(const_iterator pos, Args &&...args);
 
   iterator erase(const_iterator pos);
   iterator erase(const_iterator first, const_iterator last);
 
-  void push_back(const T& value);
-  void push_back(T&& value);
+  void push_back(const T &value);
+  void push_back(T &&value);
 
-  template <typename... Args>
-  reference emplace_back(Args&&... args);
+  template <typename... Args> reference emplace_back(Args &&...args);
   void pop_back();
   void resize(size_type count);
-  void resize(size_type count, const value_type& value);
-  void swap(one_based_vector& other) noexcept(
-      noexcept(std::declval<zero_based_type&>().swap(other.vec)));
+  void resize(size_type count, const value_type &value);
+  void swap(one_based_vector &other) noexcept(
+      noexcept(std::declval<zero_based_type &>().swap(other.vec)));
 
-  bool operator==(const one_based_vector& rhs);
-  bool operator!=(const one_based_vector& rhs);
-  bool operator<(const one_based_vector& rhs);
-  bool operator<=(const one_based_vector& rhs);
-  bool operator>(const one_based_vector& rhs);
-  bool operator>=(const one_based_vector& rhs);
+  bool operator==(const one_based_vector &rhs);
+  bool operator!=(const one_based_vector &rhs);
+  bool operator<(const one_based_vector &rhs);
+  bool operator<=(const one_based_vector &rhs);
+  bool operator>(const one_based_vector &rhs);
+  bool operator>=(const one_based_vector &rhs);
 
-  zero_based_type& zero_based() noexcept;
-  const zero_based_type& zero_based() const noexcept;
+  zero_based_type &zero_based() noexcept;
+  const zero_based_type &zero_based() const noexcept;
 
 private:
   zero_based_type vec;
@@ -129,7 +127,7 @@ template <typename InputIt,
           typename Alloc = std::allocator<
               typename std::iterator_traits<InputIt>::value_type>>
 one_based_vector(InputIt, InputIt, Alloc = Alloc())
-    ->one_based_vector<typename std::iterator_traits<InputIt>::value_type,
-                       Alloc>;
+    -> one_based_vector<typename std::iterator_traits<InputIt>::value_type,
+                        Alloc>;
 
 #include "one_based_vector_impl.hpp"

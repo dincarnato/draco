@@ -18,8 +18,7 @@
 MutationMapIndex::MutationMapIndex(std::string_view filename)
     : entries(readEntries(std::move(filename))) {}
 
-auto
-MutationMapIndex::readEntries(std::string_view filename) -> entries_type {
+auto MutationMapIndex::readEntries(std::string_view filename) -> entries_type {
 #if __has_include(<filesystem>)
   namespace fs = std::filesystem;
 #else

@@ -8,13 +8,12 @@
 #include <dlib/optimization.h>
 
 inline WeibullFitter::WeibullFitter(
-    PerturbedEigengap const& perturbed_eigengap) noexcept
+    PerturbedEigengap const &perturbed_eigengap) noexcept
     : perturbed_eigengap(perturbed_eigengap) {}
 
-inline WeibullParams
-WeibullFitter::fit() noexcept(false) {
+inline WeibullParams WeibullFitter::fit() noexcept(false) {
   WeibullParams fit_params;
-  auto const& perturbed_eigengap = this->perturbed_eigengap.get();
+  auto const &perturbed_eigengap = this->perturbed_eigengap.get();
 
   auto const size = perturbed_eigengap.size();
   if (size == 0) {
@@ -90,18 +89,18 @@ WeibullFitter::fit() noexcept(false) {
       dlib::find_max_box_constrained(
           dlib::lbfgs_search_strategy(search_points),
           dlib::objective_delta_stop_strategy(delta_stop),
-          [this](auto&& params) { return pdf_log_likelihood(params); },
-          [this](auto&& params) { return pdf_log_likelihood_deriv(params); },
+          [this](auto &&params) { return pdf_log_likelihood(params); },
+          [this](auto &&params) { return pdf_log_likelihood_deriv(params); },
           params, current_min_params, current_max_params);
-    } catch (std::exception const&) {
+    } catch (std::exception const &) {
       break;
     }
 
     bool updated_limits = false;
     for (unsigned param_index = 0; param_index < 2; ++param_index) {
       double const param = params(param_index);
-      auto&& current_max_param = current_max_params(param_index);
-      auto&& current_min_param = current_min_params(param_index);
+      auto &&current_max_param = current_max_params(param_index);
+      auto &&current_min_param = current_min_params(param_index);
 
       if (std::abs(param - current_max_param) <=
           current_max_params(param_index) * 0.05) {
@@ -129,10 +128,9 @@ WeibullFitter::fit() noexcept(false) {
   return fit_params;
 }
 
-inline void
-WeibullFitter::update_k_expressions(std::size_t start_index,
-                                    KExpr initial_data) noexcept {
-  auto const& perturbed_eigengap = this->perturbed_eigengap.get();
+inline void WeibullFitter::update_k_expressions(std::size_t start_index,
+                                                KExpr initial_data) noexcept {
+  auto const &perturbed_eigengap = this->perturbed_eigengap.get();
   auto data_iter = std::next(std::begin(perturbed_eigengap),
                              static_cast<std::ptrdiff_t>(start_index));
   auto const data_end = std::end(perturbed_eigengap);
@@ -151,7 +149,7 @@ WeibullFitter::update_k_expressions(std::size_t start_index,
 }
 
 inline double
-WeibullFitter::pdf_log_likelihood_slow(params_type const& params) noexcept {
+WeibullFitter::pdf_log_likelihood_slow(params_type const &params) noexcept {
   assert(this->perturbed_eigengap.get().size() == last_size);
 
   double const k = params(0);
@@ -166,7 +164,7 @@ WeibullFitter::pdf_log_likelihood_slow(params_type const& params) noexcept {
   else
     k_over_l_k = k / l_k;
 
-  auto&& perturbed_eigengap = this->perturbed_eigengap.get();
+  auto &&perturbed_eigengap = this->perturbed_eigengap.get();
   auto const result = std::accumulate(
       std::begin(perturbed_eigengap), std::end(perturbed_eigengap), 0.,
       [&](double acc, double x) {
@@ -183,7 +181,7 @@ WeibullFitter::pdf_log_likelihood_slow(params_type const& params) noexcept {
 }
 
 inline double
-WeibullFitter::pdf_log_likelihood(params_type const& params) noexcept {
+WeibullFitter::pdf_log_likelihood(params_type const &params) noexcept {
   assert(this->perturbed_eigengap.get().size() == last_size);
 
   double const k = params(0);
@@ -200,7 +198,7 @@ WeibullFitter::pdf_log_likelihood(params_type const& params) noexcept {
 }
 
 inline auto
-WeibullFitter::pdf_log_likelihood_deriv(params_type const& params) noexcept
+WeibullFitter::pdf_log_likelihood_deriv(params_type const &params) noexcept
     -> params_type {
   assert(this->perturbed_eigengap.get().size() == last_size);
 
@@ -218,8 +216,7 @@ WeibullFitter::pdf_log_likelihood_deriv(params_type const& params) noexcept
   return params_type{k_deriv, l_deriv};
 }
 
-inline void
-WeibullFitter::update_params(double k, double l) noexcept {
+inline void WeibullFitter::update_params(double k, double l) noexcept {
   bool changed_params = false;
 
   if (k != last_k) {

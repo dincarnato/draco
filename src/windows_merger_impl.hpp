@@ -5,9 +5,8 @@
 namespace windows_merger {
 
 template <typename Weights, typename Coverages>
-void
-WindowsMerger::add_window(bases_size_type start_offset, Weights&& weights,
-                          Coverages&& coverages) {
+void WindowsMerger::add_window(bases_size_type start_offset, Weights &&weights,
+                               Coverages &&coverages) {
   static_assert(std::is_same_v<std::decay_t<Weights>, input_weights_type>);
   static_assert(std::is_same_v<std::decay_t<Coverages>, input_coverages_type>);
 

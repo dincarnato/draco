@@ -23,23 +23,19 @@ HardClustersBase<Type>::HardClustersBase(std::size_t elements, Type clusters,
 }
 
 template <typename Type>
-auto
-HardClustersBase<Type>::cluster(index_type index) -> cluster_wrapper_type {
+auto HardClustersBase<Type>::cluster(index_type index) -> cluster_wrapper_type {
   assert(index < nClusters);
   return {*this, index};
 }
 
 template <typename Type>
-auto
-HardClustersBase<Type>::cluster(index_type index) const
+auto HardClustersBase<Type>::cluster(index_type index) const
     -> const_cluster_wrapper_type {
   assert(index < nClusters);
   return {*this, index};
 }
 
-template <typename Type>
-void
-HardClustersBase<Type>::clear() {
+template <typename Type> void HardClustersBase<Type>::clear() {
   std::fill(std::begin(_clusters), std::end(_clusters),
             std::numeric_limits<Type>::max());
 }
@@ -56,68 +52,55 @@ auto HardClustersBase<Type>::operator[](std::size_t index) const
 }
 
 template <typename Type>
-auto
-HardClustersBase<Type>::clusters() -> clusters_wrapper_type {
+auto HardClustersBase<Type>::clusters() -> clusters_wrapper_type {
   return clusters_wrapper_type{*this};
 }
 
 template <typename Type>
-auto
-HardClustersBase<Type>::clusters() const -> const_clusters_wrapper_type {
+auto HardClustersBase<Type>::clusters() const -> const_clusters_wrapper_type {
   return const_clusters_wrapper_type{*this};
 }
 
 template <typename Type>
-auto
-HardClustersBase<Type>::complement() -> complement_type {
+auto HardClustersBase<Type>::complement() -> complement_type {
   return complement_type{*this};
 }
 
 template <typename Type>
-auto
-HardClustersBase<Type>::complement() const -> const_complement_type {
+auto HardClustersBase<Type>::complement() const -> const_complement_type {
   return const_complement_type{*this};
 }
 
 template <typename Type>
-std::size_t
-HardClustersBase<Type>::getElementsSize() const {
+std::size_t HardClustersBase<Type>::getElementsSize() const {
   return _clusters.size();
 }
 
 template <typename Type>
-auto
-HardClustersBase<Type>::getClustersSize() const -> index_type {
+auto HardClustersBase<Type>::getClustersSize() const -> index_type {
   return nClusters;
 }
 
-template <typename Type>
-auto
-HardClustersBase<Type>::begin() -> iterator {
+template <typename Type> auto HardClustersBase<Type>::begin() -> iterator {
   return std::begin(_clusters);
 }
 
-template <typename Type>
-auto
-HardClustersBase<Type>::end() -> iterator {
+template <typename Type> auto HardClustersBase<Type>::end() -> iterator {
   return std::end(_clusters);
 }
 
 template <typename Type>
-auto
-HardClustersBase<Type>::begin() const -> const_iterator {
+auto HardClustersBase<Type>::begin() const -> const_iterator {
   return std::begin(_clusters);
 }
 
 template <typename Type>
-auto
-HardClustersBase<Type>::end() const -> const_iterator {
+auto HardClustersBase<Type>::end() const -> const_iterator {
   return std::end(_clusters);
 }
 
 template <typename Type>
-void
-HardClustersBase<Type>::extendMinorCluster(std::size_t maxDistance) {
+void HardClustersBase<Type>::extendMinorCluster(std::size_t maxDistance) {
   /*
   const index_type minorCluster = [&] {
     std::vector<std::size_t> counts(nClusters, 0);
@@ -134,8 +117,7 @@ HardClustersBase<Type>::extendMinorCluster(std::size_t maxDistance) {
     iterator end;
     std::size_t size;
 
-    bool
-    operator<(const Hole& other) const {
+    bool operator<(const Hole &other) const {
       return (size < other.size) or
              (size == other.size and begin < other.begin);
     }
@@ -175,16 +157,16 @@ HardClustersBase<Type>::extendMinorCluster(std::size_t maxDistance) {
     }
 
     auto lastHole = nextHole++;
-    const auto& currentHoleBegin = currentHole->begin;
-    const auto& currentHoleEnd = lastHole->end;
+    const auto &currentHoleBegin = currentHole->begin;
+    const auto &currentHoleEnd = lastHole->end;
 
     auto updateModifiedHole = [&](iterator elementIter) {
-      auto holeIter = std::find_if(nextHole, endHoles, [=](const auto& hole) {
+      auto holeIter = std::find_if(nextHole, endHoles, [=](const auto &hole) {
         return hole.begin == elementIter or hole.end == elementIter;
       });
 
       if (holeIter != endHoles) {
-        auto& hole = *holeIter;
+        auto &hole = *holeIter;
         if (hole.begin == elementIter)
           hole.begin = currentHole->begin;
         else
@@ -201,7 +183,7 @@ HardClustersBase<Type>::extendMinorCluster(std::size_t maxDistance) {
         return static_cast<std::size_t>(0);
       else {
         auto prevElementIter = std::prev(currentHoleBegin);
-        const auto& prevElement = *prevElementIter;
+        const auto &prevElement = *prevElementIter;
 
         auto prevSpanBegin = prevElementIter;
         for (;;) {
@@ -222,7 +204,7 @@ HardClustersBase<Type>::extendMinorCluster(std::size_t maxDistance) {
       if (nextElementIter == endClusters)
         return static_cast<std::size_t>(0);
       else {
-        const auto& nextElement = *nextElementIter;
+        const auto &nextElement = *nextElementIter;
 
         auto nextSpanEnd = std::next(nextElementIter);
         for (;;) {
@@ -242,8 +224,8 @@ HardClustersBase<Type>::extendMinorCluster(std::size_t maxDistance) {
       auto prevCurrentHoleBegin = std::prev(currentHoleBegin);
 
       if (spanBeforeSize != 0 and spanAfterSize != 0) {
-        const auto& clusterBefore = *prevCurrentHoleBegin;
-        const auto& clusterAfter = *currentHoleEnd;
+        const auto &clusterBefore = *prevCurrentHoleBegin;
+        const auto &clusterAfter = *currentHoleEnd;
 
         if (clusterBefore == clusterAfter) {
           if (auto holeAfter = updateModifiedHole(currentHoleEnd);
@@ -295,7 +277,7 @@ HardClustersBase<Type>::extendMinorCluster(std::size_t maxDistance) {
     std::fill(currentHoleBegin, currentHoleEnd, *spanToCopyFrom);
     if (changedHoles) {
       std::sort(nextHole, endHoles);
-      endHoles = std::find_if(nextHole, endHoles, [=](const auto& hole) {
+      endHoles = std::find_if(nextHole, endHoles, [=](const auto &hole) {
         return hole.size > maxDistance;
       });
     }
@@ -304,8 +286,7 @@ HardClustersBase<Type>::extendMinorCluster(std::size_t maxDistance) {
 }
 
 template <typename Type>
-void
-HardClustersBase<Type>::removeSmallSpans(std::size_t minSize) {
+void HardClustersBase<Type>::removeSmallSpans(std::size_t minSize) {
   const auto beginClusters = std::begin(_clusters);
   const auto endClusters = std::end(_clusters);
   for (auto clusterIter = beginClusters; clusterIter < endClusters;) {

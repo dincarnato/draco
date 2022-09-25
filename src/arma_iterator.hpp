@@ -37,20 +37,19 @@ struct Proxy<detail::ArmaAccessor<Mat, detail::ArmaIteratorDirection::cols>>
 
 } /* namespace arma */
 
-template <typename Mat>
-class ArmaIterator {
+template <typename Mat> class ArmaIterator {
 public:
   static_assert(not std::is_reference_v<Mat>);
   using matrix_type = Mat;
-  using reference = Mat&;
-  using pointer = Mat*;
+  using reference = Mat &;
+  using pointer = Mat *;
 
   using rows_handler =
       detail::ArmaIteratorHandler<Mat, detail::ArmaIteratorDirection::rows>;
   using cols_handler =
       detail::ArmaIteratorHandler<Mat, detail::ArmaIteratorDirection::cols>;
 
-  ArmaIterator(Mat& matrix) noexcept;
+  ArmaIterator(Mat &matrix) noexcept;
 
   rows_handler rows() const noexcept;
   cols_handler cols() const noexcept;

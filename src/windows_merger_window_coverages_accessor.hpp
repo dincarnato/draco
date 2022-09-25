@@ -7,25 +7,23 @@
 
 namespace windows_merger {
 
-template <typename Window>
-struct WindowsMergerWindowCoveragesIterator;
+template <typename Window> struct WindowsMergerWindowCoveragesIterator;
 
-template <typename Window>
-struct WindowsMergerWindowCoveragesAccessor {
+template <typename Window> struct WindowsMergerWindowCoveragesAccessor {
   using window_type = Window;
   using decay_window_type = std::decay_t<Window>;
-  using window_pointer_type = std::remove_reference_t<Window>*;
+  using window_pointer_type = std::remove_reference_t<Window> *;
   using traits_type = WindowsMergerTraits;
   using bases_size_type = typename traits_type::bases_size_type;
   using coverage_type = typename traits_type::coverage_type;
   using reference = std::conditional_t<
-      std::is_rvalue_reference_v<Window>, coverage_type&&,
-      std::conditional_t<std::is_const_v<Window>, coverage_type const&,
-                         coverage_type&>>;
+      std::is_rvalue_reference_v<Window>, coverage_type &&,
+      std::conditional_t<std::is_const_v<Window>, coverage_type const &,
+                         coverage_type &>>;
   using iterator = WindowsMergerWindowCoveragesIterator<Window>;
   using reverse_iterator = ranges::reverse_iterator<iterator>;
 
-  WindowsMergerWindowCoveragesAccessor(Window& window) noexcept;
+  WindowsMergerWindowCoveragesAccessor(Window &window) noexcept;
 
   bases_size_type size() const noexcept;
 

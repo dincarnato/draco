@@ -8,10 +8,9 @@
 #include <boost/math/distributions.hpp>
 
 template <typename Distribution>
-bool
-Ptba::is_distribution(Distribution&& distribution,
-                      PerturbedEigengap const& perturbed_data)
-    noexcept(false) {
+bool Ptba::is_distribution(
+    Distribution &&distribution,
+    PerturbedEigengap const &perturbed_data) noexcept(false) {
 
   assert(not perturbed_data.empty());
   std::size_t const data_size = perturbed_data.size();
@@ -25,8 +24,7 @@ Ptba::is_distribution(Distribution&& distribution,
   std::transform(
       std::begin(cumulative_data), std::end(cumulative_data),
       std::begin(cumulative_data),
-      [max = cumulative_data.back()](auto value) {
-    return value / max; });
+      [max = cumulative_data.back()](auto value) { return value / max; });
 
   std::vector<double> diffs(data_size);
   {
@@ -38,7 +36,7 @@ Ptba::is_distribution(Distribution&& distribution,
          ++data_iter, ++diffs_iter, ++cumulative_data_iter) {
       auto value = *data_iter;
       auto cum_value = *cumulative_data_iter;
-      auto& diff = *diffs_iter;
+      auto &diff = *diffs_iter;
 
       auto cdf_value = boost::math::cdf(distribution, value);
       diff = std::abs(cdf_value - cum_value);

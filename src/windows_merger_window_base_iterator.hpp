@@ -9,10 +9,9 @@
 
 namespace windows_merger {
 
-template <typename Merger>
-struct WindowsMergerWindowBaseIterator {
+template <typename Merger> struct WindowsMergerWindowBaseIterator {
   using merger_type = std::decay_t<Merger>;
-  using merger_pointer_type = std::remove_reference_t<Merger>*;
+  using merger_pointer_type = std::remove_reference_t<Merger> *;
   using traits_type = WindowsMergerTraits;
   using windows_size_type = typename traits_type::windows_size_type;
   using bases_size_type = typename traits_type::bases_size_type;
@@ -32,40 +31,38 @@ struct WindowsMergerWindowBaseIterator {
 
   WindowsMergerWindowBaseIterator() = default;
   explicit WindowsMergerWindowBaseIterator(
-      Merger& merger, windows_size_type window_index,
+      Merger &merger, windows_size_type window_index,
       signed_bases_size_type base_index = signed_bases_size_type(0)) noexcept;
 
   reference operator*() const noexcept;
   reference operator[](difference_type index) const noexcept;
 
-  self& operator++() noexcept;
+  self &operator++() noexcept;
   self operator++(int) noexcept;
-  self& operator--() noexcept;
+  self &operator--() noexcept;
   self operator--(int) noexcept;
 
-  self& operator+=(difference_type offset) noexcept;
-  self& operator-=(difference_type offset) noexcept;
+  self &operator+=(difference_type offset) noexcept;
+  self &operator-=(difference_type offset) noexcept;
 
   // In-situ friend declarations
-  friend self
-  operator+(const self& lhs, difference_type offset) noexcept {
+  friend self operator+(const self &lhs, difference_type offset) noexcept {
     return self(*lhs.merger, lhs.window_index,
                 static_cast<bases_size_type>(lhs.base_index + offset));
   }
 
-  friend self
-  operator+(typename self::difference_type offset, const self& lhs) noexcept {
+  friend self operator+(typename self::difference_type offset,
+                        const self &lhs) noexcept {
     return lhs + offset;
   }
 
-  friend self
-  operator-(const self& lhs, typename self::difference_type offset) noexcept {
+  friend self operator-(const self &lhs,
+                        typename self::difference_type offset) noexcept {
     return self(*lhs.merger, lhs.window_index,
                 static_cast<bases_size_type>(lhs.base_index - offset));
   }
 
-  friend difference_type
-  operator-(const self& lhs, const self& rhs) noexcept {
+  friend difference_type operator-(const self &lhs, const self &rhs) noexcept {
     assert(lhs.merger == rhs.merger);
     assert(lhs.window_index == rhs.window_index);
 
@@ -73,43 +70,37 @@ struct WindowsMergerWindowBaseIterator {
            static_cast<difference_type>(rhs.base_index);
   }
 
-  friend bool
-  operator==(const self& lhs, const self& rhs) noexcept {
+  friend bool operator==(const self &lhs, const self &rhs) noexcept {
     assert(lhs.merger == rhs.merger);
     assert(lhs.window_index == rhs.window_index);
     return lhs.base_index == rhs.base_index;
   }
 
-  friend bool
-  operator!=(const self& lhs, const self& rhs) noexcept {
+  friend bool operator!=(const self &lhs, const self &rhs) noexcept {
     assert(lhs.merger == rhs.merger);
     assert(lhs.window_index == rhs.window_index);
     return lhs.base_index != rhs.base_index;
   }
 
-  friend bool
-  operator<(const self& lhs, const self& rhs) noexcept {
+  friend bool operator<(const self &lhs, const self &rhs) noexcept {
     assert(lhs.merger == rhs.merger);
     assert(lhs.window_index == rhs.window_index);
     return lhs.base_index < rhs.base_index;
   }
 
-  friend bool
-  operator<=(const self& lhs, const self& rhs) noexcept {
+  friend bool operator<=(const self &lhs, const self &rhs) noexcept {
     assert(lhs.merger == rhs.merger);
     assert(lhs.window_index == rhs.window_index);
     return lhs.base_index <= rhs.base_index;
   }
 
-  friend bool
-  operator>=(const self& lhs, const self& rhs) noexcept {
+  friend bool operator>=(const self &lhs, const self &rhs) noexcept {
     assert(lhs.merger == rhs.merger);
     assert(lhs.window_index == rhs.window_index);
     return lhs.base_index >= rhs.base_index;
   }
 
-  friend bool
-  operator>(const self& lhs, const self& rhs) noexcept {
+  friend bool operator>(const self &lhs, const self &rhs) noexcept {
     assert(lhs.merger == rhs.merger);
     assert(lhs.window_index == rhs.window_index);
     return lhs.base_index > rhs.base_index;

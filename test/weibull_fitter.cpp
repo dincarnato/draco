@@ -8,8 +8,7 @@
 
 #include <boost/math/distributions/weibull.hpp>
 
-static void
-test_pdf_log_likelihood(double shape, double scale) {
+static void test_pdf_log_likelihood(double shape, double scale) {
   constexpr std::size_t n_data = 2000;
 
   thread_local std::mt19937 random_gen(std::random_device{}());
@@ -34,8 +33,7 @@ test_pdf_log_likelihood(double shape, double scale) {
   assert(std::abs(log_likelihood - fitted_log_likelihood) < 0.1);
 }
 
-static void
-test_with_params(double shape, double scale) {
+static void test_with_params(double shape, double scale) {
   constexpr std::size_t n_data = 2000;
 
   thread_local std::mt19937 random_gen(std::random_device{}());
@@ -75,8 +73,7 @@ test_with_params(double shape, double scale) {
   check_result();
 }
 
-int
-main() {
+int main() {
   test_pdf_log_likelihood(1.42, 0.8);
   test_pdf_log_likelihood(3.5, 0.8);
   test_pdf_log_likelihood(1.2, 2.5);

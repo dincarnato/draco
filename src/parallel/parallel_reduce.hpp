@@ -9,8 +9,7 @@
 namespace parallel {
 
 template <typename... Args>
-inline decltype(auto)
-parallel_reduce(Args&&... args) {
+inline decltype(auto) parallel_reduce(Args &&...args) {
   return tbb::parallel_reduce(std::forward<Args>(args)...);
 }
 
@@ -26,9 +25,8 @@ parallel_reduce(Args&&... args) {
 namespace parallel {
 
 template <typename Range, typename Value, typename Func, typename Reduction>
-Value
-parallel_reduce(const Range& range, const Value& identity, Func func,
-                const Reduction& reduction) {
+Value parallel_reduce(const Range &range, const Value &identity, Func func,
+                      const Reduction &reduction) {
   std::vector<std::future<Value>> futures;
   auto subRanges = range.split(threadsPerLoop, 1);
   futures.reserve(subRanges.size());
@@ -39,7 +37,7 @@ parallel_reduce(const Range& range, const Value& identity, Func func,
         std::async(std::launch::async, func, *subRangeIter, identity));
 
   Value returnValue = func(subRanges.back(), identity);
-  for (auto&& future : futures)
+  for (auto &&future : futures)
     returnValue = reduction(future.get(), returnValue);
 
   return returnValue;

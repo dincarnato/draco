@@ -15,16 +15,15 @@
 #include <vector>
 
 template <typename Fun, typename Ret = decltype(std::declval<Fun>()(
-                            std::declval<const arma::mat&>()))>
-static constexpr void
-checkGraphFunCallable() {
+                            std::declval<const arma::mat &>()))>
+static constexpr void checkGraphFunCallable() {
   static_assert(std::is_same<Ret, arma::mat>::value,
                 "Fun must be of type arma::mat (const arma::mat&)");
 }
 
 template <typename Fun>
-WeightedClusters
-GraphCut::partitionGraph(std::uint8_t nClusters, Fun graphFun) const {
+WeightedClusters GraphCut::partitionGraph(std::uint8_t nClusters,
+                                          Fun graphFun) const {
   constexpr unsigned minClusterTotalWeight = 3;
 
   checkGraphFunCallable<std::decay_t<Fun>>();
@@ -165,7 +164,7 @@ GraphCut::partitionGraph(std::uint8_t nClusters, Fun graphFun) const {
 
             const auto currentUsableBases =
                 static_cast<std::ptrdiff_t>(*usableBasesIter);
-            auto&& currentCluster = temporaryWeights.cluster(clusterIndex);
+            auto &&currentCluster = temporaryWeights.cluster(clusterIndex);
             const auto currentBaseIndicesEnd =
                 ranges::next(baseIndicesIter, currentUsableBases);
             assert(static_cast<std::size_t>(ranges::distance(
@@ -223,7 +222,7 @@ GraphCut::partitionGraph(std::uint8_t nClusters, Fun graphFun) const {
 
     for (auto fromClusterIter = ranges::begin(weightsClusters);
          fromClusterIter < clustersEnd; ++fromClusterIter) {
-      auto&& fromCluster = *fromClusterIter;
+      auto &&fromCluster = *fromClusterIter;
 
       const auto fromClusterEnd = ranges::end(fromCluster);
       if (ranges::accumulate(ranges::begin(fromCluster), fromClusterEnd, 0.f) <=
@@ -235,18 +234,18 @@ GraphCut::partitionGraph(std::uint8_t nClusters, Fun graphFun) const {
         if (fromClusterIter == toClusterIter)
           continue;
 
-        auto&& toCluster = *toClusterIter;
+        auto &&toCluster = *toClusterIter;
 
         auto fromClusterCurrentIter = ranges::begin(fromCluster);
         auto toClusterCurrentIter = ranges::begin(toCluster);
         std::size_t baseIndex = 0;
         for (; fromClusterCurrentIter < fromClusterEnd;
              ++fromClusterCurrentIter, ++toClusterCurrentIter, ++baseIndex) {
-          auto& fromClusterWeight = *fromClusterCurrentIter;
+          auto &fromClusterWeight = *fromClusterCurrentIter;
           if (fromClusterWeight == 0.f or
               fromClusterWeight < currentWeightChange)
             continue;
-          auto& toClusterWeight = *toClusterCurrentIter;
+          auto &toClusterWeight = *toClusterCurrentIter;
           if (toClusterWeight > 1.f - currentWeightChange)
             continue;
 
@@ -281,8 +280,8 @@ GraphCut::partitionGraph(std::uint8_t nClusters, Fun graphFun) const {
     }
 
     {
-      auto&& bestFromCluster = *bestFromClusterIter;
-      auto&& bestToCluster = *bestToClusterIter;
+      auto &&bestFromCluster = *bestFromClusterIter;
+      auto &&bestToCluster = *bestToClusterIter;
 
       // FIXME this should not assert, but it is related to the suspicious
       // warning of GCC
@@ -298,8 +297,8 @@ GraphCut::partitionGraph(std::uint8_t nClusters, Fun graphFun) const {
 }
 
 template <typename Fun>
-HardClusters
-GraphCut::partitionGraphHard(std::uint8_t nClusters, Fun graphFun) const {
+HardClusters GraphCut::partitionGraphHard(std::uint8_t nClusters,
+                                          Fun graphFun) const {
   checkGraphFunCallable<std::decay_t<Fun>>();
   auto graph = graphFun(adjacency);
 
@@ -318,7 +317,7 @@ GraphCut::partitionGraphHard(std::uint8_t nClusters, Fun graphFun) const {
         for (unsigned baseIndex = 0; baseIndex < adjacency.n_rows; ++baseIndex)
           hardClusters[baseIndex].set(clusterAssigner(randomGen));
       } while (ranges::any_of(hardClustersWrapper,
-                              [](const auto& cluster) {
+                              [](const auto &cluster) {
                                 return ranges::count(cluster, true) < 3;
                               }) or
                std::isinf(calculateCutScore(graph, hardClusters)));
@@ -405,14 +404,13 @@ GraphCut::partitionGraphHard(std::uint8_t nClusters, Fun graphFun) const {
 }
 
 template <typename Clusters>
-double
-GraphCut::calculateCutScore(const arma::mat& graph,
-                            const Clusters& clusters) const {
+double GraphCut::calculateCutScore(const arma::mat &graph,
+                                   const Clusters &clusters) const {
   static_assert(is_clusters_v<Clusters>);
   double score = 0;
   auto complement = clusters.complement();
   auto clustersWrapper = clusters.clusters();
-  for (const auto& cluster : clustersWrapper) {
+  for (const auto &cluster : clustersWrapper) {
     double divisor = calculateCut(graph, cluster, cluster);
     if (divisor == 0.)
       return std::numeric_limits<double>::infinity();
@@ -426,9 +424,8 @@ GraphCut::calculateCutScore(const arma::mat& graph,
 }
 
 template <typename ClusterA, typename ClusterB>
-double
-GraphCut::calculateCut(const arma::mat& graph, const ClusterA& clusterA,
-                       const ClusterB& clusterB) {
+double GraphCut::calculateCut(const arma::mat &graph, const ClusterA &clusterA,
+                              const ClusterB &clusterB) {
   static_assert(is_cluster_wrapper_v<ClusterA>);
   static_assert(is_cluster_wrapper_v<ClusterB>);
   double score = 0;
@@ -439,7 +436,7 @@ GraphCut::calculateCut(const arma::mat& graph, const ClusterA& clusterA,
                 std::is_integral_v<typename ClusterB::iterator::value_type>);
 
   std::size_t indexA = 0;
-  for (auto&& valueA : clusterA) {
+  for (auto &&valueA : clusterA) {
     const bool skip = [&] {
       if constexpr (valueIsIntegral)
         return not valueA;
@@ -452,9 +449,9 @@ GraphCut::calculateCut(const arma::mat& graph, const ClusterA& clusterA,
       continue;
     }
 
-    const auto& colA = graph.col(indexA);
+    const auto &colA = graph.col(indexA);
     std::size_t indexB = 0;
-    for (auto&& valueB : clusterB) {
+    for (auto &&valueB : clusterB) {
       if constexpr (valueIsIntegral) {
         if (valueB)
           score += colA(indexB);
@@ -471,8 +468,7 @@ GraphCut::calculateCut(const arma::mat& graph, const ClusterA& clusterA,
 }
 
 template <typename Clusters>
-void
-GraphCut::setInitialClusters(Clusters&& clusters) {
+void GraphCut::setInitialClusters(Clusters &&clusters) {
   using clusters_type = std::decay_t<Clusters>;
   static_assert(std::is_same_v<clusters_type, HardClusters> or
                 std::is_same_v<clusters_type, WeightedClusters>);

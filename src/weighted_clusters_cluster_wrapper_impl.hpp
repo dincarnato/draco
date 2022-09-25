@@ -7,7 +7,7 @@
 
 template <typename T>
 WeightedClustersClusterWrapper<T>::WeightedClustersClusterWrapper(
-    weighted_clusters_type& weightedClusters,
+    weighted_clusters_type &weightedClusters,
     std::ptrdiff_t clusterIndex) noexcept
     : weightedClusters(&weightedClusters), clusterIndex(clusterIndex) {
   assert(this->weightedClusters);
@@ -17,8 +17,7 @@ WeightedClustersClusterWrapper<T>::WeightedClustersClusterWrapper(
 }
 
 template <typename T>
-auto
-WeightedClustersClusterWrapper<T>::begin() const noexcept -> iterator {
+auto WeightedClustersClusterWrapper<T>::begin() const noexcept -> iterator {
   assert(weightedClusters);
   assert(clusterIndex >= 0);
   assert(clusterIndex <=
@@ -28,8 +27,7 @@ WeightedClustersClusterWrapper<T>::begin() const noexcept -> iterator {
 }
 
 template <typename T>
-auto
-WeightedClustersClusterWrapper<T>::end() const noexcept -> iterator {
+auto WeightedClustersClusterWrapper<T>::end() const noexcept -> iterator {
   assert(weightedClusters);
   assert(clusterIndex >= 0);
   assert(clusterIndex <=
@@ -39,8 +37,8 @@ WeightedClustersClusterWrapper<T>::end() const noexcept -> iterator {
 }
 
 template <typename T>
-auto WeightedClustersClusterWrapper<T>::operator[](std::size_t index) const
-    noexcept -> reference {
+auto WeightedClustersClusterWrapper<T>::operator[](
+    std::size_t index) const noexcept -> reference {
   assert(weightedClusters);
   assert(clusterIndex >= 0);
   assert(clusterIndex <=
@@ -53,8 +51,7 @@ auto WeightedClustersClusterWrapper<T>::operator[](std::size_t index) const
 }
 
 template <typename T>
-std::size_t
-WeightedClustersClusterWrapper<T>::index() const noexcept {
+std::size_t WeightedClustersClusterWrapper<T>::index() const noexcept {
   assert(weightedClusters);
   assert(clusterIndex >= 0);
   assert(clusterIndex <=
@@ -64,26 +61,23 @@ WeightedClustersClusterWrapper<T>::index() const noexcept {
 }
 
 template <typename T>
-std::size_t
-WeightedClustersClusterWrapper<T>::size() const noexcept {
+std::size_t WeightedClustersClusterWrapper<T>::size() const noexcept {
   assert(weightedClusters);
   return weightedClusters->elements;
 }
 
 template <typename T>
-auto
-WeightedClustersClusterWrapper<T>::operator=(concrete_type const& cluster) const
-    noexcept(std::is_nothrow_copy_assignable_v<std::decay_t<T>>)
-        -> WeightedClustersClusterWrapper& {
+auto WeightedClustersClusterWrapper<T>::operator=(concrete_type const &cluster)
+    const noexcept(std::is_nothrow_copy_assignable_v<std::decay_t<T>>)
+        -> WeightedClustersClusterWrapper & {
   ranges::copy(cluster, ranges::begin(*this));
   return *this;
 }
 
 template <typename T>
-auto
-WeightedClustersClusterWrapper<T>::operator=(concrete_type&& cluster) const
+auto WeightedClustersClusterWrapper<T>::operator=(concrete_type &&cluster) const
     noexcept(std::is_nothrow_move_assignable_v<std::decay_t<T>>)
-        -> WeightedClustersClusterWrapper& {
+        -> WeightedClustersClusterWrapper & {
   ranges::move(cluster, ranges::begin(*this));
   return *this;
 }

@@ -42,8 +42,7 @@ Analysis::~Analysis() noexcept {
   }
 }
 
-void
-Analysis::initStream() {
+void Analysis::initStream() {
   if (std::exchange(started, true))
     return;
 
@@ -52,8 +51,7 @@ Analysis::initStream() {
   jsonify(jsonStream, "transcripts") << ":[";
 }
 
-void
-Analysis::addTranscript(Transcript&& transcript) {
+void Analysis::addTranscript(Transcript &&transcript) {
   assert(not stop.load(std::memory_order_relaxed));
 
   std::lock_guard lock(queueMutex);
@@ -61,8 +59,7 @@ Analysis::addTranscript(Transcript&& transcript) {
   queueCv.notify_one();
 }
 
-void
-Analysis::streamerLoop() noexcept {
+void Analysis::streamerLoop() noexcept {
   while (not stop.load(std::memory_order_relaxed)) {
     auto transcript = [&] {
       std::unique_lock lock(queueMutex);

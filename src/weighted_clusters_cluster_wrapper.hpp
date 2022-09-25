@@ -5,29 +5,26 @@
 #include <type_traits>
 
 class WeightedClusters;
-template <typename>
-struct WeightedClustersCluster;
+template <typename> struct WeightedClustersCluster;
 
-template <typename T>
-class WeightedClustersClusterWrapper {
+template <typename T> class WeightedClustersClusterWrapper {
   using weighted_clusters_type =
       std::conditional_t<std::is_const<T>::value, const WeightedClusters,
                          WeightedClusters>;
-  template <typename>
-  friend class WeightedClustersClusterIterator;
+  template <typename> friend class WeightedClustersClusterIterator;
 
 public:
   using concrete_type = WeightedClustersCluster<std::decay_t<T>>;
   using iterator = WeightedClustersIterator<T, false>;
-  using reference = std::conditional_t<std::is_rvalue_reference_v<T>, T, T&>;
+  using reference = std::conditional_t<std::is_rvalue_reference_v<T>, T, T &>;
 
   WeightedClustersClusterWrapper() = default;
-  WeightedClustersClusterWrapper(weighted_clusters_type& weightedClusters,
+  WeightedClustersClusterWrapper(weighted_clusters_type &weightedClusters,
                                  std::ptrdiff_t clusterIndex) noexcept;
 
-  WeightedClustersClusterWrapper& operator=(concrete_type const& cluster) const
+  WeightedClustersClusterWrapper &operator=(concrete_type const &cluster) const
       noexcept(std::is_nothrow_copy_assignable_v<std::decay_t<T>>);
-  WeightedClustersClusterWrapper& operator=(concrete_type&& cluster) const
+  WeightedClustersClusterWrapper &operator=(concrete_type &&cluster) const
       noexcept(std::is_nothrow_move_assignable_v<std::decay_t<T>>);
 
   iterator begin() const noexcept;
@@ -41,7 +38,7 @@ public:
   std::size_t index() const noexcept;
 
 private:
-  weighted_clusters_type* weightedClusters;
+  weighted_clusters_type *weightedClusters;
   std::ptrdiff_t clusterIndex;
 };
 

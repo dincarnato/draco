@@ -4,8 +4,7 @@
 #include <stack>
 #include <stdexcept>
 
-auto
-PairedRnaSecondaryStructure::createPairs() const -> pairs_type {
+auto PairedRnaSecondaryStructure::createPairs() const -> pairs_type {
   pairs_type pairs(structure.size(),
                    PairedBase{std::numeric_limits<std::size_t>::max()});
 
@@ -37,9 +36,8 @@ PairedRnaSecondaryStructure::createPairs() const -> pairs_type {
   return pairs;
 }
 
-std::size_t
-PairedRnaSecondaryStructure::countEqualPairs(
-    const PairedRnaSecondaryStructure& other) const {
+std::size_t PairedRnaSecondaryStructure::countEqualPairs(
+    const PairedRnaSecondaryStructure &other) const {
   if (structure.size() != other.structure.size())
     throw std::runtime_error(
         "cannot compare structures with different lengths");
@@ -51,11 +49,11 @@ PairedRnaSecondaryStructure::countEqualPairs(
   auto otherIter = std::begin(other.pairs);
   for (unsigned baseIndex = 0; thisIter != thisEnd;
        ++thisIter, ++otherIter, ++baseIndex) {
-    const auto& paired = *thisIter;
+    const auto &paired = *thisIter;
     if (not paired.isPaired() or baseIndex > paired())
       continue;
 
-    const auto& otherPaired = *otherIter;
+    const auto &otherPaired = *otherIter;
     if (paired() == otherPaired())
       ++count;
   }
@@ -63,11 +61,10 @@ PairedRnaSecondaryStructure::countEqualPairs(
   return count;
 }
 
-auto
-PairedRnaSecondaryStructure::calculateStatistics(
-    const PairedRnaSecondaryStructure& predicted,
-    const PairedRnaSecondaryStructure& expected) -> Statistics {
-  const auto countPaired = [](const auto& structure) {
+auto PairedRnaSecondaryStructure::calculateStatistics(
+    const PairedRnaSecondaryStructure &predicted,
+    const PairedRnaSecondaryStructure &expected) -> Statistics {
+  const auto countPaired = [](const auto &structure) {
     return structure.structure.size() -
            static_cast<std::size_t>(std::count(
                std::begin(structure.structure), std::end(structure.structure),
@@ -82,9 +79,8 @@ PairedRnaSecondaryStructure::calculateStatistics(
   return Statistics{ppv, sensitivity};
 }
 
-std::size_t
-distance(const PairedRnaSecondaryStructure& structureA,
-         const PairedRnaSecondaryStructure& structureB) {
+std::size_t distance(const PairedRnaSecondaryStructure &structureA,
+                     const PairedRnaSecondaryStructure &structureB) {
   const auto size = structureA.structure.size();
   assert(structureA.pairs.size() == size);
   assert(structureB.pairs.size() == size);
@@ -104,7 +100,6 @@ distance(const PairedRnaSecondaryStructure& structureA,
   return distance;
 }
 
-const RnaSecondaryStructure&
-PairedRnaSecondaryStructure::raw() const {
+const RnaSecondaryStructure &PairedRnaSecondaryStructure::raw() const {
   return structure;
 }

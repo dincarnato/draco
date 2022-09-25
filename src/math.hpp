@@ -15,30 +15,25 @@
 #include <type_traits>
 #include <vector>
 
-template <typename Iterable>
-constexpr double mean(Iterable&& iterable);
+template <typename Iterable> constexpr double mean(Iterable &&iterable);
 
-template <typename Iterable>
-constexpr double variance(Iterable&& iterable);
+template <typename Iterable> constexpr double variance(Iterable &&iterable);
 
-template <typename Iterable>
-constexpr double stddev(Iterable&& iterable);
+template <typename Iterable> constexpr double stddev(Iterable &&iterable);
 
-template <typename Iterable>
-std::vector<float> ranks(Iterable&& iterable);
+template <typename Iterable> std::vector<float> ranks(Iterable &&iterable);
 
 template <typename IterableA, typename IterableB>
-double covariance(IterableA&& iterableA, IterableB&& iterableB);
+double covariance(IterableA &&iterableA, IterableB &&iterableB);
 
 enum class CorrelationType { spearman };
 
 template <CorrelationType correlationType = CorrelationType::spearman,
           typename IterableA, typename IterableB>
-auto correlation(IterableA&& iterableA, IterableB&& iterableB)
+auto correlation(IterableA &&iterableA, IterableB &&iterableB)
     -> std::enable_if_t<correlationType == CorrelationType::spearman, double>;
 
-constexpr std::uint64_t
-factorial(int n) noexcept(false) {
+constexpr std::uint64_t factorial(int n) noexcept(false) {
   if (n < 0)
     throw std::logic_error("n must be positive");
 
@@ -53,8 +48,7 @@ factorial(int n) noexcept(false) {
 }
 
 namespace detail {
-template <typename T, typename = void>
-struct numeric_traits;
+template <typename T, typename = void> struct numeric_traits;
 
 template <typename T>
 struct numeric_traits<T, std::enable_if_t<std::is_integral_v<T>>> {
@@ -100,7 +94,7 @@ binomial_generic(unsigned n, unsigned k) {
     auto factor = den_factor;
     for (auto num_factor_iter = std::begin(num_factors);
          num_factor_iter != end_num_factors; ++num_factor_iter) {
-      auto& num_factor = *num_factor_iter;
+      auto &num_factor = *num_factor_iter;
       auto divider = std::gcd(num_factor, factor);
       if (divider != 0) {
         num_factor /= divider;
@@ -132,19 +126,15 @@ binomial_generic(unsigned n, unsigned k) {
       binomial);
 }
 
-constexpr std::uint64_t
-binomial(unsigned n, unsigned k) {
+constexpr std::uint64_t binomial(unsigned n, unsigned k) {
   return binomial_generic<std::uint64_t>(n, k);
 }
 
-constexpr double
-binomial_floating(unsigned n, unsigned k) {
+constexpr double binomial_floating(unsigned n, unsigned k) {
   return binomial_generic<double, 1024>(n, k);
 }
 
-template <typename Iterable>
-constexpr double
-mean(Iterable&& iterable) {
+template <typename Iterable> constexpr double mean(Iterable &&iterable) {
   std::size_t size = iterable.size();
   return static_cast<double>(
              std::accumulate(std::begin(std::forward<Iterable>(iterable)),
@@ -153,29 +143,23 @@ mean(Iterable&& iterable) {
          size;
 }
 
-template <typename Iterable>
-constexpr double
-variance(Iterable&& iterable) {
+template <typename Iterable> constexpr double variance(Iterable &&iterable) {
   double meanValue = mean(iterable);
   std::size_t size = iterable.size();
   return static_cast<double>(std::accumulate(
              std::begin(std::forward<Iterable>(iterable)),
              std::end(std::forward<Iterable>(iterable)), 0.,
-             [meanValue](double accumulator, auto&& value) {
+             [meanValue](double accumulator, auto &&value) {
                return accumulator + std::pow(value - meanValue, 2);
              })) /
          (size - 1);
 }
 
-template <typename Iterable>
-constexpr double
-stddev(Iterable&& iterable) {
+template <typename Iterable> constexpr double stddev(Iterable &&iterable) {
   return std::sqrt(variance(std::forward<Iterable>(iterable)));
 }
 
-template <typename Iterable>
-std::vector<float>
-ranks(Iterable&& iterable) {
+template <typename Iterable> std::vector<float> ranks(Iterable &&iterable) {
   // TODO: if constexpr to work with objects without operator[] and/or using
   // iterators/pointers for order
   std::vector<std::size_t> order(iterable.size());
@@ -188,7 +172,7 @@ ranks(Iterable&& iterable) {
   std::vector<float> ranks(order.size());
   std::size_t index = 0;
   for (auto indexIter = std::begin(order); indexIter < std::end(order);) {
-    const auto& currentValue = iterable[*indexIter];
+    const auto &currentValue = iterable[*indexIter];
     auto otherIndexIter = std::next(indexIter);
     for (; otherIndexIter < std::end(order); ++otherIndexIter) {
       if (iterable[*otherIndexIter] != currentValue)
@@ -207,8 +191,7 @@ ranks(Iterable&& iterable) {
 }
 
 template <typename IterableA, typename IterableB>
-double
-covariance(IterableA&& iterableA, IterableB&& iterableB) {
+double covariance(IterableA &&iterableA, IterableB &&iterableB) {
   std::size_t size = iterableA.size();
   assert(size == iterableB.size());
 
@@ -228,11 +211,10 @@ covariance(IterableA&& iterableA, IterableB&& iterableB) {
 
 template <CorrelationType correlationType, typename IterableA,
           typename IterableB>
-auto
-correlation(IterableA&& iterableA, IterableB&& iterableB)
+auto correlation(IterableA &&iterableA, IterableB &&iterableB)
     -> std::enable_if_t<correlationType == CorrelationType::spearman, double> {
-  auto&& rankA = ranks(std::forward<IterableA>(iterableA));
-  auto&& rankB = ranks(std::forward<IterableB>(iterableB));
+  auto &&rankA = ranks(std::forward<IterableA>(iterableA));
+  auto &&rankB = ranks(std::forward<IterableB>(iterableB));
   assert(rankA.size() > 1);
   assert(rankB.size() > 1);
   assert(std::any_of(
@@ -249,9 +231,8 @@ correlation(IterableA&& iterableA, IterableB&& iterableB)
 }
 
 template <typename PredMat, typename TrueMat>
-double
-matthewCorrelationCoefficient(PredMat&& predictionMatrix,
-                              TrueMat&& trueMatrix) {
+double matthewCorrelationCoefficient(PredMat &&predictionMatrix,
+                                     TrueMat &&trueMatrix) {
   unsigned nRows = predictionMatrix.n_rows;
 
   assert(nRows == trueMatrix.n_rows);
@@ -262,7 +243,7 @@ matthewCorrelationCoefficient(PredMat&& predictionMatrix,
   std::decay_t<TrueMat> trueDispersion =
       trueMatrix - arma::repmat(arma::mean(trueMatrix), nRows, 1);
 
-  auto cov = [](const auto& matA, const auto& matB) {
+  auto cov = [](const auto &matA, const auto &matB) {
     return arma::sum(arma::sum(matA % matB)) / matA.n_cols;
   };
 
@@ -279,10 +260,9 @@ matthewCorrelationCoefficient(PredMat&& predictionMatrix,
 }
 
 template <typename Iterable>
-auto
-getPercentile(Iterable&& iterable, float percentile)
+auto getPercentile(Iterable &&iterable, float percentile)
     -> std::decay_t<decltype(iterable[0])> {
-  std::remove_reference_t<Iterable>* usableIterable = &iterable;
+  std::remove_reference_t<Iterable> *usableIterable = &iterable;
   std::unique_ptr<std::decay_t<Iterable>> localIterable;
   if (not std::is_sorted(std::begin(iterable), std::end(iterable))) {
     localIterable = std::make_unique<std::decay_t<Iterable>>(
@@ -299,8 +279,7 @@ getPercentile(Iterable&& iterable, float percentile)
 }
 
 template <typename Iterable>
-std::decay_t<Iterable>
-getWinsorized(Iterable&& iterable, float percentile) {
+std::decay_t<Iterable> getWinsorized(Iterable &&iterable, float percentile) {
   std::decay_t<Iterable> out(std::forward<Iterable>(iterable));
   if (out.size() == 0)
     return out;
@@ -321,8 +300,8 @@ template <typename IterA, typename IterB, typename ScoreFun,
           typename CompareFun>
 std::vector<std::size_t>
 getBestMatchingIndices(IterA refBegin, IterA refEnd, IterB matchBegin,
-                       IterB matchEnd, ScoreFun&& scoreFun,
-                       CompareFun&& compareFun) {
+                       IterB matchEnd, ScoreFun &&scoreFun,
+                       CompareFun &&compareFun) {
   using ref_reference_type = typename std::iterator_traits<IterA>::reference;
   using match_reference_type = typename std::iterator_traits<IterB>::reference;
 #if defined(__cpp_lib_is_invocable) && __cpp_lib_is_invocable >= 201703
@@ -415,7 +394,7 @@ getBestMatchingIndices(IterA refBegin, IterA refEnd, IterB matchBegin,
 template <typename IterA, typename IterB, typename ScoreFun>
 std::vector<std::size_t>
 getBestMatchingIndices(IterA refBegin, IterA refEnd, IterB matchBegin,
-                       IterB matchEnd, ScoreFun&& scoreFun) {
+                       IterB matchEnd, ScoreFun &&scoreFun) {
   using ref_reference_type = typename std::iterator_traits<IterA>::reference;
   using match_reference_type = typename std::iterator_traits<IterB>::reference;
 #if defined(__cpp_lib_is_invocable) && __cpp_lib_is_invocable >= 201703

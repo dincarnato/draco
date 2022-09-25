@@ -9,31 +9,26 @@ namespace cte {
 
 namespace detail {
 
-template <typename>
-struct FloatReprProperties;
+template <typename> struct FloatReprProperties;
 
-template <>
-struct FloatReprProperties<std::uint16_t> {
+template <> struct FloatReprProperties<std::uint16_t> {
   constexpr static std::size_t exponent_bits = 5;
   constexpr static std::size_t mantissa_bits = 10;
 };
 
-template <>
-struct FloatReprProperties<std::uint32_t> {
+template <> struct FloatReprProperties<std::uint32_t> {
   constexpr static std::size_t exponent_bits = 8;
   constexpr static std::size_t mantissa_bits = 23;
 };
 
-template <>
-struct FloatReprProperties<std::uint64_t> {
+template <> struct FloatReprProperties<std::uint64_t> {
   constexpr static std::size_t exponent_bits = 11;
   constexpr static std::size_t mantissa_bits = 52;
 };
 
 } // namespace detail
 
-template <typename T>
-struct FloatingPoint {
+template <typename T> struct FloatingPoint {
   static_assert(std::is_floating_point_v<T>,
                 "T must be a valid floating point type");
   static_assert(
@@ -68,36 +63,28 @@ private:
   explicit constexpr FloatingPoint(repr_type value) noexcept : repr(value) {}
 
 public:
-  constexpr static FloatingPoint
-  from_representation(repr_type value) noexcept {
+  constexpr static FloatingPoint from_representation(repr_type value) noexcept {
     return FloatingPoint(value);
   }
 
-  constexpr bool
-  is_positive() const noexcept {
+  constexpr bool is_positive() const noexcept {
     return (repr & (repr_type(1) << (exponent_bits + mantissa_bits))) == 0;
   }
 
-  constexpr repr_type
-  mantissa() const noexcept {
+  constexpr repr_type mantissa() const noexcept {
     return repr & ((repr_type(1) << mantissa_bits) - 1);
   }
 
-  constexpr repr_type
-  exponent() const noexcept {
+  constexpr repr_type exponent() const noexcept {
     return (repr >> mantissa_bits) & ((repr_type(1) << exponent_bits) - 1);
   }
 
-  constexpr signed_repr_type
-  exponent_unbiased() const noexcept {
+  constexpr signed_repr_type exponent_unbiased() const noexcept {
     return static_cast<signed_repr_type>(exponent()) -
            static_cast<signed_repr_type>(exponent_bias);
   }
 
-  constexpr repr_type
-  representation() const noexcept {
-    return repr;
-  }
+  constexpr repr_type representation() const noexcept { return repr; }
   constexpr operator repr_type() const noexcept { return repr; }
 
   constexpr operator T() const noexcept {
@@ -154,19 +141,16 @@ public:
     return out;
   }
 
-  constexpr bool
-  is_inf() const noexcept {
+  constexpr bool is_inf() const noexcept {
     return (repr & ((repr_type(1) << (mantissa_bits + exponent_bits)) - 1)) ==
            infinity;
   }
-  constexpr bool
-  is_nan() const noexcept {
+  constexpr bool is_nan() const noexcept {
     return (repr & ((repr_type(1) << (mantissa_bits + exponent_bits)) - 1)) ==
            nan;
   }
 
-  constexpr FloatingPoint
-  truncate() const noexcept {
+  constexpr FloatingPoint truncate() const noexcept {
     if (is_inf() or is_nan())
       return *this;
 
@@ -194,8 +178,7 @@ public:
   }
 
 private:
-  constexpr static repr_type
-  get_representation(T x) noexcept {
+  constexpr static repr_type get_representation(T x) noexcept {
     auto const sign_repr = [&] {
       if (x < T(0)) {
         x = -x;
@@ -257,9 +240,9 @@ private:
     return sign_repr | exp_mantissa;
   }
 
-  constexpr static FloatingPoint
-  from_elements(repr_type sign, repr_type exponent,
-                repr_type mantissa) noexcept {
+  constexpr static FloatingPoint from_elements(repr_type sign,
+                                               repr_type exponent,
+                                               repr_type mantissa) noexcept {
     assert((sign & ~repr_type(1)) == 0);
     assert((exponent & ~((repr_type(1) << exponent_bits) - 1)) == 0);
     assert((mantissa & ~((repr_type(1) << mantissa_bits) - 1)) == 0);

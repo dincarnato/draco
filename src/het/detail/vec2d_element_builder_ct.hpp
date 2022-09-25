@@ -27,10 +27,10 @@ struct vec2d_element_builder_ct_base {
 
   constexpr vec2d_element_builder_ct_base() = default;
   constexpr explicit vec2d_element_builder_ct_base(
-      const build_parts_type& build_parts)
+      const build_parts_type &build_parts)
       : build_parts(build_parts) {}
   constexpr explicit vec2d_element_builder_ct_base(
-      build_parts_type&& build_parts)
+      build_parts_type &&build_parts)
       : build_parts(std::move(build_parts)) {}
 
 protected:
@@ -48,9 +48,7 @@ struct vec2d_element_builder_ct<void, void,
                                 std::integral_constant<std::size_t, 0>> {
   using build_parts_type = void;
 
-  template <typename Alloc>
-  constexpr auto
-  set_allocator_type() const {
+  template <typename Alloc> constexpr auto set_allocator_type() const {
     return vec2d_element_builder_ct<Alloc,
                                     vec2d_build_parts<vec2d_element_empty>,
                                     std::integral_constant<std::size_t, 0>>{};
@@ -71,9 +69,7 @@ struct vec2d_element_builder_ct
     constexpr incomplete_fixed_size(vec2d_element_builder_ct builder)
         : builder(std::move(builder)) {}
 
-    template <std::size_t Sz>
-    constexpr auto
-    set_size() {
+    template <std::size_t Sz> constexpr auto set_size() {
       static_assert(
           is_vec2d_empty_v<typename build_parts_type::last_type>,
           "fixed_size must be called after set_allocator_type() or next()");
@@ -92,16 +88,14 @@ struct vec2d_element_builder_ct
     vec2d_element_builder_ct builder;
   };
 
-  constexpr auto
-  fixed_size() {
+  constexpr auto fixed_size() {
     static_assert(
         is_vec2d_empty_v<typename build_parts_type::last_type>,
         "fixed_size must be called after set_allocator_type() or next()");
     return incomplete_fixed_size(std::move(*this));
   }
 
-  constexpr auto
-  dynamic_size() {
+  constexpr auto dynamic_size() {
     static_assert(
         is_vec2d_empty_v<typename build_parts_type::last_type>,
         "dynamic_size must be called after set_allocator_type() or next()");
@@ -116,9 +110,7 @@ struct vec2d_element_builder_ct
         build_parts.replace_last_with(vec2d_element_dynamic_size()));
   }
 
-  template <typename Fun>
-  constexpr auto
-  size_from_callable(Fun&& fun) {
+  template <typename Fun> constexpr auto size_from_callable(Fun &&fun) {
     static_assert(
         is_vec2d_dynamic_size_v<typename build_parts_type::last_type> and
             not is_vec2d_dynamic_size_from_callable_part_v<
@@ -143,8 +135,7 @@ struct vec2d_element_builder_ct
         build_parts.replace_last_with(new_part_type(std::forward<Fun>(fun))));
   }
 
-  constexpr auto
-  default_construction_default() {
+  constexpr auto default_construction_default() {
     static_assert(is_vec2d_size_part_v<typename build_parts_type::last_type>,
                   "default_construction_default() must be called after "
                   "fixed_size(), dynamic_size() or size_from_callable()");
@@ -161,8 +152,7 @@ struct vec2d_element_builder_ct
   }
 
   template <typename... Args>
-  constexpr auto
-  default_construction(Args&&... args) {
+  constexpr auto default_construction(Args &&...args) {
     static_assert(is_vec2d_size_part_v<typename build_parts_type::last_type>,
                   "default_construction() must be called after "
                   "fixed_size(), dynamic_size() or size_from_callable()");
@@ -179,8 +169,7 @@ struct vec2d_element_builder_ct
         new_part_type(build_parts.take_last(), std::forward<Args>(args)...)));
   }
 
-  constexpr auto
-  default_uninitialized() {
+  constexpr auto default_uninitialized() {
     static_assert(is_vec2d_size_part_v<typename build_parts_type::last_type>,
                   "default_uninitialized() must be called after "
                   "fixed_size(), dynamic_size() or size_from_callable()");
@@ -201,8 +190,7 @@ struct vec2d_element_builder_ct
         build_parts.replace_last_with(new_part_type(build_parts.take_last())));
   }
 
-  constexpr auto
-  next() {
+  constexpr auto next() {
     static_assert(
         is_vec2d_element_with_defaults_v<typename build_parts_type::last_type>,
         "next() must be called after default_uninitialized(), "
@@ -220,8 +208,7 @@ struct vec2d_element_builder_ct
     return new_builder_type(build_parts.append(vec2d_element_empty()));
   }
 
-  constexpr auto
-  done() {
+  constexpr auto done() {
     static_assert(
         is_vec2d_element_with_defaults_v<typename build_parts_type::last_type>,
         "done() must be called after default_uninitialized(), "
@@ -259,27 +246,24 @@ struct vec2d_element_builder_ct<
   template <std::size_t Idx>
   using build_part_type = typename build_parts_type::template type<Idx>;
 
-  inline auto
-  build_at(typename allocator_traits<Alloc>::first_pointer address,
-           Alloc& alloc) const
+  inline auto build_at(typename allocator_traits<Alloc>::first_pointer address,
+                       Alloc &alloc) const
       noexcept(noexcept(vec2d_element_builder_rt_build_at(
           base_type::build_parts, address, alloc))) {
     return vec2d_element_builder_rt_build_at(base_type::build_parts, address,
                                              alloc);
   }
 
-  inline auto
-  move_to(typename allocator_traits<Alloc>::first_pointer address,
-          Alloc& alloc) const
+  inline auto move_to(typename allocator_traits<Alloc>::first_pointer address,
+                      Alloc &alloc) const
       noexcept(noexcept(vec2d_element_builder_rt_move_to(base_type::build_parts,
                                                          address, alloc))) {
     return vec2d_element_builder_rt_move_to(base_type::build_parts, address,
                                             alloc);
   }
 
-  inline auto
-  destroy(typename allocator_traits<Alloc>::first_pointer address,
-          Alloc& alloc) const
+  inline auto destroy(typename allocator_traits<Alloc>::first_pointer address,
+                      Alloc &alloc) const
       noexcept(noexcept(vec2d_element_builder_rt_destroy(base_type::build_parts,
                                                          address, alloc))) {
     return vec2d_element_builder_rt_destroy(base_type::build_parts, address,
@@ -288,4 +272,3 @@ struct vec2d_element_builder_ct<
 };
 
 } // namespace het::detail
-

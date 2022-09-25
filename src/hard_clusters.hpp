@@ -12,8 +12,7 @@
 
 #include <vector>
 
-template <typename Type>
-struct HardClustersBase {
+template <typename Type> struct HardClustersBase {
   using index_type = Type;
   using clusters_type = std::vector<Type>;
   using clusters_wrapper_type = HardClustersWrapper<HardClustersBase, false>;
@@ -31,16 +30,11 @@ struct HardClustersBase {
   using iterator = typename clusters_type::iterator;
   using const_iterator = typename clusters_type::const_iterator;
 
-  template <typename, bool>
-  friend struct HardClusterWrapper;
-  template <typename, bool>
-  friend struct HardClustersWrapper;
-  template <typename, bool>
-  friend struct HardClusterElementWrapper;
-  template <typename, bool>
-  friend struct HardClustersElementWrapper;
-  template <typename>
-  friend struct HardClustersBaseComplement;
+  template <typename, bool> friend struct HardClusterWrapper;
+  template <typename, bool> friend struct HardClustersWrapper;
+  template <typename, bool> friend struct HardClusterElementWrapper;
+  template <typename, bool> friend struct HardClustersElementWrapper;
+  template <typename> friend struct HardClustersBaseComplement;
 
   HardClustersBase() = default;
   HardClustersBase(std::size_t elements, Type clusters) noexcept;

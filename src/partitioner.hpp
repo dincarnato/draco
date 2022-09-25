@@ -11,18 +11,18 @@
 
 class Partitioner {
 public:
-  Partitioner(const RingmapData& data);
+  Partitioner(const RingmapData &data);
 
   template <typename ArmaVec>
   std::vector<std::vector<unsigned>>
   buildAssignmentIndices(unsigned clusters,
-                         ArmaVec&& eigenVectorsIndices) const;
+                         ArmaVec &&eigenVectorsIndices) const;
 
   template <typename ArmaVec>
   std::vector<std::vector<unsigned>>
   buildAssignmentIndicesAndDumpScores(unsigned clusters,
-                                      ArmaVec&& eigenVectorsIndices,
-                                      const std::string& scoresFilename) const;
+                                      ArmaVec &&eigenVectorsIndices,
+                                      const std::string &scoresFilename) const;
 
   void setReRunWithChanges(bool value = true);
   void setMinClusterAbundancy(double value);
@@ -33,15 +33,15 @@ public:
 private:
   template <typename ArmaVec>
   std::vector<std::vector<unsigned>>
-  buildAssignmentIndices(unsigned clusters, ArmaVec&& eigenVectorsIndices,
-                         const std::string* scoresFilename) const;
+  buildAssignmentIndices(unsigned clusters, ArmaVec &&eigenVectorsIndices,
+                         const std::string *scoresFilename) const;
 
-  std::tuple<std::unique_ptr<RingmapData>, const RingmapData*>
+  std::tuple<std::unique_ptr<RingmapData>, const RingmapData *>
   getFilteredData() const;
   template <typename Read>
   static std::tuple<double, unsigned>
-  findNearestCentroid(Read&& read, const arma::mat& centroidsMatrix);
-  const RingmapData* ringmapData;
+  findNearestCentroid(Read &&read, const arma::mat &centroidsMatrix);
+  const RingmapData *ringmapData;
 
   double minClusterAbundancy = 0.1;
   unsigned minClusters = 0;

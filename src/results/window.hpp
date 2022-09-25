@@ -24,10 +24,10 @@ struct Window {
   using clusters_assignment_type = RingmapData::clusters_assignment_type;
 
   Window() = default;
-  Window(windows_merger::WindowsMergerWindow const& wmw,
-         std::vector<unsigned> const& coverages) noexcept(false);
-  Window(unsigned short begin_index, WeightedClusters const& weighted_clusters,
-         std::vector<unsigned> const& coverages) noexcept(false);
+  Window(windows_merger::WindowsMergerWindow const &wmw,
+         std::vector<unsigned> const &coverages) noexcept(false);
+  Window(unsigned short begin_index, WeightedClusters const &weighted_clusters,
+         std::vector<unsigned> const &coverages) noexcept(false);
 
   unsigned short begin_index, end_index;
   WeightedClusters weighted_clusters;
@@ -44,8 +44,8 @@ struct Window {
 
 namespace results {
 
-inline Window::Window(windows_merger::WindowsMergerWindow const& wmw,
-                      std::vector<unsigned> const& coverages) noexcept(false)
+inline Window::Window(windows_merger::WindowsMergerWindow const &wmw,
+                      std::vector<unsigned> const &coverages) noexcept(false)
     : begin_index(wmw.begin_index()), end_index(wmw.end_index()),
       weighted_clusters(wmw.size(), wmw.clusters_size(), false),
       coverages(coverages) {
@@ -54,9 +54,9 @@ inline Window::Window(windows_merger::WindowsMergerWindow const& wmw,
   auto base_weights_iter = std::begin(weighted_clusters);
 
   for (; wmw_iter < end_wmw; ++wmw_iter, ++base_weights_iter) {
-    auto&& wmw_base = *wmw_iter;
-    auto&& wmw_weights = wmw_base.weights();
-    auto&& base_weights = *base_weights_iter;
+    auto &&wmw_base = *wmw_iter;
+    auto &&wmw_weights = wmw_base.weights();
+    auto &&base_weights = *base_weights_iter;
     [[maybe_unused]] auto end_base_weights =
         std::copy(std::begin(wmw_weights), std::end(wmw_weights),
                   std::begin(base_weights));
@@ -65,8 +65,8 @@ inline Window::Window(windows_merger::WindowsMergerWindow const& wmw,
 }
 
 inline Window::Window(unsigned short begin_index,
-                      WeightedClusters const& weighted_clusters,
-                      std::vector<unsigned> const& coverages) noexcept(false)
+                      WeightedClusters const &weighted_clusters,
+                      std::vector<unsigned> const &coverages) noexcept(false)
     : begin_index(begin_index),
       end_index(begin_index + static_cast<unsigned short>(coverages.size())),
       weighted_clusters(weighted_clusters), coverages(coverages) {
@@ -83,9 +83,9 @@ inline Window::Window(unsigned short begin_index,
 }
 
 template <typename CharT, typename Traits, typename T>
-inline std::basic_ostream<CharT, Traits>&
-jsonify(std::basic_ostream<CharT, Traits>& os,
-        WeightedClustersClusterWrapper<T> const& cluster_wrapper) {
+inline std::basic_ostream<CharT, Traits> &
+jsonify(std::basic_ostream<CharT, Traits> &os,
+        WeightedClustersClusterWrapper<T> const &cluster_wrapper) {
   os << '[';
   auto iter = ranges::begin(cluster_wrapper);
   if (iter != ranges::end(cluster_wrapper)) {
@@ -93,7 +93,7 @@ jsonify(std::basic_ostream<CharT, Traits>& os,
     os << std::fixed << std::setprecision(3);
 
     jsonify(os, *iter++);
-    ranges::for_each(iter, ranges::end(cluster_wrapper), [&](auto&& weight) {
+    ranges::for_each(iter, ranges::end(cluster_wrapper), [&](auto &&weight) {
       os << ',';
       jsonify(os, weight);
     });
@@ -103,8 +103,8 @@ jsonify(std::basic_ostream<CharT, Traits>& os,
 
 template <typename CharT, typename Traits, typename T>
 inline std::enable_if_t<std::is_convertible_v<std::decay_t<T>, Window>,
-                        std::basic_ostream<CharT, Traits>&>
-jsonify(std::basic_ostream<CharT, Traits>& os, T&& window) {
+                        std::basic_ostream<CharT, Traits> &>
+jsonify(std::basic_ostream<CharT, Traits> &os, T &&window) {
   os << '{';
   {
     IosSaver iosSaver(os);
@@ -129,14 +129,14 @@ jsonify(std::basic_ostream<CharT, Traits>& os, T&& window) {
 
   os << ",";
   jsonify(os, "weights") << ":[";
-  auto&& clusters = window.weighted_clusters.clusters();
+  auto &&clusters = window.weighted_clusters.clusters();
   auto iter = ranges::begin(clusters);
   if (iter != ranges::end(clusters)) {
     IosSaver iosSaver(os);
     os << std::fixed << std::setprecision(3);
 
     jsonify(os, *iter++);
-    ranges::for_each(iter, ranges::end(clusters), [&](const auto& cluster) {
+    ranges::for_each(iter, ranges::end(clusters), [&](const auto &cluster) {
       os << ',';
       jsonify(os, cluster);
     });
@@ -146,13 +146,13 @@ jsonify(std::basic_ostream<CharT, Traits>& os, T&& window) {
 }
 
 template <typename CharT, typename Traits>
-std::basic_ostream<CharT, Traits>&
-jsonify(std::basic_ostream<CharT, Traits>& os,
-        RingmapMatrixRow const& ringmap_row) {
+std::basic_ostream<CharT, Traits> &
+jsonify(std::basic_ostream<CharT, Traits> &os,
+        RingmapMatrixRow const &ringmap_row) {
   os << '{';
   jsonify(os, "start", ringmap_row.begin_index, "end", ringmap_row.end_index,
           "mutatedIndexes",
-          static_cast<RingmapMatrixRow::base_type const&>(ringmap_row));
+          static_cast<RingmapMatrixRow::base_type const &>(ringmap_row));
   return os << "}";
 }
 

@@ -3,8 +3,7 @@
 #include "clusters_traits.hpp"
 #include <type_traits>
 
-template <typename, bool>
-struct HardClusterWrapper;
+template <typename, bool> struct HardClusterWrapper;
 
 template <typename Cluster, bool complemented>
 struct HardClusterElementWrapper {
@@ -14,16 +13,15 @@ struct HardClusterElementWrapper {
                                           const index_type, index_type>;
   static constexpr bool isComplemented = complemented;
 
-  template <typename, bool>
-  friend struct HardClusterElementIterator;
+  template <typename, bool> friend struct HardClusterElementIterator;
 
   HardClusterElementWrapper() = default;
   template <typename OtherCluster>
   HardClusterElementWrapper(
-      const HardClusterWrapper<OtherCluster, complemented>& clusterWrapper,
+      const HardClusterWrapper<OtherCluster, complemented> &clusterWrapper,
       std::size_t elementIndex) noexcept;
 
-  HardClusterElementWrapper const& operator=(bool value) const noexcept;
+  HardClusterElementWrapper const &operator=(bool value) const noexcept;
 
   bool get() const noexcept;
   void set() const noexcept;
@@ -33,10 +31,10 @@ struct HardClusterElementWrapper {
   void swapMatched(HardClusterElementWrapper other) const noexcept;
 
 private:
-  element_type* _element;
+  element_type *_element;
   index_type clusterIndex;
 #ifndef NDEBUG
-  Cluster* _cluster;
+  Cluster *_cluster;
 #endif
 };
 

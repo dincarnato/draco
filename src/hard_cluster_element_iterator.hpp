@@ -4,10 +4,8 @@
 #include <range/v3/core.hpp>
 #include <type_traits>
 
-template <typename, bool>
-struct HardClusterWrapper;
-template <typename, bool>
-struct HardClusterElementWrapper;
+template <typename, bool> struct HardClusterWrapper;
+template <typename, bool> struct HardClusterElementWrapper;
 
 template <typename Cluster, bool complemented>
 struct HardClusterElementIterator {
@@ -21,19 +19,19 @@ struct HardClusterElementIterator {
   using iterator_category = ranges::random_access_iterator_tag;
 
   HardClusterElementIterator() = default;
-  HardClusterElementIterator(hard_cluster_wrapper_type const& cluster,
+  HardClusterElementIterator(hard_cluster_wrapper_type const &cluster,
                              std::size_t elementIndex) noexcept;
 
 private:
   using self = HardClusterElementIterator;
 
 public:
-  self& operator++() noexcept;
+  self &operator++() noexcept;
   self operator++(int) noexcept;
-  self& operator--() noexcept;
+  self &operator--() noexcept;
   self operator--(int) noexcept;
-  self& operator+=(difference_type offset) noexcept;
-  self& operator-=(difference_type offset) noexcept;
+  self &operator+=(difference_type offset) noexcept;
+  self &operator-=(difference_type offset) noexcept;
   self operator+(difference_type offset) const noexcept;
   self operator-(difference_type offset) const noexcept;
 
@@ -41,15 +39,15 @@ public:
   friend HardClusterElementIterator<_Cluster, _complemented> operator+(
       typename HardClusterElementIterator<
           _Cluster, _complemented>::difference_type offset,
-      const HardClusterElementIterator<_Cluster, _complemented>& iter) noexcept;
+      const HardClusterElementIterator<_Cluster, _complemented> &iter) noexcept;
 
-  bool operator<(const self& other) const noexcept;
-  bool operator>(const self& other) const noexcept;
-  bool operator>=(const self& other) const noexcept;
-  bool operator<=(const self& other) const noexcept;
-  bool operator==(const self& other) const noexcept;
-  bool operator!=(const self& other) const noexcept;
-  difference_type operator-(const self& other) const noexcept;
+  bool operator<(const self &other) const noexcept;
+  bool operator>(const self &other) const noexcept;
+  bool operator>=(const self &other) const noexcept;
+  bool operator<=(const self &other) const noexcept;
+  bool operator==(const self &other) const noexcept;
+  bool operator!=(const self &other) const noexcept;
+  difference_type operator-(const self &other) const noexcept;
 
   reference operator*() const noexcept;
   reference operator[](difference_type offset) const noexcept;

@@ -19,7 +19,7 @@ struct Helix {
 
   Helix() = default;
   Helix(iter_type begin, iter_type end,
-        const RnaSecondaryStructure& structure) noexcept
+        const RnaSecondaryStructure &structure) noexcept
       : _begin(std::move(begin)), _end(std::move(end)) {
     setPairs(structure);
   }
@@ -33,8 +33,7 @@ struct Helix {
   {
   }
 
-  bool
-  isCompatible(const Helix& other) const noexcept {
+  bool isCompatible(const Helix &other) const noexcept {
     assert(_end != std::numeric_limits<iter_type>::max());
     assert(other._end != std::numeric_limits<iter_type>::max());
     assert(not _pairs.empty());
@@ -48,8 +47,8 @@ struct Helix {
         (other._begin >= _begin and other._begin < _end and other._end >= _end))
       return false;
 
-    for (const auto& pair : _pairs) {
-      for (const auto& otherPair : other._pairs) {
+    for (const auto &pair : _pairs) {
+      for (const auto &otherPair : other._pairs) {
         if (not(other._begin + otherPair.begin >= _begin + pair.end or
                 (_begin + pair.begin >=
                      other._begin + otherPair.begin + otherPair.pairingSize and
@@ -67,8 +66,7 @@ struct Helix {
     return true;
   }
 
-  void
-  setPairs(const RnaSecondaryStructure& structure) {
+  void setPairs(const RnaSecondaryStructure &structure) {
     const auto beginIter =
         std::next(std::begin(structure), static_cast<offset_type>(_begin));
     auto fwIter = beginIter;
@@ -117,24 +115,16 @@ struct Helix {
       _pairs.emplace_back(std::move(span));
   }
 
-  iter_type
-  begin() const noexcept {
-    return _begin;
-  }
+  iter_type begin() const noexcept { return _begin; }
 
-  iter_type
-  end() const noexcept {
-    return _end;
-  }
+  iter_type end() const noexcept { return _end; }
 
-  void
-  setEnd(iter_type end, const RnaSecondaryStructure& structure) {
+  void setEnd(iter_type end, const RnaSecondaryStructure &structure) {
     _end = end;
     setPairs(structure);
   }
 
-  bool
-  operator<(const Helix& other) const noexcept {
+  bool operator<(const Helix &other) const noexcept {
     if (_begin < other._begin)
       return true;
     else if (_begin > other._begin)
@@ -153,8 +143,8 @@ struct Helix {
     for (auto pairsIter = std::begin(_pairs),
               otherPairsIter = std::begin(other._pairs);
          pairsIter != std::end(_pairs); ++pairsIter, ++otherPairsIter) {
-      const auto& pair = *pairsIter;
-      const auto& otherPair = *otherPairsIter;
+      const auto &pair = *pairsIter;
+      const auto &otherPair = *otherPairsIter;
 
       if (pair.begin < otherPair.begin)
         return true;
@@ -175,13 +165,9 @@ struct Helix {
     return false;
   }
 
-  const std::vector<PairsSpan>&
-  pairs() const noexcept {
-    return _pairs;
-  }
+  const std::vector<PairsSpan> &pairs() const noexcept { return _pairs; }
 
-  void
-  shift(offset_type offset) {
+  void shift(offset_type offset) {
     assert(offset < 0 ? _begin >= static_cast<iter_type>(-offset) : true);
     _begin = static_cast<iter_type>(static_cast<offset_type>(_begin) + offset);
     _end += static_cast<iter_type>(static_cast<offset_type>(_end) + offset);

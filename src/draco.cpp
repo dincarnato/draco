@@ -43,8 +43,7 @@ struct WindowsSpan {
   unsigned n_clusters;
   unsigned max_n_clusters;
 
-  constexpr std::ptrdiff_t
-  size() const noexcept {
+  constexpr std::ptrdiff_t size() const noexcept {
     return static_cast<std::ptrdiff_t>(end) -
            static_cast<std::ptrdiff_t>(begin);
   }
@@ -54,18 +53,18 @@ constexpr static auto const invalid_n_clusters =
     std::numeric_limits<unsigned>::max();
 
 static std::vector<WindowsSpan>
-get_windows_spans(std::vector<Window> const& windows,
-                  std::vector<unsigned> const& windows_n_clusters,
-                  std::vector<std::optional<unsigned>> const&
-                      windows_max_clusters_constraints) noexcept(false) {
+get_windows_spans(std::vector<Window> const &windows,
+                  std::vector<unsigned> const &windows_n_clusters,
+                  std::vector<std::optional<unsigned>> const
+                      &windows_max_clusters_constraints) noexcept(false) {
 
-  auto get_max_n_clusters = [&](WindowsSpan const& span) {
+  auto get_max_n_clusters = [&](WindowsSpan const &span) {
     if (span.end == span.begin) {
       return invalid_n_clusters - 1;
     } else {
       return ranges::min(windows_max_clusters_constraints |
                          ranges::view::slice(span.begin, span.end) |
-                         ranges::view::transform([](auto&& constraint) {
+                         ranges::view::transform([](auto &&constraint) {
                            if (constraint)
                              return *constraint;
                            else {
@@ -74,7 +73,7 @@ get_windows_spans(std::vector<Window> const& windows,
                          }));
     }
     unsigned max_n_clusters = [&] {
-      if (auto&& constraint = windows_max_clusters_constraints[span.begin];
+      if (auto &&constraint = windows_max_clusters_constraints[span.begin];
           constraint) {
         return *constraint;
       } else {
@@ -84,7 +83,7 @@ get_windows_spans(std::vector<Window> const& windows,
 
     for (auto window_index = span.begin; window_index < span.end;
          ++window_index) {
-      if (auto const& constraint =
+      if (auto const &constraint =
               windows_max_clusters_constraints[window_index];
           constraint) {
         max_n_clusters = std::min(max_n_clusters, *constraint);
@@ -125,18 +124,17 @@ get_windows_spans(std::vector<Window> const& windows,
   return windows_spans;
 }
 
-bool
-merge_spans(std::vector<WindowsSpan>& windows_spans) noexcept {
+bool merge_spans(std::vector<WindowsSpan> &windows_spans) noexcept {
   bool updated = false;
 
   ranges::sort(windows_spans, {},
-               [](auto&& windows_span) { return windows_span.begin; });
+               [](auto &&windows_span) { return windows_span.begin; });
 
   auto windows_spans_iter = std::begin(windows_spans);
   auto const windows_spans_end = std::end(windows_spans);
 
   for (; windows_spans_iter < windows_spans_end; ++windows_spans_iter) {
-    auto& first_windows_span = *windows_spans_iter;
+    auto &first_windows_span = *windows_spans_iter;
 
     auto const span_clusters = first_windows_span.n_clusters;
     auto span_max_clusters = first_windows_span.max_n_clusters;
@@ -144,7 +142,7 @@ merge_spans(std::vector<WindowsSpan>& windows_spans) noexcept {
     auto last_span_end = first_windows_span.end;
     for (; other_windows_spans_iter < windows_spans_end;
          ++other_windows_spans_iter) {
-      auto&& other_windows_span = *other_windows_spans_iter;
+      auto &&other_windows_span = *other_windows_spans_iter;
 
       if (other_windows_span.n_clusters != span_clusters)
         break;
@@ -159,7 +157,7 @@ merge_spans(std::vector<WindowsSpan>& windows_spans) noexcept {
       first_windows_span.end = last_span_end;
       first_windows_span.max_n_clusters = span_max_clusters;
       std::for_each(std::next(windows_spans_iter), other_windows_spans_iter,
-                    [&](auto&& windows_span) {
+                    [&](auto &&windows_span) {
                       windows_span.n_clusters = invalid_n_clusters;
                     });
       updated = true;
@@ -176,42 +174,41 @@ enum class LoopAction {
 };
 
 template <typename F1, typename F2, typename F3>
-void
-windows_span_expander(std::vector<Window> const& windows,
-                      std::vector<unsigned>& windows_n_clusters,
-                      std::vector<std::optional<unsigned>> const&
-                          windows_max_clusters_constraints,
-                      F1&& loop_start_check, F2&& same_clusters_check,
-                      F3&& different_clusters_check) noexcept(false) {
+void windows_span_expander(std::vector<Window> const &windows,
+                           std::vector<unsigned> &windows_n_clusters,
+                           std::vector<std::optional<unsigned>> const
+                               &windows_max_clusters_constraints,
+                           F1 &&loop_start_check, F2 &&same_clusters_check,
+                           F3 &&different_clusters_check) noexcept(false) {
   auto const windows_size = windows.size();
   auto windows_spans = get_windows_spans(windows, windows_n_clusters,
                                          windows_max_clusters_constraints);
 
   for (;;) {
     ranges::sort(windows_spans, {},
-                 [](auto&& window_span) { return window_span.size(); });
+                 [](auto &&window_span) { return window_span.size(); });
 
-    assert(ranges::none_of(windows_spans, [](auto&& windows_span) {
+    assert(ranges::none_of(windows_spans, [](auto &&windows_span) {
       return windows_span.n_clusters == invalid_n_clusters;
     }));
 
-    assert(ranges::all_of(windows_spans, [](auto&& windows_span) {
+    assert(ranges::all_of(windows_spans, [](auto &&windows_span) {
       return windows_span.n_clusters <= windows_span.max_n_clusters;
     }));
 
-    assert(ranges::all_of(windows_spans, [&](auto&& windows_span) {
+    assert(ranges::all_of(windows_spans, [&](auto &&windows_span) {
       return ranges::all_of(
           windows_max_clusters_constraints |
               ranges::view::slice(windows_span.begin, windows_span.end) |
               ranges::view::filter(
-                  [](auto&& constraint) { return constraint.has_value(); }),
-          [&](auto&& constraint) {
+                  [](auto &&constraint) { return constraint.has_value(); }),
+          [&](auto &&constraint) {
             return windows_span.max_n_clusters <= *constraint;
           });
     }));
 
     bool updated = false;
-    for (auto&& window_span : windows_spans) {
+    for (auto &&window_span : windows_spans) {
       if (auto const action = loop_start_check(window_span);
           action == LoopAction::Continue) {
         continue;
@@ -226,29 +223,29 @@ windows_span_expander(std::vector<Window> const& windows,
         if (window_span.begin > 0) {
           auto const left_window_span_iter =
               ranges::find(windows_spans, window_span.begin,
-                           [](auto&& window_span) { return window_span.end; });
+                           [](auto &&window_span) { return window_span.end; });
           assert(left_window_span_iter != ranges::end(windows_spans));
           return &*left_window_span_iter;
         } else
-          return static_cast<WindowsSpan*>(nullptr);
+          return static_cast<WindowsSpan *>(nullptr);
       }();
 
       auto right_windows_span_ptr = [&] {
         if (window_span.end < windows_size) {
           auto const right_window_span_iter = ranges::find(
               windows_spans, window_span.end,
-              [](auto&& window_span) { return window_span.begin; });
+              [](auto &&window_span) { return window_span.begin; });
           assert(right_window_span_iter != ranges::end(windows_spans));
           return &*right_window_span_iter;
         } else
-          return static_cast<WindowsSpan*>(nullptr);
+          return static_cast<WindowsSpan *>(nullptr);
       }();
 
       if (left_windows_span_ptr) {
-        auto& left_windows_span = *left_windows_span_ptr;
+        auto &left_windows_span = *left_windows_span_ptr;
 
         if (right_windows_span_ptr) {
-          auto& right_windows_span = *right_windows_span_ptr;
+          auto &right_windows_span = *right_windows_span_ptr;
 
           if (left_windows_span.n_clusters == right_windows_span.n_clusters) {
             if (same_clusters_check(left_windows_span, right_windows_span)) {
@@ -344,7 +341,7 @@ windows_span_expander(std::vector<Window> const& windows,
           }
         }
       } else if (right_windows_span_ptr) {
-        auto& right_windows_span = *right_windows_span_ptr;
+        auto &right_windows_span = *right_windows_span_ptr;
 
         if (different_clusters_check(right_windows_span)) {
           if (right_windows_span.n_clusters <= span_max_clusters) {
@@ -372,81 +369,78 @@ windows_span_expander(std::vector<Window> const& windows,
 
     windows_spans.erase(
         std::remove_if(std::begin(windows_spans), std::end(windows_spans),
-                       [](auto&& windows_span) {
+                       [](auto &&windows_span) {
                          return windows_span.n_clusters == invalid_n_clusters;
                        }),
         std::end(windows_spans));
   }
 
   auto const windows_n_clusters_begin = std::begin(windows_n_clusters);
-  for (auto&& windows_span : windows_spans) {
+  for (auto &&windows_span : windows_spans) {
     std::fill(std::next(windows_n_clusters_begin, windows_span.begin),
               std::next(windows_n_clusters_begin, windows_span.end),
               windows_span.n_clusters);
   }
 
-  assert(ranges::all_of(windows_spans, [](auto&& windows_span) {
+  assert(ranges::all_of(windows_spans, [](auto &&windows_span) {
     return windows_span.n_clusters <= windows_span.max_n_clusters;
   }));
 
-  assert(ranges::all_of(windows_spans, [&](auto&& windows_span) {
+  assert(ranges::all_of(windows_spans, [&](auto &&windows_span) {
     return ranges::all_of(
         windows_max_clusters_constraints |
             ranges::view::slice(windows_span.begin, windows_span.end) |
             ranges::view::filter(
-                [](auto&& constraint) { return constraint.has_value(); }),
-        [&](auto&& constraint) {
+                [](auto &&constraint) { return constraint.has_value(); }),
+        [&](auto &&constraint) {
           return windows_span.max_n_clusters <= *constraint;
         });
   }));
 }
 
-void
-collapse_outlayer_clusters(std::vector<Window> const& windows,
-                           std::vector<unsigned>& windows_n_clusters,
-                           std::vector<std::optional<unsigned>> const&
-                               windows_max_clusters_constraints,
-                           Args const& args) noexcept(false) {
+void collapse_outlayer_clusters(std::vector<Window> const &windows,
+                                std::vector<unsigned> &windows_n_clusters,
+                                std::vector<std::optional<unsigned>> const
+                                    &windows_max_clusters_constraints,
+                                Args const &args) noexcept(false) {
   auto const max_collapsing_windows = args.max_collapsing_windows();
   auto const min_surrounding_windows_size = args.min_surrounding_windows_size();
   windows_span_expander(
       windows, windows_n_clusters, windows_max_clusters_constraints,
-      [=](auto&& window_span) {
+      [=](auto &&window_span) {
         if (window_span.size() > max_collapsing_windows) {
           return LoopAction::Break;
         } else {
           return LoopAction::None;
         }
       },
-      [=](auto&& left_windows_span, auto&& right_windows_span) {
+      [=](auto &&left_windows_span, auto &&right_windows_span) {
         return left_windows_span.size() + right_windows_span.size() >=
                min_surrounding_windows_size;
       },
-      [=](auto&& windows_span) {
+      [=](auto &&windows_span) {
         return windows_span.size() >= min_surrounding_windows_size;
       });
 }
 
-void
-set_uninformative_clusters_to_surrounding(
-    std::vector<Window> const& windows,
-    std::vector<unsigned>& windows_n_clusters,
-    std::vector<std::optional<unsigned>> const&
-        windows_max_clusters_constraints) noexcept(false) {
+void set_uninformative_clusters_to_surrounding(
+    std::vector<Window> const &windows,
+    std::vector<unsigned> &windows_n_clusters,
+    std::vector<std::optional<unsigned>> const
+        &windows_max_clusters_constraints) noexcept(false) {
   windows_span_expander(
       windows, windows_n_clusters, windows_max_clusters_constraints,
-      [](auto&& window_span) {
+      [](auto &&window_span) {
         if (window_span.n_clusters != 0) {
           return LoopAction::Continue;
         } else {
           return LoopAction::None;
         }
       },
-      [](auto&&, auto&&) { return true; }, [](auto&&) { return true; });
+      [](auto &&, auto &&) { return true; }, [](auto &&) { return true; });
 }
 
-int
-main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   auto const args = Args(argc, argv);
 
   std::cout << "\n[+] Starting DRACO analysis. This might take a while...\n";
@@ -494,8 +488,8 @@ main(int argc, char* argv[]) {
         auto poppedData = queue.pop();
         if (not poppedData)
           break;
-        auto const& transcript = std::get<0>(*poppedData);
-        auto& ringmapData = std::get<1>(*poppedData);
+        auto const &transcript = std::get<0>(*poppedData);
+        auto &ringmapData = std::get<1>(*poppedData);
         if (ringmapData.data().rows_size() == 0) {
           std::cout << "\x1b[2K\r[+] Skipping transcript " << transcript.getId()
                     << " (no reads)" << std::endl;
@@ -512,7 +506,7 @@ main(int argc, char* argv[]) {
 
         auto const median_read_size = [&] {
           auto reads_sizes = ringmapData.data().rows() |
-                             ranges::view::transform([](auto&& row) {
+                             ranges::view::transform([](auto &&row) {
                                assert(row.end_index() >= row.begin_index());
                                return static_cast<std::uint64_t>(
                                    row.end_index() - row.begin_index());
@@ -527,16 +521,17 @@ main(int argc, char* argv[]) {
 
         std::size_t transcript_size = ringmapData.data().cols_size();
         const auto window_size = [&] {
-          auto&& window_size = args.window_size();
+          auto &&window_size = args.window_size();
           if (window_size <= 0) {
-            window_size = static_cast<unsigned>(static_cast<double>(median_read_size) *
-                                         args.window_size_fraction());
+            window_size =
+                static_cast<unsigned>(static_cast<double>(median_read_size) *
+                                      args.window_size_fraction());
           }
 
           return std::min(window_size, static_cast<unsigned>(transcript_size));
         }();
         const auto window_offset = [&] {
-          auto&& window_shift = args.window_shift();
+          auto &&window_shift = args.window_shift();
           if (window_shift > 0) {
             return window_shift;
           } else {
@@ -572,12 +567,12 @@ main(int argc, char* argv[]) {
         {
           auto windows_iter = std::cbegin(windows);
           auto const windows_end = std::cend(windows);
-          auto&& windows_n_clusters_iter = std::begin(windows_n_clusters);
+          auto &&windows_n_clusters_iter = std::begin(windows_n_clusters);
 
           for (; windows_iter < windows_end;
                ++windows_iter, ++windows_n_clusters_iter) {
-            auto&& window = *windows_iter;
-            auto&& window_n_clusters = *windows_n_clusters_iter;
+            auto &&window = *windows_iter;
+            auto &&window_n_clusters = *windows_n_clusters_iter;
 
             auto window_ringmap_data = ringmapData.get_new_range(
                 window.start_base, window.start_base + window_size);
@@ -632,8 +627,8 @@ main(int argc, char* argv[]) {
           windows_n_clusters = pre_collapsing_clusters;
           ranges::for_each(ranges::view::zip(windows_n_clusters,
                                              windows_max_clusters_constraints),
-                           [](auto&& data) {
-                             auto&& [window_n_clusters, constraint] = data;
+                           [](auto &&data) {
+                             auto &&[window_n_clusters, constraint] = data;
                              if (constraint) {
                                window_n_clusters =
                                    std::min(window_n_clusters, *constraint);
@@ -674,7 +669,7 @@ main(int argc, char* argv[]) {
             for (; windows_iter < windows_end;
                  ++windows_iter, ++windows_n_clusters_iter) {
 
-              auto&& window = *windows_iter;
+              auto &&window = *windows_iter;
               auto n_clusters = *windows_n_clusters_iter;
 
               std::vector<unsigned> window_reads_indices;
@@ -732,7 +727,7 @@ main(int argc, char* argv[]) {
                   window_iter->weights.getClustersSize();
               auto last_window = std::find_if(
                   std::next(window_iter), std::end(windows),
-                  [n_clusters](auto&& window) {
+                  [n_clusters](auto &&window) {
                     return window.weights.getClustersSize() != n_clusters;
                   });
 
@@ -751,20 +746,20 @@ main(int argc, char* argv[]) {
                   std::set<std::size_t> reads_indices;
                   std::for_each(window_reads_indices_iter,
                                 last_window_reads_indices,
-                                [&](auto const& indices) {
+                                [&](auto const &indices) {
                                   reads_indices.insert(std::begin(indices),
                                                        std::end(indices));
                                 });
 
-                  auto&& data = ringmapData.data();
+                  auto &&data = ringmapData.data();
                   assert(std::all_of(
                       std::begin(reads_indices), std::end(reads_indices),
                       [nrows = data.rows_size()](auto const read_index) {
                         return read_index < nrows;
                       }));
 
-                  for (auto&& read_index : reads_indices) {
-                    auto&& row = data.row(read_index);
+                  for (auto &&read_index : reads_indices) {
+                    auto &&row = data.row(read_index);
                     auto const row_begin = std::max(
                         row.begin_index(), static_cast<unsigned>(begin_index));
                     auto const row_end = std::min(
@@ -777,14 +772,14 @@ main(int argc, char* argv[]) {
                         coverages |
                             ranges::view::drop(row_begin - begin_index) |
                             ranges::view::take(row_size),
-                        [](auto&& coverage) { ++coverage; });
+                        [](auto &&coverage) { ++coverage; });
                   }
                 }
                 return coverages;
               };
 
               auto const add_result_window =
-                  [&transcriptResult](results::Window&& result_window) {
+                  [&transcriptResult](results::Window &&result_window) {
                     if (transcriptResult.windows)
                       transcriptResult.windows->emplace_back(
                           std::move(result_window));
@@ -795,7 +790,7 @@ main(int argc, char* argv[]) {
 
               if (n_clusters == 0) {
                 if (args.report_uninformative()) {
-                  std::for_each(window_iter, last_window, [&](auto&& window) {
+                  std::for_each(window_iter, last_window, [&](auto &&window) {
                     auto const coverages = get_window_coverages(
                         window.start_base,
                         window.start_base + window.coverages.size());
@@ -812,7 +807,7 @@ main(int argc, char* argv[]) {
               }
 
               windows_merger::WindowsMerger windows_merger(n_clusters);
-              std::for_each(window_iter, last_window, [&](auto&& window) {
+              std::for_each(window_iter, last_window, [&](auto &&window) {
                 windows_merger.add_window(window.start_base, window.weights,
                                           window.coverages);
               });
@@ -829,7 +824,7 @@ main(int argc, char* argv[]) {
           }
 
           if (transcriptResult.windows) {
-            auto& result_windows = *transcriptResult.windows;
+            auto &result_windows = *transcriptResult.windows;
             auto splitted_ringmaps =
                 RingmapData(ringmapData).split_into_windows(result_windows);
 
@@ -840,12 +835,12 @@ main(int argc, char* argv[]) {
             auto splitted_ringmaps_iter = std::begin(splitted_ringmaps);
             for (; windows_iter < windows_end;
                  ++windows_iter, ++splitted_ringmaps_iter) {
-              auto& window = *windows_iter;
+              auto &window = *windows_iter;
               if (window.weighted_clusters.getClustersSize() == 0) {
                 continue;
               }
 
-              auto& ringmap = *splitted_ringmaps_iter;
+              auto &ringmap = *splitted_ringmaps_iter;
 
               window.assignments.resize(ringmap.data().rows_size());
               ranges::fill(window.assignments, std::int8_t(-1));
@@ -855,7 +850,7 @@ main(int argc, char* argv[]) {
               filteredRingmap.filterReads();
               filteredRingmap.filterBases();
 
-              auto&& fractions_result = filteredRingmap.fractionReadsByWeights(
+              auto &&fractions_result = filteredRingmap.fractionReadsByWeights(
                   window.weighted_clusters);
               std::tie(window.fractions, window.patterns, std::ignore) =
                   std::move(fractions_result);
@@ -867,12 +862,12 @@ main(int argc, char* argv[]) {
                 auto const patterns_end = std::cend(*window.patterns);
 
                 for (; patterns_iter < patterns_end; ++patterns_iter) {
-                  auto&& cur_pattern = *patterns_iter;
+                  auto &&cur_pattern = *patterns_iter;
                   auto const begin_cur_pattern = std::cbegin(cur_pattern);
                   auto const end_cur_pattern = std::cend(cur_pattern);
 
                   if (std::any_of(std::next(patterns_iter), patterns_end,
-                                  [&](auto&& next_pattern) {
+                                  [&](auto &&next_pattern) {
                                     return std::equal(begin_cur_pattern,
                                                       end_cur_pattern,
                                                       std::cbegin(next_pattern),
@@ -889,7 +884,7 @@ main(int argc, char* argv[]) {
                   ranges::any_of(
                       window.fractions,
                       [min_cluster_fraction =
-                           args.minimum_cluster_fraction()](auto&& fraction) {
+                           args.minimum_cluster_fraction()](auto &&fraction) {
                         return fraction < min_cluster_fraction;
                       })) {
                 stop = false;
@@ -902,8 +897,8 @@ main(int argc, char* argv[]) {
                 ranges::for_each(
                     ranges::view::zip(windows,
                                       windows_max_clusters_constraints),
-                    [&](auto&& data) {
-                      auto&& [window, window_constraint] = data;
+                    [&](auto &&data) {
+                      auto &&[window, window_constraint] = data;
                       if (window.start_base >= result_window_begin and
                           window.start_base + window_size <=
                               result_window_end) {
@@ -926,38 +921,38 @@ main(int argc, char* argv[]) {
                                             std::get<2>(fractions_result))));
                 assert(ranges::is_sorted(
                     assignments, {},
-                    [](auto&& pair) -> decltype(auto) { return pair.first; }));
+                    [](auto &&pair) -> decltype(auto) { return pair.first; }));
 
                 if (not window.bases_coverages) {
                   window.bases_coverages = std::vector<std::vector<unsigned>>{};
                 }
-                auto& bases_coverages = *window.bases_coverages;
+                auto &bases_coverages = *window.bases_coverages;
                 bases_coverages.resize(
                     window.weighted_clusters.getClustersSize(),
                     std::vector<unsigned>(window.end_index - window.begin_index,
                                           0));
 
-                auto&& original_data = std::as_const(ringmap).data();
-                auto&& rows = std::as_const(filteredRingmap).data().rows();
-                auto&& rows_iter = ranges::cbegin(rows);
+                auto &&original_data = std::as_const(ringmap).data();
+                auto &&rows = std::as_const(filteredRingmap).data().rows();
+                auto &&rows_iter = ranges::cbegin(rows);
                 auto const rows_end = ranges::cend(rows);
-                auto&& original_indices_iter =
+                auto &&original_indices_iter =
                     ranges::begin(filteredRingmap.getReadsMap());
                 for (; rows_iter < rows_end;
                      ++rows_iter, ++original_indices_iter) {
                   auto const original_index = *original_indices_iter;
-                  auto&& row = *rows_iter;
+                  auto &&row = *rows_iter;
 
                   auto assignment_iter_range = ranges::equal_range(
                       assignments, row,
-                      [](auto&& a, auto&& b) { return a < b; },
-                      [](auto&& pair) -> decltype(auto) { return pair.first; });
+                      [](auto &&a, auto &&b) { return a < b; },
+                      [](auto &&pair) -> decltype(auto) { return pair.first; });
                   assert(assignment_iter_range.begin() !=
                          ranges::end(assignments));
                   assert(assignment_iter_range.end() ==
                          ranges::next(assignment_iter_range.begin()));
 
-                  auto&& clusters_assignments =
+                  auto &&clusters_assignments =
                       assignment_iter_range.begin()->second;
                   auto const first_usable_cluster_iter =
                       ranges::find_if(clusters_assignments,
@@ -972,7 +967,7 @@ main(int argc, char* argv[]) {
                     window.assignments[original_index] = assignment;
                     --*first_usable_cluster_iter;
 
-                    auto&& original_row = original_data.row(original_index);
+                    auto &&original_row = original_data.row(original_index);
                     auto const begin_index =
                         std::max(original_row.begin_index(),
                                  static_cast<unsigned>(window.begin_index));
@@ -982,7 +977,7 @@ main(int argc, char* argv[]) {
 
                     assert(static_cast<std::size_t>(assignment) <
                            bases_coverages.size());
-                    auto&& cluster_bases_coverages =
+                    auto &&cluster_bases_coverages =
                         bases_coverages[assignment];
                     assert(cluster_bases_coverages.size() >=
                            end_index - begin_index);
@@ -990,16 +985,16 @@ main(int argc, char* argv[]) {
                                          ranges::view::slice(
                                              begin_index - window.begin_index,
                                              end_index - window.begin_index),
-                                     [](auto&& coverage) { ++coverage; });
+                                     [](auto &&coverage) { ++coverage; });
                   }
                 }
               }
 
               if (std::all_of(std::cbegin(*window.patterns),
-                              std::cend(*window.patterns), [](auto&& pattern) {
+                              std::cend(*window.patterns), [](auto &&pattern) {
                                 return std::all_of(
                                     std::cbegin(pattern), std::cend(pattern),
-                                    [](auto&& value) { return value == 0; });
+                                    [](auto &&value) { return value == 0; });
                               })) {
                 window.patterns = std::nullopt;
                 window.bases_coverages = std::nullopt;
@@ -1014,7 +1009,7 @@ main(int argc, char* argv[]) {
   }
 
   reader.join();
-  for (auto& worker : workers)
+  for (auto &worker : workers)
     worker.join();
 
   std::cout << "\n[+] All done.\n\n";

@@ -20,9 +20,9 @@ using uvec = ::arma::Col<unsigned>;
 } /* namespace ringmap */
 
 std::vector<std::vector<unsigned>>
-cleanStructures(const RingmapData& ringmapData,
-                const std::vector<std::vector<unsigned>>& assignments,
-                Args const& args);
+cleanStructures(const RingmapData &ringmapData,
+                const std::vector<std::vector<unsigned>> &assignments,
+                Args const &args);
 
 constexpr std::size_t operator"" _sz(unsigned long long n) { return n; }
 
@@ -34,9 +34,9 @@ inline std::enable_if_t<
     typename std::vector<
         std::array<typename std::decay_t<Iterable>::value_type, k>>::iterator>
 combinations(
-    Iterable&& elements,
+    Iterable &&elements,
     typename std::vector<std::array<typename std::decay_t<Iterable>::value_type,
-                                    k>>::iterator&& outIter,
+                                    k>>::iterator &&outIter,
     unsigned elementIndex) {
   for (auto elementIter = ranges::next(ranges::begin(elements), elementIndex),
             endIter = ranges::end(elements);
@@ -51,16 +51,16 @@ inline std::enable_if_t<
     typename std::vector<
         std::array<typename std::decay_t<Iterable>::value_type, k>>::iterator>
 combinations(
-    Iterable&& elements,
+    Iterable &&elements,
     typename std::vector<std::array<typename std::decay_t<Iterable>::value_type,
-                                    k>>::iterator&& outIter,
+                                    k>>::iterator &&outIter,
     unsigned elementIndex) {
   for (unsigned index = elementIndex; index < elements.size(); ++index) {
-    const auto& element = elements[index];
+    const auto &element = elements[index];
     std::size_t elementRepetitions =
         binomial(elements.size() - index - 1, k - depth - 1);
 
-    auto&& currentEnd = ranges::next(outIter, elementRepetitions);
+    auto &&currentEnd = ranges::next(outIter, elementRepetitions);
     for (auto iter = outIter; iter < currentEnd; ++iter)
       (*iter)[depth] = element;
 
@@ -80,8 +80,7 @@ combinations(
 } /* namespace detail */
 
 template <unsigned k, typename Iterable>
-auto
-combinations(Iterable&& elements)
+auto combinations(Iterable &&elements)
     -> std::vector<std::array<typename std::decay_t<Iterable>::value_type, k>> {
   using value_type = typename std::decay_t<Iterable>::value_type;
   std::vector<std::array<value_type, k>> out(binomial(elements.size(), k));
@@ -91,9 +90,8 @@ combinations(Iterable&& elements)
 }
 
 template <typename InputIt1, typename InputIt2, typename Compare>
-std::size_t
-count_intersections(InputIt1 first1, InputIt1 last1, InputIt2 first2,
-                    InputIt2 last2, Compare comp) {
+std::size_t count_intersections(InputIt1 first1, InputIt1 last1,
+                                InputIt2 first2, InputIt2 last2, Compare comp) {
   if (first1 == last1 or first2 == last2)
     return 0;
 
@@ -119,9 +117,7 @@ count_intersections(InputIt1 first1, InputIt1 last1, InputIt2 first2,
 
 namespace arma {
 
-template <typename T>
-inline bool
-operator==(const Row<T>& a, const Row<T>& b) {
+template <typename T> inline bool operator==(const Row<T> &a, const Row<T> &b) {
   auto size = a.size();
   assert(size == b.size());
   for (decltype(size) index = 0; index < size; ++index) {
@@ -131,9 +127,7 @@ operator==(const Row<T>& a, const Row<T>& b) {
   return true;
 }
 
-template <typename T>
-inline bool
-operator==(const Col<T>& a, const Col<T>& b) {
+template <typename T> inline bool operator==(const Col<T> &a, const Col<T> &b) {
   auto size = a.size();
   assert(size == b.size());
   for (decltype(size) index = 0; index < size; ++index) {
@@ -143,24 +137,19 @@ operator==(const Col<T>& a, const Col<T>& b) {
   return true;
 }
 
-template <typename T>
-inline bool
-operator!=(const Row<T>& a, const Row<T>& b) {
+template <typename T> inline bool operator!=(const Row<T> &a, const Row<T> &b) {
   return not(a == b);
 }
 
-template <typename T>
-inline bool
-operator!=(const Col<T>& a, const Col<T>& b) {
+template <typename T> inline bool operator!=(const Col<T> &a, const Col<T> &b) {
   return not(a == b);
 }
 
 } /* namespace arma */
 
 template <typename InputIt1, typename InputIt2>
-inline std::size_t
-count_intersections(InputIt1 first1, InputIt1 last1, InputIt2 first2,
-                    InputIt2 last2) {
+inline std::size_t count_intersections(InputIt1 first1, InputIt1 last1,
+                                       InputIt2 first2, InputIt2 last2) {
   return count_intersections(std::move(first1), std::move(last1),
                              std::move(first2), std::move(last2),
                              std::less<typename InputIt1::value_type>());
@@ -172,27 +161,24 @@ count_intersections(InputIt1 first1, InputIt1 last1, InputIt2 first2,
 #ifndef NDEBUG
 
 template <typename T>
-T
-arma_get_vec(const arma::Col<T>& vec, std::size_t index) {
+T arma_get_vec(const arma::Col<T> &vec, std::size_t index) {
   return vec[index];
 }
 
 template <typename T>
-T
-arma_get_rowvec(const arma::Row<T>& vec, std::size_t index) {
+T arma_get_rowvec(const arma::Row<T> &vec, std::size_t index) {
   return vec[index];
 }
 
 template <typename T>
-T
-arma_get_mat(const arma::Mat<T>& mat, std::size_t row, std::size_t col) {
+T arma_get_mat(const arma::Mat<T> &mat, std::size_t row, std::size_t col) {
   return mat(row, col);
 }
 
 #define DEFINE_ARMA_UTIL(type)                                                 \
-  template type arma_get_vec<type>(const arma::Col<type>&, std::size_t);       \
-  template type arma_get_rowvec<type>(const arma::Row<type>&, std::size_t);    \
-  template type arma_get_mat<type>(const arma::Mat<type>&, std::size_t,        \
+  template type arma_get_vec<type>(const arma::Col<type> &, std::size_t);      \
+  template type arma_get_rowvec<type>(const arma::Row<type> &, std::size_t);   \
+  template type arma_get_mat<type>(const arma::Mat<type> &, std::size_t,       \
                                    std::size_t);
 
 DEFINE_ARMA_UTIL(double)

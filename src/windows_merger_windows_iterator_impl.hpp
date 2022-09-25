@@ -7,12 +7,12 @@ namespace windows_merger {
 
 template <typename Merger>
 WindowsMergerWindowsIterator<Merger>::WindowsMergerWindowsIterator(
-    Merger& merger, signed_windows_size_type window_index) noexcept
+    Merger &merger, signed_windows_size_type window_index) noexcept
     : merger(&merger), window_index(window_index) {}
 
 template <typename Merger>
 WindowsMergerWindowsIterator<Merger>::WindowsMergerWindowsIterator(
-    Merger& merger, windows_size_type window_index) noexcept
+    Merger &merger, windows_size_type window_index) noexcept
     : merger(&merger),
       window_index(static_cast<signed_windows_size_type>(window_index)) {}
 
@@ -25,54 +25,48 @@ auto WindowsMergerWindowsIterator<Merger>::operator*() const noexcept
 }
 
 template <typename Merger>
-auto WindowsMergerWindowsIterator<Merger>::
-operator[](difference_type offset) const noexcept -> reference {
+auto WindowsMergerWindowsIterator<Merger>::operator[](
+    difference_type offset) const noexcept -> reference {
   return accessor(*merger,
                   static_cast<windows_size_type>(window_index + offset));
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowsIterator<Merger>::operator++() noexcept -> self& {
+auto WindowsMergerWindowsIterator<Merger>::operator++() noexcept -> self & {
   ++window_index;
   return *this;
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowsIterator<Merger>::operator++(int) noexcept -> self {
+auto WindowsMergerWindowsIterator<Merger>::operator++(int) noexcept -> self {
   auto new_iter = *this;
   ++window_index;
   return new_iter;
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowsIterator<Merger>::operator--() noexcept -> self& {
+auto WindowsMergerWindowsIterator<Merger>::operator--() noexcept -> self & {
   --window_index;
   return *this;
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowsIterator<Merger>::operator--(int) noexcept -> self {
+auto WindowsMergerWindowsIterator<Merger>::operator--(int) noexcept -> self {
   auto new_iter = *this;
   --window_index;
   return new_iter;
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowsIterator<Merger>::
-operator+=(difference_type offset) noexcept -> self& {
+auto WindowsMergerWindowsIterator<Merger>::operator+=(
+    difference_type offset) noexcept -> self & {
   window_index += offset;
   return *this;
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowsIterator<Merger>::
-operator-=(difference_type offset) noexcept -> self& {
+auto WindowsMergerWindowsIterator<Merger>::operator-=(
+    difference_type offset) noexcept -> self & {
   window_index -= offset;
   return *this;
 }

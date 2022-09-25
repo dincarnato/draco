@@ -11,26 +11,20 @@
 
 namespace windows_merger {
 
-template <typename>
-struct WindowsMergerWindowsIterator;
-template <typename>
-struct WindowsMergerWindowAccessorCoveragesAccessor;
+template <typename> struct WindowsMergerWindowsIterator;
+template <typename> struct WindowsMergerWindowAccessorCoveragesAccessor;
 
 struct WindowsMergerWindow;
-template <typename>
-struct WindowsMergerWindowAccessor;
-template <typename>
-struct WindowsMergerWindowBaseAccessor;
+template <typename> struct WindowsMergerWindowAccessor;
+template <typename> struct WindowsMergerWindowBaseAccessor;
 
 struct WindowsMergerWindows
     : het::allocator<typename WindowsMergerTraits::bases_size_type,
                      typename WindowsMergerTraits::weight_type>,
       het::allocator<typename WindowsMergerTraits::bases_size_type,
                      typename WindowsMergerTraits::coverage_type> {
-  template <typename>
-  friend struct WindowsMergerWindowAccessor;
-  template <typename>
-  friend struct WindowsMergerWindowBaseAccessor;
+  template <typename> friend struct WindowsMergerWindowAccessor;
+  template <typename> friend struct WindowsMergerWindowBaseAccessor;
   template <typename>
   friend struct WindowsMergerWindowAccessorCoveragesAccessor;
 
@@ -48,14 +42,14 @@ struct WindowsMergerWindows
   using const_window_accessor =
       WindowsMergerWindowAccessor<const WindowsMergerWindows>;
   using move_window_accessor =
-      WindowsMergerWindowAccessor<WindowsMergerWindows&&>;
+      WindowsMergerWindowAccessor<WindowsMergerWindows &&>;
   using base_accessor = WindowsMergerWindowBaseAccessor<WindowsMergerWindows>;
   using const_base_accessor =
       WindowsMergerWindowBaseAccessor<const WindowsMergerWindows>;
   using reserver_type = WindowsMergerReserve<windows_size_type>;
   using resizer_type = WindowsMergerResize<windows_size_type>;
   using iterator = WindowsMergerWindowsIterator<WindowsMergerWindows>;
-  using move_iterator = WindowsMergerWindowsIterator<WindowsMergerWindows&&>;
+  using move_iterator = WindowsMergerWindowsIterator<WindowsMergerWindows &&>;
   using const_iterator =
       WindowsMergerWindowsIterator<const WindowsMergerWindows>;
   using reverse_iterator = ranges::reverse_iterator<iterator>;
@@ -70,45 +64,45 @@ struct WindowsMergerWindows
                        windows_size_type n_windows);
   ~WindowsMergerWindows() noexcept;
 
-  WindowsMergerWindows(const WindowsMergerWindows&) = delete;
-  WindowsMergerWindows& operator=(const WindowsMergerWindows&) = delete;
+  WindowsMergerWindows(const WindowsMergerWindows &) = delete;
+  WindowsMergerWindows &operator=(const WindowsMergerWindows &) = delete;
 
-  WindowsMergerWindows(WindowsMergerWindows&&) noexcept;
-  WindowsMergerWindows& operator=(WindowsMergerWindows&&) noexcept;
+  WindowsMergerWindows(WindowsMergerWindows &&) noexcept;
+  WindowsMergerWindows &operator=(WindowsMergerWindows &&) noexcept;
 
-  bool operator==(const WindowsMergerWindows& other) const noexcept;
-  bool operator!=(const WindowsMergerWindows& other) const noexcept;
+  bool operator==(const WindowsMergerWindows &other) const noexcept;
+  bool operator!=(const WindowsMergerWindows &other) const noexcept;
 
   clusters_size_type clusters_size() const noexcept;
   bases_size_type bases_capacity() const noexcept;
   windows_size_type windows_size() const noexcept;
   windows_size_type windows_capacity() const noexcept;
 
-  window_accessor operator[](windows_size_type index) & noexcept;
-  const_window_accessor operator[](windows_size_type index) const& noexcept;
-  move_window_accessor operator[](windows_size_type index) && noexcept;
+  window_accessor operator[](windows_size_type index) &noexcept;
+  const_window_accessor operator[](windows_size_type index) const &noexcept;
+  move_window_accessor operator[](windows_size_type index) &&noexcept;
   window_accessor front() noexcept;
   const_window_accessor front() const noexcept;
   window_accessor back() noexcept;
   const_window_accessor back() const noexcept;
 
-  iterator begin() & noexcept;
-  iterator end() & noexcept;
-  const_iterator begin() const& noexcept;
-  const_iterator end() const& noexcept;
-  move_iterator begin() && noexcept;
-  move_iterator end() && noexcept;
-  reverse_iterator rbegin() & noexcept;
-  reverse_iterator rend() & noexcept;
-  const_reverse_iterator rbegin() const& noexcept;
-  const_reverse_iterator rend() const& noexcept;
-  move_reverse_iterator rbegin() && noexcept;
-  move_reverse_iterator rend() && noexcept;
+  iterator begin() &noexcept;
+  iterator end() &noexcept;
+  const_iterator begin() const &noexcept;
+  const_iterator end() const &noexcept;
+  move_iterator begin() &&noexcept;
+  move_iterator end() &&noexcept;
+  reverse_iterator rbegin() &noexcept;
+  reverse_iterator rend() &noexcept;
+  const_reverse_iterator rbegin() const &noexcept;
+  const_reverse_iterator rend() const &noexcept;
+  move_reverse_iterator rbegin() &&noexcept;
+  move_reverse_iterator rend() &&noexcept;
 
   template <template <typename> typename WindowsReshaper>
   void reshape(
       bases_size_type bases_reshaper,
-      WindowsReshaper<windows_size_type>&& windows_reshaper) noexcept(false);
+      WindowsReshaper<windows_size_type> &&windows_reshaper) noexcept(false);
 
   window_accessor emplace_back() noexcept(false);
 
@@ -138,7 +132,7 @@ private:
           .next()
           .dynamic_size()
           .size_from_callable(
-              [](const bases_size_type* bases) { return *bases; })
+              [](const bases_size_type *bases) { return *bases; })
           .default_uninitialized()
           .done();
 
@@ -152,12 +146,12 @@ private:
   auto get_coverage_first_pointer(windows_size_type window_index) noexcept;
 
   template <std::size_t Index>
-  auto get_coverage_first_pointer(windows_size_type window_index) const
-      noexcept;
+  auto
+  get_coverage_first_pointer(windows_size_type window_index) const noexcept;
 
   template <typename Base>
   base_accessor base_emplace_back(windows_size_type window_index,
-                                  Base&& base) noexcept(false);
+                                  Base &&base) noexcept(false);
 
   void allocate_impl() noexcept(false);
   inline bool is_allocated() const noexcept;
@@ -166,43 +160,47 @@ private:
   void destroy_range(windows_size_type window_index, bases_size_type first,
                      bases_size_type last) noexcept;
   void copy_construct_from_range(
-      const WindowsMergerWindows& from_windows,
+      const WindowsMergerWindows &from_windows,
       windows_size_type from_window_index, bases_size_type from_first,
       bases_size_type from_last, windows_size_type to_window_index,
       bases_size_type
           to_first) noexcept(noexcept(std::
                                           is_nothrow_copy_constructible_v<
-                                              weight_type>) and
-                             noexcept(std::is_nothrow_copy_constructible_v<
-                                      coverage_type>));
+                                              weight_type>)
+                                 and noexcept(
+                                     std::is_nothrow_copy_constructible_v<
+                                         coverage_type>));
   void copy_construct_from_range(
-      const WindowsMergerWindow& from_window, bases_size_type from_first,
+      const WindowsMergerWindow &from_window, bases_size_type from_first,
       bases_size_type from_last, windows_size_type to_window_index,
       bases_size_type
           to_first) noexcept(noexcept(std::
                                           is_nothrow_copy_constructible_v<
-                                              weight_type>) and
-                             noexcept(std::is_nothrow_copy_constructible_v<
-                                      coverage_type>));
+                                              weight_type>)
+                                 and noexcept(
+                                     std::is_nothrow_copy_constructible_v<
+                                         coverage_type>));
   void move_construct_from_range(
-      const WindowsMergerWindows& from_windows,
+      const WindowsMergerWindows &from_windows,
       windows_size_type from_window_index, bases_size_type from_first,
       bases_size_type from_last, windows_size_type to_window_index,
       bases_size_type
           to_first) noexcept(noexcept(std::
                                           is_nothrow_move_constructible_v<
-                                              weight_type>) and
-                             noexcept(std::is_nothrow_move_constructible_v<
-                                      coverage_type>));
+                                              weight_type>)
+                                 and noexcept(
+                                     std::is_nothrow_move_constructible_v<
+                                         coverage_type>));
   void move_construct_from_range(
-      WindowsMergerWindow&& from_windows, bases_size_type from_first,
+      WindowsMergerWindow &&from_windows, bases_size_type from_first,
       bases_size_type from_last, windows_size_type to_window_index,
       bases_size_type
           to_first) noexcept(noexcept(std::
                                           is_nothrow_move_constructible_v<
-                                              weight_type>) and
-                             noexcept(std::is_nothrow_move_constructible_v<
-                                      coverage_type>));
+                                              weight_type>)
+                                 and noexcept(
+                                     std::is_nothrow_move_constructible_v<
+                                         coverage_type>));
   void destroy_and_deallocate() noexcept;
 
   clusters_size_type n_clusters = 0;

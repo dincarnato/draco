@@ -13,8 +13,8 @@ namespace nostd {
 struct nonesuch {
   nonesuch() = delete;
   ~nonesuch() = delete;
-  nonesuch(nonesuch const&) = delete;
-  void operator=(nonesuch const&) = delete;
+  nonesuch(nonesuch const &) = delete;
+  void operator=(nonesuch const &) = delete;
 };
 
 namespace detail {
@@ -66,16 +66,12 @@ constexpr bool is_detected_convertible_v =
 
 #endif
 
-template <typename T, std::size_t = 0>
-struct identity_type {
-  using type = T;
-};
+template <typename T, std::size_t = 0> struct identity_type { using type = T; };
 
 template <typename T, std::size_t Index = 0>
 using identity_type_t = typename identity_type<T, Index>::type;
 
-template <typename T>
-struct is_integral_constant : std::false_type {};
+template <typename T> struct is_integral_constant : std::false_type {};
 
 template <typename T, T Value>
 struct is_integral_constant<std::integral_constant<T, Value>> : std::true_type {
@@ -131,8 +127,7 @@ struct is_applicable_r<R, Fun, std::array<T, Size>>
 template <typename R, typename Fun, typename Args>
 constexpr bool is_applicable_r_v = is_applicable_r<R, Fun, Args>::value;
 
-template <typename Fun, typename Args>
-struct apply_result;
+template <typename Fun, typename Args> struct apply_result;
 
 template <typename Fun, typename... Ts>
 struct apply_result<Fun, std::tuple<Ts...>> : std::invoke_result<Fun, Ts...> {};
@@ -148,14 +143,12 @@ template <std::size_t Index, typename T>
 struct is_enumerated<Enumerated<Index, T>> : std::true_type {};
 */
 
-template <typename T>
-struct is_tuple : std::false_type {};
+template <typename T> struct is_tuple : std::false_type {};
 
 template <typename... Ts>
 struct is_tuple<std::tuple<Ts...>> : std::true_type {};
 
-template <typename T>
-constexpr bool is_tuple_v = is_tuple<T>::value;
+template <typename T> constexpr bool is_tuple_v = is_tuple<T>::value;
 
 namespace detail {
 template <typename T, typename, typename... Args>
@@ -186,8 +179,7 @@ template <typename T, typename Tuple>
 constexpr bool is_constructible_from_tuple_v =
     is_constructible_from_tuple<T, Tuple>::value;
 
-template <typename T>
-struct is_array_class : std::false_type {};
+template <typename T> struct is_array_class : std::false_type {};
 
 template <typename T, std::size_t N>
 struct is_array_class<std::array<T, N>> : std::true_type {};
@@ -195,8 +187,7 @@ struct is_array_class<std::array<T, N>> : std::true_type {};
 template <typename T>
 constexpr bool is_array_class_v = is_array_class<T>::value;
 
-template <typename T, typename = void>
-struct make_signed_upcast {
+template <typename T, typename = void> struct make_signed_upcast {
   using type = T;
 };
 
@@ -229,8 +220,7 @@ struct make_signed_upcast<
 template <typename T>
 using make_signed_upcast_t = typename make_signed_upcast<T>::type;
 
-template <typename T, typename = void>
-struct make_unsigned_downcast {
+template <typename T, typename = void> struct make_unsigned_downcast {
   using type = T;
 };
 

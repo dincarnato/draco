@@ -21,34 +21,33 @@ struct TriangularMatrixStrict {
   using const_accessor =
       detail::TriangularMatrixStrictAccessor<const TriangularMatrixStrict>;
 
-  template <typename>
-  friend struct detail::TriangularMatrixStrictAccessor;
+  template <typename> friend struct detail::TriangularMatrixStrictAccessor;
   template <typename>
   friend struct detail::TriangularMatrixStrictReferenceWrapper;
 
   TriangularMatrixStrict() = default;
-  explicit TriangularMatrixStrict(const Alloc& alloc) noexcept(
+  explicit TriangularMatrixStrict(const Alloc &alloc) noexcept(
       noexcept(Alloc()));
   explicit TriangularMatrixStrict(size_type elements,
-                                  const Alloc& alloc = Alloc());
-  explicit TriangularMatrixStrict(size_type elements, const T& value,
-                                  const Alloc& alloc = Alloc());
+                                  const Alloc &alloc = Alloc());
+  explicit TriangularMatrixStrict(size_type elements, const T &value,
+                                  const Alloc &alloc = Alloc());
   explicit TriangularMatrixStrict(
       std::initializer_list<std::initializer_list<T>> data,
-      const Alloc& alloc = Alloc());
+      const Alloc &alloc = Alloc());
 
-  TriangularMatrixStrict(const TriangularMatrixStrict&) = default;
-  TriangularMatrixStrict(TriangularMatrixStrict&&) = default;
-  TriangularMatrixStrict(const TriangularMatrixStrict& other,
-                         const Alloc& alloc);
-  TriangularMatrixStrict(TriangularMatrixStrict&& other, const Alloc& alloc);
+  TriangularMatrixStrict(const TriangularMatrixStrict &) = default;
+  TriangularMatrixStrict(TriangularMatrixStrict &&) = default;
+  TriangularMatrixStrict(const TriangularMatrixStrict &other,
+                         const Alloc &alloc);
+  TriangularMatrixStrict(TriangularMatrixStrict &&other, const Alloc &alloc);
 
-  TriangularMatrixStrict& operator=(const TriangularMatrixStrict&) = default;
-  TriangularMatrixStrict& operator=(TriangularMatrixStrict&&) = default;
+  TriangularMatrixStrict &operator=(const TriangularMatrixStrict &) = default;
+  TriangularMatrixStrict &operator=(TriangularMatrixStrict &&) = default;
 
   inline void resize(size_type new_size) noexcept(false);
   inline void resize(size_type new_size,
-                     value_type const& value) noexcept(false);
+                     value_type const &value) noexcept(false);
 
   inline iterator begin() noexcept;
   inline const_iterator begin() const noexcept;

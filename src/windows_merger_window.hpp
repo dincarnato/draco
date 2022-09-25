@@ -13,22 +13,15 @@ namespace windows_merger {
 struct WindowsMergerWindowBase;
 struct WindowsMergerWindow;
 struct WindowsMergerWindows;
-template <typename>
-struct WindowsMergerWindowAccessor;
-template <typename>
-struct WindowsMergerWindowCoveragesAccessor;
-template <typename>
-struct WindowsMergerWindowWeightsAccessor;
+template <typename> struct WindowsMergerWindowAccessor;
+template <typename> struct WindowsMergerWindowCoveragesAccessor;
+template <typename> struct WindowsMergerWindowWeightsAccessor;
 
 struct WindowsMergerWindow {
-  template <typename>
-  friend struct WindowsMergerWindowCoveragesAccessor;
-  template <typename>
-  friend struct WindowsMergerWindowCoveragesIterator;
-  template <typename>
-  friend struct WindowsMergerWindowWeightsAccessor;
-  template <typename>
-  friend struct WindowsMergerWindowWeightsIterator;
+  template <typename> friend struct WindowsMergerWindowCoveragesAccessor;
+  template <typename> friend struct WindowsMergerWindowCoveragesIterator;
+  template <typename> friend struct WindowsMergerWindowWeightsAccessor;
+  template <typename> friend struct WindowsMergerWindowWeightsIterator;
 
   using traits_type = WindowsMergerTraits;
   using index_type = typename traits_type::windows_size_type;
@@ -59,38 +52,38 @@ struct WindowsMergerWindow {
   explicit WindowsMergerWindow(clusters_size_type n_clusters) noexcept(
       std::is_nothrow_default_constructible_v<bases_type>);
 
-  WindowsMergerWindow(WindowsMergerWindow const&) = default;
-  WindowsMergerWindow(WindowsMergerWindow&&) = default;
+  WindowsMergerWindow(WindowsMergerWindow const &) = default;
+  WindowsMergerWindow(WindowsMergerWindow &&) = default;
 
+  WindowsMergerWindow(WindowsMergerWindowAccessor<WindowsMergerWindows> const
+                          &) noexcept(false);
   WindowsMergerWindow(
-      WindowsMergerWindowAccessor<WindowsMergerWindows> const&) noexcept(false);
+      WindowsMergerWindowAccessor<WindowsMergerWindows> &&) noexcept(false);
   WindowsMergerWindow(
-      WindowsMergerWindowAccessor<WindowsMergerWindows>&&) noexcept(false);
-  WindowsMergerWindow(WindowsMergerWindowAccessor<
-                      WindowsMergerWindows const> const&) noexcept(false);
-  WindowsMergerWindow(WindowsMergerWindowAccessor<
-                      WindowsMergerWindows const>&&) noexcept(false);
-  WindowsMergerWindow(WindowsMergerWindowAccessor<
-                      WindowsMergerWindows&&> const&) noexcept(false);
+      WindowsMergerWindowAccessor<WindowsMergerWindows const> const
+          &) noexcept(false);
+  WindowsMergerWindow(WindowsMergerWindowAccessor<WindowsMergerWindows const>
+                          &&) noexcept(false);
+  WindowsMergerWindow(WindowsMergerWindowAccessor<WindowsMergerWindows &&> const
+                          &) noexcept(false);
   WindowsMergerWindow(
-      WindowsMergerWindowAccessor<WindowsMergerWindows&&>&&) noexcept(false);
+      WindowsMergerWindowAccessor<WindowsMergerWindows &&> &&) noexcept(false);
 
-  self& operator=(WindowsMergerWindow const&) = default;
-  self& operator=(WindowsMergerWindow&&) = default;
+  self &operator=(WindowsMergerWindow const &) = default;
+  self &operator=(WindowsMergerWindow &&) = default;
 
-  self& operator=(
-      WindowsMergerWindowAccessor<WindowsMergerWindows> const&) noexcept(false);
-  self& operator=(WindowsMergerWindowAccessor<WindowsMergerWindows>&&) noexcept(
-      false);
-  self& operator=(WindowsMergerWindowAccessor<
-                  WindowsMergerWindows const> const&) noexcept(false);
-  self&
-  operator=(WindowsMergerWindowAccessor<WindowsMergerWindows const>&&) noexcept(
-      false);
-  self& operator=(WindowsMergerWindowAccessor<
-                  WindowsMergerWindows&&> const&) noexcept(false);
-  self& operator=(
-      WindowsMergerWindowAccessor<WindowsMergerWindows&&>&&) noexcept(false);
+  self &operator=(WindowsMergerWindowAccessor<WindowsMergerWindows> const
+                      &) noexcept(false);
+  self &operator=(
+      WindowsMergerWindowAccessor<WindowsMergerWindows> &&) noexcept(false);
+  self &operator=(WindowsMergerWindowAccessor<WindowsMergerWindows const> const
+                      &) noexcept(false);
+  self &operator=(WindowsMergerWindowAccessor<WindowsMergerWindows const>
+                      &&) noexcept(false);
+  self &operator=(WindowsMergerWindowAccessor<WindowsMergerWindows &&> const
+                      &) noexcept(false);
+  self &operator=(
+      WindowsMergerWindowAccessor<WindowsMergerWindows &&> &&) noexcept(false);
 
   bases_size_type begin_index() const noexcept;
   bases_size_type end_index() const noexcept;
@@ -103,37 +96,35 @@ struct WindowsMergerWindow {
   const_linear_weights_accessor linear_weights() const noexcept;
   void set_begin_index(bases_size_type begin_index) noexcept;
 
-  base_type const& front() const noexcept;
-  base_type const& back() const noexcept;
+  base_type const &front() const noexcept;
+  base_type const &back() const noexcept;
 
-  base_type& front() noexcept;
-  base_type& back() noexcept;
+  base_type &front() noexcept;
+  base_type &back() noexcept;
 
-  iterator begin() & noexcept;
-  iterator end() & noexcept;
-  const_iterator begin() const& noexcept;
-  const_iterator end() const& noexcept;
-  move_iterator begin() && noexcept;
-  move_iterator end() && noexcept;
-  reverse_iterator rbegin() & noexcept;
-  reverse_iterator rend() & noexcept;
-  const_reverse_iterator rbegin() const& noexcept;
-  const_reverse_iterator rend() const& noexcept;
-  move_reverse_iterator rbegin() && noexcept;
-  move_reverse_iterator rend() && noexcept;
+  iterator begin() &noexcept;
+  iterator end() &noexcept;
+  const_iterator begin() const &noexcept;
+  const_iterator end() const &noexcept;
+  move_iterator begin() &&noexcept;
+  move_iterator end() &&noexcept;
+  reverse_iterator rbegin() &noexcept;
+  reverse_iterator rend() &noexcept;
+  const_reverse_iterator rbegin() const &noexcept;
+  const_reverse_iterator rend() const &noexcept;
+  move_reverse_iterator rbegin() &&noexcept;
+  move_reverse_iterator rend() &&noexcept;
 
-  base_type const& operator[](bases_size_type index) const noexcept;
-  base_type& operator[](bases_size_type index) noexcept;
+  base_type const &operator[](bases_size_type index) const noexcept;
+  base_type &operator[](bases_size_type index) noexcept;
 
   template <typename... Args>
-  base_type& emplace_back(Args&&... args) noexcept(false);
+  base_type &emplace_back(Args &&...args) noexcept(false);
 
-  template <typename Base>
-  void push_back(Base&& base) noexcept(false);
+  template <typename Base> void push_back(Base &&base) noexcept(false);
 
 private:
-  template <typename Accessor>
-  void assign_from_accessor(Accessor&& accessor);
+  template <typename Accessor> void assign_from_accessor(Accessor &&accessor);
 
   bases_type _bases;
   bases_size_type _begin_index = 0;

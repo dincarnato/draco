@@ -12,8 +12,8 @@
 
 template <typename Read>
 std::tuple<double, unsigned>
-Partitioner::findNearestCentroid(Read&& read,
-                                 const arma::mat& centroidsMatrix) {
+Partitioner::findNearestCentroid(Read &&read,
+                                 const arma::mat &centroidsMatrix) {
   assert(centroidsMatrix.n_rows > 0);
   assert(centroidsMatrix.n_cols > 0);
   arma::mat coordinateWiseDifference =

@@ -19,8 +19,7 @@ static std::atomic_bool mapWriting = false;
 static std::map<std::vector<double>, std::atomic<std::ptrdiff_t>>
     availableElements;
 
-static void
-queue_filler(parallel::blocking_queue<std::vector<double>>& queue) {
+static void queue_filler(parallel::blocking_queue<std::vector<double>> &queue) {
   std::mt19937 randomGen(std::random_device{}());
   std::uniform_real_distribution<> randomDist;
   std::uniform_int_distribution<std::size_t> randomVecSize(minVecSize,
@@ -53,7 +52,7 @@ queue_filler(parallel::blocking_queue<std::vector<double>>& queue) {
 std::atomic<std::size_t> allVecsPopped = 0;
 
 static void
-queue_consumer(parallel::blocking_queue<std::vector<double>>& queue) {
+queue_consumer(parallel::blocking_queue<std::vector<double>> &queue) {
   std::mt19937 randomGen(std::random_device{}());
 
   std::size_t vecsPopped = 0;
@@ -65,7 +64,7 @@ queue_consumer(parallel::blocking_queue<std::vector<double>>& queue) {
     }
 
     ++vecsPopped;
-    const std::vector<double>& vec = *popped;
+    const std::vector<double> &vec = *popped;
     {
       for (;;) {
         if (mapWriting.load(std::memory_order_acquire))
@@ -103,8 +102,7 @@ queue_consumer(parallel::blocking_queue<std::vector<double>>& queue) {
   allVecsPopped += vecsPopped;
 }
 
-int
-main() {
+int main() {
   using namespace std::chrono_literals;
   parallel::blocking_queue<std::vector<double>> queue(
       static_cast<std::size_t>(1.5 * nConsumers));
@@ -120,12 +118,12 @@ main() {
 
   filler.join();
 
-  for (auto& consumer : consumers)
+  for (auto &consumer : consumers)
     consumer.join();
 
   assert(allVecsPopped = nLoops);
   assert(std::all_of(std::begin(availableElements), std::end(availableElements),
-                     [](const auto& vecAndCount) {
+                     [](const auto &vecAndCount) {
                        return vecAndCount.second.load(
                                   std::memory_order_acquire) == 0;
                      }));

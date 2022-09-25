@@ -25,8 +25,8 @@ namespace results {
 
 template <typename CharT, typename Traits, typename T>
 std::enable_if_t<std::is_convertible_v<std::decay_t<T>, Transcript>,
-                 std::basic_ostream<CharT, Traits>&>
-jsonify(std::basic_ostream<CharT, Traits>& os, T&& transcript) {
+                 std::basic_ostream<CharT, Traits> &>
+jsonify(std::basic_ostream<CharT, Traits> &os, T &&transcript) {
   os << '{';
   jsonify(os, "id", transcript.name, "sequence", transcript.sequence, "nReads",
           transcript.reads);

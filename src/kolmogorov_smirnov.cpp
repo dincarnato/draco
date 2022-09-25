@@ -44,8 +44,7 @@ static constexpr double LnFactorial[mFact + 1] = {0.,
                                                   71.257038967168,
                                                   74.65823634883016};
 
-static double
-getLogFactorial(int n) {
+static double getLogFactorial(int n) {
   if (n <= mFact) {
     return LnFactorial[n];
 
@@ -61,8 +60,7 @@ getLogFactorial(int n) {
   }
 }
 
-static double
-rapfac(int n) {
+static double rapfac(int n) {
   int i;
   double res = 1.0 / n;
   for (i = 2; i <= n; i++) {
@@ -71,8 +69,7 @@ rapfac(int n) {
   return res;
 }
 
-static double
-KSPlusbarAsymp(int n, double x) {
+static double KSPlusbarAsymp(int n, double x) {
   double t = (6.0 * n * x + 1);
   double z = t * t / (18.0 * n);
   double v = 1.0 - (2.0 * z * z - 4.0 * z - 1.0) / (18.0 * n);
@@ -84,8 +81,7 @@ KSPlusbarAsymp(int n, double x) {
   return v;
 }
 
-static double
-KSPlusbarUpper(int n, double x) {
+static double KSPlusbarUpper(int n, double x) {
   const double EPSILON = 1.0E-12;
   double q;
   double Sum = 0.0;
@@ -142,8 +138,7 @@ KSPlusbarUpper(int n, double x) {
   return Sum;
 }
 
-static double
-Pelz(int n, double x) {
+static double Pelz(int n, double x) {
   constexpr int JMAX = 20;
   constexpr double EPS = 1.0e-10;
   constexpr double C = 2.506628274631001;   /* sqrt(2*Pi) */
@@ -236,9 +231,9 @@ Pelz(int n, double x) {
   return sum;
 }
 
-static void
-CalcFloorCeil(int n, double t, std::vector<double>& A,
-              std::vector<double>& Atflo, std::vector<double>& Atcei) {
+static void CalcFloorCeil(int n, double t, std::vector<double> &A,
+                          std::vector<double> &Atflo,
+                          std::vector<double> &Atcei) {
   int i;
   auto ell = static_cast<int>(t);
   double z = t - ell;
@@ -285,8 +280,7 @@ CalcFloorCeil(int n, double t, std::vector<double>& A,
   A[2 * n + 2] = n;
 }
 
-static double
-Pomeranz(int n, double x) {
+static double Pomeranz(int n, double x) {
   const double EPS = 1.0e-15;
   const int ENO = 350;
   const double RENO = ldexp(1.0, ENO);
@@ -385,8 +379,7 @@ Pomeranz(int n, double x) {
   return exp(w);
 }
 
-static double
-cdfSpecial(int n, double x) {
+static double cdfSpecial(int n, double x) {
   if ((n * x * x >= 18.0) || (x >= 1.0))
     return 1.0;
 
@@ -414,8 +407,7 @@ cdfSpecial(int n, double x) {
   return -1.0;
 }
 
-double
-KScdf(int n, double x) {
+double KScdf(int n, double x) {
   const double w = n * x * x;
   double u = cdfSpecial(n, x);
   if (u >= 0.0)
@@ -435,8 +427,7 @@ KScdf(int n, double x) {
   return Pelz(n, x);
 }
 
-static double
-fbarSpecial(int n, double x) {
+static double fbarSpecial(int n, double x) {
   const double w = n * x * x;
 
   if ((w >= 370.0) || (x >= 1.0))
@@ -463,8 +454,7 @@ fbarSpecial(int n, double x) {
   return -1.0;
 }
 
-double
-KSfbar(int n, double x) {
+double KSfbar(int n, double x) {
   const double w = n * x * x;
   double v = fbarSpecial(n, x);
   if (v >= 0.0)
@@ -487,15 +477,14 @@ constexpr double norm = 1e140;
 constexpr double inorm = 1. / 1e140;
 constexpr double logNorm = 140.;
 
-static void mMultiply(std::vector<double> const& A,
-                      std::vector<double> const& B, std::vector<double>& C,
+static void mMultiply(std::vector<double> const &A,
+                      std::vector<double> const &B, std::vector<double> &C,
                       int m);
 
-static void mPower(std::vector<double> const& A, int eA, std::vector<double>& V,
-                   int* eV, int m, int n);
+static void mPower(std::vector<double> const &A, int eA, std::vector<double> &V,
+                   int *eV, int m, int n);
 
-static double
-DurbinMatrix(int n, double d) {
+static double DurbinMatrix(int n, double d) {
   int k, m, i, j, g, eH, eQ;
   double h, s;
   k = static_cast<int>(n * d) + 1;
@@ -536,9 +525,9 @@ DurbinMatrix(int n, double d) {
   return s;
 }
 
-static void
-mMultiply(std::vector<double> const& A, std::vector<double> const& B,
-          std::vector<double>& C, int m) {
+static void mMultiply(std::vector<double> const &A,
+                      std::vector<double> const &B, std::vector<double> &C,
+                      int m) {
   int i, j, k;
   double s;
   for (i = 0; i < m; i++)
@@ -550,17 +539,15 @@ mMultiply(std::vector<double> const& A, std::vector<double> const& B,
     }
 }
 
-static void
-renormalize(std::vector<double>& V, int m, int* p) {
+static void renormalize(std::vector<double> &V, int m, int *p) {
   int i;
   for (i = 0; i < m * m; i++)
     V[i] *= inorm;
   *p += logNorm;
 }
 
-static void
-mPower(std::vector<double> const& A, int eA, std::vector<double>& V, int* eV,
-       int m, int n) {
+static void mPower(std::vector<double> const &A, int eA, std::vector<double> &V,
+                   int *eV, int m, int n) {
   int eB, i;
   if (n == 1) {
     for (i = 0; i < m * m; i++)
@@ -588,8 +575,7 @@ mPower(std::vector<double> const& A, int eA, std::vector<double>& V, int* eV,
     renormalize(V, m, eV);
 }
 
-double
-kolmogorov_smirnov_critical_value(unsigned n, double alpha) {
+double kolmogorov_smirnov_critical_value(unsigned n, double alpha) {
   thread_local std::map<int, std::vector<double>> cached_probabilities;
 
   if (alpha <= 0. or alpha > 1.)
@@ -607,7 +593,7 @@ kolmogorov_smirnov_critical_value(unsigned n, double alpha) {
            std::sqrt(static_cast<double>(n));
   }
 
-  auto const& table = [&]() -> decltype(auto) {
+  auto const &table = [&]() -> decltype(auto) {
     if (auto table_iter = cached_probabilities.find(n);
         table_iter == std::end(cached_probabilities)) {
       std::vector<double> fbars(kolmogorov_smirnov_table_size);

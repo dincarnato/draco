@@ -9,32 +9,28 @@
 
 using namespace windows_merger;
 
-static void
-test_default_construction() {
+static void test_default_construction() {
   WindowsMergerCacheIndices wmci;
   assert(wmci.line_capacity() == 0);
   assert(wmci.size() == 0);
   assert(wmci.capacity() == 0);
 }
 
-static void
-test_construction_with_clusters_and_bases() {
+static void test_construction_with_clusters_and_bases() {
   WindowsMergerCacheIndices wmci(70);
   assert(wmci.line_capacity() == 70);
   assert(wmci.size() == 0);
   assert(wmci.capacity() == 0);
 }
 
-static void
-test_construction_with_clusters_bases_and_windows() {
+static void test_construction_with_clusters_bases_and_windows() {
   WindowsMergerCacheIndices wmci(70, 100);
   assert(wmci.line_capacity() == 70);
   assert(wmci.size() == 100);
   assert(wmci.capacity() == 100);
 }
 
-static void
-test_simple_const_accessor() {
+static void test_simple_const_accessor() {
   const WindowsMergerCacheIndices wmci(70, 20);
   for (std::size_t index = 0; index < 20; ++index) {
     auto accessor = wmci[index];
@@ -70,16 +66,15 @@ create_random_indices(std::size_t n_indices) {
   return out_indices;
 }
 
-static void
-test_simple_accessor_emplace_back() {
+static void test_simple_accessor_emplace_back() {
   constexpr std::size_t n_indices_to_add = 30;
 
   auto indices_to_add = create_random_indices(n_indices_to_add);
   WindowsMergerCacheIndices wmci(70, 20);
   {
     auto accessor = wmci[0];
-    for (const auto& index : indices_to_add) {
-      auto&& new_index = accessor.emplace_back(index);
+    for (const auto &index : indices_to_add) {
+      auto &&new_index = accessor.emplace_back(index);
       assert(new_index == index);
     }
 
@@ -88,15 +83,14 @@ test_simple_accessor_emplace_back() {
   }
 }
 
-static void
-test_simple_accessor_push_back() {
+static void test_simple_accessor_push_back() {
   constexpr std::size_t n_indices_to_add = 30;
 
   auto indices_to_add = create_random_indices(n_indices_to_add);
   WindowsMergerCacheIndices wmci(70, 20);
   {
     auto accessor = wmci[0];
-    for (const auto& index : indices_to_add) {
+    for (const auto &index : indices_to_add) {
       accessor.push_back(index);
       assert(accessor.back() == index);
     }
@@ -106,42 +100,40 @@ test_simple_accessor_push_back() {
   }
 }
 
-static void
-test_index_accessor_const_iterator() {
+static void test_index_accessor_const_iterator() {
   constexpr std::size_t n_indices_to_add = 30;
 
   auto indices_to_add = create_random_indices(n_indices_to_add);
   WindowsMergerCacheIndices wmci(70, 20);
 
   auto accessor = wmci[0];
-  for (const auto& index : indices_to_add)
+  for (const auto &index : indices_to_add)
     accessor.emplace_back(index);
 
   assert(not accessor.empty());
   for (typename WindowsMergerTraits::windows_size_type index_index = 0;
        index_index < n_indices_to_add; ++index_index) {
-    const auto& index = accessor[index_index];
-    auto&& index_added = indices_to_add[index_index];
+    const auto &index = accessor[index_index];
+    auto &&index_added = indices_to_add[index_index];
 
     assert(index == index_added);
   }
 }
 
-static void
-test_index_accessor_iterator() {
+static void test_index_accessor_iterator() {
   constexpr std::size_t n_indices_to_add = 30;
 
   auto indices_to_add = create_random_indices(n_indices_to_add);
   WindowsMergerCacheIndices wmci(70, 20);
 
   auto accessor = wmci[0];
-  for (const auto& index : indices_to_add)
+  for (const auto &index : indices_to_add)
     accessor.emplace_back(index);
 
   for (typename WindowsMergerTraits::windows_size_type index_index = 0;
        index_index < n_indices_to_add; ++index_index) {
-    auto& index = accessor[index_index];
-    auto&& index_added = indices_to_add[index_index];
+    auto &index = accessor[index_index];
+    auto &&index_added = indices_to_add[index_index];
 
     ++index;
     assert(index != index_added);
@@ -149,15 +141,14 @@ test_index_accessor_iterator() {
   }
 }
 
-static void
-test_accessor_resizing_push() {
+static void test_accessor_resizing_push() {
   constexpr std::size_t n_indices_to_add = 30;
 
   auto indices_to_add = create_random_indices(n_indices_to_add);
   WindowsMergerCacheIndices wmci(1, 20);
   auto accessor = wmci[0];
-  for (const auto& index : indices_to_add) {
-    auto const& new_index = accessor.emplace_back(index);
+  for (const auto &index : indices_to_add) {
+    auto const &new_index = accessor.emplace_back(index);
     assert(new_index == index);
     assert(new_index == accessor.back());
   }
@@ -168,16 +159,15 @@ test_accessor_resizing_push() {
     assert(accessor[index_index] == indices_to_add[index_index]);
 }
 
-static void
-test_accessor_resizing_push_on_empty() {
+static void test_accessor_resizing_push_on_empty() {
   constexpr std::size_t n_indices_to_add = 30;
 
   auto indices_to_add = create_random_indices(n_indices_to_add);
   {
     WindowsMergerCacheIndices wmci(0, 20);
     auto accessor = wmci[0];
-    for (const auto& index : indices_to_add) {
-      auto const& new_index = accessor.emplace_back(index);
+    for (const auto &index : indices_to_add) {
+      auto const &new_index = accessor.emplace_back(index);
       assert(new_index == index);
       assert(new_index == accessor.back());
     }
@@ -191,7 +181,7 @@ test_accessor_resizing_push_on_empty() {
   {
     WindowsMergerCacheIndices wmci(0, 20);
     auto accessor = wmci[0];
-    for (const auto& indices : indices_to_add) {
+    for (const auto &indices : indices_to_add) {
       accessor.push_back(indices);
       assert(accessor.back() == indices);
     }
@@ -205,7 +195,7 @@ test_accessor_resizing_push_on_empty() {
   {
     WindowsMergerCacheIndices wmci(0, 20);
     auto accessor = wmci[0];
-    for (auto& index : indices_to_add) {
+    for (auto &index : indices_to_add) {
       accessor.push_back(index);
       assert(accessor.back() == index);
     }
@@ -217,8 +207,7 @@ test_accessor_resizing_push_on_empty() {
   }
 }
 
-static void
-test_windows_reshape_noreshape() {
+static void test_windows_reshape_noreshape() {
   constexpr std::size_t n_indices_to_add = 30;
 
   {
@@ -236,7 +225,7 @@ test_windows_reshape_noreshape() {
 
   {
     auto accessor = wmci[0];
-    for (const auto& window_base : indices_to_add)
+    for (const auto &window_base : indices_to_add)
       accessor.emplace_back(window_base);
   }
 
@@ -259,24 +248,23 @@ test_windows_reshape_noreshape() {
   }
 }
 
-static void
-test_windows_reshape_from_empty() {
+static void test_windows_reshape_from_empty() {
   constexpr std::size_t n_indices_to_add = 20;
 
   auto indices_to_add = create_random_indices(n_indices_to_add);
-  auto add_to_wmci = [&](WindowsMergerCacheIndices& wmci) {
+  auto add_to_wmci = [&](WindowsMergerCacheIndices &wmci) {
     if (wmci.size() == 0)
       wmci.reshape(0, WindowsMergerCacheIndices::resizer_type(1));
 
     auto accessor = wmci[0];
-    for (const auto& window_base : indices_to_add)
+    for (const auto &window_base : indices_to_add)
       accessor.emplace_back(window_base);
 
     assert(wmci.line_capacity() == 70);
     assert(wmci.capacity() == 20);
   };
 
-  auto check_wmci = [&](const WindowsMergerCacheIndices& wmci) {
+  auto check_wmci = [&](const WindowsMergerCacheIndices &wmci) {
     auto accessor = wmci[0];
     assert(std::size(accessor) == n_indices_to_add);
     for (WindowsMergerTraits::bases_size_type base_index = 0;
@@ -338,8 +326,7 @@ test_windows_reshape_from_empty() {
   }
 }
 
-static void
-test_windows_reshape_shrink() {
+static void test_windows_reshape_shrink() {
   constexpr WindowsMergerTraits::windows_size_type n_windows = 20;
   constexpr std::size_t n_indices_to_add = 30;
 
@@ -349,7 +336,7 @@ test_windows_reshape_shrink() {
   for (WindowsMergerTraits::windows_size_type window_index = 0;
        window_index < n_windows; ++window_index) {
     auto accessor = wmci[window_index];
-    for (const auto& window_base : indices_to_add)
+    for (const auto &window_base : indices_to_add)
       accessor.emplace_back(window_base);
   }
 
@@ -368,8 +355,7 @@ test_windows_reshape_shrink() {
   }
 }
 
-static void
-test_windows_iterators() {
+static void test_windows_iterators() {
   using windows_size_type = WindowsMergerTraits::windows_size_type;
   constexpr windows_size_type n_windows = 20;
   constexpr std::size_t n_indices_to_add = 30;
@@ -383,10 +369,10 @@ test_windows_iterators() {
          window_index < n_windows; ++window_index) {
       auto accessor = wmci[window_index];
 
-      auto& current_indices_to_add = indices_to_add[window_index];
+      auto &current_indices_to_add = indices_to_add[window_index];
       current_indices_to_add = create_random_indices(n_indices_to_add);
 
-      for (const auto& window_base : current_indices_to_add)
+      for (const auto &window_base : current_indices_to_add)
         accessor.emplace_back(window_base);
     }
 
@@ -416,8 +402,8 @@ test_windows_iterators() {
 
       for (; indices_iter < indices_iter_end;
            ++added_indices_iter, ++indices_iter) {
-        auto&& indices_line = *indices_iter;
-        auto&& added_indices_line = *added_indices_iter;
+        auto &&indices_line = *indices_iter;
+        auto &&added_indices_line = *added_indices_iter;
         assert(ranges::equal(indices_line, added_indices_line));
         assert(ranges::equal(indices_line | ranges::view::reverse,
                              added_indices_line | ranges::view::reverse));
@@ -425,8 +411,8 @@ test_windows_iterators() {
 
       for (std::ptrdiff_t index = 0;
            index < static_cast<std::ptrdiff_t>(n_windows); ++index) {
-        auto&& indices_line = indices_iter_begin[index];
-        auto&& added_indices_line = added_indices_iter_begin[index];
+        auto &&indices_line = indices_iter_begin[index];
+        auto &&added_indices_line = added_indices_iter_begin[index];
 
         assert(ranges::equal(indices_line, added_indices_line));
       }
@@ -439,8 +425,8 @@ test_windows_iterators() {
 
       for (; indices_iter < indices_iter_end;
            added_indices_iter++, indices_iter++) {
-        auto&& indices_line = *indices_iter;
-        auto&& added_indices_line = *added_indices_iter;
+        auto &&indices_line = *indices_iter;
+        auto &&added_indices_line = *added_indices_iter;
         assert(ranges::equal(indices_line, added_indices_line));
       }
     }
@@ -452,8 +438,8 @@ test_windows_iterators() {
 
       for (; indices_iter < indices_iter_end;
            added_indices_iter += 2, indices_iter += 2) {
-        auto&& indices_line = *indices_iter;
-        auto&& added_indices_line = *added_indices_iter;
+        auto &&indices_line = *indices_iter;
+        auto &&added_indices_line = *added_indices_iter;
         assert(ranges::equal(indices_line, added_indices_line));
       }
     }
@@ -467,8 +453,8 @@ test_windows_iterators() {
         --indices_iter;
         --added_indices_iter;
 
-        auto&& indices_line = *indices_iter;
-        auto&& added_indices_line = *added_indices_iter;
+        auto &&indices_line = *indices_iter;
+        auto &&added_indices_line = *added_indices_iter;
         assert(ranges::equal(indices_line, added_indices_line));
       }
     }
@@ -482,8 +468,8 @@ test_windows_iterators() {
         indices_iter--;
         added_indices_iter--;
 
-        auto&& indices_line = *indices_iter;
-        auto&& added_indices_line = *added_indices_iter;
+        auto &&indices_line = *indices_iter;
+        auto &&added_indices_line = *added_indices_iter;
         assert(ranges::equal(indices_line, added_indices_line));
       }
     }
@@ -497,29 +483,28 @@ test_windows_iterators() {
         indices_iter -= 2;
         added_indices_iter -= 2;
 
-        auto&& indices_line = *indices_iter;
-        auto&& added_indices_line = *added_indices_iter;
+        auto &&indices_line = *indices_iter;
+        auto &&added_indices_line = *added_indices_iter;
         assert(ranges::equal(indices_line, added_indices_line));
       }
     }
   };
 
-  perform_test([](auto&& window) { return ranges::begin(window); },
-               [](auto&& window) { return ranges::end(window); });
+  perform_test([](auto &&window) { return ranges::begin(window); },
+               [](auto &&window) { return ranges::end(window); });
 
   perform_test(
-      [](auto&& window) { return ranges::begin(std::as_const(window)); },
-      [](auto&& window) { return ranges::end(std::as_const(window)); });
+      [](auto &&window) { return ranges::begin(std::as_const(window)); },
+      [](auto &&window) { return ranges::end(std::as_const(window)); });
 
-  perform_test([](auto&& window) { return std::rbegin(window); },
-               [](auto&& window) { return std::rend(window); });
+  perform_test([](auto &&window) { return std::rbegin(window); },
+               [](auto &&window) { return std::rend(window); });
 
-  perform_test([](auto&& window) { return std::rbegin(std::as_const(window)); },
-               [](auto&& window) { return std::rend(std::as_const(window)); });
+  perform_test([](auto &&window) { return std::rbegin(std::as_const(window)); },
+               [](auto &&window) { return std::rend(std::as_const(window)); });
 }
 
-static void
-test_move_constructor() {
+static void test_move_constructor() {
   {
     WindowsMergerCacheIndices wmci;
     WindowsMergerCacheIndices new_wmci(std::move(wmci));
@@ -566,10 +551,10 @@ test_move_constructor() {
          window_index < n_windows; ++window_index) {
       auto accessor = wmci[window_index];
 
-      auto& current_indices_to_add = indices_to_add[window_index];
+      auto &current_indices_to_add = indices_to_add[window_index];
       current_indices_to_add = create_random_indices(n_indices_to_add);
 
-      for (const auto& window_base : current_indices_to_add)
+      for (const auto &window_base : current_indices_to_add)
         accessor.emplace_back(window_base);
     }
 
@@ -584,8 +569,8 @@ test_move_constructor() {
 
     for (WindowsMergerTraits::windows_size_type window_index = 0;
          window_index < n_windows; ++window_index) {
-      auto&& new_window = std::as_const(new_wmci)[window_index];
-      const auto& indices = indices_to_add[window_index];
+      auto &&new_window = std::as_const(new_wmci)[window_index];
+      const auto &indices = indices_to_add[window_index];
 
       for (windows_size_type index_index = 0; index_index < n_indices_to_add;
            ++index_index)
@@ -594,10 +579,9 @@ test_move_constructor() {
   }
 }
 
-static void
-test_move_assignment() {
+static void test_move_assignment() {
 
-  auto perform_test = [](auto&& create_wmci) {
+  auto perform_test = [](auto &&create_wmci) {
     {
       WindowsMergerCacheIndices wmci;
       WindowsMergerCacheIndices new_wmci = create_wmci();
@@ -647,10 +631,10 @@ test_move_assignment() {
            window_index < n_windows; ++window_index) {
         auto accessor = wmci[window_index];
 
-        auto& current_indices_to_add = indices_to_add[window_index];
+        auto &current_indices_to_add = indices_to_add[window_index];
         current_indices_to_add = create_random_indices(n_indices_to_add);
 
-        for (const auto& window_base : current_indices_to_add)
+        for (const auto &window_base : current_indices_to_add)
           accessor.emplace_back(window_base);
       }
 
@@ -667,8 +651,8 @@ test_move_assignment() {
 
       for (WindowsMergerTraits::windows_size_type window_index = 0;
            window_index < n_windows; ++window_index) {
-        auto&& new_window = std::as_const(new_wmci)[window_index];
-        const auto& indices = indices_to_add[window_index];
+        auto &&new_window = std::as_const(new_wmci)[window_index];
+        const auto &indices = indices_to_add[window_index];
 
         for (windows_size_type index_index = 0; index_index < n_indices_to_add;
              ++index_index)
@@ -688,11 +672,11 @@ test_move_assignment() {
     WindowsMergerCacheIndices wmci(n_indices_to_add, n_windows);
     for (WindowsMergerTraits::windows_size_type window_index = 0;
          window_index < n_windows; ++window_index) {
-      auto&& window = wmci[window_index];
-      auto&& indices = create_random_indices(n_indices_to_add);
+      auto &&window = wmci[window_index];
+      auto &&indices = create_random_indices(n_indices_to_add);
       assert(window.size() == 0);
 
-      for (auto&& index : indices)
+      for (auto &&index : indices)
         window.emplace_back(std::move(index));
     }
 
@@ -700,8 +684,7 @@ test_move_assignment() {
   });
 }
 
-static void
-test_window_accessor_resize() {
+static void test_window_accessor_resize() {
   using windows_size_type = typename WindowsMergerTraits::windows_size_type;
 
   constexpr windows_size_type n_indices = 30;
@@ -710,7 +693,7 @@ test_window_accessor_resize() {
   const auto accessor = wmci[0];
 
   auto bases = create_random_indices(n_indices);
-  for (auto&& base : bases)
+  for (auto &&base : bases)
     accessor.emplace_back(base);
   assert(ranges::equal(bases, accessor));
 
@@ -727,8 +710,7 @@ test_window_accessor_resize() {
                        ranges::begin(accessor), ranges::end(accessor)));
 }
 
-static void
-test_window_accessor_clear() {
+static void test_window_accessor_clear() {
   using windows_size_type = typename WindowsMergerTraits::windows_size_type;
 
   constexpr windows_size_type n_indices = 30;
@@ -737,15 +719,14 @@ test_window_accessor_clear() {
   const auto accessor = wmci[0];
 
   auto bases = create_random_indices(n_indices);
-  for (auto&& base : bases)
+  for (auto &&base : bases)
     accessor.emplace_back(base);
   assert(ranges::equal(bases, accessor));
   accessor.clear();
   assert(accessor.size() == 0);
 }
 
-static void
-test_window_accessor_assignment() {
+static void test_window_accessor_assignment() {
   using windows_size_type = typename WindowsMergerTraits::windows_size_type;
 
   constexpr windows_size_type n_indices_to_add = 30;
@@ -756,7 +737,7 @@ test_window_accessor_assignment() {
     {
       auto bases_to_add = create_random_indices(initial_capacity);
       auto accessor = wmci_lhs[0];
-      for (const auto& window_base : bases_to_add)
+      for (const auto &window_base : bases_to_add)
         accessor.emplace_back(window_base);
     }
 
@@ -764,7 +745,7 @@ test_window_accessor_assignment() {
     {
       auto bases_to_add = create_random_indices(n_indices_to_add);
       auto accessor = wmci_rhs[0];
-      for (const auto& window_base : bases_to_add)
+      for (const auto &window_base : bases_to_add)
         accessor.emplace_back(window_base);
     }
 
@@ -783,88 +764,91 @@ test_window_accessor_assignment() {
 
     perform_test(
         indices_initial_capacity,
-        [](auto& wmci) -> decltype(auto) { return wmci; },
-        [](auto& wmci) -> decltype(auto) { return wmci; },
-        [](auto&& accessor_a, auto&& accessor_b) { accessor_a = accessor_b; });
-
-    perform_test(indices_initial_capacity,
-                 [](auto& wmci) -> decltype(auto) { return wmci; },
-                 [](auto& wmci) -> decltype(auto) { return wmci; },
-                 [](auto&& accessor_a, auto&& accessor_b) {
-                   accessor_a = std::move(accessor_b);
-                 });
+        [](auto &wmci) -> decltype(auto) { return wmci; },
+        [](auto &wmci) -> decltype(auto) { return wmci; },
+        [](auto &&accessor_a, auto &&accessor_b) { accessor_a = accessor_b; });
 
     perform_test(
         indices_initial_capacity,
-        [](auto& wmci) -> decltype(auto) { return std::as_const(wmci); },
-        [](auto& wmci) -> decltype(auto) { return wmci; },
-        [](auto&& accessor_a, auto&& accessor_b) { accessor_a = accessor_b; });
-
-    perform_test(
-        indices_initial_capacity,
-        [](auto& wmci) -> decltype(auto) { return std::as_const(wmci); },
-        [](auto& wmci) -> decltype(auto) { return wmci; },
-        [](auto&& accessor_a, auto&& accessor_b) {
+        [](auto &wmci) -> decltype(auto) { return wmci; },
+        [](auto &wmci) -> decltype(auto) { return wmci; },
+        [](auto &&accessor_a, auto &&accessor_b) {
           accessor_a = std::move(accessor_b);
         });
 
     perform_test(
         indices_initial_capacity,
-        [](auto& wmci) -> decltype(auto) { return wmci; },
-        [](auto& wmci) -> decltype(auto) { return std::move(wmci); },
-        [](auto&& accessor_a, auto&& accessor_b) { accessor_a = accessor_b; });
-
-    perform_test(indices_initial_capacity,
-                 [](auto& wmci) -> decltype(auto) { return wmci; },
-                 [](auto& wmci) -> decltype(auto) { return std::move(wmci); },
-                 [](auto&& accessor_a, auto&& accessor_b) {
-                   accessor_a = std::move(accessor_b);
-                 });
+        [](auto &wmci) -> decltype(auto) { return std::as_const(wmci); },
+        [](auto &wmci) -> decltype(auto) { return wmci; },
+        [](auto &&accessor_a, auto &&accessor_b) { accessor_a = accessor_b; });
 
     perform_test(
         indices_initial_capacity,
-        [](auto& wmci) -> decltype(auto) { return std::as_const(wmci); },
-        [](auto& wmci) -> decltype(auto) { return std::move(wmci); },
-        [](auto&& accessor_a, auto&& accessor_b) { accessor_a = accessor_b; });
-
-    perform_test(
-        indices_initial_capacity,
-        [](auto& wmci) -> decltype(auto) { return std::as_const(wmci); },
-        [](auto& wmci) -> decltype(auto) { return std::move(wmci); },
-        [](auto&& accessor_a, auto&& accessor_b) {
+        [](auto &wmci) -> decltype(auto) { return std::as_const(wmci); },
+        [](auto &wmci) -> decltype(auto) { return wmci; },
+        [](auto &&accessor_a, auto &&accessor_b) {
           accessor_a = std::move(accessor_b);
         });
 
     perform_test(
         indices_initial_capacity,
-        [](auto& wmci) -> decltype(auto) { return std::move(wmci); },
-        [](auto& wmci) -> decltype(auto) { return wmci; },
-        [](auto&& accessor_a, auto&& accessor_b) { accessor_a = accessor_b; });
-
-    perform_test(indices_initial_capacity,
-                 [](auto& wmci) -> decltype(auto) { return std::move(wmci); },
-                 [](auto& wmci) -> decltype(auto) { return wmci; },
-                 [](auto&& accessor_a, auto&& accessor_b) {
-                   accessor_a = std::move(accessor_b);
-                 });
+        [](auto &wmci) -> decltype(auto) { return wmci; },
+        [](auto &wmci) -> decltype(auto) { return std::move(wmci); },
+        [](auto &&accessor_a, auto &&accessor_b) { accessor_a = accessor_b; });
 
     perform_test(
         indices_initial_capacity,
-        [](auto& wmci) -> decltype(auto) { return std::move(wmci); },
-        [](auto& wmci) -> decltype(auto) { return std::move(wmci); },
-        [](auto&& accessor_a, auto&& accessor_b) { accessor_a = accessor_b; });
+        [](auto &wmci) -> decltype(auto) { return wmci; },
+        [](auto &wmci) -> decltype(auto) { return std::move(wmci); },
+        [](auto &&accessor_a, auto &&accessor_b) {
+          accessor_a = std::move(accessor_b);
+        });
 
-    perform_test(indices_initial_capacity,
-                 [](auto& wmci) -> decltype(auto) { return std::move(wmci); },
-                 [](auto& wmci) -> decltype(auto) { return std::move(wmci); },
-                 [](auto&& accessor_a, auto&& accessor_b) {
-                   accessor_a = std::move(accessor_b);
-                 });
+    perform_test(
+        indices_initial_capacity,
+        [](auto &wmci) -> decltype(auto) { return std::as_const(wmci); },
+        [](auto &wmci) -> decltype(auto) { return std::move(wmci); },
+        [](auto &&accessor_a, auto &&accessor_b) { accessor_a = accessor_b; });
+
+    perform_test(
+        indices_initial_capacity,
+        [](auto &wmci) -> decltype(auto) { return std::as_const(wmci); },
+        [](auto &wmci) -> decltype(auto) { return std::move(wmci); },
+        [](auto &&accessor_a, auto &&accessor_b) {
+          accessor_a = std::move(accessor_b);
+        });
+
+    perform_test(
+        indices_initial_capacity,
+        [](auto &wmci) -> decltype(auto) { return std::move(wmci); },
+        [](auto &wmci) -> decltype(auto) { return wmci; },
+        [](auto &&accessor_a, auto &&accessor_b) { accessor_a = accessor_b; });
+
+    perform_test(
+        indices_initial_capacity,
+        [](auto &wmci) -> decltype(auto) { return std::move(wmci); },
+        [](auto &wmci) -> decltype(auto) { return wmci; },
+        [](auto &&accessor_a, auto &&accessor_b) {
+          accessor_a = std::move(accessor_b);
+        });
+
+    perform_test(
+        indices_initial_capacity,
+        [](auto &wmci) -> decltype(auto) { return std::move(wmci); },
+        [](auto &wmci) -> decltype(auto) { return std::move(wmci); },
+        [](auto &&accessor_a, auto &&accessor_b) { accessor_a = accessor_b; });
+
+    perform_test(
+        indices_initial_capacity,
+        [](auto &wmci) -> decltype(auto) { return std::move(wmci); },
+        [](auto &wmci) -> decltype(auto) { return std::move(wmci); },
+        [](auto &&accessor_a, auto &&accessor_b) {
+          accessor_a = std::move(accessor_b);
+        });
   }
 }
 
-static void
-test_line() {
+static void test_line() {
   using windows_size_type = typename WindowsMergerTraits::windows_size_type;
 
   constexpr windows_size_type n_indices = 30;
@@ -874,7 +858,7 @@ test_line() {
     const auto accessor = wmci[0];
 
     auto bases = create_random_indices(n_indices);
-    for (auto&& base : bases)
+    for (auto &&base : bases)
       accessor.emplace_back(base);
     assert(ranges::equal(bases, accessor));
 
@@ -895,7 +879,7 @@ test_line() {
     const auto accessor = wmci[0];
 
     auto bases = create_random_indices(n_indices);
-    for (auto&& base : bases)
+    for (auto &&base : bases)
       accessor.emplace_back(base);
     assert(ranges::equal(bases, accessor));
 
@@ -911,8 +895,7 @@ test_line() {
   }
 }
 
-int
-main() {
+int main() {
   static_assert(
       std::is_nothrow_default_constructible_v<WindowsMergerCacheIndices>);
   static_assert(std::is_move_constructible_v<WindowsMergerCacheIndices>);
@@ -943,4 +926,3 @@ main() {
   test_window_accessor_assignment();
   test_line();
 }
-

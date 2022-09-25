@@ -20,11 +20,10 @@ RingmapMatrixAccessor<Matrix>::operator value_type() const noexcept {
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixAccessor<Matrix>::operator=(value_type value) const noexcept(false)
-    -> RingmapMatrixAccessor const& {
+auto RingmapMatrixAccessor<Matrix>::operator=(value_type value) const
+    noexcept(false) -> RingmapMatrixAccessor const & {
 
-  if (auto&& [iter, found] = find(); not value and found)
+  if (auto &&[iter, found] = find(); not value and found)
     row->erase(ranges::remove(iter, ranges::end(*row), col), ranges::end(*row));
   else if (value and not found) {
     row->emplace_back(col);
@@ -35,62 +34,55 @@ RingmapMatrixAccessor<Matrix>::operator=(value_type value) const noexcept(false)
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixAccessor<Matrix>::
-operator=(RingmapMatrixAccessor<RingmapMatrix> const& rhs) const noexcept
-    -> RingmapMatrixAccessor const& {
+auto RingmapMatrixAccessor<Matrix>::operator=(
+    RingmapMatrixAccessor<RingmapMatrix> const &rhs) const noexcept
+    -> RingmapMatrixAccessor const & {
   copy_from_accessor(rhs);
   return *this;
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixAccessor<Matrix>::
-operator=(RingmapMatrixAccessor<const RingmapMatrix> const& rhs) const noexcept
-    -> RingmapMatrixAccessor const& {
+auto RingmapMatrixAccessor<Matrix>::operator=(
+    RingmapMatrixAccessor<const RingmapMatrix> const &rhs) const noexcept
+    -> RingmapMatrixAccessor const & {
   copy_from_accessor(rhs);
   return *this;
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixAccessor<Matrix>::
-operator=(RingmapMatrixAccessor<RingmapMatrix&&> const& rhs) const noexcept
-    -> RingmapMatrixAccessor const& {
+auto RingmapMatrixAccessor<Matrix>::operator=(
+    RingmapMatrixAccessor<RingmapMatrix &&> const &rhs) const noexcept
+    -> RingmapMatrixAccessor const & {
   copy_from_accessor(rhs);
   return *this;
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixAccessor<Matrix>::
-operator=(RingmapMatrixAccessor<RingmapMatrix>&& rhs) const noexcept
-    -> RingmapMatrixAccessor const& {
+auto RingmapMatrixAccessor<Matrix>::operator=(
+    RingmapMatrixAccessor<RingmapMatrix> &&rhs) const noexcept
+    -> RingmapMatrixAccessor const & {
   copy_from_accessor(std::move(rhs));
   return *this;
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixAccessor<Matrix>::
-operator=(RingmapMatrixAccessor<const RingmapMatrix>&& rhs) const noexcept
-    -> RingmapMatrixAccessor const& {
+auto RingmapMatrixAccessor<Matrix>::operator=(
+    RingmapMatrixAccessor<const RingmapMatrix> &&rhs) const noexcept
+    -> RingmapMatrixAccessor const & {
   copy_from_accessor(std::move(rhs));
   return *this;
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixAccessor<Matrix>::
-operator=(RingmapMatrixAccessor<RingmapMatrix&&>&& rhs) const noexcept
-    -> RingmapMatrixAccessor const& {
+auto RingmapMatrixAccessor<Matrix>::operator=(
+    RingmapMatrixAccessor<RingmapMatrix &&> &&rhs) const noexcept
+    -> RingmapMatrixAccessor const & {
   copy_from_accessor(std::move(rhs));
   return *this;
 }
 
 template <typename Matrix>
-auto
-RingmapMatrixAccessor<Matrix>::find() const noexcept
+auto RingmapMatrixAccessor<Matrix>::find() const noexcept
     -> std::pair<row_iterator, bool> {
   assert(ranges::is_sorted(*row));
   auto iter = ranges::upper_bound(*row, col, std::less_equal<unsigned>());
@@ -100,8 +92,7 @@ RingmapMatrixAccessor<Matrix>::find() const noexcept
 
 template <typename Matrix>
 template <typename Accessor>
-void
-RingmapMatrixAccessor<Matrix>::copy_from_accessor(Accessor&& accessor) const
-    noexcept {
+void RingmapMatrixAccessor<Matrix>::copy_from_accessor(
+    Accessor &&accessor) const noexcept {
   *this = static_cast<value_type>(accessor);
 }

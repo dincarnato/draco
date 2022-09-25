@@ -5,19 +5,13 @@
 #include <type_traits>
 
 struct HardCluster;
-template <typename, bool>
-struct HardClusterElementWrapper;
-template <typename, bool>
-struct HardClustersIterator;
-template <typename, bool>
-struct HardClusterElementIterator;
+template <typename, bool> struct HardClusterElementWrapper;
+template <typename, bool> struct HardClustersIterator;
+template <typename, bool> struct HardClusterElementIterator;
 
-template <typename Cluster, bool complemented>
-struct HardClusterWrapper {
-  template <typename, bool>
-  friend struct HardClusterElementWrapper;
-  template <typename, bool>
-  friend struct HardClustersIterator;
+template <typename Cluster, bool complemented> struct HardClusterWrapper {
+  template <typename, bool> friend struct HardClusterElementWrapper;
+  template <typename, bool> friend struct HardClustersIterator;
 
   using concrete_type = HardCluster;
   using cluster_type = typename HardClustersTraits<Cluster>::cluster_type;
@@ -27,11 +21,11 @@ struct HardClusterWrapper {
   static constexpr bool isComplemented = complemented;
 
   HardClusterWrapper() = default;
-  HardClusterWrapper(Cluster& cluster, index_type index) noexcept;
+  HardClusterWrapper(Cluster &cluster, index_type index) noexcept;
 
   explicit operator concrete_type() const noexcept(false);
-  HardClusterWrapper const& operator=(concrete_type const& rhs) const noexcept;
-  HardClusterWrapper const& operator=(concrete_type&& rhs) const noexcept;
+  HardClusterWrapper const &operator=(concrete_type const &rhs) const noexcept;
+  HardClusterWrapper const &operator=(concrete_type &&rhs) const noexcept;
 
   element_wrapper operator[](std::size_t index) const noexcept;
   void set(std::size_t index) const noexcept;
@@ -45,7 +39,7 @@ struct HardClusterWrapper {
   std::size_t size() const noexcept;
 
 private:
-  Cluster* _cluster;
+  Cluster *_cluster;
   index_type _index;
 };
 

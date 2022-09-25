@@ -9,7 +9,7 @@
 
 template <typename T, bool useSpans>
 WeightedClustersIterator<T, useSpans>::WeightedClustersIterator(
-    weighted_clusters_type& weightedClusters, difference_type offset) noexcept
+    weighted_clusters_type &weightedClusters, difference_type offset) noexcept
     : _data([&] {
         assert(offset >= 0);
 
@@ -33,7 +33,7 @@ WeightedClustersIterator<T, useSpans>::WeightedClustersIterator(
 
 template <typename T, bool useSpans>
 WeightedClustersIterator<T, useSpans>::WeightedClustersIterator(
-    weighted_clusters_type& weightedClusters, difference_type offset,
+    weighted_clusters_type &weightedClusters, difference_type offset,
     EndTag) noexcept
     : _data([&] {
         assert(offset >= 0);
@@ -60,7 +60,7 @@ WeightedClustersIterator<T, useSpans>::WeightedClustersIterator(
 template <typename T, bool useSpans>
 template <bool, typename>
 WeightedClustersIterator<T, useSpans>::WeightedClustersIterator(
-    weighted_clusters_type& weightedClusters, difference_type clusterOffset,
+    weighted_clusters_type &weightedClusters, difference_type clusterOffset,
     difference_type elementOffset) noexcept
     : _data(weightedClusters.weights, weightedClusters.elements,
             elementOffset *
@@ -76,16 +76,14 @@ WeightedClustersIterator<T, useSpans>::WeightedClustersIterator(
 }
 
 template <typename T, bool useSpans>
-auto
-WeightedClustersIterator<T, useSpans>::operator++() noexcept
-    -> WeightedClustersIterator& {
+auto WeightedClustersIterator<T, useSpans>::operator++() noexcept
+    -> WeightedClustersIterator & {
   _data.index += static_cast<difference_type>(clusters);
   return *this;
 }
 
 template <typename T, bool useSpans>
-auto
-WeightedClustersIterator<T, useSpans>::operator++(int) noexcept
+auto WeightedClustersIterator<T, useSpans>::operator++(int) noexcept
     -> WeightedClustersIterator {
   auto other = *this;
   _data.index += static_cast<difference_type>(clusters);
@@ -93,16 +91,14 @@ WeightedClustersIterator<T, useSpans>::operator++(int) noexcept
 }
 
 template <typename T, bool useSpans>
-auto
-WeightedClustersIterator<T, useSpans>::operator--() noexcept
-    -> WeightedClustersIterator& {
+auto WeightedClustersIterator<T, useSpans>::operator--() noexcept
+    -> WeightedClustersIterator & {
   _data.index -= static_cast<difference_type>(clusters);
   return *this;
 }
 
 template <typename T, bool useSpans>
-auto
-WeightedClustersIterator<T, useSpans>::operator--(int) noexcept
+auto WeightedClustersIterator<T, useSpans>::operator--(int) noexcept
     -> WeightedClustersIterator {
   auto other = *this;
   _data.index -= static_cast<difference_type>(clusters);
@@ -110,34 +106,30 @@ WeightedClustersIterator<T, useSpans>::operator--(int) noexcept
 }
 
 template <typename T, bool useSpans>
-auto
-WeightedClustersIterator<T, useSpans>::
-operator+=(difference_type offset) noexcept -> WeightedClustersIterator& {
+auto WeightedClustersIterator<T, useSpans>::operator+=(
+    difference_type offset) noexcept -> WeightedClustersIterator & {
   _data.index += static_cast<difference_type>(clusters) * offset;
   return *this;
 }
 
 template <typename T, bool useSpans>
-auto
-WeightedClustersIterator<T, useSpans>::
-operator-=(difference_type offset) noexcept -> WeightedClustersIterator& {
+auto WeightedClustersIterator<T, useSpans>::operator-=(
+    difference_type offset) noexcept -> WeightedClustersIterator & {
   _data.index -= static_cast<difference_type>(clusters) * offset;
   return *this;
 }
 
 template <typename T, bool useSpans>
-auto
-WeightedClustersIterator<T, useSpans>::operator+(difference_type offset) const
-    noexcept -> WeightedClustersIterator {
+auto WeightedClustersIterator<T, useSpans>::operator+(
+    difference_type offset) const noexcept -> WeightedClustersIterator {
   auto other = *this;
   other._data.index += static_cast<difference_type>(clusters) * offset;
   return other;
 }
 
 template <typename T, bool useSpans>
-auto
-WeightedClustersIterator<T, useSpans>::operator-(difference_type offset) const
-    noexcept -> WeightedClustersIterator {
+auto WeightedClustersIterator<T, useSpans>::operator-(
+    difference_type offset) const noexcept -> WeightedClustersIterator {
   auto other = *this;
   other._data.index -= static_cast<difference_type>(clusters) * offset;
 
@@ -154,8 +146,8 @@ auto WeightedClustersIterator<T, useSpans>::operator*() const noexcept
 }
 
 template <typename T, bool useSpans>
-auto WeightedClustersIterator<T, useSpans>::
-operator[](difference_type index) const noexcept -> reference {
+auto WeightedClustersIterator<T, useSpans>::operator[](
+    difference_type index) const noexcept -> reference {
   if constexpr (useSpans) {
     auto newData = _data;
     newData.index += static_cast<difference_type>(clusters) * index;
@@ -166,62 +158,53 @@ operator[](difference_type index) const noexcept -> reference {
 }
 
 template <typename T, bool useSpans>
-bool
-WeightedClustersIterator<T, useSpans>::
-operator<(const WeightedClustersIterator& other) const noexcept {
+bool WeightedClustersIterator<T, useSpans>::operator<(
+    const WeightedClustersIterator &other) const noexcept {
   return _data.index < other._data.index;
 }
 
 template <typename T, bool useSpans>
-bool
-WeightedClustersIterator<T, useSpans>::
-operator>(const WeightedClustersIterator& other) const noexcept {
+bool WeightedClustersIterator<T, useSpans>::operator>(
+    const WeightedClustersIterator &other) const noexcept {
   return _data.index > other._data.index;
 }
 
 template <typename T, bool useSpans>
-bool
-WeightedClustersIterator<T, useSpans>::
-operator>=(const WeightedClustersIterator& other) const noexcept {
+bool WeightedClustersIterator<T, useSpans>::operator>=(
+    const WeightedClustersIterator &other) const noexcept {
   return _data.index >= other._data.index;
 }
 
 template <typename T, bool useSpans>
-bool
-WeightedClustersIterator<T, useSpans>::
-operator<=(const WeightedClustersIterator& other) const noexcept {
+bool WeightedClustersIterator<T, useSpans>::operator<=(
+    const WeightedClustersIterator &other) const noexcept {
   return _data._data <= other._data._data;
 }
 
 template <typename T, bool useSpans>
-bool
-WeightedClustersIterator<T, useSpans>::
-operator==(const WeightedClustersIterator& other) const noexcept {
+bool WeightedClustersIterator<T, useSpans>::operator==(
+    const WeightedClustersIterator &other) const noexcept {
   return _data.index == other._data.index;
 }
 
 template <typename T, bool useSpans>
-bool
-WeightedClustersIterator<T, useSpans>::
-operator!=(const WeightedClustersIterator& other) const noexcept {
+bool WeightedClustersIterator<T, useSpans>::operator!=(
+    const WeightedClustersIterator &other) const noexcept {
   return _data.index != other._data.index;
 }
 
 template <typename T, bool useSpans>
-auto
-WeightedClustersIterator<T, useSpans>::
-operator-(const WeightedClustersIterator& other) const noexcept
-    -> difference_type {
+auto WeightedClustersIterator<T, useSpans>::operator-(
+    const WeightedClustersIterator &other) const noexcept -> difference_type {
   assert(clusters == other.clusters);
   return static_cast<difference_type>(_data.index - other._data.index) /
          static_cast<difference_type>(clusters);
 }
 
 template <typename T, bool useSpans>
-WeightedClustersIterator<T, useSpans>
-operator+(
+WeightedClustersIterator<T, useSpans> operator+(
     typename WeightedClustersIterator<T, useSpans>::difference_type offset,
-    const WeightedClustersIterator<T, useSpans>& iter) noexcept {
+    const WeightedClustersIterator<T, useSpans> &iter) noexcept {
   auto newIter = iter;
   newIter.index +=
       static_cast<

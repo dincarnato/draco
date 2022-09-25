@@ -8,7 +8,7 @@ namespace parallel {
 
 template <typename T>
 template <typename... Args>
-blocking_queue_entry<T>::blocking_queue_entry(Args&&... args) noexcept(
+blocking_queue_entry<T>::blocking_queue_entry(Args &&...args) noexcept(
     noexcept(T(std::forward<Args>(args)...)))
     : entry(std::forward<Args>(args)...), next_entry(nullptr) {}
 
@@ -28,35 +28,34 @@ blocking_queue<T, Alloc>::blocking_queue() noexcept(noexcept(Alloc()))
     : Alloc(), head(nullptr), tail(nullptr), _size(0) {}
 
 template <typename T, typename Alloc>
-blocking_queue<T, Alloc>::blocking_queue(const allocator_type& alloc) noexcept
+blocking_queue<T, Alloc>::blocking_queue(const allocator_type &alloc) noexcept
     : Alloc(alloc), head(nullptr), tail(nullptr), _size(0) {}
 
 template <typename T, typename Alloc>
 blocking_queue<T, Alloc>::blocking_queue(std::size_t max_size,
-                                         const allocator_type& alloc) noexcept
+                                         const allocator_type &alloc) noexcept
     : Alloc(alloc), head(nullptr), tail(nullptr), _size(0),
       _max_size(max_size) {}
 
 template <typename T, typename Alloc>
 template <typename InputIterator>
-void
-blocking_queue<T, Alloc>::initWithIterators(InputIterator first,
-                                            InputIterator last) {
+void blocking_queue<T, Alloc>::initWithIterators(InputIterator first,
+                                                 InputIterator last) {
   static_assert(std::is_same_v<typename InputIterator::value_type, T>,
                 "InputIterator must have a value_type with the same type as T");
 
   std::size_t _size = 0;
   head = nullptr;
-  entry_type* tail = nullptr;
+  entry_type *tail = nullptr;
 
   if (first != last) {
-    entry_type* head = std::allocator_traits<Alloc>::allocate(*this, 1);
+    entry_type *head = std::allocator_traits<Alloc>::allocate(*this, 1);
     std::allocator_traits<Alloc>::construct(*this, head, *first++);
     tail = head;
     ++_size;
 
     for (; first != last; ++first, ++_size) {
-      entry_type* new_entry = std::allocator_traits<Alloc>::allocate(*this, 1);
+      entry_type *new_entry = std::allocator_traits<Alloc>::allocate(*this, 1);
       std::allocator_traits<Alloc>::construct(*this, new_entry, *first);
 
       head->prev_entry.store(new_entry, std::memory_order_release);
@@ -74,7 +73,7 @@ template <typename T, typename Alloc>
 template <typename InputIterator>
 blocking_queue<T, Alloc>::blocking_queue(InputIterator first,
                                          InputIterator last,
-                                         const allocator_type& a)
+                                         const allocator_type &a)
     : Alloc(a) {
   initWithIterators(std::move(first), std::move(last));
 }
@@ -84,30 +83,29 @@ template <typename InputIterator>
 blocking_queue<T, Alloc>::blocking_queue(InputIterator first,
                                          InputIterator last,
                                          std::size_t max_size,
-                                         const allocator_type& a)
+                                         const allocator_type &a)
     : Alloc(a), _max_size(max_size) {
   initWithIterators(std::move(first), std::move(last));
 }
 
 template <typename T, typename Alloc>
-blocking_queue<T, Alloc>::blocking_queue(blocking_queue&& other) noexcept(
+blocking_queue<T, Alloc>::blocking_queue(blocking_queue &&other) noexcept(
     std::is_nothrow_move_constructible_v<Alloc>)
-    : Alloc(static_cast<Alloc&&>(std::move(other))) {
+    : Alloc(static_cast<Alloc &&>(std::move(other))) {
   moveDataFrom(std::move(other));
 }
 
 template <typename T, typename Alloc>
 blocking_queue<T, Alloc>::blocking_queue(
-    blocking_queue&& other,
-    const allocator_type&
-        alloc) noexcept(std::is_nothrow_copy_constructible_v<Alloc>)
+    blocking_queue &&other,
+    const allocator_type
+        &alloc) noexcept(std::is_nothrow_copy_constructible_v<Alloc>)
     : Alloc(alloc) {
   moveDataFrom(std::move(other));
 }
 
 template <typename T, typename Alloc>
-void
-blocking_queue<T, Alloc>::moveDataFrom(blocking_queue&& other) noexcept {
+void blocking_queue<T, Alloc>::moveDataFrom(blocking_queue &&other) noexcept {
   for (bool pushing = false; not other.pushing.compare_exchange_weak(
            pushing, true, std::memory_order_acq_rel);)
     pushing = false;
@@ -128,10 +126,9 @@ blocking_queue<T, Alloc>::moveDataFrom(blocking_queue&& other) noexcept {
 }
 
 template <typename T, typename Alloc>
-auto
-blocking_queue<T, Alloc>::operator=(blocking_queue&& other) noexcept(
-    std::is_nothrow_move_assignable_v<Alloc>) -> blocking_queue& {
-  static_cast<Alloc&>(*this) = static_cast<Alloc&&>(std::move(other));
+auto blocking_queue<T, Alloc>::operator=(blocking_queue &&other) noexcept(
+    std::is_nothrow_move_assignable_v<Alloc>) -> blocking_queue & {
+  static_cast<Alloc &>(*this) = static_cast<Alloc &&>(std::move(other));
   moveDataFrom(std::move(other));
   return *this;
 }
@@ -141,7 +138,7 @@ blocking_queue<T, Alloc>::~blocking_queue() noexcept(
     std::is_nothrow_destructible_v<T>) {
   _finished.store(true, std::memory_order_release);
 
-  for (entry_type* entry = std::exchange(head, nullptr); entry != nullptr;) {
+  for (entry_type *entry = std::exchange(head, nullptr); entry != nullptr;) {
 
 #ifndef NDEBUG
     entry->prev_entry = nullptr;
@@ -159,8 +156,7 @@ blocking_queue<T, Alloc>::~blocking_queue() noexcept(
 }
 
 template <typename T, typename Alloc>
-void
-blocking_queue<T, Alloc>::finish() noexcept {
+void blocking_queue<T, Alloc>::finish() noexcept {
   while (not mxEmpty.try_lock())
     ;
   _finished.store(true, std::memory_order_release);
@@ -169,15 +165,13 @@ blocking_queue<T, Alloc>::finish() noexcept {
 }
 
 template <typename T, typename Alloc>
-bool
-blocking_queue<T, Alloc>::finished() noexcept {
+bool blocking_queue<T, Alloc>::finished() noexcept {
   return _finished.load(std::memory_order_acquire);
 }
 
 template <typename T, typename Alloc>
 template <typename U>
-void
-blocking_queue<T, Alloc>::push(U&& value) {
+void blocking_queue<T, Alloc>::push(U &&value) {
   static_assert(std::is_same_v<std::decay_t<U>, T>,
                 "U must decay to the same type of T");
   emplace(std::forward<U>(value));
@@ -185,12 +179,11 @@ blocking_queue<T, Alloc>::push(U&& value) {
 
 template <typename T, typename Alloc>
 template <typename... Args>
-void
-blocking_queue<T, Alloc>::emplace(Args&&... args) {
+void blocking_queue<T, Alloc>::emplace(Args &&...args) {
   static_assert(std::is_constructible_v<T, Args...>,
                 "T must be constructible using Args...");
 
-  entry_type* new_entry = std::allocator_traits<Alloc>::allocate(*this, 1);
+  entry_type *new_entry = std::allocator_traits<Alloc>::allocate(*this, 1);
   std::allocator_traits<Alloc>::construct(*this, new_entry,
                                           std::forward<Args>(args)...);
 
@@ -216,7 +209,7 @@ blocking_queue<T, Alloc>::emplace(Args&&... args) {
     popping = false;
 
   {
-    entry_type* null_entry = nullptr;
+    entry_type *null_entry = nullptr;
     tail.compare_exchange_strong(null_entry, new_entry,
                                  std::memory_order_acq_rel);
   }
@@ -238,17 +231,16 @@ blocking_queue<T, Alloc>::emplace(Args&&... args) {
 }
 
 template <typename T, typename Alloc>
-std::optional<T>
-blocking_queue<T, Alloc>::pop() noexcept(
-    std::is_nothrow_move_constructible_v<T>and
-        std::is_nothrow_destructible_v<T>) {
+std::optional<T> blocking_queue<T, Alloc>::pop() noexcept(
+    std::is_nothrow_move_constructible_v<T>
+        and std::is_nothrow_destructible_v<T>) {
 
   for (;;) {
     for (bool popping = false; not this->popping.compare_exchange_weak(
              popping, true, std::memory_order_acq_rel);)
       popping = false;
 
-    entry_type* current_tail = tail.load(std::memory_order_acquire);
+    entry_type *current_tail = tail.load(std::memory_order_acquire);
     if (current_tail == nullptr) {
       std::unique_lock lock(mxEmpty);
 
@@ -296,16 +288,15 @@ blocking_queue<T, Alloc>::pop() noexcept(
 }
 
 template <typename T, typename Alloc>
-std::optional<T>
-blocking_queue<T, Alloc>::try_pop() noexcept(
-    std::is_nothrow_move_constructible_v<T>and
-        std::is_nothrow_destructible_v<T>) {
+std::optional<T> blocking_queue<T, Alloc>::try_pop() noexcept(
+    std::is_nothrow_move_constructible_v<T>
+        and std::is_nothrow_destructible_v<T>) {
 
   for (bool popping = false; not this->popping.compare_exchange_weak(
            popping, true, std::memory_order_acq_rel);)
     popping = false;
 
-  entry_type* current_tail = tail.load(std::memory_order_acquire);
+  entry_type *current_tail = tail.load(std::memory_order_acquire);
   if (current_tail == nullptr) {
     popping.store(false, std::memory_order_release);
     return std::nullopt;

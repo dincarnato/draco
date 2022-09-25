@@ -7,9 +7,7 @@
 
 namespace parallel {
 
-template <typename... Args>
-inline decltype(auto)
-parallel_for(Args&&... args) {
+template <typename... Args> inline decltype(auto) parallel_for(Args &&...args) {
   return tbb::parallel_for(std::forward<Args>(args)...);
 }
 
@@ -26,8 +24,7 @@ parallel_for(Args&&... args) {
 namespace parallel {
 
 template <typename Index, typename Func>
-Func
-parallel_for(Index first, Index last, Index step, Func&& f) {
+Func parallel_for(Index first, Index last, Index step, Func &&f) {
   std::vector<std::thread> threads;
   if (threadsPerLoop > 1) {
     assert(step >= 0);
@@ -39,10 +36,10 @@ parallel_for(Index first, Index last, Index step, Func&& f) {
 
     auto runner = [&]() -> decltype(auto) {
       if constexpr (std::is_invocable_v<Func, blocked_range<Index>>)
-        return static_cast<Func&>(f);
+        return static_cast<Func &>(f);
       else {
         static_assert(std::is_invocable_v<Func, Index>);
-        return [&f, step ](blocked_range<Index> range) noexcept {
+        return [&f, step](blocked_range<Index> range) noexcept {
           for (auto index = std::begin(range); index < std::end(range);
                index += step)
             f(index);
@@ -56,7 +53,7 @@ parallel_for(Index first, Index last, Index step, Func&& f) {
 
     runner(subRanges.back());
 
-    for (auto& thread : threads)
+    for (auto &thread : threads)
       thread.join();
   } else {
     if constexpr (std::is_invocable_v<Func, blocked_range<Index>>)
@@ -72,8 +69,7 @@ parallel_for(Index first, Index last, Index step, Func&& f) {
 }
 
 template <typename Index, typename Func>
-Func
-parallel_for(Index first, Index last, Func&& f) {
+Func parallel_for(Index first, Index last, Func &&f) {
   return parallel_for(first, last, static_cast<Index>(1),
                       std::forward<Func>(f));
 }

@@ -11,50 +11,48 @@ namespace windows_merger {
 struct WindowsMergerCacheIndices;
 struct WindowsMergerCacheIndicesLine;
 
-template <typename Merger>
-struct WindowsMergerCacheIndicesAccessor {
-  template <typename>
-  friend struct WindowsMergerCacheIndicesAccessor;
+template <typename Merger> struct WindowsMergerCacheIndicesAccessor {
+  template <typename> friend struct WindowsMergerCacheIndicesAccessor;
 
   using merger_type = Merger;
   using decayed_merger_type = std::decay_t<Merger>;
-  using merger_pointer_type = std::remove_reference_t<Merger>*;
+  using merger_pointer_type = std::remove_reference_t<Merger> *;
   using traits_type = WindowsMergerTraits;
   using windows_size_type = typename traits_type::windows_size_type;
-  using reference = nostd::copy_const_t<Merger, windows_size_type>&;
-  using iterator = nostd::copy_const_t<Merger, windows_size_type>*;
+  using reference = nostd::copy_const_t<Merger, windows_size_type> &;
+  using iterator = nostd::copy_const_t<Merger, windows_size_type> *;
   using reverse_iterator = ranges::reverse_iterator<iterator>;
   using self = WindowsMergerCacheIndicesAccessor;
 
-  WindowsMergerCacheIndicesAccessor(Merger& merger,
+  WindowsMergerCacheIndicesAccessor(Merger &merger,
                                     windows_size_type line_index) noexcept;
-  WindowsMergerCacheIndicesAccessor(WindowsMergerCacheIndicesAccessor const&) =
+  WindowsMergerCacheIndicesAccessor(WindowsMergerCacheIndicesAccessor const &) =
       default;
-  WindowsMergerCacheIndicesAccessor(WindowsMergerCacheIndicesAccessor&&) =
+  WindowsMergerCacheIndicesAccessor(WindowsMergerCacheIndicesAccessor &&) =
       default;
 
-  self const& operator=(
-      WindowsMergerCacheIndicesAccessor<WindowsMergerCacheIndices> const& rhs)
+  self const &operator=(
+      WindowsMergerCacheIndicesAccessor<WindowsMergerCacheIndices> const &rhs)
       const noexcept(false);
-  self const& operator=(
-      WindowsMergerCacheIndicesAccessor<WindowsMergerCacheIndices const> const&
-          rhs) const noexcept(false);
-  self const& operator=(
-      WindowsMergerCacheIndicesAccessor<WindowsMergerCacheIndices&&> const& rhs)
-      const noexcept(false);
-  self const& operator=(
-      WindowsMergerCacheIndicesAccessor<WindowsMergerCacheIndices>&& rhs) const
+  self const &operator=(
+      WindowsMergerCacheIndicesAccessor<WindowsMergerCacheIndices const> const
+          &rhs) const noexcept(false);
+  self const &operator=(
+      WindowsMergerCacheIndicesAccessor<WindowsMergerCacheIndices &&> const
+          &rhs) const noexcept(false);
+  self const &operator=(
+      WindowsMergerCacheIndicesAccessor<WindowsMergerCacheIndices> &&rhs) const
       noexcept(false);
-  self const& operator=(
-      WindowsMergerCacheIndicesAccessor<WindowsMergerCacheIndices const>&& rhs)
+  self const &operator=(
+      WindowsMergerCacheIndicesAccessor<WindowsMergerCacheIndices const> &&rhs)
       const noexcept(false);
-  self const& operator=(
-      WindowsMergerCacheIndicesAccessor<WindowsMergerCacheIndices&&>&& rhs)
+  self const &operator=(
+      WindowsMergerCacheIndicesAccessor<WindowsMergerCacheIndices &&> &&rhs)
       const noexcept(false);
 
-  self const& operator=(WindowsMergerCacheIndicesLine const& line) const
+  self const &operator=(WindowsMergerCacheIndicesLine const &line) const
       noexcept(false);
-  self const& operator=(WindowsMergerCacheIndicesLine&& line) const
+  self const &operator=(WindowsMergerCacheIndicesLine &&line) const
       noexcept(false);
 
   operator WindowsMergerCacheIndicesLine() const noexcept(false);
@@ -73,7 +71,7 @@ struct WindowsMergerCacheIndicesAccessor {
   reverse_iterator rbegin() const noexcept;
   reverse_iterator rend() const noexcept;
 
-  windows_size_type& emplace_back(windows_size_type index) const
+  windows_size_type &emplace_back(windows_size_type index) const
       noexcept(false);
   void push_back(windows_size_type index) const noexcept(false);
 
@@ -82,10 +80,10 @@ struct WindowsMergerCacheIndicesAccessor {
 
 private:
   template <typename Accessor>
-  void assign_from_accessor(Accessor&& accessor) const noexcept(false);
+  void assign_from_accessor(Accessor &&accessor) const noexcept(false);
 
   template <typename Line>
-  void assign_from_line(Line&& line) const noexcept(false);
+  void assign_from_line(Line &&line) const noexcept(false);
 
   merger_pointer_type merger;
   windows_size_type line_index;

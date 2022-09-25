@@ -8,8 +8,7 @@
 namespace parallel {
 
 template <typename... Args>
-inline decltype(auto)
-parallel_for_each(Args&&... args) {
+inline decltype(auto) parallel_for_each(Args &&...args) {
   return tbb::parallel_for_each(std::forward<Args>(args)...);
 }
 
@@ -25,8 +24,7 @@ parallel_for_each(Args&&... args) {
 namespace parallel {
 
 template <typename Iterable, typename Func>
-Func
-parallel_for_each(Iterable&& iterable, Func&& f) {
+Func parallel_for_each(Iterable &&iterable, Func &&f) {
   using diff_type = typename std::decay_t<Iterable>::difference_type;
 
   std::vector<std::thread> threads;
@@ -39,14 +37,14 @@ parallel_for_each(Iterable&& iterable, Func&& f) {
     threads.reserve(subRanges.size());
 
     auto runner = [&](blocked_range<diff_type> range) noexcept {
-      auto&& iterableIter = std::next(std::begin(iterable), range[0]);
-      auto&& end = std::end(range);
+      auto &&iterableIter = std::next(std::begin(iterable), range[0]);
+      auto &&end = std::end(range);
       for (auto index = std::begin(range); index < end; ++index, ++iterableIter)
         f(*iterableIter);
     };
 
     {
-      auto&& subRangesEnd = std::prev(std::end(subRanges));
+      auto &&subRangesEnd = std::prev(std::end(subRanges));
       for (auto subRangeIter = std::begin(subRanges);
            subRangeIter < subRangesEnd; ++subRangeIter)
         threads.emplace_back(runner, *subRangeIter);
@@ -54,10 +52,10 @@ parallel_for_each(Iterable&& iterable, Func&& f) {
 
     runner(subRanges.back());
 
-    for (auto& thread : threads)
+    for (auto &thread : threads)
       thread.join();
   } else {
-    for (auto&& element : iterable)
+    for (auto &&element : iterable)
       f(element);
   }
 

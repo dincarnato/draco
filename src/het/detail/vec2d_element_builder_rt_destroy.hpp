@@ -6,16 +6,16 @@ namespace het::detail {
 
 template <typename Alloc, typename BuildParts>
 vec2d_element_builder_rt_destroy(
-    const BuildParts& build_parts,
-    typename allocator_traits<Alloc>::first_pointer, Alloc&)
-    ->vec2d_element_builder_rt_destroy<std::decay_t<Alloc>,
-                                       std::decay_t<BuildParts>>;
+    const BuildParts &build_parts,
+    typename allocator_traits<Alloc>::first_pointer, Alloc &)
+    -> vec2d_element_builder_rt_destroy<std::decay_t<Alloc>,
+                                        std::decay_t<BuildParts>>;
 
 template <typename Alloc, typename BuildParts, typename InitParts>
 vec2d_element_builder_rt_destroy(
-    const BuildParts& build_parts,
-    typename allocator_traits<Alloc>::first_pointer, Alloc&, InitParts &&)
-    ->vec2d_element_builder_rt_destroy<
+    const BuildParts &build_parts,
+    typename allocator_traits<Alloc>::first_pointer, Alloc &, InitParts &&)
+    -> vec2d_element_builder_rt_destroy<
         std::decay_t<Alloc>, std::decay_t<BuildParts>, std::decay_t<InitParts>>;
 
 template <typename Alloc, typename BuildParts, typename InitParts>
@@ -53,8 +53,8 @@ struct [[nodiscard]] vec2d_element_builder_rt_destroy
     return init_parts_type::arity == 1;
   }
 
-  inline auto next() noexcept(
-      noexcept(this->new_appended(vec2d_rt_part_empty()))) {
+  inline auto
+  next() noexcept(noexcept(this->new_appended(vec2d_rt_part_empty()))) {
     static_assert(init_parts_type::arity >= 2);
     static constexpr std::size_t element_index = init_parts_type::arity - 2;
 
@@ -153,7 +153,7 @@ private:
 
     while (line_index > zero_line) {
       std::apply(
-          [&, this](auto&&... sizes) {
+          [&, this](auto &&...sizes) {
             unwind_destroy_line(
                 --line_index, nostd::make_index_sequence_rev<sizeof...(Idx)>(),
                 std::forward<decltype(sizes)>(sizes)...);

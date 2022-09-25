@@ -7,33 +7,25 @@ namespace het::detail {
 // Forward declarations
 
 struct vec2d_element_empty;
-template <auto>
-struct vec2d_element_fixed_size;
+template <auto> struct vec2d_element_fixed_size;
 struct vec2d_element_dynamic_size;
-template <typename Fun>
-struct vec2d_element_dynamic_size_from_callable;
-template <typename T>
-struct vec2d_element_default_uninitialized;
-template <typename T>
-struct vec2d_element_default_construction_default;
+template <typename Fun> struct vec2d_element_dynamic_size_from_callable;
+template <typename T> struct vec2d_element_default_uninitialized;
+template <typename T> struct vec2d_element_default_construction_default;
 template <typename T, typename... Values>
 struct vec2d_element_default_construction;
-template <typename... Ts>
-struct vec2d_build_parts;
+template <typename... Ts> struct vec2d_build_parts;
 
 // End of forward declarations
 
-template <typename T>
-struct is_vec2d_empty : std::false_type {};
+template <typename T> struct is_vec2d_empty : std::false_type {};
 
-template <>
-struct is_vec2d_empty<vec2d_element_empty> : std::true_type {};
+template <> struct is_vec2d_empty<vec2d_element_empty> : std::true_type {};
 
 template <typename T>
 constexpr bool is_vec2d_empty_v = is_vec2d_empty<T>::value;
 
-template <typename T>
-struct is_vec2d_fixed_size : std::false_type {};
+template <typename T> struct is_vec2d_fixed_size : std::false_type {};
 
 template <std::size_t Size>
 struct is_vec2d_fixed_size<vec2d_element_fixed_size<Size>> : std::true_type {};
@@ -41,8 +33,7 @@ struct is_vec2d_fixed_size<vec2d_element_fixed_size<Size>> : std::true_type {};
 template <typename T>
 constexpr bool is_vec2d_fixed_size_v = is_vec2d_fixed_size<T>::value;
 
-template <typename T>
-struct is_vec2d_dynamic_size : std::false_type {};
+template <typename T> struct is_vec2d_dynamic_size : std::false_type {};
 
 template <>
 struct is_vec2d_dynamic_size<vec2d_element_dynamic_size> : std::true_type {};
@@ -54,8 +45,7 @@ struct is_vec2d_dynamic_size<vec2d_element_dynamic_size_from_callable<Fun>>
 template <typename T>
 constexpr bool is_vec2d_dynamic_size_v = is_vec2d_dynamic_size<T>::value;
 
-template <typename T>
-struct is_vec2d_size_type : std::false_type {};
+template <typename T> struct is_vec2d_size_type : std::false_type {};
 
 template <std::size_t Size>
 struct is_vec2d_size_type<vec2d_element_fixed_size<Size>> : std::true_type {};
@@ -124,8 +114,7 @@ template <typename T>
 constexpr bool is_vec2d_element_with_defaults_v =
     is_vec2d_element_with_defaults<T>::value;
 
-template <typename T>
-struct is_vec2d_fixed_size_part : std::false_type {};
+template <typename T> struct is_vec2d_fixed_size_part : std::false_type {};
 
 template <std::size_t Size>
 struct is_vec2d_fixed_size_part<vec2d_element_fixed_size<Size>>
@@ -149,8 +138,7 @@ struct is_vec2d_fixed_size_part<
 template <typename T>
 constexpr bool is_vec2d_fixed_size_part_v = is_vec2d_fixed_size_part<T>::value;
 
-template <typename T>
-struct is_vec2d_dynamic_size_part : std::false_type {};
+template <typename T> struct is_vec2d_dynamic_size_part : std::false_type {};
 
 template <>
 struct is_vec2d_dynamic_size_part<vec2d_element_dynamic_size> : std::true_type {
@@ -226,11 +214,9 @@ template <typename T>
 constexpr bool is_vec2d_dynamic_size_from_callable_part_v =
     is_vec2d_dynamic_size_from_callable_part<T>::value;
 
-template <typename T>
-struct is_vec2d_build_parts : std::false_type {};
+template <typename T> struct is_vec2d_build_parts : std::false_type {};
 
-template <>
-struct is_vec2d_build_parts<void> : std::true_type {};
+template <> struct is_vec2d_build_parts<void> : std::true_type {};
 
 template <typename... Ts>
 struct is_vec2d_build_parts<vec2d_build_parts<Ts...>> : std::true_type {};

@@ -11,7 +11,7 @@ struct HardClustersElementWrapper {
                                           const index_type, index_type>;
 
   HardClustersElementWrapper() = default;
-  HardClustersElementWrapper(Cluster& cluster, std::size_t index) noexcept;
+  HardClustersElementWrapper(Cluster &cluster, std::size_t index) noexcept;
 
   index_type get() const noexcept;
   void set(index_type clusterIndex) const noexcept;
@@ -19,9 +19,9 @@ struct HardClustersElementWrapper {
   bool isCluster(index_type index) const noexcept;
 
 private:
-  element_type* _element;
+  element_type *_element;
 #ifndef NDEBUG
-  Cluster* _cluster;
+  Cluster *_cluster;
 #endif
 };
 

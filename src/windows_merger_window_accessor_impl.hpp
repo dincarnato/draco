@@ -15,20 +15,18 @@ namespace windows_merger {
 
 template <typename Merger>
 WindowsMergerWindowAccessor<Merger>::WindowsMergerWindowAccessor(
-    Merger& merger, index_type window_index) noexcept
+    Merger &merger, index_type window_index) noexcept
     : merger(&merger), _index(window_index) {
   assert(window_index < merger.windows_size());
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::index() const noexcept -> index_type {
+auto WindowsMergerWindowAccessor<Merger>::index() const noexcept -> index_type {
   return _index;
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::begin_index() const noexcept
+auto WindowsMergerWindowAccessor<Merger>::begin_index() const noexcept
     -> bases_size_type {
   if (merger->is_allocated())
     return std::as_const(*merger).template get_window_first_pointer<0>(
@@ -38,8 +36,7 @@ WindowsMergerWindowAccessor<Merger>::begin_index() const noexcept
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::end_index() const noexcept
+auto WindowsMergerWindowAccessor<Merger>::end_index() const noexcept
     -> bases_size_type {
   if (merger->is_allocated())
     return std::as_const(*merger).template get_window_first_pointer<0>(
@@ -49,8 +46,8 @@ WindowsMergerWindowAccessor<Merger>::end_index() const noexcept
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::size() const noexcept -> bases_size_type {
+auto WindowsMergerWindowAccessor<Merger>::size() const noexcept
+    -> bases_size_type {
   if (merger->is_allocated()) {
     const auto start_end =
         std::as_const(*merger).template get_window_first_pointer<0>(_index);
@@ -61,31 +58,30 @@ WindowsMergerWindowAccessor<Merger>::size() const noexcept -> bases_size_type {
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::front() const noexcept -> base_accessor {
+auto WindowsMergerWindowAccessor<Merger>::front() const noexcept
+    -> base_accessor {
   assert(size() > 0);
   return base_accessor(*merger, _index, 0);
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::back() const noexcept -> base_accessor {
+auto WindowsMergerWindowAccessor<Merger>::back() const noexcept
+    -> base_accessor {
   const auto window_size = size();
   assert(window_size > 0);
   return base_accessor(*merger, _index, window_size - 1);
 }
 
 template <typename Merger>
-auto WindowsMergerWindowAccessor<Merger>::
-operator[](bases_size_type index) const noexcept -> base_accessor {
+auto WindowsMergerWindowAccessor<Merger>::operator[](
+    bases_size_type index) const noexcept -> base_accessor {
   assert(index < size());
   return base_accessor(*merger, _index, index);
 }
 
 template <typename Merger>
 template <typename... Args>
-auto
-WindowsMergerWindowAccessor<Merger>::emplace_back(Args&&... args) const
+auto WindowsMergerWindowAccessor<Merger>::emplace_back(Args &&...args) const
     noexcept(false) -> base_accessor {
   static_assert(not std::is_const_v<Merger>);
   return merger->base_emplace_back(
@@ -94,8 +90,7 @@ WindowsMergerWindowAccessor<Merger>::emplace_back(Args&&... args) const
 
 template <typename Merger>
 template <typename Base>
-void
-WindowsMergerWindowAccessor<Merger>::push_back(Base&& base) const
+void WindowsMergerWindowAccessor<Merger>::push_back(Base &&base) const
     noexcept(false) {
   static_assert(not std::is_const_v<Merger>);
   static_assert(std::is_same_v<std::decay_t<Base>, WindowsMergerWindowBase>);
@@ -103,132 +98,116 @@ WindowsMergerWindowAccessor<Merger>::push_back(Base&& base) const
 }
 
 template <typename Merger>
-void
-WindowsMergerWindowAccessor<Merger>::set_begin_index(
+void WindowsMergerWindowAccessor<Merger>::set_begin_index(
     bases_size_type begin_index) const noexcept(false) {
   merger->set_begin_index(_index, begin_index);
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::coverages() const noexcept
+auto WindowsMergerWindowAccessor<Merger>::coverages() const noexcept
     -> coverages_accessor {
   return coverages_accessor(*merger, _index);
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::clusters_size() const noexcept
+auto WindowsMergerWindowAccessor<Merger>::clusters_size() const noexcept
     -> clusters_size_type {
   return merger->n_clusters;
 }
 
 template <typename Merger>
-bool
-WindowsMergerWindowAccessor<Merger>::empty() const noexcept {
+bool WindowsMergerWindowAccessor<Merger>::empty() const noexcept {
   return size() == 0;
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::begin() const noexcept -> iterator {
+auto WindowsMergerWindowAccessor<Merger>::begin() const noexcept -> iterator {
   return iterator(*merger, _index);
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::end() const noexcept -> iterator {
+auto WindowsMergerWindowAccessor<Merger>::end() const noexcept -> iterator {
   return iterator(*merger, _index, size());
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::rbegin() const noexcept
+auto WindowsMergerWindowAccessor<Merger>::rbegin() const noexcept
     -> reverse_iterator {
   return reverse_iterator(iterator(*merger, _index, size()));
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::rend() const noexcept -> reverse_iterator {
+auto WindowsMergerWindowAccessor<Merger>::rend() const noexcept
+    -> reverse_iterator {
   return reverse_iterator(iterator(*merger, _index));
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::
-operator=(WindowsMergerWindowAccessor<WindowsMergerWindows> const& rhs) const
-    noexcept(false) -> self const& {
+auto WindowsMergerWindowAccessor<Merger>::operator=(
+    WindowsMergerWindowAccessor<WindowsMergerWindows> const &rhs) const
+    noexcept(false) -> self const & {
   assign_from_accessor(rhs);
   return *this;
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::
-operator=(WindowsMergerWindowAccessor<WindowsMergerWindows>&& rhs) const
-    noexcept(false) -> self const& {
+auto WindowsMergerWindowAccessor<Merger>::operator=(
+    WindowsMergerWindowAccessor<WindowsMergerWindows> &&rhs) const
+    noexcept(false) -> self const & {
   assign_from_accessor(std::move(rhs));
   return *this;
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::operator=(
-    WindowsMergerWindowAccessor<WindowsMergerWindows const> const& rhs) const
-    noexcept(false) -> self const& {
+auto WindowsMergerWindowAccessor<Merger>::operator=(
+    WindowsMergerWindowAccessor<WindowsMergerWindows const> const &rhs) const
+    noexcept(false) -> self const & {
   assign_from_accessor(rhs);
   return *this;
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::
-operator=(WindowsMergerWindowAccessor<WindowsMergerWindows const>&& rhs) const
-    noexcept(false) -> self const& {
+auto WindowsMergerWindowAccessor<Merger>::operator=(
+    WindowsMergerWindowAccessor<WindowsMergerWindows const> &&rhs) const
+    noexcept(false) -> self const & {
   assign_from_accessor(std::move(rhs));
   return *this;
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::
-operator=(WindowsMergerWindowAccessor<WindowsMergerWindows&&> const& rhs) const
-    noexcept(false) -> self const& {
+auto WindowsMergerWindowAccessor<Merger>::operator=(
+    WindowsMergerWindowAccessor<WindowsMergerWindows &&> const &rhs) const
+    noexcept(false) -> self const & {
   assign_from_accessor(rhs);
   return *this;
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::
-operator=(WindowsMergerWindowAccessor<WindowsMergerWindows&&>&& rhs) const
-    noexcept(false) -> self const& {
+auto WindowsMergerWindowAccessor<Merger>::operator=(
+    WindowsMergerWindowAccessor<WindowsMergerWindows &&> &&rhs) const
+    noexcept(false) -> self const & {
   assign_from_accessor(std::move(rhs));
   return *this;
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::
-operator=(WindowsMergerWindow const& rhs) const noexcept(false) -> self const& {
+auto WindowsMergerWindowAccessor<Merger>::operator=(
+    WindowsMergerWindow const &rhs) const noexcept(false) -> self const & {
   assign_from_window(rhs);
   return *this;
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::operator=(WindowsMergerWindow&& rhs) const
-    noexcept(false) -> self const& {
+auto WindowsMergerWindowAccessor<Merger>::operator=(
+    WindowsMergerWindow &&rhs) const noexcept(false) -> self const & {
   assign_from_window(std::move(rhs));
   return *this;
 }
 
 template <typename Merger>
 template <typename Accessor>
-void
-WindowsMergerWindowAccessor<Merger>::assign_from_accessor(Accessor&& rhs) const
-    noexcept(false) {
+void WindowsMergerWindowAccessor<Merger>::assign_from_accessor(
+    Accessor &&rhs) const noexcept(false) {
   const auto n_clusters = merger->n_clusters;
   if (n_clusters != rhs.merger->n_clusters)
     throw exceptions::InvalidClustersSize(
@@ -319,9 +298,8 @@ WindowsMergerWindowAccessor<Merger>::assign_from_accessor(Accessor&& rhs) const
 
 template <typename Merger>
 template <typename Window>
-void
-WindowsMergerWindowAccessor<Merger>::assign_from_window(Window&& window) const
-    noexcept(false) {
+void WindowsMergerWindowAccessor<Merger>::assign_from_window(
+    Window &&window) const noexcept(false) {
   const auto n_clusters = merger->n_clusters;
   if (n_clusters != window.clusters_size())
     throw exceptions::InvalidClustersSize(
@@ -341,7 +319,7 @@ WindowsMergerWindowAccessor<Merger>::assign_from_window(Window&& window) const
   {
     const auto weights_pointer =
         merger->template get_window_first_pointer<1>(_index);
-    auto&& weights = window.linear_weights();
+    auto &&weights = window.linear_weights();
     if constexpr (std::is_lvalue_reference_v<Window>) {
       ranges::copy(
           ranges::begin(weights),
@@ -358,7 +336,7 @@ WindowsMergerWindowAccessor<Merger>::assign_from_window(Window&& window) const
   {
     const auto coverages_pointer =
         merger->template get_coverage_first_pointer<1>(_index);
-    auto&& coverages = window.coverages();
+    auto &&coverages = window.coverages();
     if constexpr (std::is_lvalue_reference_v<Window>) {
       ranges::copy(ranges::begin(coverages),
                    ranges::next(ranges::begin(coverages), bases_to_assign),
@@ -392,59 +370,52 @@ WindowsMergerWindowAccessor<Merger>::assign_from_window(Window&& window) const
 }
 
 template <typename Merger>
-bool
-WindowsMergerWindowAccessor<Merger>::is_merger_allocated() const noexcept {
+bool WindowsMergerWindowAccessor<Merger>::is_merger_allocated() const noexcept {
   return merger->is_allocated();
 }
 
 template <typename Merger>
-auto
-WindowsMergerWindowAccessor<Merger>::merger_get_bases_capacity() const noexcept
-    -> bases_size_type {
+auto WindowsMergerWindowAccessor<Merger>::merger_get_bases_capacity()
+    const noexcept -> bases_size_type {
   return merger->n_bases_capacity;
 }
 
 template <typename Merger>
 template <std::size_t Index>
-auto
-WindowsMergerWindowAccessor<Merger>::merger_get_window_first_pointer(
+auto WindowsMergerWindowAccessor<Merger>::merger_get_window_first_pointer(
     windows_size_type window_index) const noexcept {
   return merger->template get_window_first_pointer<Index>(window_index);
 }
 
 template <typename Merger>
 template <std::size_t Index>
-auto
-WindowsMergerWindowAccessor<Merger>::merger_get_coverage_first_pointer(
+auto WindowsMergerWindowAccessor<Merger>::merger_get_coverage_first_pointer(
     windows_size_type window_index) const noexcept {
   return merger->template get_coverage_first_pointer<Index>(window_index);
 }
 
 template <typename Merger>
 template <typename RhsMerger>
-void
-WindowsMergerWindowAccessor<Merger>::merger_move_construct_from_range(
-    RhsMerger& from_merger, windows_size_type from_window_index,
+void WindowsMergerWindowAccessor<Merger>::merger_move_construct_from_range(
+    RhsMerger &from_merger, windows_size_type from_window_index,
     bases_size_type from_first_base, bases_size_type from_last_base,
     windows_size_type to_window_index, bases_size_type to_first_base) const
-    noexcept(std::is_nothrow_move_constructible_v<weight_type>and
-                 std::is_nothrow_move_constructible_v<coverage_type>) {
+    noexcept(std::is_nothrow_move_constructible_v<weight_type>
+                 and std::is_nothrow_move_constructible_v<coverage_type>) {
   merger->move_construct_from_range(from_merger, from_window_index,
                                     from_first_base, from_last_base,
                                     to_window_index, to_first_base);
 }
 
 template <typename Merger>
-void
-WindowsMergerWindowAccessor<Merger>::merger_destroy_range(
+void WindowsMergerWindowAccessor<Merger>::merger_destroy_range(
     windows_size_type window_index, bases_size_type first,
     bases_size_type last) noexcept {
   return merger->destroy_range(window_index, first, last);
 }
 
 template <typename Merger>
-void
-WindowsMergerWindowAccessor<Merger>::resize(bases_size_type value) const
+void WindowsMergerWindowAccessor<Merger>::resize(bases_size_type value) const
     noexcept(false) {
   if (value > merger->n_bases_capacity)
     merger->reshape(value, typename decayed_merger_type::reserver_type(0));
@@ -461,7 +432,7 @@ WindowsMergerWindowAccessor<Merger>::resize(bases_size_type value) const
     const auto weights = merger->template get_window_first_pointer<1>(_index);
     const auto weights_start = weights + old_size * n_clusters;
     const auto weights_end = weights + value * n_clusters;
-    for (weight_type* weight_ptr = weights_start; weight_ptr < weights_end;
+    for (weight_type *weight_ptr = weights_start; weight_ptr < weights_end;
          ++weight_ptr) {
       try {
         windows_allocator_traits::construct(*merger, weight_ptr);
@@ -489,7 +460,7 @@ WindowsMergerWindowAccessor<Merger>::resize(bases_size_type value) const
                                             coverages + coverage_index);
         }
 
-        for (weight_type* weight_ptr = weights_end;
+        for (weight_type *weight_ptr = weights_end;
              weight_ptr > weights_start;) {
           --weight_ptr;
           windows_allocator_traits::destroy(*merger, weight_ptr);
@@ -507,8 +478,7 @@ WindowsMergerWindowAccessor<Merger>::resize(bases_size_type value) const
 }
 
 template <typename Merger>
-void
-WindowsMergerWindowAccessor<Merger>::clear() const noexcept {
+void WindowsMergerWindowAccessor<Merger>::clear() const noexcept {
   {
     auto start_end = merger_get_window_first_pointer<0>(_index);
     merger->destroy_range(_index, 0, start_end[1] - start_end[0]);
@@ -521,8 +491,7 @@ WindowsMergerWindowAccessor<Merger>::clear() const noexcept {
 }
 
 template <typename Merger>
-void
-WindowsMergerWindowAccessor<Merger>::reorder_clusters(
+void WindowsMergerWindowAccessor<Merger>::reorder_clusters(
     std::vector<clusters_size_type> clusters_indices) noexcept(false) {
   using pair_type = std::array<clusters_size_type, 2>;
   thread_local std::vector<pair_type> swap_indices;
@@ -549,7 +518,7 @@ WindowsMergerWindowAccessor<Merger>::reorder_clusters(
 
       auto cluster_index = *clusters_indices_iter;
       if (cluster_index != position) {
-        if (auto& next_cluster_index = clusters_indices[cluster_index];
+        if (auto &next_cluster_index = clusters_indices[cluster_index];
             next_cluster_index == position) {
 
           swap_indices.push_back(pair_type{position, cluster_index});
@@ -578,7 +547,7 @@ WindowsMergerWindowAccessor<Merger>::reorder_clusters(
   weight_type temp_weight;
   for (bases_size_type base_index = 0; base_index < n_bases; ++base_index) {
     auto const base_ptr = get_base(base_index);
-    for (auto&& [cluster_index_a, cluster_index_b] : swap_indices) {
+    for (auto &&[cluster_index_a, cluster_index_b] : swap_indices) {
       if (cluster_index_b == temp_data_index) {
         std::swap(base_ptr[cluster_index_a], temp_weight);
       } else {
@@ -596,7 +565,7 @@ std::enable_if_t<
     std::is_same_v<std::decay_t<AccessorR>,
                    WindowsMergerWindowAccessor<
                        typename std::decay_t<AccessorR>::merger_type>>>
-swap(AccessorL&& lhs, AccessorR&& rhs) noexcept(false) {
+swap(AccessorL &&lhs, AccessorR &&rhs) noexcept(false) {
   if (lhs.merger == rhs.merger and lhs._index == rhs._index)
     return;
 
@@ -685,14 +654,13 @@ static_assert(
     ::ranges::RandomAccessIterator<
         WindowsMergerWindowAccessor<const WindowsMergerWindows>::iterator>);
 static_assert(::ranges::RandomAccessIterator<
-              WindowsMergerWindowAccessor<WindowsMergerWindows&&>::iterator>);
+              WindowsMergerWindowAccessor<WindowsMergerWindows &&>::iterator>);
 static_assert(
     ::ranges::RandomAccessIterator<
         WindowsMergerWindowAccessor<WindowsMergerWindows>::reverse_iterator>);
 static_assert(::ranges::RandomAccessIterator<WindowsMergerWindowAccessor<
                   const WindowsMergerWindows>::reverse_iterator>);
-static_assert(
-    ::ranges::RandomAccessIterator<
-        WindowsMergerWindowAccessor<WindowsMergerWindows&&>::reverse_iterator>);
+static_assert(::ranges::RandomAccessIterator<WindowsMergerWindowAccessor<
+                  WindowsMergerWindows &&>::reverse_iterator>);
 
 } // namespace windows_merger

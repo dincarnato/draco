@@ -4,9 +4,7 @@
 #include <sstream>
 #include <string_view>
 
-template <typename Arg>
-static void
-dump_arg(std::ostream& os, Arg const& arg) {
+template <typename Arg> static void dump_arg(std::ostream &os, Arg const &arg) {
   auto const type_name = arg.get_type_name().c_str();
   auto const variable_name = arg.get_variable_name().c_str();
 
@@ -17,36 +15,31 @@ dump_arg(std::ostream& os, Arg const& arg) {
 }
 
 template <typename Group, std::size_t... Idx>
-static void
-dump_group_impl(std::ostream& os, Group const& group,
-                std::index_sequence<Idx...>) {
+static void dump_group_impl(std::ostream &os, Group const &group,
+                            std::index_sequence<Idx...>) {
   (dump_arg(os, std::get<Idx>(group.args)), ...);
 }
 
 template <typename Group>
-static void
-dump_group(std::ostream& os, Group const& group) {
+static void dump_group(std::ostream &os, Group const &group) {
   dump_group_impl(
       os, group,
       std::make_index_sequence<std::tuple_size_v<typename Group::args_type>>());
 }
 
 template <std::size_t... Idx>
-static void
-dump_opts_impl(std::ostream& os, std::index_sequence<Idx...>) {
+static void dump_opts_impl(std::ostream &os, std::index_sequence<Idx...>) {
   (dump_group(os, std::get<Idx>(args::opts.groups)), ...);
 }
 
-static void
-dump_opts(std::ostream& os) {
+static void dump_opts(std::ostream &os) {
   dump_opts_impl(
       os, std::make_index_sequence<
               std::tuple_size_v<typename decltype(args::opts)::groups_type>>());
 }
 
 template <std::size_t GroupIndex, std::size_t ArgIndex, typename Arg>
-static void
-create_setter_function_for_arg(std::ostream& os, Arg const& arg) {
+static void create_setter_function_for_arg(std::ostream &os, Arg const &arg) {
   auto const variable_name = arg.get_variable_name().c_str();
   auto const parameter_name = arg.get_parameter_name().c_str();
   auto const type_name = arg.get_type_name().c_str();
@@ -63,32 +56,30 @@ create_setter_function_for_arg(std::ostream& os, Arg const& arg) {
 }
 
 template <std::size_t GroupIndex, typename Group, std::size_t... Idx>
-static void
-create_setter_function_for_group(std::ostream& os, Group const& group,
-                                 std::index_sequence<Idx...>) {
+static void create_setter_function_for_group(std::ostream &os,
+                                             Group const &group,
+                                             std::index_sequence<Idx...>) {
   (create_setter_function_for_arg<GroupIndex, Idx>(os,
                                                    std::get<Idx>(group.args)),
    ...);
 }
 
 template <std::size_t GroupIndex, typename Group>
-static void
-create_setter_function_for_group(std::ostream& os, Group const& group) {
+static void create_setter_function_for_group(std::ostream &os,
+                                             Group const &group) {
   create_setter_function_for_group<GroupIndex>(
       os, group,
       std::make_index_sequence<std::tuple_size_v<typename Group::args_type>>());
 }
 
 template <std::size_t... Idx>
-static void
-create_setter_function_for_groups(std::ostream& os,
-                                  std::index_sequence<Idx...>) {
+static void create_setter_function_for_groups(std::ostream &os,
+                                              std::index_sequence<Idx...>) {
   (create_setter_function_for_group<Idx>(os, std::get<Idx>(args::opts.groups)),
    ...);
 }
 
-static void
-create_setter_function(std::ostream& os) {
+static void create_setter_function(std::ostream &os) {
   os << "protected:\nvoid set_parameters_from_args(cxxopts::ParseResult const& "
         "results) {\n";
   create_setter_function_for_groups(

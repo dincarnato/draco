@@ -15,8 +15,7 @@ static constexpr std::array<float, nClusters * nElements> allWeights{
 };
 
 template <bool post_increment, bool iter_forward, typename T>
-static void
-test_weighted_clusters(T&& weightedClusters) {
+static void test_weighted_clusters(T &&weightedClusters) {
   static_assert(std::is_same_v<std::decay_t<T>, WeightedClusters>);
 
   auto weightsRange = [&] {
@@ -26,14 +25,14 @@ test_weighted_clusters(T&& weightedClusters) {
       return allWeights | ranges::view::reverse;
   }();
 
-  auto getRange = [](auto&& range) {
+  auto getRange = [](auto &&range) {
     if constexpr (iter_forward)
       return range;
     else
       return range | ranges::view::reverse;
   };
 
-  auto getWeightsIter = [](auto& weightsRange, std::ptrdiff_t index) {
+  auto getWeightsIter = [](auto &weightsRange, std::ptrdiff_t index) {
     if constexpr (not iter_forward) {
       assert(index < nClusters);
       index = nClusters - index - 1;
@@ -48,7 +47,7 @@ test_weighted_clusters(T&& weightedClusters) {
       else
         return std::ptrdiff_t(nClusters - 1);
     }();
-    auto&& clusters = weightedClusters.clusters();
+    auto &&clusters = weightedClusters.clusters();
     assert(clusters.size() == nClusters);
     auto clustersRange = getRange(clusters);
     for (
@@ -69,7 +68,7 @@ test_weighted_clusters(T&& weightedClusters) {
       assert(clusterIter >= ranges::begin(clustersRange));
       assert(clusterIter < ranges::end(clustersRange));
 
-      auto&& cluster = *clusterIter;
+      auto &&cluster = *clusterIter;
       assert(cluster.size() == nElements);
       auto weightsIter = getWeightsIter(weightsRange, clusterIndex);
       auto clusterRange = getRange(cluster);
@@ -85,7 +84,7 @@ test_weighted_clusters(T&& weightedClusters) {
         assert(elementIter >= ranges::begin(clusterRange));
         assert(elementIter < ranges::end(clusterRange));
 
-        auto&& element = *elementIter;
+        auto &&element = *elementIter;
         assert(element == *weightsIter);
 
         if (ranges::distance(weightsIter, ranges::end(weightsRange)) >=
@@ -97,26 +96,27 @@ test_weighted_clusters(T&& weightedClusters) {
     }
   }
 
-  for (std::ptrdiff_t clusterIndex =
-           [] {
-             if constexpr (iter_forward)
-               return std::ptrdiff_t(0);
-             else
-               return std::ptrdiff_t(nClusters - 1);
-           }();
-       [&] {
-         if constexpr (iter_forward)
-           return clusterIndex < nClusters;
-         else
-           return clusterIndex >= 0;
-       }();
-       [&] {
-         if constexpr (iter_forward)
-           ++clusterIndex;
-         else
-           --clusterIndex;
-       }()) {
-    auto&& cluster =
+  for (
+      std::ptrdiff_t clusterIndex =
+          [] {
+            if constexpr (iter_forward)
+              return std::ptrdiff_t(0);
+            else
+              return std::ptrdiff_t(nClusters - 1);
+          }();
+      [&] {
+        if constexpr (iter_forward)
+          return clusterIndex < nClusters;
+        else
+          return clusterIndex >= 0;
+      }();
+      [&] {
+        if constexpr (iter_forward)
+          ++clusterIndex;
+        else
+          --clusterIndex;
+      }()) {
+    auto &&cluster =
         weightedClusters.cluster(static_cast<std::size_t>(clusterIndex));
     auto weightsIter = getWeightsIter(weightsRange, clusterIndex);
 
@@ -134,7 +134,7 @@ test_weighted_clusters(T&& weightedClusters) {
       assert(valueIter >= ranges::begin(clusterRange));
       assert(valueIter < ranges::end(clusterRange));
 
-      auto&& value = *valueIter;
+      auto &&value = *valueIter;
       assert(value == *weightsIter);
 
       if (ranges::distance(weightsIter, ranges::end(weightsRange)) >= nClusters)
@@ -148,49 +148,51 @@ test_weighted_clusters(T&& weightedClusters) {
     auto clustersWrapper = weightedClusters.clusters();
     auto firstClusterIter = ranges::begin(clustersWrapper);
 
-    for (std::ptrdiff_t clusterIndex =
-             [] {
-               if constexpr (iter_forward)
-                 return std::ptrdiff_t(0);
-               else
-                 return std::ptrdiff_t(nClusters - 1);
-             }();
-         [&] {
-           if constexpr (iter_forward)
-             return clusterIndex < nClusters;
-           else
-             return clusterIndex >= 0;
-         }();
-         [&] {
-           if constexpr (iter_forward)
-             ++clusterIndex;
-           else
-             --clusterIndex;
-         }()) {
-      auto&& cluster = firstClusterIter[clusterIndex];
+    for (
+        std::ptrdiff_t clusterIndex =
+            [] {
+              if constexpr (iter_forward)
+                return std::ptrdiff_t(0);
+              else
+                return std::ptrdiff_t(nClusters - 1);
+            }();
+        [&] {
+          if constexpr (iter_forward)
+            return clusterIndex < nClusters;
+          else
+            return clusterIndex >= 0;
+        }();
+        [&] {
+          if constexpr (iter_forward)
+            ++clusterIndex;
+          else
+            --clusterIndex;
+        }()) {
+      auto &&cluster = firstClusterIter[clusterIndex];
       auto clusterFirstElementIter = ranges::begin(cluster);
 
-      for (std::ptrdiff_t elementIndex =
-               [] {
-                 if constexpr (iter_forward)
-                   return std::ptrdiff_t(0);
-                 else
-                   return std::ptrdiff_t(nElements - 1);
-               }();
-           [&] {
-             if constexpr (iter_forward)
-               return elementIndex < nElements;
-             else
-               return elementIndex >= 0;
-           }();
-           [&] {
-             if constexpr (iter_forward)
-               ++elementIndex;
-             else
-               --elementIndex;
-           }()) {
+      for (
+          std::ptrdiff_t elementIndex =
+              [] {
+                if constexpr (iter_forward)
+                  return std::ptrdiff_t(0);
+                else
+                  return std::ptrdiff_t(nElements - 1);
+              }();
+          [&] {
+            if constexpr (iter_forward)
+              return elementIndex < nElements;
+            else
+              return elementIndex >= 0;
+          }();
+          [&] {
+            if constexpr (iter_forward)
+              ++elementIndex;
+            else
+              --elementIndex;
+          }()) {
 
-        auto&& value = clusterFirstElementIter[elementIndex];
+        auto &&value = clusterFirstElementIter[elementIndex];
         assert(value == allWeights[static_cast<std::size_t>(
                             elementIndex * nClusters + clusterIndex)]);
       }
@@ -200,50 +202,52 @@ test_weighted_clusters(T&& weightedClusters) {
   {
     auto firstElementIter = ranges::begin(weightedClusters);
 
-    for (std::ptrdiff_t elementIndex =
-             [] {
-               if constexpr (iter_forward)
-                 return std::ptrdiff_t(0);
-               else
-                 return std::ptrdiff_t(nElements - 1);
-             }();
-         [&] {
-           if constexpr (iter_forward)
-             return elementIndex < nElements;
-           else
-             return elementIndex >= 0;
-         }();
-         [&] {
-           if constexpr (iter_forward)
-             ++elementIndex;
-           else
-             --elementIndex;
-         }()) {
+    for (
+        std::ptrdiff_t elementIndex =
+            [] {
+              if constexpr (iter_forward)
+                return std::ptrdiff_t(0);
+              else
+                return std::ptrdiff_t(nElements - 1);
+            }();
+        [&] {
+          if constexpr (iter_forward)
+            return elementIndex < nElements;
+          else
+            return elementIndex >= 0;
+        }();
+        [&] {
+          if constexpr (iter_forward)
+            ++elementIndex;
+          else
+            --elementIndex;
+        }()) {
 
-      auto&& elementSpan = firstElementIter[elementIndex];
+      auto &&elementSpan = firstElementIter[elementIndex];
       auto elementSpanFirstClusterIter = ranges::begin(elementSpan);
 
-      for (std::ptrdiff_t clusterIndex =
-               [] {
-                 if constexpr (iter_forward)
-                   return std::ptrdiff_t(0);
-                 else
-                   return std::ptrdiff_t(nClusters - 1);
-               }();
-           [&] {
-             if constexpr (iter_forward)
-               return clusterIndex < nClusters;
-             else
-               return clusterIndex >= 0;
-           }();
-           [&] {
-             if constexpr (iter_forward)
-               ++clusterIndex;
-             else
-               --clusterIndex;
-           }()) {
+      for (
+          std::ptrdiff_t clusterIndex =
+              [] {
+                if constexpr (iter_forward)
+                  return std::ptrdiff_t(0);
+                else
+                  return std::ptrdiff_t(nClusters - 1);
+              }();
+          [&] {
+            if constexpr (iter_forward)
+              return clusterIndex < nClusters;
+            else
+              return clusterIndex >= 0;
+          }();
+          [&] {
+            if constexpr (iter_forward)
+              ++clusterIndex;
+            else
+              --clusterIndex;
+          }()) {
 
-        auto&& value =
+        auto &&value =
             elementSpanFirstClusterIter[static_cast<std::size_t>(clusterIndex)];
         assert(value == allWeights[static_cast<std::size_t>(
                             elementIndex * nClusters + clusterIndex)]);
@@ -252,7 +256,7 @@ test_weighted_clusters(T&& weightedClusters) {
   }
 
   for (unsigned elementIndex = 0; elementIndex < nElements; ++elementIndex) {
-    auto&& elementSpan = weightedClusters[elementIndex];
+    auto &&elementSpan = weightedClusters[elementIndex];
 
     assert(ranges::distance(ranges::begin(elementSpan),
                             ranges::end(elementSpan)) == nClusters);
@@ -264,8 +268,7 @@ test_weighted_clusters(T&& weightedClusters) {
   }
 }
 
-int
-main() {
+int main() {
   {
     WeightedClusters weightedClusters;
     assert(weightedClusters.getClustersSize() == 0);
@@ -277,8 +280,8 @@ main() {
     assert(weightedClusters.getClustersSize() == 3);
     assert(weightedClusters.getElementsSize() == 3);
 
-    for (auto&& cluster : weightedClusters) {
-      for (auto&& value : cluster)
+    for (auto &&cluster : weightedClusters) {
+      for (auto &&value : cluster)
         assert(value == 0);
     }
   }
@@ -294,7 +297,7 @@ main() {
 
     for (unsigned elementIndex = 0; elementIndex < nElements; ++elementIndex) {
       auto elementWrapper = *iter++;
-      auto&& elementIter = ranges::begin(elementWrapper);
+      auto &&elementIter = ranges::begin(elementWrapper);
       for (unsigned clusterIndex = 0; clusterIndex < nClusters; ++clusterIndex)
         *elementIter++ = *allWeightsIter++;
     }

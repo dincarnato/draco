@@ -28,32 +28,31 @@ public:
   constexpr static HardCut hard{};
 
   GraphCut() = default;
-  GraphCut(const arma::mat& adjacency, Graph type = Graph::symmetricLaplacian);
+  GraphCut(const arma::mat &adjacency, Graph type = Graph::symmetricLaplacian);
 
   WeightedClusters run(std::uint8_t nClusters, FuzzyCut = fuzzy) const;
   HardClusters run(std::uint8_t nClusters, HardCut) const;
 
   double calculateClustersScore(
-      const std::vector<std::vector<bool>>& rawClusters) const;
-  double calculateClustersScore(const HardClusters& clusters) const;
-  template <typename Clusters>
-  void setInitialClusters(Clusters&& clusters);
+      const std::vector<std::vector<bool>> &rawClusters) const;
+  double calculateClustersScore(const HardClusters &clusters) const;
+  template <typename Clusters> void setInitialClusters(Clusters &&clusters);
 
 private:
-  inline arma::mat createGraph(const arma::mat& adjacency) const;
-  inline arma::mat createSymmetricLaplacian(const arma::mat& adjacency) const;
+  inline arma::mat createGraph(const arma::mat &adjacency) const;
+  inline arma::mat createSymmetricLaplacian(const arma::mat &adjacency) const;
   template <typename Fun>
   WeightedClusters partitionGraph(std::uint8_t nClusters, Fun graphFun) const;
   template <typename Fun>
   HardClusters partitionGraphHard(std::uint8_t nClusters, Fun graphFun) const;
   template <typename Clusters>
-  double calculateCutScore(const arma::mat& graph,
-                           const Clusters& clusters) const;
+  double calculateCutScore(const arma::mat &graph,
+                           const Clusters &clusters) const;
   template <typename ClusterA, typename ClusterB>
-  static double calculateCut(const arma::mat& graph, const ClusterA& clusterA,
-                             const ClusterB& clusterB);
+  static double calculateCut(const arma::mat &graph, const ClusterA &clusterA,
+                             const ClusterB &clusterB);
 
-  arma::mat getGraphWithNoLoops(const arma::mat& matrix) const;
+  arma::mat getGraphWithNoLoops(const arma::mat &matrix) const;
 
   Graph graphType = Graph::symmetricLaplacian;
   arma::mat adjacency;

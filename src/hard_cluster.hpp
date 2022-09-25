@@ -2,8 +2,7 @@
 
 #include <vector>
 
-template <typename, bool>
-struct HardClusterWrapper;
+template <typename, bool> struct HardClusterWrapper;
 
 struct HardCluster : std::vector<bool> {
   using base_type = std::vector<bool>;
@@ -12,15 +11,15 @@ struct HardCluster : std::vector<bool> {
 
   template <typename Cluster, bool complemented>
   HardCluster(
-      HardClusterWrapper<Cluster, complemented> const& wrapper) noexcept(false);
+      HardClusterWrapper<Cluster, complemented> const &wrapper) noexcept(false);
 
   template <typename Cluster, bool complemented>
-  HardCluster(HardClusterWrapper<Cluster, complemented>&& wrapper) noexcept(
+  HardCluster(HardClusterWrapper<Cluster, complemented> &&wrapper) noexcept(
       false);
 
 private:
   template <typename Wrapper>
-  void init_from_wrapper(Wrapper&& wrapper) noexcept(false);
+  void init_from_wrapper(Wrapper &&wrapper) noexcept(false);
 };
 
 #include "hard_cluster_impl.hpp"

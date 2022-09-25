@@ -26,7 +26,7 @@ inline WindowsMergerWindows::WindowsMergerWindows(
     : n_clusters(n_clusters), n_bases_capacity(n_bases) {}
 
 inline WindowsMergerWindows::WindowsMergerWindows(
-    WindowsMergerWindows&& other) noexcept
+    WindowsMergerWindows &&other) noexcept
     : n_clusters(other.n_clusters),
       n_bases_capacity(std::exchange(other.n_bases_capacity, 0)),
       n_windows_capacity(std::exchange(other.n_windows_capacity, 0)),
@@ -34,8 +34,8 @@ inline WindowsMergerWindows::WindowsMergerWindows(
       windows_data(std::exchange(other.windows_data, nullptr)),
       coverages_data(std::exchange(other.coverages_data, nullptr)) {}
 
-inline WindowsMergerWindows&
-WindowsMergerWindows::operator=(WindowsMergerWindows&& other) noexcept {
+inline WindowsMergerWindows &
+WindowsMergerWindows::operator=(WindowsMergerWindows &&other) noexcept {
   destroy_and_deallocate();
 
   n_clusters = other.n_clusters;
@@ -57,8 +57,7 @@ inline WindowsMergerWindows::WindowsMergerWindows(clusters_size_type n_clusters,
     allocate_impl();
 }
 
-inline void
-WindowsMergerWindows::allocate_impl() noexcept(false) {
+inline void WindowsMergerWindows::allocate_impl() noexcept(false) {
   assert(n_clusters > 0);
   assert(n_bases_capacity > 0);
 
@@ -74,7 +73,7 @@ WindowsMergerWindows::allocate_impl() noexcept(false) {
           .next()
           .with_max_size(static_cast<bases_size_type>(n_clusters_bases))
           .with_fun_size([n_clusters =
-                              n_clusters](const bases_size_type* start_end) {
+                              n_clusters](const bases_size_type *start_end) {
             assert(start_end[0] <= start_end[1]);
             return static_cast<bases_size_type>((start_end[1] - start_end[0]) *
                                                 n_clusters);
@@ -123,8 +122,7 @@ inline WindowsMergerWindows::~WindowsMergerWindows() noexcept {
   destroy_and_deallocate();
 }
 
-inline void
-WindowsMergerWindows::destroy_and_deallocate() noexcept {
+inline void WindowsMergerWindows::destroy_and_deallocate() noexcept {
   static_assert(std::is_trivially_destructible_v<weight_type>);
   if (n_clusters > 0 and n_bases_capacity > 0 and n_windows_capacity > 0) {
     windows_builder.destroy(windows_data, *this)
@@ -134,7 +132,7 @@ WindowsMergerWindows::destroy_and_deallocate() noexcept {
         .with_max_size(
             static_cast<bases_size_type>(n_bases_capacity * n_clusters))
         .with_fun_size([n_clusters =
-                            n_clusters](const bases_size_type* start_end) {
+                            n_clusters](const bases_size_type *start_end) {
           assert(start_end[0] <= start_end[1]);
           return static_cast<bases_size_type>((start_end[1] - start_end[0]) *
                                               n_clusters);
@@ -155,13 +153,12 @@ WindowsMergerWindows::destroy_and_deallocate() noexcept {
   }
 }
 
-inline bool
-WindowsMergerWindows::operator==(const WindowsMergerWindows& other) const
-    noexcept {
-  return static_cast<const windows_allocator&>(*this) ==
-             static_cast<const windows_allocator&>(other) &&
-         static_cast<const coverages_allocator&>(*this) ==
-             static_cast<const coverages_allocator&>(other) &&
+inline bool WindowsMergerWindows::operator==(
+    const WindowsMergerWindows &other) const noexcept {
+  return static_cast<const windows_allocator &>(*this) ==
+             static_cast<const windows_allocator &>(other) &&
+         static_cast<const coverages_allocator &>(*this) ==
+             static_cast<const coverages_allocator &>(other) &&
          n_clusters == other.n_clusters && n_bases_capacity &&
          other.n_bases_capacity &&
          n_windows_capacity == other.n_windows_capacity &&
@@ -169,50 +166,49 @@ WindowsMergerWindows::operator==(const WindowsMergerWindows& other) const
          coverages_data == other.coverages_data;
 }
 
-inline bool
-WindowsMergerWindows::operator!=(const WindowsMergerWindows& other) const
-    noexcept {
+inline bool WindowsMergerWindows::operator!=(
+    const WindowsMergerWindows &other) const noexcept {
   return !operator==(other);
 }
 
-inline auto
-WindowsMergerWindows::clusters_size() const noexcept -> clusters_size_type {
+inline auto WindowsMergerWindows::clusters_size() const noexcept
+    -> clusters_size_type {
   return n_clusters;
 }
 
-inline auto
-WindowsMergerWindows::bases_capacity() const noexcept -> bases_size_type {
+inline auto WindowsMergerWindows::bases_capacity() const noexcept
+    -> bases_size_type {
   return n_bases_capacity;
 }
 
-inline auto
-WindowsMergerWindows::windows_size() const noexcept -> windows_size_type {
+inline auto WindowsMergerWindows::windows_size() const noexcept
+    -> windows_size_type {
   return n_windows;
 }
 
-inline auto
-WindowsMergerWindows::windows_capacity() const noexcept -> windows_size_type {
+inline auto WindowsMergerWindows::windows_capacity() const noexcept
+    -> windows_size_type {
   return n_windows_capacity;
 }
 
-inline auto WindowsMergerWindows::operator[](windows_size_type index) &
-    noexcept -> window_accessor {
+inline auto WindowsMergerWindows::operator[](windows_size_type index) &noexcept
+    -> window_accessor {
   return window_accessor{*this, index};
 }
 
-inline auto WindowsMergerWindows::operator[](windows_size_type index) const &
-    noexcept -> const_window_accessor {
+inline auto
+WindowsMergerWindows::operator[](windows_size_type index) const &noexcept
+    -> const_window_accessor {
   return const_window_accessor{*this, index};
 }
 
-inline auto WindowsMergerWindows::operator[](windows_size_type index) &&
-    noexcept -> move_window_accessor {
+inline auto WindowsMergerWindows::operator[](windows_size_type index) &&noexcept
+    -> move_window_accessor {
   return move_window_accessor{*this, index};
 }
 
 template <std::size_t Index>
-inline auto
-WindowsMergerWindows::get_window_first_pointer(
+inline auto WindowsMergerWindows::get_window_first_pointer(
     windows_size_type window_index) const noexcept {
   static_assert(Index < 2);
   return windows_allocator_traits::first_pointer_of<Index>(
@@ -220,36 +216,32 @@ WindowsMergerWindows::get_window_first_pointer(
 }
 
 template <std::size_t Index>
-inline auto
-WindowsMergerWindows::get_window_first_pointer(
+inline auto WindowsMergerWindows::get_window_first_pointer(
     windows_size_type window_index) noexcept {
   return const_cast<typename windows_allocator_traits::template pointer<Index>>(
-      const_cast<const WindowsMergerWindows&>(*this)
+      const_cast<const WindowsMergerWindows &>(*this)
           .get_window_first_pointer<Index>(window_index));
 }
 
 template <std::size_t Index>
-inline auto
-WindowsMergerWindows::get_coverage_first_pointer(
+inline auto WindowsMergerWindows::get_coverage_first_pointer(
     windows_size_type window_index) const noexcept {
   return coverages_allocator_traits::first_pointer_of<Index>(
       *this, coverages_data, window_index, 1, n_bases_capacity);
 }
 
 template <std::size_t Index>
-inline auto
-WindowsMergerWindows::get_coverage_first_pointer(
+inline auto WindowsMergerWindows::get_coverage_first_pointer(
     windows_size_type window_index) noexcept {
   return const_cast<
       typename coverages_allocator_traits::template pointer<Index>>(
-      const_cast<const WindowsMergerWindows&>(*this)
+      const_cast<const WindowsMergerWindows &>(*this)
           .template get_coverage_first_pointer<Index>(window_index));
 }
 
 template <typename Base>
-auto
-WindowsMergerWindows::base_emplace_back(windows_size_type window_index,
-                                        Base&& base) noexcept(false)
+auto WindowsMergerWindows::base_emplace_back(windows_size_type window_index,
+                                             Base &&base) noexcept(false)
     -> base_accessor {
   using new_base_type = std::decay_t<Base>;
   static_assert(traits_type::template is_window_baselike_v<new_base_type>);
@@ -276,11 +268,11 @@ WindowsMergerWindows::base_emplace_back(windows_size_type window_index,
     reshape(n_bases_capacity * 2, WindowsMergerReserve(n_windows_capacity));
 
   constexpr bool weights_build_is_noexcept =
-      not std::is_lvalue_reference_v<Base> and
-      noexcept(weight_type(base.weight(std::declval<clusters_size_type>()))) and
-      noexcept(std::declval<new_base_type&>().weight(
-                   std::declval<clusters_size_type>()) =
-                   std::declval<weight_type&&>());
+      not std::is_lvalue_reference_v<Base> and noexcept(
+          weight_type(base.weight(std::declval<clusters_size_type>())))
+          and noexcept(std::declval<new_base_type &>().weight(
+                           std::declval<clusters_size_type>()) =
+                           std::declval<weight_type &&>());
 
   auto new_base_ptr =
       get_window_first_pointer<1>(window_index) + window_size * n_clusters;
@@ -310,10 +302,10 @@ WindowsMergerWindows::base_emplace_back(windows_size_type window_index,
   }
 
   constexpr bool coverages_build_is_noexcept =
-      not std::is_lvalue_reference_v<Base> and
-      noexcept(coverage_type(base.coverage())) and
-      noexcept(std::declval<new_base_type&>().coverage() =
-                   std::declval<coverage_type&&>());
+      not std::is_lvalue_reference_v<Base> and noexcept(coverage_type(
+          base.coverage())) and noexcept(std::declval<new_base_type &>()
+                                             .coverage() =
+                                             std::declval<coverage_type &&>());
 
   auto new_coverage_ptr =
       get_coverage_first_pointer<1>(window_index) + window_size;
@@ -347,10 +339,9 @@ WindowsMergerWindows::base_emplace_back(windows_size_type window_index,
 }
 
 template <template <typename> typename WindowsReshaper>
-void
-WindowsMergerWindows::reshape(
+void WindowsMergerWindows::reshape(
     bases_size_type bases_capacity,
-    WindowsReshaper<windows_size_type>&& windows_reshaper) noexcept(false) {
+    WindowsReshaper<windows_size_type> &&windows_reshaper) noexcept(false) {
   using windows_reshaper_type =
       std::decay_t<WindowsReshaper<windows_size_type>>;
   static_assert(traits_type::template is_reshaper_arg_v<windows_reshaper_type>,
@@ -420,7 +411,7 @@ WindowsMergerWindows::reshape(
             .next()
             .with_max_size(new_clusters_bases)
             .with_fun_size(
-                [n_clusters = n_clusters](const bases_size_type* start_end) {
+                [n_clusters = n_clusters](const bases_size_type *start_end) {
                   assert(start_end[0] <= start_end[1]);
                   return static_cast<bases_size_type>(
                       (start_end[1] - start_end[0]) * n_clusters);
@@ -430,7 +421,7 @@ WindowsMergerWindows::reshape(
             .next()
             .with_max_size(new_clusters_bases)
             .with_fun_size(
-                [n_clusters = n_clusters](const bases_size_type* start_end) {
+                [n_clusters = n_clusters](const bases_size_type *start_end) {
                   assert(start_end[0] <= start_end[1]);
                   return static_cast<bases_size_type>(
                       (start_end[1] - start_end[0]) * n_clusters);
@@ -443,7 +434,7 @@ WindowsMergerWindows::reshape(
             .next()
             .with_max_size(old_clusters_bases)
             .with_fun_size(
-                [n_clusters = n_clusters](const bases_size_type* start_end) {
+                [n_clusters = n_clusters](const bases_size_type *start_end) {
                   assert(start_end[0] <= start_end[1]);
                   return static_cast<bases_size_type>(
                       (start_end[1] - start_end[0]) * n_clusters);
@@ -504,7 +495,7 @@ WindowsMergerWindows::reshape(
         .next()
         .with_max_size(old_clusters_bases)
         .with_fun_size([n_clusters =
-                            n_clusters](const bases_size_type* start_end) {
+                            n_clusters](const bases_size_type *start_end) {
           assert(start_end[0] <= start_end[1]);
           return static_cast<bases_size_type>((start_end[1] - start_end[0]) *
                                               n_clusters);
@@ -541,7 +532,7 @@ WindowsMergerWindows::reshape(
               .next()
               .with_max_size(clusters_bases)
               .with_fun_size(
-                  [n_clusters = n_clusters](const bases_size_type* start_end) {
+                  [n_clusters = n_clusters](const bases_size_type *start_end) {
                     assert(start_end[0] <= start_end[1]);
                     return static_cast<bases_size_type>(
                         (start_end[1] - start_end[0]) * n_clusters);
@@ -571,7 +562,7 @@ WindowsMergerWindows::reshape(
           .next()
           .with_max_size(clusters_bases)
           .with_fun_size([n_clusters =
-                              n_clusters](const bases_size_type* start_end) {
+                              n_clusters](const bases_size_type *start_end) {
             assert(start_end[0] <= start_end[1]);
             return static_cast<bases_size_type>((start_end[1] - start_end[0]) *
                                                 n_clusters);
@@ -593,8 +584,8 @@ WindowsMergerWindows::reshape(
   n_windows = new_windows_size;
 }
 
-inline auto
-WindowsMergerWindows::emplace_back() noexcept(false) -> window_accessor {
+inline auto WindowsMergerWindows::emplace_back() noexcept(false)
+    -> window_accessor {
   const auto new_window_index = n_windows;
   if (n_bases_capacity > 0)
     reshape(n_bases_capacity, resizer_type(n_windows + 1));
@@ -610,8 +601,7 @@ WindowsMergerWindows::emplace_back() noexcept(false) -> window_accessor {
   return window_accessor(*this, new_window_index);
 }
 
-inline void
-WindowsMergerWindows::set_begin_index(
+inline void WindowsMergerWindows::set_begin_index(
     windows_size_type window_index,
     bases_size_type new_begin_index) noexcept(false) {
   assert(window_index < n_windows);
@@ -628,39 +618,35 @@ WindowsMergerWindows::set_begin_index(
   start_end[1] = new_end_index;
 }
 
-inline bool
-WindowsMergerWindows::is_allocated() const noexcept {
+inline bool WindowsMergerWindows::is_allocated() const noexcept {
   return n_bases_capacity > 0 and n_windows_capacity > 0;
 }
 
-inline auto
-WindowsMergerWindows::front() noexcept -> window_accessor {
+inline auto WindowsMergerWindows::front() noexcept -> window_accessor {
   assert(n_windows > 0);
   return window_accessor(*this, 0);
 }
 
-inline auto
-WindowsMergerWindows::front() const noexcept -> const_window_accessor {
+inline auto WindowsMergerWindows::front() const noexcept
+    -> const_window_accessor {
   assert(n_windows > 0);
   return const_window_accessor(*this, 0);
 }
 
-inline auto
-WindowsMergerWindows::back() noexcept -> window_accessor {
+inline auto WindowsMergerWindows::back() noexcept -> window_accessor {
   assert(n_windows > 0);
   return window_accessor(*this, n_windows - 1);
 }
 
-inline auto
-WindowsMergerWindows::back() const noexcept -> const_window_accessor {
+inline auto WindowsMergerWindows::back() const noexcept
+    -> const_window_accessor {
   assert(n_windows > 0);
   return const_window_accessor(*this, n_windows - 1);
 }
 
-inline void
-WindowsMergerWindows::destroy_range(windows_size_type window_index,
-                                    bases_size_type first,
-                                    bases_size_type last) noexcept {
+inline void WindowsMergerWindows::destroy_range(windows_size_type window_index,
+                                                bases_size_type first,
+                                                bases_size_type last) noexcept {
   {
     auto weights_pointer = get_window_first_pointer<1>(window_index);
     const auto weights_ptr_end = weights_pointer + last;
@@ -680,17 +666,17 @@ WindowsMergerWindows::destroy_range(windows_size_type window_index,
   }
 }
 
-inline void
-WindowsMergerWindows::copy_construct_from_range(
-    const WindowsMergerWindows& from_windows,
+inline void WindowsMergerWindows::copy_construct_from_range(
+    const WindowsMergerWindows &from_windows,
     windows_size_type from_window_index, bases_size_type from_first,
     bases_size_type from_last, windows_size_type to_window_index,
     bases_size_type
         to_first) noexcept(noexcept(std::
                                         is_nothrow_copy_constructible_v<
-                                            weight_type>) and
-                           noexcept(std::is_nothrow_copy_constructible_v<
-                                    coverage_type>)) {
+                                            weight_type>)
+                               and noexcept(
+                                   std::is_nothrow_copy_constructible_v<
+                                       coverage_type>)) {
   assert(to_window_index < n_windows);
   assert(from_window_index < from_windows.n_windows);
 
@@ -724,16 +710,16 @@ WindowsMergerWindows::copy_construct_from_range(
   }
 }
 
-inline void
-WindowsMergerWindows::copy_construct_from_range(
-    const WindowsMergerWindow& from_windows, bases_size_type from_first,
+inline void WindowsMergerWindows::copy_construct_from_range(
+    const WindowsMergerWindow &from_windows, bases_size_type from_first,
     bases_size_type from_last, windows_size_type to_window_index,
     bases_size_type
         to_first) noexcept(noexcept(std::
                                         is_nothrow_copy_constructible_v<
-                                            weight_type>) and
-                           noexcept(std::is_nothrow_copy_constructible_v<
-                                    coverage_type>)) {
+                                            weight_type>)
+                               and noexcept(
+                                   std::is_nothrow_copy_constructible_v<
+                                       coverage_type>)) {
   assert(to_window_index < n_windows);
 
   assert(from_first <= from_windows.size());
@@ -741,7 +727,7 @@ WindowsMergerWindows::copy_construct_from_range(
   assert(to_first + (from_last - from_first) <= n_bases_capacity);
 
   {
-    auto&& linear_weights = from_windows.linear_weights();
+    auto &&linear_weights = from_windows.linear_weights();
     auto to_weights_pointer = get_window_first_pointer<1>(to_window_index);
 
     assert(from_first <=
@@ -762,7 +748,7 @@ WindowsMergerWindows::copy_construct_from_range(
   }
 
   {
-    auto&& coverages = from_windows.coverages();
+    auto &&coverages = from_windows.coverages();
     auto to_coverages_pointer = get_coverage_first_pointer<1>(to_window_index);
     for (; from_first < from_last; ++from_first, ++to_first)
       windows_allocator_traits::construct(
@@ -770,17 +756,17 @@ WindowsMergerWindows::copy_construct_from_range(
   }
 }
 
-inline void
-WindowsMergerWindows::move_construct_from_range(
-    const WindowsMergerWindows& from_windows,
+inline void WindowsMergerWindows::move_construct_from_range(
+    const WindowsMergerWindows &from_windows,
     windows_size_type from_window_index, bases_size_type from_first,
     bases_size_type from_last, windows_size_type to_window_index,
     bases_size_type
         to_first) noexcept(noexcept(std::
                                         is_nothrow_move_constructible_v<
-                                            weight_type>) and
-                           noexcept(std::is_nothrow_move_constructible_v<
-                                    coverage_type>)) {
+                                            weight_type>)
+                               and noexcept(
+                                   std::is_nothrow_move_constructible_v<
+                                       coverage_type>)) {
   assert(to_window_index < n_windows);
   assert(from_window_index < from_windows.n_windows);
 
@@ -814,21 +800,21 @@ WindowsMergerWindows::move_construct_from_range(
   }
 }
 
-inline void
-WindowsMergerWindows::move_construct_from_range(
-    WindowsMergerWindow&& from_windows, bases_size_type from_first,
+inline void WindowsMergerWindows::move_construct_from_range(
+    WindowsMergerWindow &&from_windows, bases_size_type from_first,
     bases_size_type from_last, windows_size_type to_window_index,
     bases_size_type
         to_first) noexcept(noexcept(std::
                                         is_nothrow_move_constructible_v<
-                                            weight_type>) and
-                           noexcept(std::is_nothrow_move_constructible_v<
-                                    coverage_type>)) {
+                                            weight_type>)
+                               and noexcept(
+                                   std::is_nothrow_move_constructible_v<
+                                       coverage_type>)) {
   assert(to_window_index < n_windows);
   assert(to_first + (from_last - from_first) <= n_bases_capacity);
 
   {
-    auto&& linear_weights = from_windows.linear_weights();
+    auto &&linear_weights = from_windows.linear_weights();
     auto to_weights_pointer = get_window_first_pointer<1>(to_window_index);
 
     assert(from_first <=
@@ -849,7 +835,7 @@ WindowsMergerWindows::move_construct_from_range(
   }
 
   {
-    auto&& coverages = from_windows.coverages();
+    auto &&coverages = from_windows.coverages();
     auto to_coverages_pointer = get_coverage_first_pointer<1>(to_window_index);
     for (; from_first < from_last; ++from_first, ++to_first)
       windows_allocator_traits::construct(*this,
@@ -858,81 +844,58 @@ WindowsMergerWindows::move_construct_from_range(
   }
 }
 
-inline auto
-    WindowsMergerWindows::begin() &
-    noexcept -> iterator {
+inline auto WindowsMergerWindows::begin() &noexcept -> iterator {
   return iterator(*this);
 }
 
-inline auto
-    WindowsMergerWindows::end() &
-    noexcept -> iterator {
+inline auto WindowsMergerWindows::end() &noexcept -> iterator {
   return iterator(*this, n_windows);
 }
 
-inline auto
-    WindowsMergerWindows::begin() const
-    & noexcept -> const_iterator {
+inline auto WindowsMergerWindows::begin() const &noexcept -> const_iterator {
   return const_iterator(*this);
 }
 
-inline auto
-    WindowsMergerWindows::end() const
-    & noexcept -> const_iterator {
+inline auto WindowsMergerWindows::end() const &noexcept -> const_iterator {
   return const_iterator(*this, n_windows);
 }
 
-inline auto
-    WindowsMergerWindows::begin() &&
-    noexcept -> move_iterator {
+inline auto WindowsMergerWindows::begin() &&noexcept -> move_iterator {
   return move_iterator(*this);
 }
 
-inline auto
-    WindowsMergerWindows::end() &&
-    noexcept -> move_iterator {
+inline auto WindowsMergerWindows::end() &&noexcept -> move_iterator {
   return move_iterator(*this, n_windows);
 }
 
-inline auto
-    WindowsMergerWindows::rbegin() &
-    noexcept -> reverse_iterator {
+inline auto WindowsMergerWindows::rbegin() &noexcept -> reverse_iterator {
   return reverse_iterator(iterator(*this, n_windows));
 }
 
-inline auto
-    WindowsMergerWindows::rend() &
-    noexcept -> reverse_iterator {
+inline auto WindowsMergerWindows::rend() &noexcept -> reverse_iterator {
   return reverse_iterator(iterator(*this));
 }
 
-inline auto
-    WindowsMergerWindows::rbegin() const
-    & noexcept -> const_reverse_iterator {
+inline auto WindowsMergerWindows::rbegin() const &noexcept
+    -> const_reverse_iterator {
   return const_reverse_iterator(const_iterator(*this, n_windows));
 }
 
-inline auto
-    WindowsMergerWindows::rend() const
-    & noexcept -> const_reverse_iterator {
+inline auto WindowsMergerWindows::rend() const &noexcept
+    -> const_reverse_iterator {
   return const_reverse_iterator(const_iterator(*this));
 }
 
-inline auto
-    WindowsMergerWindows::rbegin() &&
-    noexcept -> move_reverse_iterator {
+inline auto WindowsMergerWindows::rbegin() &&noexcept -> move_reverse_iterator {
   return move_reverse_iterator(move_iterator(*this, n_windows));
 }
 
-inline auto
-    WindowsMergerWindows::rend() &&
-    noexcept -> move_reverse_iterator {
+inline auto WindowsMergerWindows::rend() &&noexcept -> move_reverse_iterator {
   return move_reverse_iterator(move_iterator(*this));
 }
 
 template <typename T, typename U>
-auto
-operator==(T&& t, U&& u) noexcept -> std::enable_if_t<
+auto operator==(T &&t, U &&u) noexcept -> std::enable_if_t<
     WindowsMergerTraits::template is_window_baselike_v<std::decay_t<T>> and
         WindowsMergerTraits::template is_window_baselike_v<std::decay_t<U>>,
     bool> {
@@ -945,8 +908,7 @@ operator==(T&& t, U&& u) noexcept -> std::enable_if_t<
 }
 
 template <typename T, typename U>
-auto
-operator!=(T&& t, U&& u) noexcept -> std::enable_if_t<
+auto operator!=(T &&t, U &&u) noexcept -> std::enable_if_t<
     WindowsMergerTraits::template is_window_baselike_v<std::decay_t<T>> and
         WindowsMergerTraits::template is_window_baselike_v<std::decay_t<U>>,
     bool> {
@@ -954,8 +916,7 @@ operator!=(T&& t, U&& u) noexcept -> std::enable_if_t<
 }
 
 template <typename T, typename U>
-auto
-operator==(T&& t, U&& u) noexcept -> std::enable_if_t<
+auto operator==(T &&t, U &&u) noexcept -> std::enable_if_t<
     WindowsMergerTraits::template is_windowlike_v<std::decay_t<T>> and
         WindowsMergerTraits::template is_windowlike_v<std::decay_t<U>>,
     bool> {
@@ -966,8 +927,7 @@ operator==(T&& t, U&& u) noexcept -> std::enable_if_t<
 }
 
 template <typename T, typename U>
-auto
-operator!=(T&& t, U&& u) noexcept -> std::enable_if_t<
+auto operator!=(T &&t, U &&u) noexcept -> std::enable_if_t<
     WindowsMergerTraits::template is_windowlike_v<std::decay_t<T>> and
         WindowsMergerTraits::template is_windowlike_v<std::decay_t<U>>,
     bool> {

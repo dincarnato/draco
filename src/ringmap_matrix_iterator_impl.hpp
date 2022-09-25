@@ -6,12 +6,11 @@
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
 RingmapMatrixIterator<Matrix, Type>::RingmapMatrixIterator(
-    Matrix& matrix, row_type* const row, unsigned col) noexcept
+    Matrix &matrix, row_type *const row, unsigned col) noexcept
     : matrix(&matrix), row(row), col(col) {}
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-auto
-RingmapMatrixIterator<Matrix, Type>::operator++() noexcept -> self& {
+auto RingmapMatrixIterator<Matrix, Type>::operator++() noexcept -> self & {
   if constexpr (Type == RingmapMatrixIteratorType::cols)
     ++col;
   else if constexpr (Type == RingmapMatrixIteratorType::rows)
@@ -28,8 +27,7 @@ RingmapMatrixIterator<Matrix, Type>::operator++() noexcept -> self& {
 }
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-auto
-RingmapMatrixIterator<Matrix, Type>::operator++(int) noexcept -> self {
+auto RingmapMatrixIterator<Matrix, Type>::operator++(int) noexcept -> self {
   auto other = *this;
   ++*this;
 
@@ -37,8 +35,7 @@ RingmapMatrixIterator<Matrix, Type>::operator++(int) noexcept -> self {
 }
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-auto
-RingmapMatrixIterator<Matrix, Type>::operator--() noexcept -> self& {
+auto RingmapMatrixIterator<Matrix, Type>::operator--() noexcept -> self & {
   if constexpr (Type == RingmapMatrixIteratorType::cols)
     --col;
   else if constexpr (Type == RingmapMatrixIteratorType::rows)
@@ -56,8 +53,7 @@ RingmapMatrixIterator<Matrix, Type>::operator--() noexcept -> self& {
 }
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-auto
-RingmapMatrixIterator<Matrix, Type>::operator--(int) noexcept -> self {
+auto RingmapMatrixIterator<Matrix, Type>::operator--(int) noexcept -> self {
   auto other = *this;
   --*this;
 
@@ -65,9 +61,8 @@ RingmapMatrixIterator<Matrix, Type>::operator--(int) noexcept -> self {
 }
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-auto
-RingmapMatrixIterator<Matrix, Type>::operator+=(difference_type offset) noexcept
-    -> self& {
+auto RingmapMatrixIterator<Matrix, Type>::operator+=(
+    difference_type offset) noexcept -> self & {
   if constexpr (Type == RingmapMatrixIteratorType::cols)
     col += offset;
   else if constexpr (Type == RingmapMatrixIteratorType::rows)
@@ -82,15 +77,14 @@ RingmapMatrixIterator<Matrix, Type>::operator+=(difference_type offset) noexcept
 }
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-auto
-RingmapMatrixIterator<Matrix, Type>::operator+(difference_type offset) const
-    noexcept -> self {
+auto RingmapMatrixIterator<Matrix, Type>::operator+(
+    difference_type offset) const noexcept -> self {
   if constexpr (Type == RingmapMatrixIteratorType::cols)
     return {*matrix, row, col + offset};
   else if constexpr (Type == RingmapMatrixIteratorType::cols)
     return {*matrix, row + offset, col};
   else {
-    row_type* otherRow = row;
+    row_type *otherRow = row;
     unsigned otherCol = col + offset;
 
     otherRow += otherCol / matrix->bases;
@@ -103,28 +97,25 @@ RingmapMatrixIterator<Matrix, Type>::operator+(difference_type offset) const
 template <typename Matrix, RingmapMatrixIteratorType Type>
 RingmapMatrixIterator<Matrix, Type>
 operator+(typename RingmapMatrixIterator<Matrix, Type>::difference_type offset,
-          RingmapMatrixIterator<Matrix, Type> const& rhs) noexcept {
+          RingmapMatrixIterator<Matrix, Type> const &rhs) noexcept {
   return rhs + offset;
 }
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-auto
-RingmapMatrixIterator<Matrix, Type>::operator-=(difference_type offset) noexcept
-    -> self& {
+auto RingmapMatrixIterator<Matrix, Type>::operator-=(
+    difference_type offset) noexcept -> self & {
   return *this += -offset;
 }
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-auto
-RingmapMatrixIterator<Matrix, Type>::operator-(difference_type offset) const
-    noexcept -> self {
+auto RingmapMatrixIterator<Matrix, Type>::operator-(
+    difference_type offset) const noexcept -> self {
   return *this + -offset;
 }
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-auto
-RingmapMatrixIterator<Matrix, Type>::operator-(self const& rhs) const noexcept
-    -> difference_type {
+auto RingmapMatrixIterator<Matrix, Type>::operator-(
+    self const &rhs) const noexcept -> difference_type {
   assert(matrix == rhs.matrix);
   if constexpr (Type == RingmapMatrixIteratorType::cols) {
     return static_cast<difference_type>(col) -
@@ -139,24 +130,21 @@ RingmapMatrixIterator<Matrix, Type>::operator-(self const& rhs) const noexcept
 }
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-bool
-RingmapMatrixIterator<Matrix, Type>::
-operator==(const RingmapMatrixIterator& other) const noexcept {
+bool RingmapMatrixIterator<Matrix, Type>::operator==(
+    const RingmapMatrixIterator &other) const noexcept {
   assert(matrix == other.matrix);
   return row == other.row and col == other.col;
 }
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-bool
-RingmapMatrixIterator<Matrix, Type>::
-operator!=(const RingmapMatrixIterator& other) const noexcept {
+bool RingmapMatrixIterator<Matrix, Type>::operator!=(
+    const RingmapMatrixIterator &other) const noexcept {
   return not operator==(other);
 }
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-bool
-RingmapMatrixIterator<Matrix, Type>::
-operator<(const RingmapMatrixIterator& other) const noexcept {
+bool RingmapMatrixIterator<Matrix, Type>::operator<(
+    const RingmapMatrixIterator &other) const noexcept {
   assert(matrix == other.matrix);
   if constexpr (Type == RingmapMatrixIteratorType::cols)
     return col < other.col;
@@ -170,9 +158,8 @@ operator<(const RingmapMatrixIterator& other) const noexcept {
 }
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-bool
-RingmapMatrixIterator<Matrix, Type>::
-operator<=(const RingmapMatrixIterator& other) const noexcept {
+bool RingmapMatrixIterator<Matrix, Type>::operator<=(
+    const RingmapMatrixIterator &other) const noexcept {
   assert(matrix == other.matrix);
   if constexpr (Type == RingmapMatrixIteratorType::cols)
     return col <= other.col;
@@ -186,16 +173,14 @@ operator<=(const RingmapMatrixIterator& other) const noexcept {
 }
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-bool
-RingmapMatrixIterator<Matrix, Type>::
-operator>=(const RingmapMatrixIterator& other) const noexcept {
+bool RingmapMatrixIterator<Matrix, Type>::operator>=(
+    const RingmapMatrixIterator &other) const noexcept {
   return not(*this < other);
 }
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-bool
-RingmapMatrixIterator<Matrix, Type>::
-operator>(const RingmapMatrixIterator& other) const noexcept {
+bool RingmapMatrixIterator<Matrix, Type>::operator>(
+    const RingmapMatrixIterator &other) const noexcept {
   return not(*this <= other);
 }
 
@@ -206,8 +191,8 @@ auto RingmapMatrixIterator<Matrix, Type>::operator*() const noexcept
 }
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
-auto RingmapMatrixIterator<Matrix, Type>::
-operator[](difference_type offset) const noexcept -> reference {
+auto RingmapMatrixIterator<Matrix, Type>::operator[](
+    difference_type offset) const noexcept -> reference {
   auto temp = *this;
   temp += offset;
   return *temp;

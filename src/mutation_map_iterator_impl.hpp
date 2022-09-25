@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 template <typename MMap>
-MutationMapIterator<MMap>::MutationMapIterator(MMap& mutationMap,
+MutationMapIterator<MMap>::MutationMapIterator(MMap &mutationMap,
                                                std::streampos offset) noexcept
     : mutationMap(&mutationMap), offset(offset) {}
 
@@ -18,23 +18,21 @@ auto MutationMapIterator<MMap>::operator*() const noexcept(false) -> reference {
 }
 
 template <typename MMap>
-auto MutationMapIterator<MMap>::operator-> () const noexcept(false) -> pointer {
+auto MutationMapIterator<MMap>::operator->() const noexcept(false) -> pointer {
   assert(mutationMap);
   checkOffset();
   return mutationMap->transcripts.data() + offset;
 }
 
 template <typename MMap>
-auto
-MutationMapIterator<MMap>::operator++() noexcept -> self& {
+auto MutationMapIterator<MMap>::operator++() noexcept -> self & {
   assert(mutationMap);
   offset += 1;
   return *this;
 }
 
 template <typename MMap>
-auto
-MutationMapIterator<MMap>::operator++(int) noexcept -> self {
+auto MutationMapIterator<MMap>::operator++(int) noexcept -> self {
   assert(mutationMap);
   self other(*this);
   offset += 1;
@@ -42,8 +40,7 @@ MutationMapIterator<MMap>::operator++(int) noexcept -> self {
 }
 
 template <typename MMap>
-auto
-MutationMapIterator<MMap>::operator-(const self& other) const noexcept
+auto MutationMapIterator<MMap>::operator-(const self &other) const noexcept
     -> difference_type {
   assert(mutationMap);
   return static_cast<difference_type>(offset) - other.offset;
@@ -51,9 +48,8 @@ MutationMapIterator<MMap>::operator-(const self& other) const noexcept
 
 template <typename MMap>
 template <typename T>
-void
-MutationMapIterator<MMap>::checkOffset(
-    std::enable_if_t<not std::is_const<T>::value>*) const noexcept(false) {
+void MutationMapIterator<MMap>::checkOffset(
+    std::enable_if_t<not std::is_const<T>::value> *) const noexcept(false) {
   assert(mutationMap);
   if (static_cast<std::streamoff>(mutationMap->transcripts.size()) <= offset) {
     if (not loadOtherTranscripts())
@@ -63,9 +59,8 @@ MutationMapIterator<MMap>::checkOffset(
 
 template <typename MMap>
 template <typename T>
-void
-MutationMapIterator<MMap>::checkOffset(
-    std::enable_if_t<std::is_const<T>::value>*) const noexcept(false) {
+void MutationMapIterator<MMap>::checkOffset(
+    std::enable_if_t<std::is_const<T>::value> *) const noexcept(false) {
   assert(mutationMap);
   if (static_cast<std::streamoff>(mutationMap->transcripts.size()) <= offset)
     throw std::runtime_error("attempting to deference a not loaded transcript "
@@ -89,8 +84,8 @@ MutationMapIterator<MMap>::loadOtherTranscripts() const noexcept(false) {
 }
 
 template <typename MMap>
-bool
-MutationMapIterator<MMap>::operator==(const self& other) const noexcept(false) {
+bool MutationMapIterator<MMap>::operator==(const self &other) const
+    noexcept(false) {
   if (mutationMap == nullptr) {
     if (other.mutationMap == nullptr)
       return true;
@@ -111,7 +106,7 @@ MutationMapIterator<MMap>::operator==(const self& other) const noexcept(false) {
 }
 
 template <typename MMap>
-bool
-MutationMapIterator<MMap>::operator!=(const self& other) const noexcept(false) {
+bool MutationMapIterator<MMap>::operator!=(const self &other) const
+    noexcept(false) {
   return not operator==(other);
 }

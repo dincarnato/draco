@@ -23,7 +23,8 @@ static constexpr void checkGraphFunCallable() {
 
 template <typename Fun>
 std::tuple<WeightedClusters, double>
-GraphCut::partitionGraph(std::uint8_t nClusters, Fun graphFun) const {
+GraphCut::partitionGraph(std::uint8_t nClusters, float weightModule,
+                         std::uint16_t nTries, Fun graphFun) const {
   constexpr unsigned minClusterTotalWeight = 3;
 
   checkGraphFunCallable<std::decay_t<Fun>>();
@@ -68,7 +69,6 @@ GraphCut::partitionGraph(std::uint8_t nClusters, Fun graphFun) const {
 
       usableBases[0] = usableBasesModule;
       auto bestScore = std::numeric_limits<double>::infinity();
-      constexpr unsigned nTries = 50;
       WeightedClusters temporaryWeights(nBases, nClusters, false);
       std::vector<std::size_t> baseIndices(nBases);
       ranges::iota(baseIndices, std::size_t(0));
@@ -150,7 +150,7 @@ GraphCut::partitionGraph(std::uint8_t nClusters, Fun graphFun) const {
         assert(ranges::accumulate(usableBases, std::size_t(0)) == nBases);
         assert(ranges::none_of(usableBases,
                                [](std::size_t nBases) { return nBases == 0; }));
-        for (unsigned trialIndex = 0; trialIndex < nTries; ++trialIndex) {
+        for (std::uint16_t trialIndex = 0; trialIndex < nTries; ++trialIndex) {
           temporaryWeights.removeWeights();
 
           ranges::shuffle(baseIndices, randomGen);
@@ -198,7 +198,6 @@ GraphCut::partitionGraph(std::uint8_t nClusters, Fun graphFun) const {
     }
   }();
 
-  const float weightModule = 1.f / (nClusters * 2);
   auto weightsClusters = weights.clusters();
   static_assert(not std::is_const<decltype(weightsClusters)>::value, "!");
   float currentWeightChange = weightModule;

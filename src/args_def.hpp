@@ -156,11 +156,22 @@ static constexpr auto opts = args::Opts(
                          "[Note: if this threshold is not met, the number of "
                          "clusters is automatically decreased]")
             .DEFAULT_VALUE(0.05),
+        ARG(std::uint16_t, soft_clustering_initializations)
+            .parameter_name("softClusteringInitializations")
+            .description(
+                "Number of iterations for the initialization process of the "
+                "graph cut. The initializaztion with the best score is chosen.")
+            .DEFAULT_VALUE(1000),
         ARG(std::uint16_t, soft_clustering_iterations)
             .parameter_name("softClusteringIterations")
             .description("Number of iterations performed on graph cut. The cut "
                          "with the best score is chosen.")
-            .DEFAULT_VALUE(100)),
+            .DEFAULT_VALUE(100),
+        ARG(float, soft_clustering_weight_module)
+            .parameter_name("softClusteringWeightModule")
+            .description("The module of the weight that is used to change the "
+                         "cluster weights in order to find the best score.")
+            .DEFAULT_VALUE(0.05)),
 
     args::Group(
         "Windowed analysis",

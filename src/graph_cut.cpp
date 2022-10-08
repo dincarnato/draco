@@ -66,15 +66,16 @@ arma::mat GraphCut::getGraphWithNoLoops(const arma::mat &matrix) const {
   return symLaplacian;
 }
 
-auto GraphCut::run(std::uint8_t nClusters, std::uint16_t iterations,
-                   FuzzyCut) const -> WeightedClusters {
+auto GraphCut::run(std::uint8_t nClusters, float weightModule, unsigned nTries,
+                   std::uint16_t iterations, FuzzyCut) const
+    -> WeightedClusters {
   if (nClusters < 2)
     throw std::logic_error("nClusters must be at least 2");
 
-  auto createPartitionGraph = [this, nClusters]() {
-    return partitionGraph(nClusters, [this](const auto &matrix) {
-      return getGraphWithNoLoops(matrix);
-    });
+  auto createPartitionGraph = [this, nClusters, weightModule, nTries]() {
+    return partitionGraph(
+        nClusters, weightModule, nTries,
+        [this](const auto &matrix) { return getGraphWithNoLoops(matrix); });
   };
 
   auto [clusters, score] = createPartitionGraph();

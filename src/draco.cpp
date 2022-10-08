@@ -704,7 +704,9 @@ int main(int argc, char *argv[]) {
                   GraphCut graphCut(covariance);
 
                   auto graphCutResults = graphCut.run(
-                      n_clusters, args.soft_clustering_iterations());
+                      n_clusters, args.soft_clustering_weight_module(),
+                      args.soft_clustering_initializations(),
+                      args.soft_clustering_iterations());
                   auto clusters = filtered_data.getUnfilteredWeights(
                       std::move(graphCutResults));
 

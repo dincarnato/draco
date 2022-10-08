@@ -6,7 +6,7 @@
 namespace args {
 
 static constexpr auto opts = args::Opts(
-    "\n DRACO (v1.0)\n",
+    "\n DRACO (v1.1)\n",
     args::Group(
         "",
         ARG(std::string, mm_filename)
@@ -15,7 +15,7 @@ static constexpr auto opts = args::Opts(
         ARG(std::string, output_filename)
             .parameter_name("output")
             .description("Output JSON file")
-            .DEFAULT_VALUE("draco_deconvoluted.json"),
+            .DEFAULT_VALUE("draco_deconvolved.json"),
         ARG(unsigned, n_processors)
             .parameter_name("processors")
             .description("Number of processors to use [Note: when set to 0, "
@@ -80,10 +80,9 @@ static constexpr auto opts = args::Opts(
                          "the null model")
             .DEFAULT_VALUE(400),
         ARG(double, first_eigengap_threshold)
-            .parameter_name("firstEigengapThresh")
-            .description("Threshold to consider the first eigengap [Note: when "
-                         "this threshold "
-                         "is not met, 0 clusters are reported]")
+            .parameter_name("firstEigengapShift")
+            .description("How much the mean of the first eigengap's null model "
+                         "should be shifted by")
             .DEFAULT_VALUE(0.90),
         ARG(double, min_eigengap_threshold)
             .parameter_name("eigengapCumRelThresh")
@@ -157,21 +156,22 @@ static constexpr auto opts = args::Opts(
                          "clusters is automatically decreased]")
             .DEFAULT_VALUE(0.05),
         ARG(std::uint16_t, soft_clustering_initializations)
-            .parameter_name("softClusteringInitializations")
+            .parameter_name("softClusteringInits")
             .description(
                 "Number of iterations for the initialization process of the "
-                "graph cut. The initializaztion with the best score is chosen.")
-            .DEFAULT_VALUE(1000),
+                "graph-cut "
+                "[Note: the initialization with the lowest score is picked]")
+            .DEFAULT_VALUE(500),
         ARG(std::uint16_t, soft_clustering_iterations)
-            .parameter_name("softClusteringIterations")
-            .description("Number of iterations performed on graph cut. The cut "
-                         "with the best score is chosen.")
-            .DEFAULT_VALUE(100),
+            .parameter_name("softClusteringIters")
+            .description("Number of iterations performed on graph-cut "
+                         "[Note: The cut with the lowest score is picked]")
+            .DEFAULT_VALUE(20),
         ARG(float, soft_clustering_weight_module)
             .parameter_name("softClusteringWeightModule")
             .description("The module of the weight that is used to change the "
-                         "cluster weights in order to find the best score.")
-            .DEFAULT_VALUE(0.05)),
+                         "cluster weights in order to find the lowest score")
+            .DEFAULT_VALUE(0.005)),
 
     args::Group(
         "Windowed analysis",

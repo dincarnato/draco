@@ -4,6 +4,12 @@ project(draco VERSION 1.0.0)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 subdirs(src test)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9")
+    message(FATAL_ERROR "Insufficient gcc version. Minimal supported version for GCC is 9.")
+  endif()
+endif()
+
 find_package(Boost 1.66 REQUIRED)
 find_package(Armadillo REQUIRED)
 find_package(TBB COMPONENTS tbbmalloc)

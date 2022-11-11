@@ -5,8 +5,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 subdirs(src test)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9")
-    message(FATAL_ERROR "Insufficient gcc version. Minimal supported version for GCC is 9.")
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "10")
+    message(FATAL_ERROR "Insufficient gcc version. Minimal supported version for GCC is 10.")
   endif()
 endif()
 

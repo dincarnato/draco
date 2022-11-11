@@ -34,8 +34,8 @@ Please see <http://www.gnu.org/licenses/> for more information.
 ## Prerequisites
 
 - Linux system
-- GCC v9 or higher (GCC v10 is recommended; <https://gcc.gnu.org/gcc-10/>), or
-  <br/>Clang v9 or greater (<https://releases.llvm.org/download.html>)
+- GCC v10 or higher (<https://gcc.gnu.org/gcc-10/>), or
+  <br/>Clang v10 or greater (<https://releases.llvm.org/download.html>)
 - CMake v3.8 or higher (<https://cmake.org/download/>)
 - OpenBLAS (<https://www.openblas.net>)
 - Armadillo v9.850.1 or greater (<http://arma.sourceforge.net>)

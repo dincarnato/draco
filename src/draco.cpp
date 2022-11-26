@@ -639,9 +639,8 @@ int main(int argc, char *argv[]) {
             set_uninformative_clusters_to_surrounding(
                 windows, windows_n_clusters, windows_max_clusters_constraints);
 
-            constexpr auto const zero_clusters = [](auto n_clusters) {
-              return n_clusters == 0;
-            };
+            [[maybe_unused]] constexpr auto const zero_clusters =
+                [](auto n_clusters) { return n_clusters == 0; };
             assert(ranges::none_of(windows_n_clusters, zero_clusters) or
                    ranges::all_of(windows_n_clusters, zero_clusters));
           }

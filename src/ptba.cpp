@@ -495,7 +495,7 @@ auto Ptba::result_from_run() const noexcept(false) -> PtbaResult {
       if (eigengap_index == 0)
         return std::max(mean - stddev - dataEigenGaps[eigengap_index], 0.);
       else
-        return std::max(dataEigenGaps[eigengap_index] - mean - stddev, 0.);
+        return std::abs(dataEigenGaps[eigengap_index] - mean - stddev);
     };
 
     eigenGapIndex = std::max(eigenGapIndex, 1u);

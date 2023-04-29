@@ -36,7 +36,15 @@ static constexpr auto opts = args::Opts(
             .description("Enables spectral analysis on all four bases (default "
                          "is only A/C bases) "
                          "[Note: this feature is highly experimental]")
-            .DEFAULT_VALUE(false)),
+            .DEFAULT_VALUE(false),
+        ARG(std::string, output_raw_n_clusters)
+            .optional()
+            .parameter_name("outputRawNClusters")
+            .description("Outputs a file containing, for each sequence, the "
+                         "number of clusters detected for each window. The "
+                         "file is tab-separated and has the following format: "
+                         "sequence_name <tab> window start offset <tab> window "
+                         "end offset <tab> n clusters.")),
 
     args::Group("Mutation filtering",
                 ARG(unsigned, minimum_base_coverage)

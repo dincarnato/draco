@@ -480,10 +480,18 @@ int main(int argc, char *argv[]) {
     return static_cast<std::size_t>(std::max(n_processors, 1u));
   }();
 
+  std::optional<std::ofstream> raw_n_clusters_stream{std::nullopt};
+  if (!args.output_raw_n_clusters().empty()) {
+    raw_n_clusters_stream =
+        std::ofstream(args.output_raw_n_clusters(),
+                      std::ios_base::out | std::ios_base::trunc);
+  }
+
   std::vector<std::thread> workers;
   workers.reserve(nWorkers);
   for (std::size_t workerIndex = 0; workerIndex < nWorkers; ++workerIndex) {
-    workers.emplace_back([&queue, &analysisResult, &args] {
+    workers.emplace_back([&queue, &analysisResult, &args,
+                          &raw_n_clusters_stream] {
       for (;;) {
         auto poppedData = queue.pop();
         if (not poppedData)
@@ -613,6 +621,31 @@ int main(int argc, char *argv[]) {
               window_n_clusters = ptba.run();
             }
           }
+        }
+
+        if (raw_n_clusters_stream) {
+          std::stringstream raw_n_clusters_data;
+
+          auto windows_iter = std::cbegin(windows);
+          auto windows_end = std::cend(windows);
+          auto windows_n_clusters_iter = std::cbegin(windows_n_clusters);
+          assert(std::distance(windows_iter, windows_end) ==
+                 std::distance(windows_n_clusters_iter,
+                               std::cend(windows_n_clusters)));
+
+          for (; windows_iter < windows_end;
+               ++windows_iter, ++windows_n_clusters_iter) {
+            auto &&window = *windows_iter;
+            auto n_clusters = *windows_n_clusters_iter;
+            raw_n_clusters_data
+                << transcriptResult.name << '\t' << window.start_base << '\t'
+                << window.start_base + window_size << '\t' << n_clusters
+                << '\n';
+          }
+
+          *raw_n_clusters_stream << raw_n_clusters_data.rdbuf();
+          analysisResult.addTranscript(std::move(transcriptResult));
+          continue;
         }
 
         auto const pre_collapsing_clusters = std::move(windows_n_clusters);

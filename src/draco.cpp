@@ -13,6 +13,8 @@
 #include "range/v3/view.hpp"
 #include <charconv>
 #include <iostream>
+#include <mutex>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <thread>
@@ -480,7 +482,8 @@ int main(int argc, char *argv[]) {
     return static_cast<std::size_t>(std::max(n_processors, 1u));
   }();
 
-  std::optional<std::ofstream> raw_n_clusters_stream{std::nullopt};
+  std::optional<std::ofstream> raw_n_clusters_stream;
+  std::mutex raw_n_clusters_stream_mutex;
   if (!args.output_raw_n_clusters().empty()) {
     raw_n_clusters_stream =
         std::ofstream(args.output_raw_n_clusters(),
@@ -491,7 +494,8 @@ int main(int argc, char *argv[]) {
   workers.reserve(nWorkers);
   for (std::size_t workerIndex = 0; workerIndex < nWorkers; ++workerIndex) {
     workers.emplace_back([&queue, &analysisResult, &args,
-                          &raw_n_clusters_stream] {
+                          &raw_n_clusters_stream,
+                          &raw_n_clusters_stream_mutex] {
       for (;;) {
         auto poppedData = queue.pop();
         if (not poppedData)
@@ -643,7 +647,10 @@ int main(int argc, char *argv[]) {
                 << '\n';
           }
 
-          *raw_n_clusters_stream << raw_n_clusters_data.rdbuf();
+          {
+            std::lock_guard<std::mutex> lock(raw_n_clusters_stream_mutex);
+            *raw_n_clusters_stream << raw_n_clusters_data.rdbuf();
+          }
           analysisResult.addTranscript(std::move(transcriptResult));
           continue;
         }

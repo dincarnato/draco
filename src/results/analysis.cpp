@@ -52,7 +52,7 @@ void Analysis::initStream() {
 }
 
 void Analysis::addTranscript(Transcript &&transcript) {
-  assert(not stop.load(std::memory_order_relaxed));
+  assert(not stop.load(std::memory_order_acquire));
 
   std::lock_guard lock(queueMutex);
   transcripts.push(std::move(transcript));
@@ -60,7 +60,7 @@ void Analysis::addTranscript(Transcript &&transcript) {
 }
 
 void Analysis::streamerLoop() noexcept {
-  while (not stop.load(std::memory_order_relaxed)) {
+  while (not stop.load(std::memory_order_acquire)) {
     auto transcript = [&] {
       std::unique_lock lock(queueMutex);
       if (transcripts.empty())

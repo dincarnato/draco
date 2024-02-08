@@ -6,7 +6,7 @@
 namespace args {
 
 static constexpr auto opts = args::Opts(
-    "\n DRACO (v1.1)\n",
+    "\n DRACO (v1.2)\n",
     args::Group(
         "",
         ARG(std::string, mm_filename)

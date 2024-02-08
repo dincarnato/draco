@@ -75,6 +75,17 @@ cargo build --release
 The `simulate_mm` executable will be located under `target/release/`.
 
 
+## Avoiding BLAS-related issues
+
+In some cases, we observed issues related to the internal multithreading used by OpenBLAS. To avoid these and to make sure that only DRACO's multithreading is used, set the following environment variables:
+
+```bash
+export OPENBLAS_NUM_THREADS=1
+export GOTO_NUM_THREADS=1
+export OMP_NUM_THREADS=1
+```
+
+
 ## Testing your installation
 
 Under `examples/` it is possible to find three sample MM files, each one containing simulated data for a single transcript, forming one, two, or three coexisting conformations.<br/>

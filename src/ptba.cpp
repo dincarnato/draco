@@ -295,13 +295,12 @@ auto Ptba::result_from_run() const noexcept(false) -> PtbaResult {
           return std::pair(PValueResult::inf, true);
       }
 
-      double pValue;
-      if (eigenGapIndex == 0)
-        pValue = boost::math::cdf(distribution, dataEigenGaps[eigenGapIndex]);
-      else {
-        pValue = boost::math::cdf(boost::math::complement(
-            distribution, dataEigenGaps[eigenGapIndex]));
-      }
+      // We have modified this part of the code to calcualte a two-tailed
+      // p-value, after seeing cases of switches with the null model and the
+      // eigengap inverted if (eigenGapIndex == 0)
+      double cdfValue =
+          boost::math::cdf(distribution, dataEigenGaps[eigenGapIndex]);
+      double pValue = 2 * std::min(cdfValue, 1 - cdfValue);
 
       if (pValue < alphaValue)
         return std::pair(PValueResult::significant, true);
@@ -310,163 +309,6 @@ auto Ptba::result_from_run() const noexcept(false) -> PtbaResult {
       else
         return std::pair(PValueResult::alternative, true);
     };
-
-    if (eigenGapIndex == 0) {
-      auto const [significativeness, evaluated_distribution] =
-          isPValueSignificative(0);
-
-      if (significativeness == PValueResult::inf) {
-        if (permutation == maxPermutations - 1)
-          return {0u,
-                  std::move(dataEigenVecs),
-                  std::move(dataEigenGaps),
-                  std::move(perturbed_eigengaps),
-                  {},
-                  std::move(filteredToUnfilteredBases),
-                  std::move(adjacency)};
-        else
-          continue;
-      }
-
-      if (not evaluated_distribution and
-          significativeness != PValueResult::significant) {
-        if (permutation < maxPermutations - 1)
-          continue;
-        else {
-          auto const &perturbed_eigengap = perturbed_eigengaps[0];
-          double shifted_mean;
-          double first_stddev;
-          {
-            double const first_mean = std::accumulate(
-                std::begin(perturbed_eigengap), std::end(perturbed_eigengap),
-                0.,
-                [n = static_cast<double>(perturbed_eigengap.size())](
-                    double acc, double x) { return acc + x / n; });
-            shifted_mean = first_mean * firstEigengapThreshold;
-
-            first_stddev = std::sqrt(std::accumulate(
-                std::begin(perturbed_eigengap), std::end(perturbed_eigengap),
-                0.,
-                [&, n = static_cast<double>(perturbed_eigengap.size() - 1)](
-                    double acc, double x) {
-                  return acc + std::pow(x - first_mean, 2.) / n;
-                }));
-          }
-
-          if (significativeness == PValueResult::alternative and
-              dataEigenGaps[0] < shifted_mean - first_stddev * 3.) {
-            return {1u,
-                    std::move(dataEigenVecs),
-                    std::move(dataEigenGaps),
-                    std::move(perturbed_eigengaps),
-                    std::vector<unsigned>{0},
-                    std::move(filteredToUnfilteredBases),
-                    std::move(adjacency)};
-          } else {
-            return {0u,
-                    std::move(dataEigenVecs),
-                    std::move(dataEigenGaps),
-                    std::move(perturbed_eigengaps),
-                    {},
-                    std::move(filteredToUnfilteredBases),
-                    std::move(adjacency)};
-          }
-        }
-      }
-
-      if (evaluated_distribution) {
-        double const first_mean =
-            weibull_params[0].scale *
-            std::tgamma(1. + 1. / weibull_params[0].shape);
-
-        {
-          PerturbedEigengap shiftedFirstEigengap(perturbed_eigengaps[0].size());
-          std::transform(
-              std::cbegin(perturbed_eigengaps[0]),
-              std::cend(perturbed_eigengaps[0]),
-              std::begin(shiftedFirstEigengap), [&](auto &&value) {
-                return std::max(
-                    value - (1. - firstEigengapThreshold) * first_mean, 1e-5);
-              });
-          assert(std::none_of(std::begin(shiftedFirstEigengap),
-                              std::end(shiftedFirstEigengap), [](double value) {
-                                return std::isinf(value) or std::isnan(value);
-                              }));
-
-          WeibullFitter fitter(shiftedFirstEigengap);
-          auto shifted_params = fitter.fit();
-
-          boost::math::weibull_distribution<double> shifted_distribution(
-              shifted_params.shape, shifted_params.scale);
-
-          if (double pValue =
-                  boost::math::cdf(shifted_distribution, dataEigenGaps[0]);
-              pValue > firstEigengapBetaValue) {
-            return {0u,
-                    std::move(dataEigenVecs),
-                    std::move(dataEigenGaps),
-                    std::move(perturbed_eigengaps),
-                    {},
-                    std::move(filteredToUnfilteredBases),
-                    std::move(adjacency)};
-          } else if (pValue >= alphaValue / 2. or
-                     std::abs(first_mean - dataEigenGaps[0]) <
-                         first_mean * (1. - firstEigengapThreshold)) {
-            if (permutation < maxPermutations - 1)
-              continue;
-            else
-              return {0u,
-                      std::move(dataEigenVecs),
-                      std::move(dataEigenGaps),
-                      std::move(perturbed_eigengaps),
-                      {},
-                      std::move(filteredToUnfilteredBases),
-                      std::move(adjacency)};
-          }
-        }
-      } else {
-        // Approximated evaluation
-        auto const &perturbed_eigengap = perturbed_eigengaps[0];
-        double shifted_mean;
-        double first_stddev;
-        {
-          double const first_mean = std::accumulate(
-              std::begin(perturbed_eigengap), std::end(perturbed_eigengap), 0.,
-              [n = static_cast<double>(perturbed_eigengap.size())](
-                  double acc, double x) { return acc + x / n; });
-          shifted_mean = first_mean * firstEigengapThreshold;
-
-          first_stddev = std::sqrt(std::accumulate(
-              std::begin(perturbed_eigengap), std::end(perturbed_eigengap), 0.,
-              [&, n = static_cast<double>(perturbed_eigengap.size() - 1)](
-                  double acc, double x) {
-                return acc + std::pow(x - first_mean, 2.) / n;
-              }));
-        }
-
-        double const first_eigengap = dataEigenGaps[0];
-        if (first_eigengap >= shifted_mean + first_stddev * 3.) {
-          return {0u,
-                  std::move(dataEigenVecs),
-                  std::move(dataEigenGaps),
-                  std::move(perturbed_eigengaps),
-                  {},
-                  std::move(filteredToUnfilteredBases),
-                  std::move(adjacency)};
-        } else if (first_eigengap >= shifted_mean - first_stddev * 3.) {
-          if (permutation < maxPermutations - 1)
-            continue;
-          else
-            return {0u,
-                    std::move(dataEigenVecs),
-                    std::move(dataEigenGaps),
-                    std::move(perturbed_eigengaps),
-                    {},
-                    std::move(filteredToUnfilteredBases),
-                    std::move(adjacency)};
-        }
-      }
-    }
 
     auto const calc_eigengap_null_distance = [&](unsigned eigengap_index,
                                                  bool evaluated_distribution) {
@@ -492,10 +334,8 @@ auto Ptba::result_from_run() const noexcept(false) -> PtbaResult {
             }));
       }
 
-      if (eigengap_index == 0)
-        return std::max(mean - stddev - dataEigenGaps[eigengap_index], 0.);
-      else
-        return std::abs(dataEigenGaps[eigengap_index] - mean - stddev);
+      return std::max(std::abs(dataEigenGaps[eigengap_index] - mean) - stddev,
+                      0.);
     };
 
     eigenGapIndex = std::max(eigenGapIndex, 1u);

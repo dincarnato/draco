@@ -177,7 +177,7 @@ fn main() {
                     let begin = if range_max == 0 {
                         0
                     } else {
-                        rng.gen_range(0, range_max)
+                        rng.gen_range(0..range_max)
                     };
                     let end = begin + args_opt.read_size;
                     (profile_index, mutations_indices, begin..end)

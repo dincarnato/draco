@@ -27,11 +27,13 @@ struct ArgsOpt {
     mm_file: PathBuf,
 
     /// Number of reads mapping to each transcript
+    ///
     /// [Note: this parameter and "--meanCoverage" are mutually exclusive]
     #[structopt(short = "n", long = "nReads", group = "reads_amount")]
     n_reads: Option<usize>,
 
     /// Mean sequencing depth (coverage) per base
+    ///
     /// [Note: this parameter and "--nReads" are mutually exclusive]
     #[structopt(short = "c", long = "meanCoverage", group = "reads_amount")]
     mean_coverage: Option<u32>,
@@ -41,6 +43,7 @@ struct ArgsOpt {
     read_size: u32,
 
     /// Comma-separated list of % conformation stoichiometries
+    ///
     /// [Note: the stoichiometries must sum to approx. 100 (tollerance: 97-103).
     /// When no stoichiometry is specified, the conformations are assumed to be equimolar]
     #[structopt(
@@ -55,6 +58,7 @@ struct ArgsOpt {
     text: Option<PathBuf>,
 
     /// Sets the `p` value for generation of the binomial distribution of mutations
+    ///
     /// [Note: the default value (0.01927) has been learnt empirically from Homan et al., 2014]
     #[structopt(default_value, long)]
     probability: Probability,

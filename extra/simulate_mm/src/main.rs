@@ -3,6 +3,7 @@ mod modifications_distribution;
 mod mutation_map;
 
 use std::{
+    error::Error,
     fmt::{self, Display},
     num::ParseFloatError,
     path::PathBuf,
@@ -90,10 +91,19 @@ enum ParsePercentageError {
 
 impl Display for ParsePercentageError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use ParsePercentageError::*;
+        let s = match self {
+            ParsePercentageError::InvalidFloat(_) => "percentage is an invalid float",
+            ParsePercentageError::InvalidSum => "percentages do not sum to 100",
+        };
+        f.write_str(s)
+    }
+}
+
+impl Error for ParsePercentageError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
-            InvalidFloat(err) => err.fmt(f),
-            InvalidSum => f.write_str("percentages do not sum to 100"),
+            ParsePercentageError::InvalidFloat(source) => Some(source),
+            ParsePercentageError::InvalidSum => None,
         }
     }
 }

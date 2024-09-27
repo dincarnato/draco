@@ -520,7 +520,7 @@ private:
         std::size_t constructed_elements = 0;
         try {
           (std::apply(
-               [&, this](auto &&...sizes) {
+               [&](auto &&...sizes) {
                  constexpr std::size_t remaining_part_index =
                      build_parts_type::arity + 1 + Idx;
 
@@ -535,7 +535,7 @@ private:
            ...);
         } catch (...) {
           std::apply(
-              [&, this](auto &&...sizes) {
+              [&](auto &&...sizes) {
                 unwind_destroy_line_partial(
                     to_line_index, constructed_elements,
                     nostd::make_index_sequence_rev<sizeof...(Idx)>(),
@@ -545,7 +545,7 @@ private:
 
           while (remaining_line_index > remaining_line_zero) {
             std::apply(
-                [&, this](auto &&...sizes) {
+                [&](auto &&...sizes) {
                   unwind_destroy_line(
                       --to_line_index,
                       nostd::make_index_sequence_rev<sizeof...(Idx)>(),
@@ -602,7 +602,7 @@ private:
         init_parts_from_index + 1 + Index;
 
     auto &&n_from_elements = std::apply(
-        [&, this](auto &&...sizes) {
+        [&](auto &&...sizes) {
           return base_type::template get_init_part_n_elements_at<
               from_init_part_index>(from_address,
                                     std::forward<FromLineSize>(from_line_index),
@@ -611,7 +611,7 @@ private:
         from_element_sizes);
 
     auto &&n_to_elements = std::apply(
-        [&, this](auto &&...sizes) {
+        [&](auto &&...sizes) {
           return base_type::template get_init_part_n_elements<Index + 1>(
               std::forward<ToLineSize>(to_line_index),
               std::forward<decltype(sizes)>(sizes)...);
@@ -773,7 +773,7 @@ private:
 
     using element_type = typename build_parts_type::template type<Index>;
     auto n_elements = std::apply(
-        [&, this](auto &&...sizes) {
+        [&](auto &&...sizes) {
           return base_type::template get_init_part_n_elements<Index + 1>(
               to_line_index, sizes...);
         },
@@ -781,7 +781,7 @@ private:
 
     auto data_ptr_from =
         std::apply(
-            [&, this](auto &&...sizes) {
+            [&](auto &&...sizes) {
               return allocator_traits<Alloc>::template first_pointer_of<Index>(
                   *alloc, from_address, from_line_index, sizes...);
             },
@@ -790,7 +790,7 @@ private:
 
     auto data_ptr_to =
         std::apply(
-            [&, this](auto &&...sizes) {
+            [&](auto &&...sizes) {
               return allocator_traits<Alloc>::template first_pointer_of<Index>(
                   *alloc, address, to_line_index, sizes...);
             },

@@ -165,7 +165,7 @@ private:
       std::size_t constructed_elements = 0;
       try {
         (std::apply(
-             [&, this](auto &&...sizes) {
+             [&](auto &&...sizes) {
                construction_base_type::
                    template perform_all_elements_build_from_init<Idx + 1>(
                        line_index, std::forward<decltype(sizes)>(sizes)...);
@@ -175,7 +175,7 @@ private:
          ...);
       } catch (...) {
         std::apply(
-            [&, this](auto &&...sizes) {
+            [&](auto &&...sizes) {
               unwind_destroy_line_partial(
                   line_index, constructed_elements,
                   nostd::make_index_sequence_rev<sizeof...(Idx)>(),
@@ -185,7 +185,7 @@ private:
 
         while (line_index > zero_line) {
           std::apply(
-              [&, this](auto &&...sizes) {
+              [&](auto &&...sizes) {
                 unwind_destroy_line(
                     --line_index,
                     nostd::make_index_sequence_rev<sizeof...(Idx)>(),
@@ -218,7 +218,7 @@ private:
     lines_type line_index = std::get<0>(init_parts).lines;
     while (line_index > zero_line) {
       std::apply(
-          [&, this](auto &&...sizes) {
+          [&](auto &&...sizes) {
             unwind_destroy_line(
                 --line_index,
                 nostd::make_index_sequence_rev<build_parts_type::arity>(),

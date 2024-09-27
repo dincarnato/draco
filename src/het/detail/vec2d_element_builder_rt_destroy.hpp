@@ -153,7 +153,7 @@ private:
 
     while (line_index > zero_line) {
       std::apply(
-          [&, this](auto &&...sizes) {
+          [&](auto &&...sizes) {
             unwind_destroy_line(
                 --line_index, nostd::make_index_sequence_rev<sizeof...(Idx)>(),
                 std::forward<decltype(sizes)>(sizes)...);

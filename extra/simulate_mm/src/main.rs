@@ -9,58 +9,57 @@ use std::{
     path::PathBuf,
     str::FromStr,
 };
-use structopt::{clap::ArgGroup, StructOpt};
 
-#[derive(StructOpt)]
-#[structopt(group = ArgGroup::with_name("reads_amount").required(true))]
+use clap::{ArgGroup, Parser};
+
+#[derive(Parser)]
+#[clap(group = ArgGroup::new("reads_amount").required(true))]
 struct ArgsOpt {
     /// Input file with structure profiles
-    #[structopt(parse(from_os_str))]
     db_file: PathBuf,
 
     /// Output file with structure profiles updated according to the simulation
-    #[structopt(parse(from_os_str), short = "o", long = "outProfiles")]
+    #[clap(short = 'o', long = "outProfiles")]
     db_out: PathBuf,
 
     /// Output mutation map (MM) file
-    #[structopt(parse(from_os_str))]
     mm_file: PathBuf,
 
     /// Number of reads mapping to each transcript
     ///
     /// [Note: this parameter and "--meanCoverage" are mutually exclusive]
-    #[structopt(short = "n", long = "nReads", group = "reads_amount")]
+    #[clap(short = 'n', long = "nReads", group = "reads_amount")]
     n_reads: Option<usize>,
 
     /// Mean sequencing depth (coverage) per base
     ///
     /// [Note: this parameter and "--nReads" are mutually exclusive]
-    #[structopt(short = "c", long = "meanCoverage", group = "reads_amount")]
+    #[clap(short = 'c', long = "meanCoverage", group = "reads_amount")]
     mean_coverage: Option<u32>,
 
     /// Length (in bp) of the simulated reads
-    #[structopt(short = "s", long = "readLen")]
+    #[clap(short = 's', long = "readLen")]
     read_size: u32,
 
     /// Comma-separated list of % conformation stoichiometries
     ///
     /// [Note: the stoichiometries must sum to approx. 100 (tollerance: 97-103).
     /// When no stoichiometry is specified, the conformations are assumed to be equimolar]
-    #[structopt(
-        short = "p",
+    #[clap(
+        short = 'p',
         long = "stoichiometry",
-        parse(try_from_str = parse_percentages)
+        value_parser = parse_percentages
     )]
     fractions: Vec<Vec<f32>>,
 
     /// Output MM file "human-readable" version
-    #[structopt(short, long)]
+    #[clap(short, long)]
     text: Option<PathBuf>,
 
     /// Sets the `p` value for generation of the binomial distribution of mutations
     ///
     /// [Note: the default value (0.01927) has been learnt empirically from Homan et al., 2014]
-    #[structopt(default_value, long)]
+    #[clap(default_value_t, long)]
     probability: Probability,
 }
 
@@ -140,7 +139,7 @@ fn main() {
         ops::Range,
     };
 
-    let args_opt = ArgsOpt::from_args();
+    let args_opt = ArgsOpt::parse();
     let db = Db::new(&args_opt.db_file).expect("cannot read DB file");
     let mut mm_file =
         BufWriter::new(File::create(&args_opt.mm_file).expect("cannot create MM file"));

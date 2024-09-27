@@ -213,7 +213,7 @@ fn main() {
                 .write_all(entry.sequence.as_bytes())
                 .expect("cannot write to output DB");
             db_out
-                .write_all(&[b'\n'])
+                .write_all(b"\n")
                 .expect("cannot write to output DB");
             entry.profiles.iter().for_each(|profile| {
                 let modificability: Vec<_> = profile
@@ -231,7 +231,7 @@ fn main() {
                     .expect("cannot write to output DB");
             });
             db_out
-                .write_all(&[b'\n'])
+                .write_all(b"\n")
                 .expect("cannot write to output DB");
 
             let transcript_name =

@@ -14,7 +14,7 @@ use clap::{ArgGroup, Parser};
 
 #[derive(Parser)]
 #[clap(group = ArgGroup::new("reads_amount").required(true))]
-struct ArgsOpt {
+struct Cli {
     /// Input file with structure profiles
     db_file: PathBuf,
 
@@ -139,31 +139,30 @@ fn main() {
         ops::Range,
     };
 
-    let args_opt = ArgsOpt::parse();
-    let db = Db::new(&args_opt.db_file).expect("cannot read DB file");
-    let mut mm_file =
-        BufWriter::new(File::create(&args_opt.mm_file).expect("cannot create MM file"));
+    let cli = Cli::parse();
+    let db = Db::new(&cli.db_file).expect("cannot read DB file");
+    let mut mm_file = BufWriter::new(File::create(&cli.mm_file).expect("cannot create MM file"));
     let mut rng = thread_rng();
 
     let mut db_out =
-        BufWriter::new(File::create(&args_opt.db_out).expect("cannot create the output DB"));
+        BufWriter::new(File::create(&cli.db_out).expect("cannot create the output DB"));
 
-    let mut text_file = args_opt
+    let mut text_file = cli
         .text
         .as_ref()
         .map(|text| File::create(text).expect("cannot create the output text file"));
 
-    let probability = args_opt.probability.0;
+    let probability = cli.probability.0;
 
     db.entries
         .into_iter()
         .enumerate()
         .for_each(|(entry_index, entry)| {
-            let range_max = entry.sequence.len() as u32 - args_opt.read_size;
+            let range_max = entry.sequence.len() as u32 - cli.read_size;
             let mut modifications = vec![vec![0; entry.sequence.len()]; entry.profiles.len()];
 
             let len_profiles = entry.profiles.len();
-            let fractions = args_opt
+            let fractions = cli
                 .fractions
                 .iter()
                 .find(|fractions| fractions.len() == len_profiles)
@@ -192,15 +191,15 @@ fn main() {
                     } else {
                         rng.gen_range(0..range_max)
                     };
-                    let end = begin + args_opt.read_size;
+                    let end = begin + cli.read_size;
                     (profile_index, mutations_indices, begin..end)
                 });
 
             let reads: Vec<_> = {
-                if let Some(n_reads) = args_opt.n_reads {
+                if let Some(n_reads) = cli.n_reads {
                     mutations_generator.take(n_reads).map(profile_mapper).collect()
                 } else {
-                    let mean_coverage = args_opt.mean_coverage.unwrap();
+                    let mean_coverage = cli.mean_coverage.unwrap();
 
                     let initial_data = (false, vec![0u32; entry.sequence.len()]);
                     mutations_generator.scan(initial_data, |(minimally_covered, coverages), (profile_index, modification_indices, range)| {

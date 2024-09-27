@@ -62,8 +62,8 @@ void RingmapMatrixColAccessor<Matrix>::shuffle(URBG &&g) const noexcept(false) {
 
 template <typename Matrix>
 auto RingmapMatrixColAccessor<Matrix>::operator=(
-    RingmapMatrixColAccessor<RingmapMatrix> const &rhs) const noexcept(false)
-    -> RingmapMatrixColAccessor const & {
+    RingmapMatrixColAccessor<RingmapMatrix> const &rhs) const
+    noexcept(false) -> RingmapMatrixColAccessor const & {
   copy_from_accessor(rhs);
   return *this;
 }
@@ -78,32 +78,32 @@ auto RingmapMatrixColAccessor<Matrix>::operator=(
 
 template <typename Matrix>
 auto RingmapMatrixColAccessor<Matrix>::operator=(
-    RingmapMatrixColAccessor<RingmapMatrix &&> const &rhs) const noexcept(false)
-    -> RingmapMatrixColAccessor const & {
+    RingmapMatrixColAccessor<RingmapMatrix &&> const &rhs) const
+    noexcept(false) -> RingmapMatrixColAccessor const & {
   copy_from_accessor(rhs);
   return *this;
 }
 
 template <typename Matrix>
 auto RingmapMatrixColAccessor<Matrix>::operator=(
-    RingmapMatrixColAccessor<RingmapMatrix> &&rhs) const noexcept(false)
-    -> RingmapMatrixColAccessor const & {
+    RingmapMatrixColAccessor<RingmapMatrix> &&rhs) const
+    noexcept(false) -> RingmapMatrixColAccessor const & {
   copy_from_accessor(std::move(rhs));
   return *this;
 }
 
 template <typename Matrix>
 auto RingmapMatrixColAccessor<Matrix>::operator=(
-    RingmapMatrixColAccessor<const RingmapMatrix> &&rhs) const noexcept(false)
-    -> RingmapMatrixColAccessor const & {
+    RingmapMatrixColAccessor<const RingmapMatrix> &&rhs) const
+    noexcept(false) -> RingmapMatrixColAccessor const & {
   copy_from_accessor(std::move(rhs));
   return *this;
 }
 
 template <typename Matrix>
 auto RingmapMatrixColAccessor<Matrix>::operator=(
-    RingmapMatrixColAccessor<RingmapMatrix &&> &&rhs) const noexcept(false)
-    -> RingmapMatrixColAccessor const & {
+    RingmapMatrixColAccessor<RingmapMatrix &&> &&rhs) const
+    noexcept(false) -> RingmapMatrixColAccessor const & {
   copy_from_accessor(std::move(rhs));
   return *this;
 }

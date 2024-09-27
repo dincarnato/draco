@@ -118,8 +118,8 @@ struct vec2d_rt_part_transform : Base, Fun {
 
   template <typename _Base, typename _Fun>
   inline vec2d_rt_part_transform(_Base &&base, _Fun &&fun) noexcept(
-      noexcept(Fun(std::forward<_Fun>(fun))) and noexcept(
-          Base(std::forward<_Base>(base))))
+      noexcept(Fun(std::forward<_Fun>(fun))) and
+      noexcept(Base(std::forward<_Base>(base))))
       : base_type(std::forward<_Base>(base)),
         function_type(std::forward<_Fun>(fun)) {}
 };
@@ -161,8 +161,8 @@ struct vec2d_rt_part_construct_copies : T {
 
   template <typename _Value>
   inline vec2d_rt_part_construct_copies(T &&t, _Value &&value) noexcept(
-      noexcept(T(std::move(t))) and noexcept(
-          Value(std::forward<_Value>(value))))
+      noexcept(T(std::move(t))) and
+      noexcept(Value(std::forward<_Value>(value))))
       : T(std::move(t)), value(std::forward<_Value>(value)) {}
 
   Value value;
@@ -180,7 +180,8 @@ struct vec2d_rt_part_construct : T {
 
   template <typename... _ArgsTuples>
   inline vec2d_rt_part_construct(T &&t, _ArgsTuples &&...args_tuples) noexcept(
-      noexcept(T(std::move(t))) and noexcept(
+      noexcept(T(std::move(t))) and
+      noexcept(
           std::tuple<ArgsTuples...>(std::forward<_ArgsTuples>(args_tuples)...)))
       : T(std::move(t)),
         args_tuples(std::forward<_ArgsTuples>(args_tuples)...) {}

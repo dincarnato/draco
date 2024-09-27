@@ -328,14 +328,14 @@ void one_based_vector<T, Allocator>::clear() noexcept {
 }
 
 template <typename T, typename Allocator>
-auto one_based_vector<T, Allocator>::insert(const_iterator pos, const T &value)
-    -> iterator {
+auto one_based_vector<T, Allocator>::insert(const_iterator pos,
+                                            const T &value) -> iterator {
   return vec.insert(std::move(pos), value);
 }
 
 template <typename T, typename Allocator>
-auto one_based_vector<T, Allocator>::insert(const_iterator pos, T &&value)
-    -> iterator {
+auto one_based_vector<T, Allocator>::insert(const_iterator pos,
+                                            T &&value) -> iterator {
   return vec.insert(std::move(pos), std::move(value));
 }
 
@@ -353,16 +353,15 @@ auto one_based_vector<T, Allocator>::insert(const_iterator pos, InputIt first,
 }
 
 template <typename T, typename Allocator>
-auto one_based_vector<T, Allocator>::insert(const_iterator pos,
-                                            std::initializer_list<T> ilist)
-    -> iterator {
+auto one_based_vector<T, Allocator>::insert(
+    const_iterator pos, std::initializer_list<T> ilist) -> iterator {
   return vec.insert(std::move(pos), std::move(ilist));
 }
 
 template <typename T, typename Allocator>
 template <typename... Args>
-auto one_based_vector<T, Allocator>::emplace(const_iterator pos, Args &&...args)
-    -> iterator {
+auto one_based_vector<T, Allocator>::emplace(const_iterator pos,
+                                             Args &&...args) -> iterator {
   return vec.emplace(std::move(pos), std::forward<Args>(args)...);
 }
 

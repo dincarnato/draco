@@ -197,9 +197,8 @@ WeibullFitter::pdf_log_likelihood(params_type const &params) noexcept {
   return result;
 }
 
-inline auto
-WeibullFitter::pdf_log_likelihood_deriv(params_type const &params) noexcept
-    -> params_type {
+inline auto WeibullFitter::pdf_log_likelihood_deriv(
+    params_type const &params) noexcept -> params_type {
   assert(this->perturbed_eigengap.get().size() == last_size);
 
   double const k = params(0);

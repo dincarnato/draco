@@ -187,12 +187,12 @@ template <std::size_t DescriptionSize, typename... Args> struct Group {
 };
 
 template <std::size_t DescriptionSize, typename... Args>
-Group(cte::string<DescriptionSize>, Args &&...)
-    -> Group<DescriptionSize, std::decay_t<Args>...>;
+Group(cte::string<DescriptionSize>,
+      Args &&...) -> Group<DescriptionSize, std::decay_t<Args>...>;
 
 template <std::size_t StringSize, typename... Args>
-Group(char const (&)[StringSize], Args &&...)
-    -> Group<StringSize - 1, std::decay_t<Args>...>;
+Group(char const (&)[StringSize],
+      Args &&...) -> Group<StringSize - 1, std::decay_t<Args>...>;
 
 template <typename T> struct is_group : std::false_type {};
 
@@ -222,12 +222,12 @@ template <std::size_t DescriptionSize, typename... Groups> struct Opts {
 };
 
 template <std::size_t DescriptionSize, typename... Groups>
-Opts(cte::string<DescriptionSize> description, Groups &&...groups)
-    -> Opts<DescriptionSize, Groups...>;
+Opts(cte::string<DescriptionSize> description,
+     Groups &&...groups) -> Opts<DescriptionSize, Groups...>;
 
 template <std::size_t DescriptionSize, typename... Groups>
-Opts(char const (&description)[DescriptionSize], Groups &&...groups)
-    -> Opts<DescriptionSize - 1, Groups...>;
+Opts(char const (&description)[DescriptionSize],
+     Groups &&...groups) -> Opts<DescriptionSize - 1, Groups...>;
 
 } // namespace args
 

@@ -153,16 +153,16 @@ auto WindowsMergerCacheIndicesAccessor<Merger>::operator=(
 
 template <typename Merger>
 auto WindowsMergerCacheIndicesAccessor<Merger>::operator=(
-    WindowsMergerCacheIndicesLine const &line) const noexcept(false)
-    -> self const & {
+    WindowsMergerCacheIndicesLine const &line) const
+    noexcept(false) -> self const & {
   assign_from_line(line);
   return *this;
 }
 
 template <typename Merger>
 auto WindowsMergerCacheIndicesAccessor<Merger>::operator=(
-    WindowsMergerCacheIndicesLine &&line) const noexcept(false)
-    -> self const & {
+    WindowsMergerCacheIndicesLine &&line) const
+    noexcept(false) -> self const & {
   assign_from_line(std::move(line));
   return *this;
 }

@@ -232,8 +232,8 @@ void blocking_queue<T, Alloc>::emplace(Args &&...args) {
 
 template <typename T, typename Alloc>
 std::optional<T> blocking_queue<T, Alloc>::pop() noexcept(
-    std::is_nothrow_move_constructible_v<T>
-        and std::is_nothrow_destructible_v<T>) {
+    std::is_nothrow_move_constructible_v<T> and
+    std::is_nothrow_destructible_v<T>) {
 
   for (;;) {
     for (bool popping = false; not this->popping.compare_exchange_weak(
@@ -289,8 +289,8 @@ std::optional<T> blocking_queue<T, Alloc>::pop() noexcept(
 
 template <typename T, typename Alloc>
 std::optional<T> blocking_queue<T, Alloc>::try_pop() noexcept(
-    std::is_nothrow_move_constructible_v<T>
-        and std::is_nothrow_destructible_v<T>) {
+    std::is_nothrow_move_constructible_v<T> and
+    std::is_nothrow_destructible_v<T>) {
 
   for (bool popping = false; not this->popping.compare_exchange_weak(
            popping, true, std::memory_order_acq_rel);)

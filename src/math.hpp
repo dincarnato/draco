@@ -260,8 +260,8 @@ double matthewCorrelationCoefficient(PredMat &&predictionMatrix,
 }
 
 template <typename Iterable>
-auto getPercentile(Iterable &&iterable, float percentile)
-    -> std::decay_t<decltype(iterable[0])> {
+auto getPercentile(Iterable &&iterable,
+                   float percentile) -> std::decay_t<decltype(iterable[0])> {
   std::remove_reference_t<Iterable> *usableIterable = &iterable;
   std::unique_ptr<std::decay_t<Iterable>> localIterable;
   if (not std::is_sorted(std::begin(iterable), std::end(iterable))) {

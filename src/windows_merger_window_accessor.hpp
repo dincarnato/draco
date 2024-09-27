@@ -129,8 +129,8 @@ private:
                                         bases_size_type from_last_base,
                                         windows_size_type to_window_index,
                                         bases_size_type to_first_base) const
-      noexcept(std::is_nothrow_move_constructible_v<weight_type>
-                   and std::is_nothrow_move_constructible_v<coverage_type>);
+      noexcept(std::is_nothrow_move_constructible_v<weight_type> and
+               std::is_nothrow_move_constructible_v<coverage_type>);
 
   inline void merger_destroy_range(windows_size_type window_index,
                                    bases_size_type first,

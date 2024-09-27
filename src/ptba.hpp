@@ -26,8 +26,8 @@ class Ptba /* Permutation test-based analysis */
 {
 public:
   struct exception : std::runtime_error {
-    explicit exception(const std::string &what) : std::runtime_error(what){};
-    explicit exception(const char *what) : std::runtime_error(what){};
+    explicit exception(const std::string &what) : std::runtime_error(what) {};
+    explicit exception(const char *what) : std::runtime_error(what) {};
   };
 
   Ptba(const RingmapData &data, Args const &args);

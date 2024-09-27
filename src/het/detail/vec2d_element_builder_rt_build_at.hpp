@@ -11,9 +11,9 @@ namespace het::detail {
 template <typename Alloc, typename BuildParts>
 vec2d_element_builder_rt_build_at(
     const BuildParts &build_parts,
-    typename allocator_traits<Alloc>::first_pointer, Alloc &)
-    -> vec2d_element_builder_rt_build_at<std::decay_t<Alloc>,
-                                         std::decay_t<BuildParts>>;
+    typename allocator_traits<Alloc>::first_pointer,
+    Alloc &) -> vec2d_element_builder_rt_build_at<std::decay_t<Alloc>,
+                                                  std::decay_t<BuildParts>>;
 
 template <typename Alloc, typename BuildParts, typename InitParts>
 vec2d_element_builder_rt_build_at(

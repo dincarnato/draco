@@ -47,15 +47,15 @@ public:
   WindowsMerger(const WindowsMerger &) = delete;
   WindowsMerger &operator=(const WindowsMerger &) = delete;
   WindowsMerger(WindowsMerger &&) noexcept(
-      std::is_nothrow_move_constructible_v<queue_type>
-          and std::is_nothrow_move_constructible_v<WindowsMergerWindows> and
-              std::is_nothrow_move_constructible_v<WindowsMergerCacheIndices>
-                  and std::is_nothrow_move_constructible_v<distances_type>);
+      std::is_nothrow_move_constructible_v<queue_type> and
+      std::is_nothrow_move_constructible_v<WindowsMergerWindows> and
+      std::is_nothrow_move_constructible_v<WindowsMergerCacheIndices> and
+      std::is_nothrow_move_constructible_v<distances_type>);
   WindowsMerger &operator=(WindowsMerger &&) noexcept(
-      std::is_nothrow_move_assignable_v<queue_type>
-          and std::is_nothrow_move_assignable_v<WindowsMergerWindows>
-              and std::is_nothrow_move_assignable_v<WindowsMergerCacheIndices>
-                  and std::is_nothrow_move_assignable_v<distances_type>);
+      std::is_nothrow_move_assignable_v<queue_type> and
+      std::is_nothrow_move_assignable_v<WindowsMergerWindows> and
+      std::is_nothrow_move_assignable_v<WindowsMergerCacheIndices> and
+      std::is_nothrow_move_assignable_v<distances_type>);
 
   template <typename Weights, typename Coverages>
   void add_window(bases_size_type start_offset, Weights &&weights,

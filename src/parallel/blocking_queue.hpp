@@ -70,11 +70,11 @@ struct blocking_queue : private Alloc {
 
   template <typename... Args> void emplace(Args &&...args);
 
-  std::optional<T> pop() noexcept(std::is_nothrow_move_constructible_v<T>
-                                      and std::is_nothrow_destructible_v<T>);
+  std::optional<T> pop() noexcept(std::is_nothrow_move_constructible_v<T> and
+                                  std::is_nothrow_destructible_v<T>);
   std::optional<T>
-  try_pop() noexcept(std::is_nothrow_move_constructible_v<T>
-                         and std::is_nothrow_destructible_v<T>);
+  try_pop() noexcept(std::is_nothrow_move_constructible_v<T> and
+                     std::is_nothrow_destructible_v<T>);
   void finish() noexcept;
   bool finished() noexcept;
 

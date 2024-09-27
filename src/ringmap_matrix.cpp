@@ -56,8 +56,8 @@ arma::vec RingmapMatrix::sum(unsigned char axis) const noexcept(false) {
   }
 }
 
-auto RingmapMatrix::operator()(unsigned row, unsigned col) noexcept
-    -> accessor_type {
+auto RingmapMatrix::operator()(unsigned row,
+                               unsigned col) noexcept -> accessor_type {
   readsCount = std::max(row + 1, readsCount);
   return {data.data() + row, col};
 }

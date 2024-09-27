@@ -97,10 +97,10 @@ public:
       Alloc &alloc,
       _InitParts &&init_parts) noexcept(std::
                                             is_nothrow_copy_constructible_v<
-                                                base_address_type>
-                                                and noexcept(init_parts_type(
-                                                    std::forward<_InitParts>(
-                                                        init_parts))))
+                                                base_address_type> and
+                                        noexcept(init_parts_type(
+                                            std::forward<_InitParts>(
+                                                init_parts))))
       : build_parts(&build_parts), address(address), alloc(&alloc),
         init_parts(std::forward<_InitParts>(init_parts)) {}
 

@@ -102,18 +102,18 @@ struct WindowsMergerWindow {
   base_type &front() noexcept;
   base_type &back() noexcept;
 
-  iterator begin() &noexcept;
-  iterator end() &noexcept;
-  const_iterator begin() const &noexcept;
-  const_iterator end() const &noexcept;
-  move_iterator begin() &&noexcept;
-  move_iterator end() &&noexcept;
-  reverse_iterator rbegin() &noexcept;
-  reverse_iterator rend() &noexcept;
-  const_reverse_iterator rbegin() const &noexcept;
-  const_reverse_iterator rend() const &noexcept;
-  move_reverse_iterator rbegin() &&noexcept;
-  move_reverse_iterator rend() &&noexcept;
+  iterator begin() & noexcept;
+  iterator end() & noexcept;
+  const_iterator begin() const & noexcept;
+  const_iterator end() const & noexcept;
+  move_iterator begin() && noexcept;
+  move_iterator end() && noexcept;
+  reverse_iterator rbegin() & noexcept;
+  reverse_iterator rend() & noexcept;
+  const_reverse_iterator rbegin() const & noexcept;
+  const_reverse_iterator rend() const & noexcept;
+  move_reverse_iterator rbegin() && noexcept;
+  move_reverse_iterator rend() && noexcept;
 
   base_type const &operator[](bases_size_type index) const noexcept;
   base_type &operator[](bases_size_type index) noexcept;

@@ -38,8 +38,8 @@ inline auto WeightedClusters::operator[](std::size_t index) -> span_type {
               static_cast<std::ptrdiff_t>(_clusters)};
 }
 
-inline auto WeightedClusters::operator[](std::size_t index) const
-    -> const_span_type {
+inline auto
+WeightedClusters::operator[](std::size_t index) const -> const_span_type {
   assert(index < elements);
   return {weights, _clusters,
           static_cast<std::ptrdiff_t>(index) *
@@ -50,8 +50,8 @@ inline auto WeightedClusters::cluster(std::size_t index) -> cluster_wrapper {
   return {*this, static_cast<std::ptrdiff_t>(index)};
 }
 
-inline auto WeightedClusters::cluster(std::size_t index) const
-    -> const_cluster_wrapper {
+inline auto
+WeightedClusters::cluster(std::size_t index) const -> const_cluster_wrapper {
   return {*this, static_cast<std::ptrdiff_t>(index)};
 }
 

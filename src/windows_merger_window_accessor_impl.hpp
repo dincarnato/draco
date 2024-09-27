@@ -400,8 +400,8 @@ void WindowsMergerWindowAccessor<Merger>::merger_move_construct_from_range(
     RhsMerger &from_merger, windows_size_type from_window_index,
     bases_size_type from_first_base, bases_size_type from_last_base,
     windows_size_type to_window_index, bases_size_type to_first_base) const
-    noexcept(std::is_nothrow_move_constructible_v<weight_type>
-                 and std::is_nothrow_move_constructible_v<coverage_type>) {
+    noexcept(std::is_nothrow_move_constructible_v<weight_type> and
+             std::is_nothrow_move_constructible_v<coverage_type>) {
   merger->move_construct_from_range(from_merger, from_window_index,
                                     from_first_base, from_last_base,
                                     to_window_index, to_first_base);

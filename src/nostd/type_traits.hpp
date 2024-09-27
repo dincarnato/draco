@@ -102,7 +102,9 @@ constexpr bool is_detected_convertible_v =
 
 #endif
 
-template <typename T, std::size_t = 0> struct identity_type { using type = T; };
+template <typename T, std::size_t = 0> struct identity_type {
+  using type = T;
+};
 
 template <typename T, std::size_t Index = 0>
 using identity_type_t = typename identity_type<T, Index>::type;

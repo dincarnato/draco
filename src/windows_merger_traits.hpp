@@ -91,11 +91,12 @@ struct WindowsMergerTraits {
 
   template <typename T>
   static constexpr bool is_window_baselike_v =
-      nostd::is_detected_convertible_v<const weight_type &, weight_getter_t, T>
-          and nostd::is_detected_convertible_v<const coverage_type &,
-                                               coverage_getter_t, T>
-              and nostd::is_detected_convertible_v<clusters_size_type,
-                                                   clusters_size_getter_t, T>;
+      nostd::is_detected_convertible_v<const weight_type &, weight_getter_t,
+                                       T> and
+      nostd::is_detected_convertible_v<const coverage_type &, coverage_getter_t,
+                                       T> and
+      nostd::is_detected_convertible_v<clusters_size_type,
+                                       clusters_size_getter_t, T>;
 
   template <typename T, typename = void>
   struct is_lvalue_window_baselike_reference : std::false_type {};
@@ -129,13 +130,14 @@ struct WindowsMergerTraits {
       std::declval<bases_size_type>()));
 
   template <typename T>
-  static constexpr bool is_windowlike_v = nostd::is_detected_exact_v<
-      clusters_size_type, clusters_size_getter_t, T>
-      and nostd::is_detected_exact_v<bases_size_type, begin_index_getter_t, T>
-          and nostd::is_detected_exact_v<bases_size_type, end_index_getter_t, T>
-              and nostd::is_detected_exact_v<bases_size_type, size_getter_t, T>
-                  and nostd::is_detected_v<coverages_getter_t, T>
-                      and nostd::is_detected_v<begin_index_setter_t, T>;
+  static constexpr bool is_windowlike_v =
+      nostd::is_detected_exact_v<clusters_size_type, clusters_size_getter_t,
+                                 T> and
+      nostd::is_detected_exact_v<bases_size_type, begin_index_getter_t, T> and
+      nostd::is_detected_exact_v<bases_size_type, end_index_getter_t, T> and
+      nostd::is_detected_exact_v<bases_size_type, size_getter_t, T> and
+      nostd::is_detected_v<coverages_getter_t, T> and
+      nostd::is_detected_v<begin_index_setter_t, T>;
 
   template <typename T> struct is_window : std::false_type {};
 

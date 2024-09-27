@@ -144,14 +144,14 @@ inline auto TriangularMatrixStrict<T, Alloc>::begin() noexcept -> iterator {
 }
 
 template <typename T, typename Alloc>
-inline auto TriangularMatrixStrict<T, Alloc>::begin() const noexcept
-    -> const_iterator {
+inline auto
+TriangularMatrixStrict<T, Alloc>::begin() const noexcept -> const_iterator {
   return _data.begin();
 }
 
 template <typename T, typename Alloc>
-inline auto TriangularMatrixStrict<T, Alloc>::cbegin() const noexcept
-    -> const_iterator {
+inline auto
+TriangularMatrixStrict<T, Alloc>::cbegin() const noexcept -> const_iterator {
   return _data.cbegin();
 }
 
@@ -161,20 +161,20 @@ inline auto TriangularMatrixStrict<T, Alloc>::end() noexcept -> iterator {
 }
 
 template <typename T, typename Alloc>
-inline auto TriangularMatrixStrict<T, Alloc>::end() const noexcept
-    -> const_iterator {
+inline auto
+TriangularMatrixStrict<T, Alloc>::end() const noexcept -> const_iterator {
   return _data.end();
 }
 
 template <typename T, typename Alloc>
-inline auto TriangularMatrixStrict<T, Alloc>::cend() const noexcept
-    -> const_iterator {
+inline auto
+TriangularMatrixStrict<T, Alloc>::cend() const noexcept -> const_iterator {
   return _data.cend();
 }
 
 template <typename T, typename Alloc>
-inline auto TriangularMatrixStrict<T, Alloc>::rbegin() noexcept
-    -> reverse_iterator {
+inline auto
+TriangularMatrixStrict<T, Alloc>::rbegin() noexcept -> reverse_iterator {
   return _data.rbegin();
 }
 
@@ -191,8 +191,8 @@ inline auto TriangularMatrixStrict<T, Alloc>::crbegin() const noexcept
 }
 
 template <typename T, typename Alloc>
-inline auto TriangularMatrixStrict<T, Alloc>::rend() noexcept
-    -> reverse_iterator {
+inline auto
+TriangularMatrixStrict<T, Alloc>::rend() noexcept -> reverse_iterator {
   return _data.rend();
 }
 
@@ -209,19 +209,19 @@ inline auto TriangularMatrixStrict<T, Alloc>::crend() const noexcept
 }
 
 template <typename T, typename Alloc>
-inline auto TriangularMatrixStrict<T, Alloc>::size() const noexcept
-    -> size_type {
+inline auto
+TriangularMatrixStrict<T, Alloc>::size() const noexcept -> size_type {
   return _data.size();
 }
 
 template <typename T, typename Alloc>
-inline auto TriangularMatrixStrict<T, Alloc>::rows_size() const noexcept
-    -> size_type {
+inline auto
+TriangularMatrixStrict<T, Alloc>::rows_size() const noexcept -> size_type {
   return _n_elements;
 }
 
 template <typename T, typename Alloc>
-inline auto TriangularMatrixStrict<T, Alloc>::cols_size() const noexcept
-    -> size_type {
+inline auto
+TriangularMatrixStrict<T, Alloc>::cols_size() const noexcept -> size_type {
   return _n_elements;
 }

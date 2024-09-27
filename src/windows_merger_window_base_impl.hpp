@@ -114,9 +114,8 @@ inline auto WindowsMergerWindowBase::weight(clusters_size_type index) noexcept
   return _weights[index];
 }
 
-inline auto
-WindowsMergerWindowBase::weight(clusters_size_type index) const noexcept
-    -> const weight_type & {
+inline auto WindowsMergerWindowBase::weight(
+    clusters_size_type index) const noexcept -> const weight_type & {
   assert(index < _weights.size());
   return _weights[index];
 }
@@ -125,18 +124,18 @@ inline auto WindowsMergerWindowBase::coverage() noexcept -> coverage_type & {
   return _coverage;
 }
 
-inline auto WindowsMergerWindowBase::coverage() const noexcept
-    -> const coverage_type & {
+inline auto
+WindowsMergerWindowBase::coverage() const noexcept -> const coverage_type & {
   return _coverage;
 }
 
-inline auto WindowsMergerWindowBase::clusters_size() const noexcept
-    -> clusters_size_type {
+inline auto
+WindowsMergerWindowBase::clusters_size() const noexcept -> clusters_size_type {
   return static_cast<clusters_size_type>(_weights.size());
 }
 
-inline auto WindowsMergerWindowBase::weights() noexcept
-    -> weights_accessor_type {
+inline auto
+WindowsMergerWindowBase::weights() noexcept -> weights_accessor_type {
   return weights_accessor_type(_weights.data(),
                                _weights.data() + std::size(_weights));
 }

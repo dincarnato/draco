@@ -10,10 +10,10 @@ WindowsMerger::WindowsMerger(clusters_size_type n_clusters) noexcept
     : windows(n_clusters), cache(n_clusters) {}
 
 WindowsMerger::WindowsMerger(WindowsMerger &&other) noexcept(
-    std::is_nothrow_move_constructible_v<queue_type>
-        and std::is_nothrow_move_constructible_v<WindowsMergerWindows>
-            and std::is_nothrow_move_constructible_v<WindowsMergerCacheIndices>
-                and std::is_nothrow_move_constructible_v<distances_type>)
+    std::is_nothrow_move_constructible_v<queue_type> and
+    std::is_nothrow_move_constructible_v<WindowsMergerWindows> and
+    std::is_nothrow_move_constructible_v<WindowsMergerCacheIndices> and
+    std::is_nothrow_move_constructible_v<distances_type>)
     : dequeueing(other.dequeueing.load(std::memory_order_acquire)),
       queue(std::move(other.queue)), windows(std::move(other.windows)),
       cache(std::move(other.cache)),
@@ -22,10 +22,10 @@ WindowsMerger::WindowsMerger(WindowsMerger &&other) noexcept(
       non_overlap_penalty(other.non_overlap_penalty) {}
 
 WindowsMerger &WindowsMerger::operator=(WindowsMerger &&other) noexcept(
-    std::is_nothrow_move_assignable_v<queue_type>
-        and std::is_nothrow_move_assignable_v<WindowsMergerWindows>
-            and std::is_nothrow_move_assignable_v<WindowsMergerCacheIndices>
-                and std::is_nothrow_move_assignable_v<distances_type>) {
+    std::is_nothrow_move_assignable_v<queue_type> and
+    std::is_nothrow_move_assignable_v<WindowsMergerWindows> and
+    std::is_nothrow_move_assignable_v<WindowsMergerCacheIndices> and
+    std::is_nothrow_move_assignable_v<distances_type>) {
   dequeueing.store(other.dequeueing.load(std::memory_order_acquire),
                    std::memory_order_release);
   queue = std::move(other.queue);

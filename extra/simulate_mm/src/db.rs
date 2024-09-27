@@ -1,8 +1,8 @@
 mod random_read_generator;
 
-use bstr::{BStr, BString};
+use bstr::BString;
 use random_read_generator::RandomReadGenerator;
-use std::{io, path::Path};
+use std::{io, path::Path, str};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Db {
@@ -30,7 +30,7 @@ impl Db {
         let mut lines = buffer.byte_lines();
         let mut entries = Vec::new();
         while let Some(sequence) = lines.next() {
-            let sequence = sequence?;
+            let sequence = sequence?.into();
             let mut modificability_profiles: Vec<ModificabilityProfile> = Vec::new();
 
             let mut line = loop {
@@ -62,10 +62,10 @@ impl Db {
     }
 }
 
-impl From<BString> for ModificabilityProfile {
-    fn from(s: BString) -> Self {
+impl From<Vec<u8>> for ModificabilityProfile {
+    fn from(s: Vec<u8>) -> Self {
         let profile: Vec<_> = s
-            .bytes()
+            .iter()
             .map(|c| match c {
                 b'x' => false,
                 b'(' => false,
@@ -81,14 +81,14 @@ impl From<BString> for ModificabilityProfile {
 
 impl<BS> From<BS> for Profile
 where
-    BS: AsRef<BStr>,
+    BS: AsRef<[u8]>,
 {
     fn from(s: BS) -> Self {
         let profile: Vec<u32> = s
             .as_ref()
-            .split(b",")
+            .split(|&c| c == b',')
             .map(|c| {
-                c.to_str()
+                str::from_utf8(c)
                     .expect("invalid UTF-8 string")
                     .parse()
                     .expect("expected positive integer")

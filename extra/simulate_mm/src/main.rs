@@ -210,7 +210,7 @@ fn main() {
             };
 
             db_out
-                .write_all(entry.sequence.as_bytes())
+                .write_all(entry.sequence.as_slice())
                 .expect("cannot write to output DB");
             db_out
                 .write_all(b"\n")

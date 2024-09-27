@@ -62,13 +62,13 @@ impl Transcript {
         W: Write,
     {
         serialize_into(&mut writer, &(self.id.len() as u16 + 1))?;
-        for c in self.id.bytes() {
+        for &c in self.id.as_slice() {
             serialize_into(&mut writer, &(c as c_char))?;
         }
         serialize_into(&mut writer, &(0 as c_char))?;
 
         serialize_into(&mut writer, &(self.sequence.len() as u32))?;
-        for chunk in self.sequence.as_bytes().chunks(2) {
+        for chunk in self.sequence.as_slice().chunks(2) {
             let c = if chunk.len() == 2 {
                 (get_base_repr(chunk[0]) << 4) | get_base_repr(chunk[1])
             } else {

@@ -140,7 +140,7 @@ function(create_tests suffix)
   target_link_libraries(ringmap_shuffle_${ARGV0} ${ARMADILLO_LIBRARIES})
   target_link_libraries(ringmap_concat_${ARGV0} ${ARMADILLO_LIBRARIES})
   target_link_libraries(ringmap_window_${ARGV0} ${ARMADILLO_LIBRARIES})
-  target_link_libraries(weibull_fitter_${ARGV0} ${DLIB_LIBRARIES})
+  target_link_libraries(weibull_fitter_${ARGV0} dlib::dlib)
 
   add_dependencies(ringmap_base_${ARGV0} run_args_generate)
   add_dependencies(ringmap_shuffle_${ARGV0} run_args_generate)

@@ -12,7 +12,6 @@ endif()
 
 find_package(Boost 1.66 REQUIRED)
 find_package(Armadillo REQUIRED)
-find_package(TBB COMPONENTS tbbmalloc)
 find_package(OpenMP REQUIRED)
 
 option(USE_TBB "Use Thread Building Blocks for parallelization if available" ON)
@@ -34,13 +33,16 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   link_libraries(stdc++fs)
 endif()
 
+find_package(PkgConfig REQUIRED)
+
 FIND_PACKAGE(dlib)
 if(NOT dlib_FOUND)
     message(STATUS "dlib not found using CMake packages. Trying pkgconfig.")
-    find_package(PkgConfig REQUIRED)
     pkg_check_modules(dlib REQUIRED dlib-1)
     set(dlib_USES_PKGCONFIG ON)
 endif()
+
+pkg_check_modules(TBB tbb)
 
 if(TBB_FOUND AND USE_TBB)
     add_definitions(-DUSE_TBB=1)

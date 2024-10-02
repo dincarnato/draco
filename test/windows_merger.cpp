@@ -13,9 +13,8 @@
 
 #include "windows_merger_deserializer.hpp"
 
-#include <range/v3/all.hpp>
-
 using namespace windows_merger;
+namespace ranges = std::ranges;
 
 static constexpr std::size_t n_tests = 20;
 static constexpr std::size_t window_size = 70;
@@ -47,8 +46,9 @@ generate_random_windows(typename WindowsMerger::clusters_size_type n_clusters,
   for (auto &&span : weighted_clusters) {
     std::vector<double> weights(n_clusters);
     ranges::generate(weights, [&] { return real_dist(random_gen); });
-    const double normalizer = ranges::accumulate(weights, 0.);
-    ranges::copy(weights | ranges::view::transform([normalizer](double value) {
+    const double normalizer = std::accumulate(std::ranges::begin(weights),
+                                              std::ranges::end(weights), 0.);
+    ranges::copy(weights | std::views::transform([normalizer](double value) {
                    return weighted_clusters_weight_type(value / normalizer);
                  }),
                  ranges::begin(span));

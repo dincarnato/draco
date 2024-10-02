@@ -9,9 +9,6 @@
 #include "weighted_clusters.hpp"
 
 #include <limits>
-#include <range/v3/algorithm.hpp>
-#include <range/v3/core.hpp>
-#include <range/v3/iterator/insert_iterators.hpp>
 
 namespace windows_merger {
 
@@ -25,7 +22,7 @@ inline WindowsMergerWindow::WindowsMergerWindow(
         &rhs) noexcept(false)
     : _bases(rhs.size()), _begin_index(rhs.begin_index()),
       n_clusters(rhs.clusters_size()) {
-  ranges::copy(rhs, ranges::begin(_bases));
+  std::ranges::copy(rhs, std::ranges::begin(_bases));
 }
 
 inline WindowsMergerWindow::WindowsMergerWindow(
@@ -37,7 +34,7 @@ inline WindowsMergerWindow::WindowsMergerWindow(
         &rhs) noexcept(false)
     : _bases(rhs.size()), _begin_index(rhs.begin_index()),
       n_clusters(rhs.clusters_size()) {
-  ranges::copy(rhs, ranges::begin(_bases));
+  std::ranges::copy(rhs, std::ranges::begin(_bases));
 }
 
 inline WindowsMergerWindow::WindowsMergerWindow(
@@ -48,8 +45,8 @@ inline WindowsMergerWindow::WindowsMergerWindow(
 inline WindowsMergerWindow::WindowsMergerWindow(
     WindowsMergerWindowAccessor<WindowsMergerWindows &&> const
         &rhs) noexcept(false)
-    : _bases(ranges::move_iterator(ranges::begin(rhs)),
-             ranges::move_iterator(ranges::end(rhs))),
+    : _bases(std::move_iterator(std::ranges::begin(rhs)),
+             std::move_iterator(std::ranges::end(rhs))),
       _begin_index(rhs.begin_index()), n_clusters(rhs.clusters_size()) {}
 
 inline WindowsMergerWindow::WindowsMergerWindow(
@@ -109,11 +106,11 @@ void WindowsMergerWindow::assign_from_accessor(Accessor &&accessor) noexcept(
   using merger_type = typename std::decay_t<Accessor>::merger_type;
 
   if constexpr (std::is_rvalue_reference_v<merger_type>)
-    ranges::move(ranges::begin(accessor), ranges::end(accessor),
-                 ranges::back_inserter(_bases));
+    std::ranges::move(std::ranges::begin(accessor), std::ranges::end(accessor),
+                      std::back_inserter(_bases));
   else
-    ranges::copy(ranges::begin(accessor), ranges::end(accessor),
-                 ranges::back_inserter(_bases));
+    std::ranges::copy(std::ranges::begin(accessor), std::ranges::end(accessor),
+                      std::back_inserter(_bases));
 }
 
 inline auto
@@ -203,11 +200,11 @@ inline auto WindowsMergerWindow::end() const & noexcept -> const_iterator {
 }
 
 inline auto WindowsMergerWindow::begin() && noexcept -> move_iterator {
-  return ranges::move_iterator(_bases.begin());
+  return std::move_iterator(_bases.begin());
 }
 
 inline auto WindowsMergerWindow::end() && noexcept -> move_iterator {
-  return ranges::move_iterator(_bases.end());
+  return std::move_iterator(_bases.end());
 }
 
 inline auto WindowsMergerWindow::rbegin() & noexcept -> reverse_iterator {
@@ -229,11 +226,11 @@ WindowsMergerWindow::rend() const & noexcept -> const_reverse_iterator {
 }
 
 inline auto WindowsMergerWindow::rbegin() && noexcept -> move_reverse_iterator {
-  return ranges::move_iterator(_bases.rbegin());
+  return std::move_iterator(_bases.rbegin());
 }
 
 inline auto WindowsMergerWindow::rend() && noexcept -> move_reverse_iterator {
-  return ranges::move_iterator(_bases.rend());
+  return std::move_iterator(_bases.rend());
 }
 
 inline auto WindowsMergerWindow::operator[](

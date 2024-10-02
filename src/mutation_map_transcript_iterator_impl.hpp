@@ -4,8 +4,8 @@
 #include "mutation_map_transcript.hpp"
 #include "mutation_map_transcript_iterator.hpp"
 
+#include <algorithm>
 #include <cassert>
-#include <range/v3/algorithm.hpp>
 
 template <typename Stream>
 MutationMapTranscriptIterator<Stream>::MutationMapTranscriptIterator(
@@ -60,7 +60,7 @@ void MutationMapTranscriptIterator<Stream>::nextRead() noexcept(false) {
       readIndex = mutationIndex;
     }
 
-    assert(ranges::is_sorted(currentRead.indices));
+    assert(std::ranges::is_sorted(currentRead.indices));
   }
 }
 

@@ -3,8 +3,7 @@
 #include "hard_cluster.hpp"
 #include "hard_cluster_wrapper.hpp"
 #include "hard_clusters_iterator.hpp"
-
-#include <range/v3/algorithm.hpp>
+#include <algorithm>
 
 template <typename Cluster, bool complemented>
 HardClustersIterator<Cluster, complemented>::HardClustersIterator(
@@ -144,7 +143,7 @@ auto HardClustersIterator<Cluster, complemented>::operator=(
   asserT(wrapper_iter == wrapper.end());
   */
 
-  ranges::copy(rhs, ranges::begin(*this));
+  std::ranges::copy(rhs, std::ranges::begin(*this));
   return this;
 }
 
@@ -154,6 +153,6 @@ auto HardClustersIterator<Cluster, complemented>::operator=(
   assert(wrapper);
   assert(wrapper.size() == rhs.size());
 
-  ranges::move(rhs, ranges::begin(*this));
+  std::ranges::move(rhs, std::ranges::begin(*this));
   return this;
 }

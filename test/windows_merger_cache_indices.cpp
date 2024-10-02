@@ -4,10 +4,8 @@
 #include <cassert>
 #include <random>
 
-#include <range/v3/algorithm.hpp>
-#include <range/v3/view.hpp>
-
 using namespace windows_merger;
+namespace ranges = std::ranges;
 
 static void test_default_construction() {
   WindowsMergerCacheIndices wmci;
@@ -405,8 +403,8 @@ static void test_windows_iterators() {
         auto &&indices_line = *indices_iter;
         auto &&added_indices_line = *added_indices_iter;
         assert(ranges::equal(indices_line, added_indices_line));
-        assert(ranges::equal(indices_line | ranges::view::reverse,
-                             added_indices_line | ranges::view::reverse));
+        assert(ranges::equal(indices_line | std::views::reverse,
+                             added_indices_line | std::views::reverse));
       }
 
       for (std::ptrdiff_t index = 0;
@@ -700,7 +698,7 @@ static void test_window_accessor_resize() {
   accessor.resize(60);
   assert(wmci.line_capacity() == 60);
   assert(accessor.size() == 60);
-  assert(ranges::equal(bases, accessor | ranges::view::take(bases.size())));
+  assert(ranges::equal(bases, accessor | std::views::take(bases.size())));
 
   accessor.resize(20);
   assert(wmci.line_capacity() == 60);

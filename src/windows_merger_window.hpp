@@ -2,8 +2,6 @@
 
 #include "windows_merger_traits.hpp"
 
-#include <range/v3/core.hpp>
-
 #include <vector>
 
 class WeightedClusters;
@@ -41,11 +39,11 @@ struct WindowsMergerWindow {
       WindowsMergerWindowWeightsAccessor<const WindowsMergerWindow>;
   using iterator = typename bases_type::iterator;
   using const_iterator = typename bases_type::const_iterator;
-  using move_iterator = ranges::move_iterator<typename bases_type::iterator>;
+  using move_iterator = std::move_iterator<typename bases_type::iterator>;
   using reverse_iterator = typename bases_type::reverse_iterator;
   using const_reverse_iterator = typename bases_type::const_reverse_iterator;
   using move_reverse_iterator =
-      ranges::move_iterator<typename bases_type::reverse_iterator>;
+      std::move_iterator<typename bases_type::reverse_iterator>;
   using self = WindowsMergerWindow;
 
   WindowsMergerWindow() = default;

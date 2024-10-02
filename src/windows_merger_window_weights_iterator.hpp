@@ -6,7 +6,6 @@
 
 #include <cassert>
 #include <iterator>
-#include <range/v3/core.hpp>
 
 namespace windows_merger {
 
@@ -36,7 +35,7 @@ template <typename Window> struct WindowsMergerWindowWeightsIterator {
                          weight_type &>>;
   using pointer =
       nostd::copy_const_t<std::remove_reference_t<Window>, weight_type> *;
-  using iterator_category = ranges::random_access_iterator_tag;
+  using iterator_category = std::random_access_iterator_tag;
 
   WindowsMergerWindowWeightsIterator() = default;
   explicit WindowsMergerWindowWeightsIterator(

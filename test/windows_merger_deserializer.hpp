@@ -6,7 +6,6 @@
 #include <boost/callable_traits.hpp>
 
 #include <cmath>
-#include <range/v3/core.hpp>
 
 namespace ct = boost::callable_traits;
 
@@ -51,14 +50,14 @@ void weighted_clusters_from_json(WeightedClusters &weighted_clusters,
   auto weighted_clusters_clusters = weighted_clusters.clusters();
   auto weighted_cluster_iter = weighted_clusters_clusters.begin();
   auto const weighted_clusters_end = weighted_clusters_clusters.end();
-  auto json_cluster_iter = ranges::begin(json_data);
+  auto json_cluster_iter = std::ranges::begin(json_data);
 
   for (; weighted_cluster_iter < weighted_clusters_end;
        ++weighted_cluster_iter, ++json_cluster_iter) {
     auto &&weighted_cluster = *weighted_cluster_iter;
     auto &&json_cluster = std::get<jsonde::Array>(*json_cluster_iter);
 
-    ranges::transform(
+    std::ranges::transform(
         json_cluster, weighted_cluster.begin(), [](auto &&json_weight) {
           return static_cast<float>(
               std::get<double>(std::get<jsonde::Number>(json_weight)));
@@ -69,8 +68,8 @@ void weighted_clusters_from_json(WeightedClusters &weighted_clusters,
 void coverages_from_json(std::vector<unsigned> &coverages,
                          json_deserializer::Array const &json_data) noexcept {
   coverages.resize(json_data.size());
-  ranges::transform(
-      json_data, ranges::begin(coverages), [](auto &&json_number) {
+  std::ranges::transform(
+      json_data, std::ranges::begin(coverages), [](auto &&json_number) {
         return static_cast<unsigned>(
             std::get<long>(std::get<json_deserializer::Number>(json_number)));
       });
@@ -164,16 +163,16 @@ private:
     namespace jsonde = json_deserializer;
     assert(std::size(clusters) == std::size(raw_clusters));
 
-    auto cluster_iter = ranges::begin(clusters);
-    auto const clusters_end = ranges::end(clusters);
-    auto raw_cluster_iter = ranges::begin(raw_clusters);
+    auto cluster_iter = std::ranges::begin(clusters);
+    auto const clusters_end = std::ranges::end(clusters);
+    auto raw_cluster_iter = std::ranges::begin(raw_clusters);
     for (; cluster_iter < clusters_end; ++cluster_iter, ++raw_cluster_iter) {
       auto &&cluster = *cluster_iter;
       auto &&raw_cluster = std::get<jsonde::Array>(*raw_cluster_iter);
 
       cluster.resize(raw_cluster.size());
-      ranges::transform(
-          raw_cluster, ranges::begin(cluster), [](auto &&json_number) {
+      std::ranges::transform(
+          raw_cluster, std::ranges::begin(cluster), [](auto &&json_number) {
             double weight;
             from_json_number(weight, std::get<jsonde::Number>(json_number));
             return weight;
@@ -189,7 +188,7 @@ inline bool operator==(Window const &a,
   using bases_size_type = windows_merger::WindowsMergerTraits::bases_size_type;
 
   if (a.begin != b.begin_index() or a.end != b.end_index() or
-      not ranges::equal(a.coverages, b.coverages()))
+      not std::ranges::equal(a.coverages, b.coverages()))
     return false;
 
   auto const clusters_size = a.clusters_weights.size();
@@ -242,9 +241,9 @@ static std::vector<Window> deserialize_windows(std::istream &is,
   std::vector<Window> windows;
   windows.resize(raw_windows.size(), Window(n_clusters));
 
-  auto raw_window_iter = ranges::cbegin(raw_windows);
-  auto const raw_windows_end = ranges::cend(raw_windows);
-  auto window_iter = ranges::begin(windows);
+  auto raw_window_iter = std::ranges::cbegin(raw_windows);
+  auto const raw_windows_end = std::ranges::cend(raw_windows);
+  auto window_iter = std::ranges::begin(windows);
 
   for (; raw_window_iter < raw_windows_end; ++raw_window_iter, ++window_iter)
     window_iter->from_json(std::get<jsonde::Object>(*raw_window_iter));

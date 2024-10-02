@@ -2,7 +2,6 @@
 
 #include "weighted_clusters_cluster_wrapper.hpp"
 
-#include <range/v3/core.hpp>
 #include <type_traits>
 
 class WeightedClusters;
@@ -18,7 +17,7 @@ public:
   using wrapper_type = WeightedClustersClusterWrapper<T>;
   using value_type = WeightedClustersCluster<std::decay_t<T>>;
   using reference = wrapper_type;
-  using iterator_category = ranges::random_access_iterator_tag;
+  using iterator_category = std::random_access_iterator_tag;
 
   WeightedClustersClusterIterator() = default;
   explicit WeightedClustersClusterIterator(

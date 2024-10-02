@@ -8,7 +8,6 @@
 #include "windows_merger_window_base_iterator.hpp"
 
 #include <cassert>
-#include <range/v3/iterator/concepts.hpp>
 #include <utility>
 
 namespace windows_merger {
@@ -321,15 +320,15 @@ void WindowsMergerWindowAccessor<Merger>::assign_from_window(
         merger->template get_window_first_pointer<1>(_index);
     auto &&weights = window.linear_weights();
     if constexpr (std::is_lvalue_reference_v<Window>) {
-      ranges::copy(
-          ranges::begin(weights),
-          ranges::next(ranges::begin(weights), bases_to_assign * n_clusters),
-          weights_pointer);
+      std::ranges::copy(std::ranges::begin(weights),
+                        std::ranges::next(std::ranges::begin(weights),
+                                          bases_to_assign * n_clusters),
+                        weights_pointer);
     } else {
-      ranges::move(
-          ranges::begin(weights),
-          ranges::next(ranges::begin(weights), bases_to_assign * n_clusters),
-          weights_pointer);
+      std::ranges::move(std::ranges::begin(weights),
+                        std::ranges::next(std::ranges::begin(weights),
+                                          bases_to_assign * n_clusters),
+                        weights_pointer);
     }
   }
 
@@ -338,13 +337,15 @@ void WindowsMergerWindowAccessor<Merger>::assign_from_window(
         merger->template get_coverage_first_pointer<1>(_index);
     auto &&coverages = window.coverages();
     if constexpr (std::is_lvalue_reference_v<Window>) {
-      ranges::copy(ranges::begin(coverages),
-                   ranges::next(ranges::begin(coverages), bases_to_assign),
-                   coverages_pointer);
+      std::ranges::copy(
+          std::ranges::begin(coverages),
+          std::ranges::next(std::ranges::begin(coverages), bases_to_assign),
+          coverages_pointer);
     } else {
-      ranges::move(ranges::begin(coverages),
-                   ranges::next(ranges::begin(coverages), bases_to_assign),
-                   coverages_pointer);
+      std::ranges::move(
+          std::ranges::begin(coverages),
+          std::ranges::next(std::ranges::begin(coverages), bases_to_assign),
+          coverages_pointer);
     }
   }
 
@@ -648,19 +649,19 @@ swap(AccessorL &&lhs, AccessorR &&rhs) noexcept(false) {
   std::swap(*lhs_coverage_size, *rhs_coverage_size);
 }
 
-static_assert(::ranges::RandomAccessIterator<
+static_assert(std::random_access_iterator<
               WindowsMergerWindowAccessor<WindowsMergerWindows>::iterator>);
 static_assert(
-    ::ranges::RandomAccessIterator<
+    std::random_access_iterator<
         WindowsMergerWindowAccessor<const WindowsMergerWindows>::iterator>);
-static_assert(::ranges::RandomAccessIterator<
+static_assert(std::random_access_iterator<
               WindowsMergerWindowAccessor<WindowsMergerWindows &&>::iterator>);
 static_assert(
-    ::ranges::RandomAccessIterator<
+    std::random_access_iterator<
         WindowsMergerWindowAccessor<WindowsMergerWindows>::reverse_iterator>);
-static_assert(::ranges::RandomAccessIterator<WindowsMergerWindowAccessor<
+static_assert(std::random_access_iterator<WindowsMergerWindowAccessor<
                   const WindowsMergerWindows>::reverse_iterator>);
-static_assert(::ranges::RandomAccessIterator<WindowsMergerWindowAccessor<
+static_assert(std::random_access_iterator<WindowsMergerWindowAccessor<
                   WindowsMergerWindows &&>::reverse_iterator>);
 
 } // namespace windows_merger

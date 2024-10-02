@@ -3,8 +3,6 @@
 #include <ios>
 #include <type_traits>
 
-#include <range/v3/core.hpp>
-
 class MutationMapTranscript;
 
 template <typename MMap> class MutationMapIterator {
@@ -16,7 +14,7 @@ public:
                                        const value_type &, value_type &>;
   using pointer = std::conditional_t<std::is_const_v<MMap>, const value_type *,
                                      value_type *>;
-  using iterator_category = ranges::input_iterator_tag;
+  using iterator_category = std::input_iterator_tag;
   using difference_type = std::ptrdiff_t;
 
   MutationMapIterator() = default;

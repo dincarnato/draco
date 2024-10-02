@@ -1,10 +1,10 @@
 #include "weighted_clusters.hpp"
 
-#include <range/v3/view/reverse.hpp>
-
 #include <array>
 #include <cassert>
 #include <utility>
+
+namespace ranges = std::ranges;
 
 static constexpr std::ptrdiff_t nClusters = 3;
 static constexpr std::ptrdiff_t nElements = 10;
@@ -22,14 +22,14 @@ static void test_weighted_clusters(T &&weightedClusters) {
     if constexpr (iter_forward)
       return allWeights;
     else
-      return allWeights | ranges::view::reverse;
+      return allWeights | std::views::reverse;
   }();
 
   auto getRange = [](auto &&range) {
     if constexpr (iter_forward)
       return range;
     else
-      return range | ranges::view::reverse;
+      return range | std::views::reverse;
   };
 
   auto getWeightsIter = [](auto &weightsRange, std::ptrdiff_t index) {

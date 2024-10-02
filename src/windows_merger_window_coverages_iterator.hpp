@@ -6,7 +6,6 @@
 
 #include <cassert>
 #include <iterator>
-#include <range/v3/core.hpp>
 
 namespace windows_merger {
 
@@ -35,7 +34,7 @@ template <typename Window> struct WindowsMergerWindowCoveragesIterator {
                          coverage_type &>>;
   using pointer =
       nostd::copy_const_t<std::remove_reference_t<Window>, coverage_type> *;
-  using iterator_category = ranges::random_access_iterator_tag;
+  using iterator_category = std::random_access_iterator_tag;
 
   WindowsMergerWindowCoveragesIterator() = default;
   explicit WindowsMergerWindowCoveragesIterator(

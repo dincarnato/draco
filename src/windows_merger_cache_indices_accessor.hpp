@@ -4,8 +4,6 @@
 
 #include "nostd/type_traits.hpp"
 
-#include <range/v3/core.hpp>
-
 namespace windows_merger {
 
 struct WindowsMergerCacheIndices;
@@ -21,7 +19,7 @@ template <typename Merger> struct WindowsMergerCacheIndicesAccessor {
   using windows_size_type = typename traits_type::windows_size_type;
   using reference = nostd::copy_const_t<Merger, windows_size_type> &;
   using iterator = nostd::copy_const_t<Merger, windows_size_type> *;
-  using reverse_iterator = ranges::reverse_iterator<iterator>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
   using self = WindowsMergerCacheIndicesAccessor;
 
   WindowsMergerCacheIndicesAccessor(Merger &merger,

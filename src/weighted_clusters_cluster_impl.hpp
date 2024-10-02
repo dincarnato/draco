@@ -3,7 +3,7 @@
 #include "weighted_clusters_cluster.hpp"
 #include "weighted_clusters_cluster_wrapper.hpp"
 
-#include <range/v3/algorithm.hpp>
+#include <algorithm>
 
 template <typename T>
 template <typename U>
@@ -24,5 +24,5 @@ template <typename Wrapper>
 void WeightedClustersCluster<T>::init_from_wrapper(Wrapper &&wrapper) noexcept(
     false) {
   base_type::resize(wrapper.size());
-  ranges::copy(wrapper, std::begin(*this));
+  std::ranges::copy(wrapper, std::begin(*this));
 }

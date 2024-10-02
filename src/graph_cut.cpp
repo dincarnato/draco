@@ -4,7 +4,6 @@
 #include <cassert>
 #include <iomanip>
 #include <iostream>
-#include <range/v3/core.hpp>
 #include <stdexcept>
 
 GraphCut::GraphCut(const arma::mat &adjacency, Graph type)
@@ -115,17 +114,17 @@ double GraphCut::calculateClustersScore(
                             static_cast<std::uint8_t>(rawClusters.size()));
   {
     auto &&clusters = hardClusters.clusters();
-    auto clusterIter = ranges::begin(clusters);
-    const auto clustersEnd = ranges::end(clusters);
-    auto rawClusterIter = ranges::begin(rawClusters);
+    auto clusterIter = std::ranges::begin(clusters);
+    const auto clustersEnd = std::ranges::end(clusters);
+    auto rawClusterIter = std::ranges::begin(rawClusters);
 
     for (; clusterIter < clustersEnd; ++clusterIter, ++rawClusterIter) {
       auto &&cluster = *clusterIter;
       auto &&rawCluster = *rawClusterIter;
 
-      auto baseIter = ranges::begin(cluster);
-      const auto clusterEnd = ranges::end(cluster);
-      auto rawBaseIter = ranges::begin(rawCluster);
+      auto baseIter = std::ranges::begin(cluster);
+      const auto clusterEnd = std::ranges::end(cluster);
+      auto rawBaseIter = std::ranges::begin(rawCluster);
 
       for (; baseIter < clusterEnd; ++baseIter, ++rawBaseIter) {
         if (*rawBaseIter) {

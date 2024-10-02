@@ -7,8 +7,6 @@
 #include <numeric>
 #include <random>
 
-#include <range/v3/all.hpp>
-
 using namespace windows_merger;
 
 static void test_default_construction() {
@@ -74,13 +72,13 @@ create_random_bases(std::size_t n_clusters, std::size_t n_bases) {
       WindowsMergerWindowBase(
           static_cast<WindowsMergerTraits::clusters_size_type>(n_clusters)));
   for (auto &window_base : out_bases) {
-    std::generate(ranges::begin(weights), ranges::end(weights),
+    std::generate(std::ranges::begin(weights), std::ranges::end(weights),
                   [&] { return real_dist(random_gen); });
-    std::transform(ranges::begin(weights), ranges::end(weights),
-                   ranges::begin(weights),
-                   [normalizer = std::accumulate(ranges::begin(weights),
-                                                 ranges::end(weights), 0.)](
-                       double weight) { return weight / normalizer; });
+    std::transform(std::ranges::begin(weights), std::ranges::end(weights),
+                   std::ranges::begin(weights),
+                   [normalizer = std::accumulate(
+                        std::ranges::begin(weights), std::ranges::end(weights),
+                        0.)](double weight) { return weight / normalizer; });
 
     using clusters_size_type =
         typename WindowsMergerWindowBase::clusters_size_type;
@@ -102,7 +100,7 @@ create_random_starts(WindowsMergerTraits::windows_size_type n_windows,
   std::uniform_int_distribution<bases_size_type> start_dist(0, sequence_size -
                                                                    n_bases);
   std::vector<bases_size_type> all_starts(n_windows);
-  std::generate(ranges::begin(all_starts), ranges::end(all_starts),
+  std::generate(std::ranges::begin(all_starts), std::ranges::end(all_starts),
                 [&] { return start_dist(random_gen); });
 
   return all_starts;
@@ -252,18 +250,16 @@ static void test_base_accessor_iterator() {
     const auto &window_base = accessor[window_base_index];
     auto weights_accessor = window_base.weights();
 
-    ranges::fill(ranges::begin(weights_accessor), ranges::end(weights_accessor),
-                 TinyFraction(0.2));
-    assert(ranges::all_of(weights_accessor, [](auto &&weight) {
+    std::ranges::fill(weights_accessor, TinyFraction(0.2));
+    assert(std::ranges::all_of(weights_accessor, [](auto &&weight) {
       return weight == TinyFraction(0.2);
     }));
 
     {
       auto base_added = std::as_const(bases_to_add)[window_base_index];
       auto weights_accessor = base_added.weights();
-      ranges::fill(ranges::begin(weights_accessor),
-                   ranges::end(weights_accessor), TinyFraction(0.3));
-      assert(ranges::all_of(weights_accessor, [](auto &&weight) {
+      std::ranges::fill(weights_accessor, TinyFraction(0.3));
+      assert(std::ranges::all_of(weights_accessor, [](auto &&weight) {
         return weight == TinyFraction(0.3);
       }));
     }
@@ -887,15 +883,15 @@ static void test_window_coverage_accessor() {
     auto coverages = new_window.coverages();
     assert(coverages.index() == 0);
     assert(coverages.size() == 0);
-    assert(ranges::begin(coverages) == nullptr);
-    assert(ranges::end(coverages) == nullptr);
+    assert(std::ranges::begin(coverages) == nullptr);
+    assert(std::ranges::end(coverages) == nullptr);
   }
 
   {
     auto coverages = std::as_const(wmw)[0].coverages();
     assert(coverages.size() == 0);
-    assert(ranges::begin(coverages) == nullptr);
-    assert(ranges::end(coverages) == nullptr);
+    assert(std::ranges::begin(coverages) == nullptr);
+    assert(std::ranges::end(coverages) == nullptr);
   }
 
   for (WindowsMergerTraits::bases_size_type base_index = 0; base_index < 30;
@@ -904,10 +900,10 @@ static void test_window_coverage_accessor() {
 
   auto perform_test = [&new_bases](auto &&new_window) {
     auto new_window_coverages = new_window.coverages();
-    assert(ranges::equal(
+    assert(std::ranges::equal(
         new_bases, new_window_coverages, {},
         [](auto &&base_accessor) { return base_accessor.coverage(); }));
-    assert(ranges::equal(
+    assert(std::ranges::equal(
         std::as_const(new_bases), new_window_coverages, {},
         [](auto &&base_accessor) { return base_accessor.coverage(); }));
     for (typename WindowsMergerTraits::bases_size_type base_index = 0;
@@ -932,8 +928,8 @@ static void test_window_accessor_iterator() {
   constexpr bases_size_type n_bases = 30;
   std::vector<decltype(create_random_bases(n_clusters, n_bases))> raw_windows(
       n_windows);
-  std::generate(ranges::begin(raw_windows), ranges::end(raw_windows),
-                [] { return create_random_bases(n_clusters, n_bases); });
+  std::ranges::generate(
+      raw_windows, [] { return create_random_bases(n_clusters, n_bases); });
 
   WindowsMergerWindows wmw(n_clusters);
   for (auto &&window : std::as_const(raw_windows)) {
@@ -950,9 +946,9 @@ static void test_window_accessor_iterator() {
       const auto &raw_window = raw_windows[window_index];
 
       {
-        auto accessor_iter = ranges::begin(accessor);
-        const auto accessor_end = ranges::end(accessor);
-        auto raw_window_iter = ranges::begin(raw_window);
+        auto accessor_iter = std::ranges::begin(accessor);
+        const auto accessor_end = std::ranges::end(accessor);
+        auto raw_window_iter = std::ranges::begin(raw_window);
         typename decltype(accessor_iter)::difference_type position = 0;
 
         {
@@ -990,12 +986,12 @@ static void test_window_accessor_iterator() {
         for (; accessor_iter < accessor_end;
              ++accessor_iter, ++raw_window_iter, ++position) {
           assert(*accessor_iter == *raw_window_iter);
-          assert(ranges::distance(ranges::begin(accessor), accessor_iter) ==
-                 position);
-          assert(ranges::begin(accessor)[position] == *accessor_iter);
+          assert(std::ranges::distance(std::ranges::begin(accessor),
+                                       accessor_iter) == position);
+          assert(std::ranges::begin(accessor)[position] == *accessor_iter);
         }
 
-        assert(raw_window_iter == ranges::end(raw_window));
+        assert(raw_window_iter == std::ranges::end(raw_window));
       }
 
       {
@@ -1006,7 +1002,7 @@ static void test_window_accessor_iterator() {
         for (; accessor_iter < accessor_end;
              ++accessor_iter, ++raw_window_iter, ++position) {
           assert(*accessor_iter == *raw_window_iter);
-          assert(ranges::distance(std::rbegin(accessor), accessor_iter) ==
+          assert(std::ranges::distance(std::rbegin(accessor), accessor_iter) ==
                  position);
           assert(std::rbegin(accessor)[position] == *accessor_iter);
         }
@@ -1048,7 +1044,7 @@ static void test_accessor_assignment() {
       accessor.set_begin_index(starts[0]);
     }
 
-    assert(not ranges::equal(wmw_lhs[0], wmw_rhs[0]));
+    assert(not std::ranges::equal(wmw_lhs[0], wmw_rhs[0]));
     {
       auto accessor = get_rhs_wmw(wmw_rhs)[0];
       assign_accessor(get_lhs_wmw(wmw_lhs)[0], accessor);
@@ -1056,7 +1052,7 @@ static void test_accessor_assignment() {
     // I can do this even in case of move because I know that the source state
     // is unchanged
     assert(wmw_lhs[0].begin_index() == wmw_rhs[0].begin_index());
-    assert(ranges::equal(wmw_lhs[0], wmw_rhs[0]));
+    assert(std::ranges::equal(wmw_lhs[0], wmw_rhs[0]));
   };
 
   for (bases_size_type bases_initial_capacity :
@@ -1170,17 +1166,17 @@ static void test_accessor_swap() {
     auto wmw_1 = wmw[1];
     auto &&added_windows_0 = added_windows[0];
     auto &&added_windows_1 = added_windows[1];
-    assert(
-        not ranges::equal(wmw[0], wmw_1 | ranges::view::take(wmw[0].size())));
-    assert(ranges::equal(wmw_0,
-                         added_windows_0 | ranges::view::take(wmw_0.size())));
-    assert(ranges::equal(wmw_1,
-                         added_windows_1 | ranges::view::take(wmw_1.size())));
+    assert(not std::ranges::equal(wmw[0],
+                                  wmw_1 | std::views::take(wmw[0].size())));
+    assert(std::ranges::equal(wmw_0, added_windows_0 |
+                                         std::views::take(wmw_0.size())));
+    assert(std::ranges::equal(wmw_1, added_windows_1 |
+                                         std::views::take(wmw_1.size())));
     assert(wmw_0.begin_index() == added_windows_starts[0]);
     assert(wmw_1.begin_index() == added_windows_starts[1]);
   }
 
-  ranges::swap(wmw[0], wmw[1]);
+  std::ranges::swap(wmw[0], wmw[1]);
 
   {
     auto &&wmw_0 = wmw[0];
@@ -1191,10 +1187,10 @@ static void test_accessor_swap() {
     assert(wmw_1.begin_index() == added_windows_starts[0]);
     auto &&added_windows_0 = added_windows[0];
     auto &&added_windows_1 = added_windows[1];
-    assert(ranges::equal(wmw_0,
-                         added_windows_1 | ranges::view::take(wmw_0.size())));
-    assert(ranges::equal(wmw_1,
-                         added_windows_0 | ranges::view::take(wmw_1.size())));
+    assert(std::ranges::equal(wmw_0, added_windows_1 |
+                                         std::views::take(wmw_0.size())));
+    assert(std::ranges::equal(wmw_1, added_windows_0 |
+                                         std::views::take(wmw_1.size())));
   }
 }
 
@@ -1220,15 +1216,16 @@ static void test_accessor_assignment_reshape() {
   {
     auto &&wmw_a0 = wmw_a[0];
     auto &&wmw_b0 = wmw_b[0];
-    assert(
-        not ranges::equal(wmw_a0, wmw_b0 | ranges::view::take(wmw_a0.size())));
+    assert(not std::ranges::equal(wmw_a0,
+                                  wmw_b0 | std::views::take(wmw_a0.size())));
   }
   wmw_a[0] = wmw_b[0];
   assert(wmw_a.bases_capacity() == 70);
   {
     auto &&wmw_a0 = wmw_a[0];
     auto &&wmw_b0 = wmw_b[0];
-    assert(ranges::equal(wmw_a0, wmw_b0 | ranges::view::take(wmw_a0.size())));
+    assert(
+        std::ranges::equal(wmw_a0, wmw_b0 | std::views::take(wmw_a0.size())));
   }
 }
 
@@ -1254,8 +1251,8 @@ static void test_accessor_assignment_destroy() {
   {
     auto &&wmw_a0 = wmw_a[0];
     auto &&wmw_b0 = wmw_b[0];
-    assert(
-        not ranges::equal(wmw_a0, wmw_b0 | ranges::view::take(wmw_a0.size())));
+    assert(not std::ranges::equal(wmw_a0,
+                                  wmw_b0 | std::views::take(wmw_a0.size())));
     assert(wmw_a0.size() == 70);
     assert(wmw_a0.coverages().size() == 70);
 
@@ -1263,7 +1260,8 @@ static void test_accessor_assignment_destroy() {
 
     assert(wmw_a0.size() == 30);
     assert(wmw_a0.coverages().size() == 30);
-    assert(ranges::equal(wmw_a0, wmw_b0 | ranges::view::take(wmw_a0.size())));
+    assert(
+        std::ranges::equal(wmw_a0, wmw_b0 | std::views::take(wmw_a0.size())));
   }
 }
 
@@ -1290,11 +1288,12 @@ static void test_accessor_move_assignment_reshape() {
     auto &&wmw_a0 = wmw_a[0];
     auto &&wmw_b0 = wmw_b[0];
 
-    assert(
-        not ranges::equal(wmw_a0, wmw_b0 | ranges::view::take(wmw_a0.size())));
+    assert(not std::ranges::equal(wmw_a0,
+                                  wmw_b0 | std::views::take(wmw_a0.size())));
     wmw_a0 = std::move(wmw_b)[0];
     assert(wmw_a.bases_capacity() == 70);
-    assert(ranges::equal(wmw_a0, wmw_b0 | ranges::view::take(wmw_a0.size())));
+    assert(
+        std::ranges::equal(wmw_a0, wmw_b0 | std::views::take(wmw_a0.size())));
   }
 }
 
@@ -1321,8 +1320,8 @@ static void test_accessor_move_assignment_destroy() {
     auto &&wmw_a0 = wmw_a[0];
     auto &&wmw_b0 = wmw_b[0];
 
-    assert(
-        not ranges::equal(wmw_a0, wmw_b0 | ranges::view::take(wmw_a0.size())));
+    assert(not std::ranges::equal(wmw_a0,
+                                  wmw_b0 | std::views::take(wmw_a0.size())));
     assert(wmw_a0.size() == 70);
     assert(wmw_a0.coverages().size() == 70);
 
@@ -1330,7 +1329,8 @@ static void test_accessor_move_assignment_destroy() {
 
     assert(wmw_a0.size() == 30);
     assert(wmw_a0.coverages().size() == 30);
-    assert(ranges::equal(wmw_a0, wmw_b0 | ranges::view::take(wmw_a0.size())));
+    assert(
+        std::ranges::equal(wmw_a0, wmw_b0 | std::views::take(wmw_a0.size())));
   }
 }
 
@@ -1367,15 +1367,15 @@ static void test_accessor_swap_reshape_lhs() {
     assert(wmw_b.bases_capacity() == 70);
     assert(std::size(wmw_a0) == 30);
     assert(std::size(wmw_b0) == 70);
-    assert(
-        not ranges::equal(wmw_a0, wmw_b0 | ranges::view::take(wmw_a0.size())));
-    assert(ranges::equal(wmw_a0,
-                         added_windows_0 | ranges::view::take(wmw_a0.size())));
-    assert(ranges::equal(wmw_b0,
-                         added_windows_1 | ranges::view::take(wmw_b0.size())));
+    assert(not std::ranges::equal(wmw_a0,
+                                  wmw_b0 | std::views::take(wmw_a0.size())));
+    assert(std::ranges::equal(wmw_a0, added_windows_0 |
+                                          std::views::take(wmw_a0.size())));
+    assert(std::ranges::equal(wmw_b0, added_windows_1 |
+                                          std::views::take(wmw_b0.size())));
   }
 
-  ranges::swap(wmw_a[0], wmw_b[0]);
+  std::ranges::swap(wmw_a[0], wmw_b[0]);
 
   {
     auto &&wmw_a0 = wmw_a[0];
@@ -1387,10 +1387,10 @@ static void test_accessor_swap_reshape_lhs() {
     assert(wmw_b.bases_capacity() == 70);
     assert(std::size(wmw_a0) == 70);
     assert(std::size(wmw_b0) == 30);
-    assert(ranges::equal(wmw_a0,
-                         added_windows_1 | ranges::view::take(wmw_a0.size())));
-    assert(ranges::equal(wmw_b0,
-                         added_windows_0 | ranges::view::take(wmw_b0.size())));
+    assert(std::ranges::equal(wmw_a0, added_windows_1 |
+                                          std::views::take(wmw_a0.size())));
+    assert(std::ranges::equal(wmw_b0, added_windows_0 |
+                                          std::views::take(wmw_b0.size())));
   }
 }
 
@@ -1427,15 +1427,15 @@ static void test_accessor_swap_reshape_rhs() {
     assert(wmw_b.bases_capacity() == 30);
     assert(std::size(wmw_a0) == 70);
     assert(std::size(wmw_b0) == 30);
-    assert(
-        not ranges::equal(wmw_a0, wmw_b0 | ranges::view::take(wmw_a0.size())));
-    assert(ranges::equal(wmw_a0,
-                         added_windows_0 | ranges::view::take(wmw_a0.size())));
-    assert(ranges::equal(wmw_b0,
-                         added_windows_1 | ranges::view::take(wmw_b0.size())));
+    assert(not std::ranges::equal(wmw_a0,
+                                  wmw_b0 | std::views::take(wmw_a0.size())));
+    assert(std::ranges::equal(wmw_a0, added_windows_0 |
+                                          std::views::take(wmw_a0.size())));
+    assert(std::ranges::equal(wmw_b0, added_windows_1 |
+                                          std::views::take(wmw_b0.size())));
   }
 
-  ranges::swap(wmw_a[0], wmw_b[0]);
+  std::ranges::swap(wmw_a[0], wmw_b[0]);
 
   {
     auto &&wmw_a0 = wmw_a[0];
@@ -1447,10 +1447,10 @@ static void test_accessor_swap_reshape_rhs() {
     assert(wmw_b.bases_capacity() == 70);
     assert(std::size(wmw_a0) == 30);
     assert(std::size(wmw_b0) == 70);
-    assert(ranges::equal(wmw_a0,
-                         added_windows_1 | ranges::view::take(wmw_a0.size())));
-    assert(ranges::equal(wmw_b0,
-                         added_windows_0 | ranges::view::take(wmw_b0.size())));
+    assert(std::ranges::equal(wmw_a0, added_windows_1 |
+                                          std::views::take(wmw_a0.size())));
+    assert(std::ranges::equal(wmw_b0, added_windows_0 |
+                                          std::views::take(wmw_b0.size())));
   }
 }
 
@@ -1471,21 +1471,21 @@ static void test_base_accessor_assignment() {
       accessor.set_begin_index(starts[window_index]);
     }
 
-    assert(not ranges::equal(wmw[0], wmw[1]));
+    assert(not std::ranges::equal(wmw[0], wmw[1]));
     {
       auto lhs_accessor = get_lhs_wmw(wmw)[0];
       auto rhs_accessor = get_rhs_wmw(wmw)[1];
 
-      auto rhs_iter = ranges::begin(rhs_accessor);
-      const auto rhs_end_iter = ranges::end(rhs_accessor);
-      auto lhs_iter = ranges::begin(lhs_accessor);
+      auto rhs_iter = std::ranges::begin(rhs_accessor);
+      const auto rhs_end_iter = std::ranges::end(rhs_accessor);
+      auto lhs_iter = std::ranges::begin(lhs_accessor);
       for (; rhs_iter < rhs_end_iter; ++rhs_iter, ++lhs_iter)
         assign_op(*lhs_iter, *rhs_iter);
       wmw[0].set_begin_index(wmw[1].begin_index());
     }
     // I can do this even in case of move because I know that the source state
     // is unchanged
-    assert(ranges::equal(wmw[0], wmw[1]));
+    assert(std::ranges::equal(wmw[0], wmw[1]));
   };
 
   perform_test([](auto &wmw) -> decltype(auto) { return wmw; },
@@ -1584,9 +1584,9 @@ static void test_window_accessor_to_window_constructor() {
     for (windows_size_type window_index = 0; window_index < n_windows;
          ++window_index) {
       WindowsMergerWindow window(wmw_get(wmw)[window_index]);
-      assert(ranges::equal(
+      assert(std::ranges::equal(
           added_windows[window_index],
-          window | ranges::view::take(added_windows[window_index].size())));
+          window | std::views::take(added_windows[window_index].size())));
     }
   };
 
@@ -1620,9 +1620,9 @@ static void test_window_accessor_to_window_assignment() {
       WindowsMergerWindow window(n_clusters);
       auto accessor = wmw_get(wmw)[window_index];
       window = get_accessor(accessor);
-      assert(ranges::equal(
+      assert(std::ranges::equal(
           added_windows[window_index],
-          window | ranges::view::take(added_windows[window_index].size())));
+          window | std::views::take(added_windows[window_index].size())));
     }
   };
 
@@ -1781,20 +1781,20 @@ static void test_windows_iterators() {
     auto test_with_iterators = [](auto wmw_begin, auto wmw_end,
                                   auto added_windows_begin,
                                   auto added_windows_end) {
-      if (ranges::distance(wmw_begin, wmw_end) !=
-          ranges::distance(added_windows_begin, added_windows_end))
+      if (std::ranges::distance(wmw_begin, wmw_end) !=
+          std::ranges::distance(added_windows_begin, added_windows_end))
         return false;
 
       {
         typename WindowsMergerTraits::bases_size_type index = 0;
         auto wmw_iter = wmw_begin;
 
-        assert(ranges::next(wmw_iter) == ranges::next(wmw_begin));
-        assert(ranges::next(wmw_iter) != wmw_begin);
-        assert(ranges::next(wmw_iter) > wmw_begin);
-        assert(ranges::next(wmw_iter) >= wmw_begin);
-        assert(wmw_begin < ranges::next(wmw_iter));
-        assert(wmw_begin <= ranges::next(wmw_iter));
+        assert(std::ranges::next(wmw_iter) == std::ranges::next(wmw_begin));
+        assert(std::ranges::next(wmw_iter) != wmw_begin);
+        assert(std::ranges::next(wmw_iter) > wmw_begin);
+        assert(std::ranges::next(wmw_iter) >= wmw_begin);
+        assert(wmw_begin < std::ranges::next(wmw_iter));
+        assert(wmw_begin <= std::ranges::next(wmw_iter));
         {
           auto iter = wmw_begin;
           ++iter;
@@ -1808,7 +1808,7 @@ static void test_windows_iterators() {
           ++iter;
           assert(2 + wmw_begin == iter);
         }
-        assert(ranges::next(wmw_iter, 2) - 2 == wmw_begin);
+        assert(std::ranges::next(wmw_iter, 2) - 2 == wmw_begin);
 
         auto added_windows_iter = added_windows_begin;
         for (; wmw_iter < wmw_end; ++wmw_iter, ++added_windows_iter, ++index) {
@@ -1816,15 +1816,15 @@ static void test_windows_iterators() {
           assert(wmw_begin[index].index() == (*wmw_iter).index() and
                  wmw_begin[index].begin_index() == (*wmw_iter).begin_index() and
                  wmw_begin[index].end_index() == (*wmw_iter).end_index() and
-                 ranges::equal(
+                 std::ranges::equal(
                      wmw_begin[index],
-                     wmw_window | ranges::view::take(wmw_begin[index].size())));
+                     wmw_window | std::views::take(wmw_begin[index].size())));
 
           if (added_windows_iter == added_windows_end)
             return false;
 
           auto &&added_window = *added_windows_iter;
-          if (not ranges::equal(wmw_window, added_window))
+          if (not std::ranges::equal(wmw_window, added_window))
             return false;
         }
 
@@ -1844,7 +1844,7 @@ static void test_windows_iterators() {
 
           auto &&wmw_window = *wmw_iter;
           auto &&added_window = *added_windows_iter;
-          if (not ranges::equal(wmw_window, added_window))
+          if (not std::ranges::equal(wmw_window, added_window))
             return false;
         }
 
@@ -1861,7 +1861,7 @@ static void test_windows_iterators() {
 
           auto &&wmw_window = *wmw_iter;
           auto &&added_window = *added_windows_iter;
-          if (not ranges::equal(wmw_window, added_window))
+          if (not std::ranges::equal(wmw_window, added_window))
             return false;
         }
 
@@ -1881,7 +1881,7 @@ static void test_windows_iterators() {
 
           auto &&wmw_window = *wmw_iter;
           auto &&added_window = *added_windows_iter;
-          if (not ranges::equal(wmw_window, added_window))
+          if (not std::ranges::equal(wmw_window, added_window))
             return false;
         }
 
@@ -1898,7 +1898,7 @@ static void test_windows_iterators() {
 
           auto &&wmw_window = *wmw_iter;
           auto &&added_window = *added_windows_iter;
-          if (not ranges::equal(wmw_window, added_window))
+          if (not std::ranges::equal(wmw_window, added_window))
             return false;
         }
 
@@ -1909,7 +1909,7 @@ static void test_windows_iterators() {
       {
         auto wmw_iter = wmw_end;
         auto added_windows_iter = added_windows_end;
-        while (wmw_iter > ranges::next(wmw_begin)) {
+        while (wmw_iter > std::ranges::next(wmw_begin)) {
           wmw_iter -= 2;
           added_windows_iter -= 2;
 
@@ -1918,7 +1918,7 @@ static void test_windows_iterators() {
 
           auto &&wmw_window = *wmw_iter;
           auto &&added_window = *added_windows_iter;
-          if (not ranges::equal(wmw_window, added_window))
+          if (not std::ranges::equal(wmw_window, added_window))
             return false;
         }
 
@@ -1954,8 +1954,8 @@ static void test_windows_iterators() {
 
     return test_with_iterators(std::forward<wmw_type>(wmw).begin(),
                                std::forward<wmw_type>(wmw).end(),
-                               ranges::begin(added_windows),
-                               ranges::end(added_windows)) and
+                               std::ranges::begin(added_windows),
+                               std::ranges::end(added_windows)) and
            test_with_iterators(std::forward<wmw_type>(wmw).rbegin(),
                                std::forward<wmw_type>(wmw).rend(),
                                std::rbegin(added_windows),
@@ -1981,20 +1981,20 @@ static void test_concrete_base() {
     accessor.emplace_back(std::move(base));
 
   bases = create_random_bases(n_clusters, n_bases);
-  ranges::copy(bases, ranges::begin(accessor));
-  assert(ranges::equal(accessor, bases));
+  std::ranges::copy(bases, std::ranges::begin(accessor));
+  assert(std::ranges::equal(accessor, bases));
 
   bases = create_random_bases(n_clusters, n_bases);
-  ranges::move(bases, ranges::begin(accessor));
-  assert(ranges::equal(accessor, bases));
+  std::ranges::move(bases, std::ranges::begin(accessor));
+  assert(std::ranges::equal(accessor, bases));
 
   bases = create_random_bases(n_clusters, n_bases);
-  ranges::copy(accessor, ranges::begin(bases));
-  assert(ranges::equal(accessor, bases));
+  std::ranges::copy(accessor, std::ranges::begin(bases));
+  assert(std::ranges::equal(accessor, bases));
 
   bases = create_random_bases(n_clusters, n_bases);
-  ranges::move(accessor, ranges::begin(bases));
-  assert(ranges::equal(accessor, bases));
+  std::ranges::move(accessor, std::ranges::begin(bases));
+  assert(std::ranges::equal(accessor, bases));
 }
 
 static void test_concrete_window() {
@@ -2009,7 +2009,7 @@ static void test_concrete_window() {
     std::vector<WindowsMergerWindow> added_windows(n_windows);
     auto generate_added_windows = [&](bool use_push_back = false) {
       std::generate(
-          ranges::begin(added_windows), ranges::end(added_windows),
+          std::ranges::begin(added_windows), std::ranges::end(added_windows),
           [window_index = windows_size_type(0), use_push_back]() mutable {
             WindowsMergerWindow window(n_clusters);
             auto random_bases = create_random_bases(n_clusters, n_bases_to_add);
@@ -2067,57 +2067,57 @@ static void test_concrete_window() {
     {
       generate_added_windows(true);
       CREATE_WMW()
-      ranges::copy(added_windows, ranges::begin(wmw));
-      assert(ranges::equal(wmw, added_windows));
+      std::ranges::copy(added_windows, std::ranges::begin(wmw));
+      assert(std::ranges::equal(wmw, added_windows));
     }
 
     {
       generate_added_windows();
       CREATE_WMW()
-      ranges::move(added_windows, ranges::begin(wmw));
-      assert(ranges::equal(wmw, added_windows));
+      std::ranges::move(added_windows, std::ranges::begin(wmw));
+      assert(std::ranges::equal(wmw, added_windows));
     }
 
     {
       generate_added_windows(true);
       CREATE_WMW()
-      ranges::copy(added_windows, std::move(wmw).begin());
-      assert(ranges::equal(wmw, added_windows));
+      std::ranges::copy(added_windows, std::move(wmw).begin());
+      assert(std::ranges::equal(wmw, added_windows));
     }
 
     {
       generate_added_windows();
       CREATE_WMW()
-      ranges::move(added_windows, std::move(wmw).begin());
-      assert(ranges::equal(wmw, added_windows));
+      std::ranges::move(added_windows, std::move(wmw).begin());
+      assert(std::ranges::equal(wmw, added_windows));
     }
 
     {
       generate_added_windows(true);
       CREATE_WMW()
-      ranges::copy(wmw, ranges::begin(added_windows));
-      assert(ranges::equal(wmw, added_windows));
+      std::ranges::copy(wmw, std::ranges::begin(added_windows));
+      assert(std::ranges::equal(wmw, added_windows));
     }
 
     {
       generate_added_windows();
       CREATE_WMW()
-      ranges::move(wmw, ranges::begin(added_windows));
-      assert(ranges::equal(wmw, added_windows));
+      std::ranges::move(wmw, std::ranges::begin(added_windows));
+      assert(std::ranges::equal(wmw, added_windows));
     }
 
     {
       generate_added_windows(true);
       CREATE_WMW()
-      ranges::copy(std::move(wmw), ranges::begin(added_windows));
-      assert(ranges::equal(wmw, added_windows));
+      std::ranges::copy(std::move(wmw), std::ranges::begin(added_windows));
+      assert(std::ranges::equal(wmw, added_windows));
     }
 
     {
       generate_added_windows();
       CREATE_WMW()
-      ranges::move(std::move(wmw), ranges::begin(added_windows));
-      assert(ranges::equal(wmw, added_windows));
+      std::ranges::move(std::move(wmw), std::ranges::begin(added_windows));
+      assert(std::ranges::equal(wmw, added_windows));
     }
   };
 
@@ -2137,8 +2137,8 @@ static void test_concrete_window_iterator() {
     for (auto &&base : random_bases)
       window.emplace_back(base);
 
-    assert(ranges::equal(get_begin(window), get_end(window),
-                         get_begin(random_bases), get_end(random_bases)));
+    assert(std::ranges::equal(get_begin(window), get_end(window),
+                              get_begin(random_bases), get_end(random_bases)));
 
     for (bases_size_type base_index = 0; base_index < n_bases_to_add;
          ++base_index) {
@@ -2185,21 +2185,21 @@ static void test_concrete_window_coverage_accessor() {
     window.emplace_back(std::move(base));
 
   auto perform_test = [&](auto window_get) {
-    auto added_bases_iter = ranges::begin(added_bases);
+    auto added_bases_iter = std::ranges::begin(added_bases);
     auto coverages = window_get(window).coverages();
     assert(coverages.size() == n_bases_to_add);
     assert(coverages.front() == added_bases.front().coverage());
     assert(coverages.back() == added_bases.back().coverage());
 
     {
-      auto coverages_iter = ranges::begin(coverages);
-      const auto coverages_end = ranges::end(coverages);
+      auto coverages_iter = std::ranges::begin(coverages);
+      const auto coverages_end = std::ranges::end(coverages);
 
       for (; coverages_iter < coverages_end;
            ++coverages_iter, ++added_bases_iter) {
         assert(*coverages_iter == added_bases_iter->coverage());
       }
-      assert(added_bases_iter == ranges::end(added_bases));
+      assert(added_bases_iter == std::ranges::end(added_bases));
     }
 
     for (bases_size_type base_index = 0; base_index < n_bases_to_add;
@@ -2246,7 +2246,8 @@ static void test_concrete_window_coverage_iterator() {
       }
       assert(coverages_iter <= coverages_iter);
       assert(coverages_iter >= coverages_iter);
-      assert(ranges::distance(coverages_iter, coverages_end) == n_bases_to_add);
+      assert(std::ranges::distance(coverages_iter, coverages_end) ==
+             n_bases_to_add);
 
       for (; coverages_iter < coverages_end;
            ++coverages_iter, ++added_bases_iter) {
@@ -2411,11 +2412,11 @@ static void test_concrete_window_weights_accessor() {
     assert(linear_weights.back() == added_bases.back().weight(n_clusters - 1));
 
     {
-      auto linear_weights_iter = ranges::begin(linear_weights);
-      const auto linear_weights_end = ranges::end(linear_weights);
-      assert(ranges::distance(linear_weights_iter, linear_weights_end) ==
+      auto linear_weights_iter = std::ranges::begin(linear_weights);
+      const auto linear_weights_end = std::ranges::end(linear_weights);
+      assert(std::ranges::distance(linear_weights_iter, linear_weights_end) ==
              n_clusters * n_bases_to_add);
-      auto added_bases_iter = ranges::begin(added_bases);
+      auto added_bases_iter = std::ranges::begin(added_bases);
       clusters_size_type weight_index = 0;
 
       for (; linear_weights_iter < linear_weights_end;
@@ -2426,7 +2427,7 @@ static void test_concrete_window_weights_accessor() {
         }
         assert(*linear_weights_iter == added_bases_iter->weight(weight_index));
       }
-      assert(added_bases_iter == std::prev(ranges::end(added_bases)));
+      assert(added_bases_iter == std::prev(std::ranges::end(added_bases)));
       assert(weight_index == n_clusters);
     }
 
@@ -2496,7 +2497,7 @@ static void test_concrete_window_weights_iterator() {
       }
       assert(linear_weights_iter <= linear_weights_iter);
       assert(linear_weights_iter >= linear_weights_iter);
-      assert(ranges::distance(linear_weights_iter, linear_weights_end) ==
+      assert(std::ranges::distance(linear_weights_iter, linear_weights_end) ==
              n_bases_to_add * n_clusters);
 
       for (; linear_weights_iter < linear_weights_end;
@@ -2653,7 +2654,7 @@ static void test_windows_sort() {
   constexpr bases_size_type max_sequence_size = 300;
   std::vector<decltype(create_random_bases(n_clusters, n_bases))> raw_windows(
       n_windows);
-  std::generate(ranges::begin(raw_windows), ranges::end(raw_windows),
+  std::generate(std::ranges::begin(raw_windows), std::ranges::end(raw_windows),
                 [] { return create_random_bases(n_clusters, n_bases); });
   WindowsMergerWindows wmw(n_clusters, n_bases, n_windows);
   auto all_starts = create_random_starts(n_windows, n_bases, max_sequence_size);
@@ -2672,26 +2673,29 @@ static void test_windows_sort() {
 
   {
     std::vector<std::size_t> indices(n_windows);
-    std::iota(ranges::begin(indices), ranges::end(indices), std::size_t(0));
-    ranges::stable_sort(indices, ranges::less{},
-                        [&](std::size_t index) { return all_starts[index]; });
+    std::iota(std::ranges::begin(indices), std::ranges::end(indices),
+              std::size_t(0));
+    std::ranges::stable_sort(
+        indices, std::ranges::less{},
+        [&](std::size_t index) { return all_starts[index]; });
 
     decltype(raw_windows) new_raw_windows;
     new_raw_windows.reserve(n_windows);
-    std::transform(ranges::begin(indices), ranges::end(indices),
+    std::transform(std::ranges::begin(indices), std::ranges::end(indices),
                    std::back_inserter(new_raw_windows),
                    [&](std::size_t index) -> decltype(auto) {
                      return std::move(raw_windows[index]);
                    });
 
     raw_windows = std::move(new_raw_windows);
-    ranges::stable_sort(all_starts);
+    std::ranges::stable_sort(all_starts);
   }
 
-  ranges::stable_sort(wmw, ranges::less{},
-                      [](auto &&window) { return window.begin_index(); });
-  assert(ranges::is_sorted(wmw, ranges::less{},
-                           [](auto &&window) { return window.begin_index(); }));
+  std::ranges::stable_sort(wmw, std::ranges::less{},
+                           [](auto &&window) { return window.begin_index(); });
+  assert(std::ranges::is_sorted(wmw, std::ranges::less{}, [](auto &&window) {
+    return window.begin_index();
+  }));
 
   for (windows_size_type window_index = 0; window_index < n_windows;
        ++window_index) {
@@ -2700,7 +2704,7 @@ static void test_windows_sort() {
 
     assert(window_accessor.begin_index() == all_starts[window_index]);
     assert(window_accessor.end_index() == all_starts[window_index] + n_bases);
-    assert(ranges::equal(window_accessor, raw_window));
+    assert(std::ranges::equal(window_accessor, raw_window));
   }
 }
 
@@ -2716,29 +2720,31 @@ static void test_window_accessor_resize() {
   auto bases = create_random_bases(n_clusters, n_bases);
   for (auto &&base : bases)
     accessor.emplace_back(base);
-  assert(ranges::equal(bases, accessor));
+  assert(std::ranges::equal(bases, accessor));
 
   accessor.resize(60);
   assert(wmw.bases_capacity() == 60);
   assert(accessor.size() == 60);
   assert(accessor.coverages().size() == 60);
-  assert(ranges::equal(bases, accessor | ranges::view::take(bases.size())));
+  assert(std::ranges::equal(bases, accessor | std::views::take(bases.size())));
 
   WindowsMergerWindowBase default_base(n_clusters);
-  ranges::fill(default_base.weights(), TinyFraction(0.));
+  std::ranges::fill(default_base.weights(), TinyFraction(0.));
   default_base.coverage() = 0;
 
-  assert(ranges::all_of(
-      ranges::next(ranges::begin(accessor), n_bases), ranges::end(accessor),
+  assert(std::ranges::all_of(
+      std::ranges::next(std::ranges::begin(accessor), n_bases),
+      std::ranges::end(accessor),
       [&default_base](auto &&base) { return base == default_base; }));
 
   accessor.resize(20);
   assert(wmw.bases_capacity() == 60);
   assert(accessor.size() == 20);
   assert(accessor.coverages().size() == 20);
-  assert(ranges::equal(ranges::begin(bases),
-                       ranges::next(ranges::begin(bases), 20),
-                       ranges::begin(accessor), ranges::end(accessor)));
+  assert(std::ranges::equal(std::ranges::begin(bases),
+                            std::ranges::next(std::ranges::begin(bases), 20),
+                            std::ranges::begin(accessor),
+                            std::ranges::end(accessor)));
 }
 
 static void test_move_constructor() {
@@ -2799,7 +2805,8 @@ static void test_move_constructor() {
     constexpr bases_size_type n_bases = 30;
     std::vector<decltype(create_random_bases(n_clusters, n_bases))> raw_windows(
         n_windows);
-    std::generate(ranges::begin(raw_windows), ranges::end(raw_windows),
+    std::generate(std::ranges::begin(raw_windows),
+                  std::ranges::end(raw_windows),
                   [] { return create_random_bases(n_clusters, n_bases); });
 
     WindowsMergerWindows wmw(n_clusters);
@@ -2893,7 +2900,8 @@ static void test_move_assignment() {
       constexpr bases_size_type n_bases = 30;
       std::vector<decltype(create_random_bases(n_clusters, n_bases))>
           raw_windows(n_windows);
-      std::generate(ranges::begin(raw_windows), ranges::end(raw_windows),
+      std::generate(std::ranges::begin(raw_windows),
+                    std::ranges::end(raw_windows),
                     [] { return create_random_bases(n_clusters, n_bases); });
 
       WindowsMergerWindows wmw(n_clusters);
@@ -2960,7 +2968,7 @@ static void test_window_accessor_clear() {
   constexpr bases_size_type n_bases = 30;
   std::vector<decltype(create_random_bases(n_clusters, n_bases))> raw_windows(
       n_windows);
-  std::generate(ranges::begin(raw_windows), ranges::end(raw_windows),
+  std::generate(std::ranges::begin(raw_windows), std::ranges::end(raw_windows),
                 [] { return create_random_bases(n_clusters, n_bases); });
 
   WindowsMergerWindows wmw(n_clusters);
@@ -2999,10 +3007,11 @@ static void test_reorder_clusters() {
   }
 
   std::vector<clusters_size_type> new_clusters_order(n_clusters);
-  ranges::iota(new_clusters_order, clusters_size_type(0));
+  std::iota(std::ranges::begin(new_clusters_order),
+            std::ranges::end(new_clusters_order), clusters_size_type(0));
   {
     std::mt19937 random_gen(std::random_device{}());
-    ranges::shuffle(new_clusters_order, random_gen);
+    std::ranges::shuffle(new_clusters_order, random_gen);
   }
 
   for (auto &&window : wmw) {
@@ -3010,17 +3019,17 @@ static void test_reorder_clusters() {
   }
 
   {
-    auto wmw_window_iter = ranges::cbegin(wmw);
-    auto const wmw_end = ranges::cend(wmw);
-    auto added_windows_iter = ranges::cbegin(added_windows);
+    auto wmw_window_iter = std::ranges::cbegin(wmw);
+    auto const wmw_end = std::ranges::cend(wmw);
+    auto added_windows_iter = std::ranges::cbegin(added_windows);
 
     for (; wmw_window_iter < wmw_end; ++wmw_window_iter, ++added_windows_iter) {
       auto &&window = *wmw_window_iter;
       auto &&added_window = *added_windows_iter;
 
-      auto window_iter = ranges::cbegin(window);
-      auto const window_end = ranges::cend(window);
-      auto added_window_iter = ranges::cbegin(added_window);
+      auto window_iter = std::ranges::cbegin(window);
+      auto const window_end = std::ranges::cend(window);
+      auto added_window_iter = std::ranges::cbegin(added_window);
       for (; window_iter < window_end; ++window_iter, ++added_window_iter) {
         auto &&base = *window_iter;
         auto &&added_window_base = *added_window_iter;

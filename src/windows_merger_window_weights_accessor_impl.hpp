@@ -3,8 +3,6 @@
 #include "windows_merger_window_weights_accessor.hpp"
 #include "windows_merger_window_weights_iterator.hpp"
 
-#include <range/v3/iterator/concepts.hpp>
-
 namespace windows_merger {
 
 template <typename Window>
@@ -80,12 +78,12 @@ auto WindowsMergerWindowWeightsAccessor<Window>::rend() const noexcept
 namespace windows_merger {
 
 static_assert(
-    ::ranges::RandomAccessIterator<
+    std::random_access_iterator<
         WindowsMergerWindowWeightsAccessor<WindowsMergerWindow>::iterator>);
-static_assert(::ranges::RandomAccessIterator<WindowsMergerWindowWeightsAccessor<
+static_assert(std::random_access_iterator<WindowsMergerWindowWeightsAccessor<
                   const WindowsMergerWindow>::iterator>);
 static_assert(
-    ::ranges::RandomAccessIterator<
+    std::random_access_iterator<
         WindowsMergerWindowWeightsAccessor<WindowsMergerWindow &&>::iterator>);
 
 } // namespace windows_merger

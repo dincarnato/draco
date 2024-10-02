@@ -8,8 +8,6 @@
 #include "hard_clusters_iterator.hpp"
 #include "hard_clusters_wrapper.hpp"
 
-#include <range/v3/iterator/concepts.hpp>
-
 #include <vector>
 
 template <typename Type> struct HardClustersBase {
@@ -76,16 +74,16 @@ private:
 using HardClusters = HardClustersBase<unsigned char>;
 static_assert(is_clusters_v<HardClusters>);
 
-static_assert(ranges::RandomAccessIterator<typename HardClusters::iterator>);
+static_assert(std::random_access_iterator<typename HardClusters::iterator>);
 static_assert(
-    ranges::RandomAccessIterator<typename HardClusters::const_iterator>);
+    std::random_access_iterator<typename HardClusters::const_iterator>);
 
-static_assert(ranges::RandomAccessIterator<
+static_assert(std::random_access_iterator<
               typename HardClusters::cluster_wrapper_type::iterator>);
-static_assert(ranges::RandomAccessIterator<
+static_assert(std::random_access_iterator<
               typename HardClusters::const_cluster_wrapper_type::iterator>);
 
-static_assert(ranges::RandomAccessIterator<
+static_assert(std::random_access_iterator<
               typename HardClusters::clusters_wrapper_type::iterator>);
-static_assert(ranges::RandomAccessIterator<
+static_assert(std::random_access_iterator<
               typename HardClusters::const_clusters_wrapper_type::iterator>);

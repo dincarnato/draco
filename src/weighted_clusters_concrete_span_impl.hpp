@@ -3,7 +3,7 @@
 #include "weighted_clusters_concrete_span.hpp"
 #include "weighted_clusters_span.hpp"
 
-#include <range/v3/algorithm.hpp>
+#include <algorithm>
 
 template <typename T>
 template <typename U>
@@ -26,5 +26,5 @@ template <typename Span>
 void WeightedClustersConcreteSpan<T>::init_from_span(Span &&span) noexcept(
     false) {
   base_type::resize(span.size());
-  ranges::copy(span, std::begin(*this));
+  std::ranges::copy(span, std::begin(*this));
 }

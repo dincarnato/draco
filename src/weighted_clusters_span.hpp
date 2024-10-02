@@ -9,6 +9,9 @@ class WeightedClusters;
 template <typename T> struct WeightedClustersConcreteSpan;
 
 template <typename T> class WeightedClustersSpan {
+  template <typename> friend class WeightedClustersSpan;
+  template <typename, bool> friend class WeightedClustersIterator;
+
   using weights_reference =
       std::conditional_t<std::is_const_v<T>,
                          const weighted_clusters_weights_type &,

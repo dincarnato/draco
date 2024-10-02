@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cassert>
 #include <functional>
-#include <range/v3/algorithm.hpp>
 #include <tuple>
 
 template <typename Matrix>
@@ -23,11 +22,13 @@ template <typename Matrix>
 auto RingmapMatrixAccessor<Matrix>::operator=(value_type value) const
     noexcept(false) -> RingmapMatrixAccessor const & {
 
-  if (auto &&[iter, found] = find(); not value and found)
-    row->erase(ranges::remove(iter, ranges::end(*row), col), ranges::end(*row));
-  else if (value and not found) {
+  if (auto &&[iter, found] = find(); not value and found) {
+    auto &&[begin, end] =
+        std::ranges::remove(iter, std::ranges::end(*row), col);
+    row->erase(begin, end);
+  } else if (value and not found) {
     row->emplace_back(col);
-    ranges::sort(*row);
+    std::ranges::sort(*row);
   }
 
   return *this;
@@ -84,9 +85,9 @@ auto RingmapMatrixAccessor<Matrix>::operator=(
 template <typename Matrix>
 auto RingmapMatrixAccessor<Matrix>::find() const noexcept
     -> std::pair<row_iterator, bool> {
-  assert(ranges::is_sorted(*row));
-  auto iter = ranges::upper_bound(*row, col, std::less_equal<unsigned>());
-  bool found = (iter != ranges::end(*row) and *iter == col);
+  assert(std::ranges::is_sorted(*row));
+  auto iter = std::ranges::upper_bound(*row, col, std::less_equal<unsigned>());
+  bool found = (iter != std::ranges::end(*row) and *iter == col);
   return {std::move(iter), found};
 }
 

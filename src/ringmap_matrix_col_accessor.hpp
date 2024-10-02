@@ -8,6 +8,8 @@
 template <typename, RingmapMatrixIteratorType> class RingmapMatrixIterator;
 class RingmapMatrix;
 
+template <typename Matrix> class RingmapMatrixAccessor;
+
 template <typename Matrix> class RingmapMatrixColAccessor {
   template <typename> friend class RingmapMatrixColIterator;
   friend class RingmapMatrix;

@@ -2,8 +2,6 @@
 
 #include "ringmap_data.hpp"
 
-#include <range/v3/algorithm.hpp>
-
 template <typename Iter>
 RingmapData::RingmapData(const std::string &sequence, unsigned nReads,
                          Iter readsBegin, Iter readsEnd, Args const &args)
@@ -22,13 +20,13 @@ template <typename Iter> void RingmapData::addReads(Iter begin, Iter end) {
 #ifndef NDEBUG
   std::size_t readsCount = 0;
 #endif
-  ranges::for_each(begin, end, [&, this](auto &&read) {
+  std::ranges::for_each(begin, end, [&, this](auto &&read) {
     auto beginCurrentBaseCoverages =
-        ranges::next(ranges::begin(baseCoverages), read.begin);
-    ranges::transform(beginCurrentBaseCoverages,
-                      ranges::next(ranges::begin(baseCoverages), read.end),
-                      beginCurrentBaseCoverages,
-                      [](unsigned value) { return value + 1; });
+        std::ranges::next(std::ranges::begin(baseCoverages), read.begin);
+    std::ranges::transform(
+        beginCurrentBaseCoverages,
+        std::ranges::next(std::ranges::begin(baseCoverages), read.end),
+        beginCurrentBaseCoverages, [](unsigned value) { return value + 1; });
     m_data.addRead(read);
 
 #ifndef NDEBUG

@@ -1,8 +1,9 @@
 #include "windows_merger.hpp"
 
+#include <numeric>
 #include <type_traits>
 
-#include <range/v3/all.hpp>
+namespace ranges = std::ranges;
 
 namespace windows_merger {
 
@@ -48,7 +49,7 @@ void WindowsMerger::process_queue() {
           },
           std::move(*maybe_window));
     } else {
-      dequeueing.store(false, std::memory_order::memory_order_release);
+      dequeueing.store(false, std::memory_order::release);
       break;
     }
   }
@@ -57,7 +58,7 @@ void WindowsMerger::process_queue() {
 void WindowsMerger::wait_queue() {
   queue.finished();
   if (bool expected = false; dequeueing.compare_exchange_strong(
-          expected, true, std::memory_order::memory_order_acq_rel)) {
+          expected, true, std::memory_order::acq_rel)) {
     process_queue();
   }
 
@@ -203,8 +204,9 @@ auto WindowsMerger::get_best_distance_and_permutation_between(
   const auto clusters_size = cache.clusters_size();
   permutation_indices.resize(clusters_size);
   best_permutation.resize(clusters_size);
-  ranges::iota(permutation_indices, clusters_size_type(0));
-  ranges::copy(permutation_indices, ranges::begin(best_permutation));
+  std::iota(std::ranges::begin(permutation_indices),
+            std::ranges::end(permutation_indices), clusters_size_type(0));
+  std::ranges::copy(permutation_indices, ranges::begin(best_permutation));
 
   const auto cache_window_a_begin = cache_window_a.begin_index();
   const auto cache_window_a_end = cache_window_a.end_index();
@@ -269,8 +271,9 @@ auto WindowsMerger::get_best_distance_and_permutation_between(
                                        double weight) -> double {
           auto &&window_indices =
               std::as_const(cache_indices)[cache_window_index];
-          auto &&retval = ranges::accumulate(
-              window_indices, 0.,
+          auto &&retval = std::accumulate(
+              std::ranges::begin(window_indices),
+              std::ranges::end(window_indices), 0.,
               [&](double acc, windows_size_type window_index) {
                 auto &&window = std::as_const(windows)[window_index];
                 if (base_index < window.begin_index() or
@@ -319,7 +322,7 @@ auto WindowsMerger::get_best_distance_and_permutation_between(
       ranges::copy(permutation_begin, permutation_end,
                    ranges::begin(best_permutation));
     }
-  } while (ranges::next_permutation(permutation_begin, permutation_end));
+  } while (std::next_permutation(permutation_begin, permutation_end));
 
   const double penalty =
       static_cast<double>(

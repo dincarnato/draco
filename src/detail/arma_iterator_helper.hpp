@@ -4,7 +4,6 @@
 
 #include <armadillo>
 #include <optional>
-#include <range/v3/core.hpp>
 
 namespace detail {
 
@@ -20,7 +19,7 @@ public:
                          arma::colvec>;
   using reference = ArmaAccessor<Mat, direction>;
   using difference_type = std::ptrdiff_t;
-  using iterator_category = ranges::random_access_iterator_tag;
+  using iterator_category = std::random_access_iterator_tag;
   using self = ArmaIteratorHelper;
 
   ArmaIteratorHelper() = default;

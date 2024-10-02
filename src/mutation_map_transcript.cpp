@@ -1,10 +1,9 @@
 #include "mutation_map_transcript.hpp"
 #include "mutation_map.hpp"
 
-#include <range/v3/algorithm.hpp>
-#include <range/v3/view.hpp>
-
 #include <cassert>
+#include <iterator>
+#include <ranges>
 
 MutationMapTranscript::MutationMapTranscript(
     const MutationMap &mutationMap, std::streampos offset) noexcept(false)
@@ -35,7 +34,7 @@ MutationMapTranscript::MutationMapTranscript(
     std::vector<char> rawSequence((nBases + 1) / 2);
     iteratorStream.read(rawSequence.data(), (nBases + 1) / 2);
 
-    auto baseIter = ranges::begin(sequence);
+    auto baseIter = std::ranges::begin(sequence);
     for (unsigned baseIndex = 0; baseIndex < (nBases + 1) / 2; ++baseIndex) {
       for (unsigned splitIndex = 0; splitIndex < 2; ++splitIndex, ++baseIter) {
         switch ((rawSequence[baseIndex] >> ((1 - splitIndex) * 4)) & 0x0f) {
@@ -197,15 +196,16 @@ MutationMapTranscript::calculateMutationsAndCoverage() const noexcept(false) {
       std::vector<std::size_t>(sequenceSize, 0),
       std::vector<std::size_t>(sequenceSize, 0)};
 
-  ranges::for_each(*this, [&](auto &&read) {
+  std::ranges::for_each(*this, [&](auto &&read) {
     for (auto index : read.indices)
       ++out[0][index];
 
-    ranges::for_each(out[1] | ranges::view::slice(read.begin, read.end),
-                     [&](auto &index) { ++index; });
+    std::ranges::for_each(out[1] | std::views::drop(read.begin) |
+                              std::views::take(read.end - read.begin),
+                          [&](auto &index) { ++index; });
   });
 
   return out;
 }
 
-static_assert(ranges::InputIterator<MutationMapTranscript::const_iterator>);
+static_assert(std::input_iterator<MutationMapTranscript::const_iterator>);

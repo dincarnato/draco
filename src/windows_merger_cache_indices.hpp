@@ -7,8 +7,6 @@
 #include "het/allocator_traits.hpp"
 #include "het/vec2d_builder.hpp"
 
-#include <range/v3/core.hpp>
-
 namespace windows_merger {
 
 template <typename> struct WindowsMergerCacheIndicesIterator;
@@ -33,9 +31,9 @@ struct WindowsMergerCacheIndices
   using iterator = WindowsMergerCacheIndicesIterator<WindowsMergerCacheIndices>;
   using const_iterator =
       WindowsMergerCacheIndicesIterator<const WindowsMergerCacheIndices>;
-  using reverse_iterator = ranges::reverse_iterator<
+  using reverse_iterator = std::reverse_iterator<
       WindowsMergerCacheIndicesIterator<WindowsMergerCacheIndices>>;
-  using const_reverse_iterator = ranges::reverse_iterator<
+  using const_reverse_iterator = std::reverse_iterator<
       WindowsMergerCacheIndicesIterator<const WindowsMergerCacheIndices>>;
 
   WindowsMergerCacheIndices() = default;

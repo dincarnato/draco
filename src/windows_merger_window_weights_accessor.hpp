@@ -3,7 +3,6 @@
 #include "windows_merger_traits.hpp"
 
 #include "nostd/type_traits.hpp"
-#include <range/v3/core.hpp>
 
 namespace windows_merger {
 
@@ -21,7 +20,7 @@ template <typename Window> struct WindowsMergerWindowWeightsAccessor {
       std::conditional_t<std::is_const_v<Window>, weight_type const &,
                          weight_type &>>;
   using iterator = WindowsMergerWindowWeightsIterator<Window>;
-  using reverse_iterator = ranges::reverse_iterator<iterator>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
 
   WindowsMergerWindowWeightsAccessor(Window &window) noexcept;
 

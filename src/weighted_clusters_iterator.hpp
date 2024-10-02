@@ -1,7 +1,6 @@
 #pragma once
 
 #include <iterator>
-#include <range/v3/core.hpp>
 #include <type_traits>
 
 class WeightedClusters;
@@ -23,7 +22,7 @@ public:
   using reference = std::conditional_t<
       useSpans, weighted_clusters_span_type,
       std::conditional_t<std::is_rvalue_reference_v<T>, T, T &>>;
-  using iterator_category = ranges::random_access_iterator_tag;
+  using iterator_category = std::random_access_iterator_tag;
 
   static constexpr EndTag endTag{};
 

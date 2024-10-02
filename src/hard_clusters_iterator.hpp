@@ -3,7 +3,6 @@
 #include "hard_cluster_wrapper.hpp"
 
 #include <cstdint>
-#include <range/v3/core.hpp>
 #include <type_traits>
 
 struct HardCluster;
@@ -11,7 +10,7 @@ struct HardCluster;
 template <typename Cluster, bool complemented> struct HardClustersIterator {
   using cluster_type = typename HardClustersTraits<Cluster>::cluster_type;
   using index_type = typename HardClustersTraits<Cluster>::index_type;
-  using iterator_category = ranges::random_access_iterator_tag;
+  using iterator_category = std::random_access_iterator_tag;
   using wrapper_type = HardClusterWrapper<Cluster, complemented>;
   using value_type = HardCluster;
   using reference = wrapper_type;

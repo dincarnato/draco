@@ -1,7 +1,6 @@
 #pragma once
 
 #include "clusters_traits.hpp"
-#include <range/v3/core.hpp>
 #include <type_traits>
 
 template <typename, bool> struct HardClusterWrapper;
@@ -16,7 +15,7 @@ struct HardClusterElementIterator {
   using value_type = bool;
   using reference = wrapper_type;
   using difference_type = std::ptrdiff_t;
-  using iterator_category = ranges::random_access_iterator_tag;
+  using iterator_category = std::random_access_iterator_tag;
 
   HardClusterElementIterator() = default;
   HardClusterElementIterator(hard_cluster_wrapper_type const &cluster,

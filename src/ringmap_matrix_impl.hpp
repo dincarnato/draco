@@ -5,7 +5,6 @@
 #include "utils.hpp"
 
 #include <memory>
-#include <range/v3/algorithm.hpp>
 
 template <typename Iterable>
 void RingmapMatrix::addRead(
@@ -30,7 +29,7 @@ void RingmapMatrix::addRead(
     std::enable_if_t<std::is_same<std::decay_t<TranscriptRead>,
                                   MutationMapTranscriptRead>::value>
         *) noexcept(false) {
-  assert(ranges::is_sorted(transcriptRead.indices));
+  assert(std::ranges::is_sorted(transcriptRead.indices));
   while (readsCount >= data.size())
     data.emplace_back();
   data[readsCount] = std::forward<TranscriptRead>(transcriptRead).indices;
@@ -44,25 +43,25 @@ void RingmapMatrix::keepOnlyIndices(Iterable &&iterable) noexcept(false) {
   using iterable_type = std::decay_t<Iterable>;
   const iterable_type *sortedIterable;
   std::unique_ptr<iterable_type> localIterable;
-  if (ranges::is_sorted(iterable))
+  if (std::ranges::is_sorted(iterable))
     sortedIterable = &iterable;
   else {
     localIterable.reset(new iterable_type(std::forward<Iterable>(iterable)));
-    ranges::sort(*localIterable);
+    std::ranges::sort(*localIterable);
     sortedIterable = localIterable.get();
   }
 
-  auto end = ranges::next(ranges::begin(data), readsCount);
+  auto end = std::ranges::next(std::ranges::begin(data), readsCount);
   for (unsigned index = readsCount;;) {
     if (index == 0)
       break;
     --index;
 
-    if (not ranges::binary_search(*sortedIterable, index))
+    if (not std::ranges::binary_search(*sortedIterable, index))
       data[index] = std::move(*--end);
   }
-  readsCount =
-      static_cast<unsigned>(ranges::distance(ranges::begin(data), end));
+  readsCount = static_cast<unsigned>(
+      std::ranges::distance(std::ranges::begin(data), end));
   data.resize(readsCount);
 }
 
@@ -84,9 +83,9 @@ arma::mat RingmapMatrix::covariance(Weights &&baseWeights) const
         continue;
 
       const auto &colVector = transposed.data[col];
-      std::size_t count =
-          count_intersections(ranges::begin(rowVector), ranges::end(rowVector),
-                              ranges::begin(colVector), ranges::end(colVector));
+      std::size_t count = count_intersections(
+          std::ranges::begin(rowVector), std::ranges::end(rowVector),
+          std::ranges::begin(colVector), std::ranges::end(colVector));
 
 #ifndef NDEBUG
       if (row == col)
@@ -101,18 +100,18 @@ arma::mat RingmapMatrix::covariance(Weights &&baseWeights) const
 }
 
 static_assert(
-    ranges::RandomAccessIterator<typename RingmapMatrix::row_iterator>);
+    std::random_access_iterator<typename RingmapMatrix::row_iterator>);
 static_assert(
-    ranges::RandomAccessIterator<typename RingmapMatrix::const_row_iterator>);
+    std::random_access_iterator<typename RingmapMatrix::const_row_iterator>);
 static_assert(
-    ranges::RandomAccessIterator<typename RingmapMatrix::col_iterator>);
+    std::random_access_iterator<typename RingmapMatrix::col_iterator>);
 static_assert(
-    ranges::RandomAccessIterator<typename RingmapMatrix::const_col_iterator>);
-static_assert(ranges::RandomAccessIterator<
+    std::random_access_iterator<typename RingmapMatrix::const_col_iterator>);
+static_assert(std::random_access_iterator<
               typename RingmapMatrix::row_iterator_helper::iterator>);
-static_assert(ranges::RandomAccessIterator<
+static_assert(std::random_access_iterator<
               typename RingmapMatrix::const_row_iterator_helper::iterator>);
-static_assert(ranges::RandomAccessIterator<
+static_assert(std::random_access_iterator<
               typename RingmapMatrix::col_iterator_helper::iterator>);
-static_assert(ranges::RandomAccessIterator<
+static_assert(std::random_access_iterator<
               typename RingmapMatrix::const_col_iterator_helper::iterator>);

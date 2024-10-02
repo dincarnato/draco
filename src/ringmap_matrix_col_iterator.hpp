@@ -23,7 +23,7 @@ public:
                                       const ringmap_matrix::row_type,
                                       typename ringmap_matrix::row_type>;
   using difference_type = std::ptrdiff_t;
-  using iterator_category = ranges::random_access_iterator_tag;
+  using iterator_category = std::random_access_iterator_tag;
   using self = RingmapMatrixColIterator;
 
   RingmapMatrixColIterator() = default;

@@ -8,9 +8,7 @@
 #include <cassert>
 #include <limits>
 #include <random>
-#include <range/v3/algorithm.hpp>
-#include <range/v3/numeric.hpp>
-#include <range/v3/view.hpp>
+#include <ranges>
 #include <type_traits>
 #include <vector>
 
@@ -61,25 +59,26 @@ GraphCut::partitionGraph(std::uint8_t nClusters, float weightModule,
                    static_cast<std::size_t>(minClusterTotalWeight));
 
       auto incrementUsableBases = [&](std::size_t index) {
+        auto r = usableBases | std::views::take(index);
         usableBases[index] = std::min(
             usableBases[index] + usableBasesModule,
-            nBases - ranges::accumulate(usableBases | ranges::view::take(index),
-                                        std::size_t(0)));
+            nBases - std::accumulate(std::ranges::begin(r), std::ranges::end(r),
+                                     std::size_t(0)));
       };
 
       usableBases[0] = usableBasesModule;
       auto bestScore = std::numeric_limits<double>::infinity();
       WeightedClusters temporaryWeights(nBases, nClusters, false);
       std::vector<std::size_t> baseIndices(nBases);
-      ranges::iota(baseIndices, std::size_t(0));
+      std::iota(std::begin(baseIndices), std::end(baseIndices), std::size_t(0));
 
       for (;;) {
         if (usableBases[clusterUsableBasesIndex] == 0) {
+          auto r = usableBases | std::views::take(clusterUsableBasesIndex + 1);
+
           maxUsableBases =
-              nBases -
-              ranges::accumulate(
-                  usableBases | ranges::view::take(clusterUsableBasesIndex + 1),
-                  std::size_t(0));
+              nBases - std::accumulate(std::ranges::begin(r),
+                                       std::ranges::end(r), std::size_t(0));
 
           assert(maxUsableBases <= nBases);
           if (clusterUsableBasesIndex ==
@@ -118,8 +117,9 @@ GraphCut::partitionGraph(std::uint8_t nClusters, float weightModule,
                   assert(lastUsableBasesIndex < nClusters);
                   incrementUsableBases(lastUsableBasesIndex);
 
-                  assert(ranges::accumulate(usableBases, std::size_t(0)) <=
-                         nBases);
+                  assert(std::accumulate(std::begin(usableBases),
+                                         std::end(usableBases),
+                                         std::size_t(0)) <= nBases);
                 }
                 break;
               } else {
@@ -128,8 +128,9 @@ GraphCut::partitionGraph(std::uint8_t nClusters, float weightModule,
 
                   incrementUsableBases(clusterUsableBasesIndex - 1);
                   usableBases[clusterUsableBasesIndex] = 0;
-                  assert(ranges::accumulate(usableBases, std::size_t(0)) <=
-                         nBases);
+                  assert(std::accumulate(std::begin(usableBases),
+                                         std::end(usableBases),
+                                         std::size_t(0)) <= nBases);
                   break;
                 } else {
                   usableBases[0] = 0;
@@ -145,39 +146,41 @@ GraphCut::partitionGraph(std::uint8_t nClusters, float weightModule,
             continue;
         }
 
-        assert(ranges::all_of(
+        assert(std::ranges::all_of(
             usableBases, [&](std::size_t bases) { return bases <= nBases; }));
-        assert(ranges::accumulate(usableBases, std::size_t(0)) == nBases);
-        assert(ranges::none_of(usableBases,
-                               [](std::size_t nBases) { return nBases == 0; }));
+        assert(std::accumulate(std::begin(usableBases), std::end(usableBases),
+                               std::size_t(0)) == nBases);
+        assert(std::ranges::none_of(
+            usableBases, [](std::size_t nBases) { return nBases == 0; }));
         for (std::uint16_t trialIndex = 0; trialIndex < nTries; ++trialIndex) {
           temporaryWeights.removeWeights();
 
-          ranges::shuffle(baseIndices, randomGen);
+          std::ranges::shuffle(baseIndices, randomGen);
 
-          auto baseIndicesIter = ranges::begin(baseIndices);
-          auto usableBasesIter = ranges::begin(usableBases);
+          auto baseIndicesIter = std::ranges::begin(baseIndices);
+          auto usableBasesIter = std::ranges::begin(usableBases);
           for (unsigned clusterIndex = 0; clusterIndex < nClusters;
                ++clusterIndex, ++usableBasesIter) {
-            assert(usableBasesIter < ranges::end(usableBases));
-            assert(baseIndicesIter < ranges::end(baseIndices));
+            assert(usableBasesIter < std::ranges::end(usableBases));
+            assert(baseIndicesIter < std::ranges::end(baseIndices));
 
             const auto currentUsableBases =
                 static_cast<std::ptrdiff_t>(*usableBasesIter);
             auto &&currentCluster = temporaryWeights.cluster(clusterIndex);
             const auto currentBaseIndicesEnd =
-                ranges::next(baseIndicesIter, currentUsableBases);
-            assert(static_cast<std::size_t>(ranges::distance(
-                       ranges::begin(baseIndices), currentBaseIndicesEnd)) ==
-                   ranges::accumulate(ranges::begin(usableBases),
-                                      ranges::next(usableBasesIter),
-                                      std::size_t(0)));
-            assert(currentBaseIndicesEnd <= ranges::end(baseIndices));
+                std::ranges::next(baseIndicesIter, currentUsableBases);
+            assert(
+                static_cast<std::size_t>(std::ranges::distance(
+                    std::ranges::begin(baseIndices), currentBaseIndicesEnd)) ==
+                std::accumulate(std::ranges::begin(usableBases),
+                                std::ranges::next(usableBasesIter),
+                                std::size_t(0)));
+            assert(currentBaseIndicesEnd <= std::ranges::end(baseIndices));
 
-            ranges::for_each(baseIndicesIter, currentBaseIndicesEnd,
-                             [&](std::size_t baseIndex) {
-                               currentCluster[baseIndex] = 1.f;
-                             });
+            std::ranges::for_each(baseIndicesIter, currentBaseIndicesEnd,
+                                  [&](std::size_t baseIndex) {
+                                    currentCluster[baseIndex] = 1.f;
+                                  });
 
             baseIndicesIter = currentBaseIndicesEnd;
           }
@@ -203,7 +206,7 @@ GraphCut::partitionGraph(std::uint8_t nClusters, float weightModule,
   float currentWeightChange = weightModule;
   double bestScore = NAN;
 
-  for (const auto clustersEnd = ranges::end(weightsClusters);;) {
+  for (const auto clustersEnd = std::ranges::end(weightsClusters);;) {
     bestScore = calculateCutScore(graph, weights);
 
     if (std::isnan(bestScore)) {
@@ -220,24 +223,24 @@ GraphCut::partitionGraph(std::uint8_t nClusters, float weightModule,
     // (theoretically, it cannot happens...). Let's init it...
     auto bestBaseIndex = std::numeric_limits<std::size_t>::max();
 
-    for (auto fromClusterIter = ranges::begin(weightsClusters);
+    for (auto fromClusterIter = std::ranges::begin(weightsClusters);
          fromClusterIter < clustersEnd; ++fromClusterIter) {
       auto &&fromCluster = *fromClusterIter;
 
-      const auto fromClusterEnd = ranges::end(fromCluster);
-      if (ranges::accumulate(ranges::begin(fromCluster), fromClusterEnd, 0.f) <=
-          3)
+      const auto fromClusterEnd = std::ranges::end(fromCluster);
+      if (std::accumulate(std::ranges::begin(fromCluster), fromClusterEnd,
+                          0.f) <= 3)
         continue;
 
-      for (auto toClusterIter = ranges::begin(weightsClusters);
+      for (auto toClusterIter = std::ranges::begin(weightsClusters);
            toClusterIter < clustersEnd; ++toClusterIter) {
         if (fromClusterIter == toClusterIter)
           continue;
 
         auto &&toCluster = *toClusterIter;
 
-        auto fromClusterCurrentIter = ranges::begin(fromCluster);
-        auto toClusterCurrentIter = ranges::begin(toCluster);
+        auto fromClusterCurrentIter = std::ranges::begin(fromCluster);
+        auto toClusterCurrentIter = std::ranges::begin(toCluster);
         std::size_t baseIndex = 0;
         for (; fromClusterCurrentIter < fromClusterEnd;
              ++fromClusterCurrentIter, ++toClusterCurrentIter, ++baseIndex) {
@@ -316,10 +319,11 @@ HardClusters GraphCut::partitionGraphHard(std::uint8_t nClusters,
 
         for (unsigned baseIndex = 0; baseIndex < adjacency.n_rows; ++baseIndex)
           hardClusters[baseIndex].set(clusterAssigner(randomGen));
-      } while (ranges::any_of(hardClustersWrapper,
-                              [](const auto &cluster) {
-                                return ranges::count(cluster, true) < 3;
-                              }) or
+      } while (std::ranges::any_of(hardClustersWrapper,
+                                   [](const auto &cluster) {
+                                     return std::ranges::count(cluster, true) <
+                                            3;
+                                   }) or
                std::isinf(calculateCutScore(graph, hardClusters)));
 
       return hardClusters;
@@ -328,7 +332,7 @@ HardClusters GraphCut::partitionGraphHard(std::uint8_t nClusters,
 
   auto clusters = hardClusters.clusters();
 
-  for (const auto clustersEnd = ranges::end(clusters);;) {
+  for (const auto clustersEnd = std::ranges::end(clusters);;) {
     double bestScore = calculateCutScore(graph, hardClusters);
     if (std::isnan(bestScore)) {
       std::cerr << "Invalid bestScore\nGraph content:\n";
@@ -343,23 +347,23 @@ HardClusters GraphCut::partitionGraphHard(std::uint8_t nClusters,
     // (theoretically, it cannot happens...). Let's init it...
     auto bestBaseIndex = std::numeric_limits<std::size_t>::max();
 
-    for (auto fromClusterIter = ranges::begin(clusters);
+    for (auto fromClusterIter = std::ranges::begin(clusters);
          fromClusterIter < clustersEnd; ++fromClusterIter) {
       auto fromCluster = *fromClusterIter;
-      if (ranges::count(fromCluster, true) <= 3)
+      if (std::ranges::count(fromCluster, true) <= 3)
         continue;
 
-      const auto fromClusterEnd = ranges::end(fromCluster);
+      const auto fromClusterEnd = std::ranges::end(fromCluster);
 
-      for (auto toClusterIter = ranges::begin(clusters);
+      for (auto toClusterIter = std::ranges::begin(clusters);
            toClusterIter < clustersEnd; ++toClusterIter) {
         if (fromClusterIter == toClusterIter)
           continue;
 
         auto toCluster = *toClusterIter;
 
-        auto fromClusterCurrentIter = ranges::begin(fromCluster);
-        auto toClusterCurrentIter = ranges::begin(toCluster);
+        auto fromClusterCurrentIter = std::ranges::begin(fromCluster);
+        auto toClusterCurrentIter = std::ranges::begin(toCluster);
         std::size_t baseIndex = 0;
         for (; fromClusterCurrentIter < fromClusterEnd;
              ++fromClusterCurrentIter, ++toClusterCurrentIter, ++baseIndex) {

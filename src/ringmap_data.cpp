@@ -7,10 +7,6 @@
 #include "spectral_partitioner.hpp"
 #include "tokenizer_iterator.hpp"
 
-#include <range/v3/algorithm.hpp>
-#include <range/v3/iterator/insert_iterators.hpp>
-#include <range/v3/numeric.hpp>
-
 #include <array>
 #include <cassert>
 #include <fstream>
@@ -66,11 +62,11 @@ RingmapData::RingmapData(const std::string &filename,
     }
 
     {
-      auto beginCurrentBaseCoverages =
-          ranges::next(ranges::begin(baseCoverages), currentStartIndex);
-      ranges::transform(
+      auto beginCurrentBaseCoverages = std::ranges::next(
+          std::ranges::begin(baseCoverages), currentStartIndex);
+      std::ranges::transform(
           beginCurrentBaseCoverages,
-          ranges::next(ranges::begin(baseCoverages), currentEndIndex),
+          std::ranges::next(std::ranges::begin(baseCoverages), currentEndIndex),
           beginCurrentBaseCoverages, [](unsigned value) { return value + 1; });
     }
 
@@ -125,7 +121,7 @@ RingmapData::RingmapData(const MutationMapTranscript &transcript,
           args.minimum_modifications_per_base_fraction()),
       sequence(transcript.getSequence()), baseCoverages(endIndex),
       m_data(nSetReads, endIndex), shape(args.shape()) {
-  addReads(ranges::begin(transcript), ranges::end(transcript));
+  addReads(std::ranges::begin(transcript), std::ranges::end(transcript));
 }
 
 RingmapData::RingmapData(const RingmapData &other,
@@ -156,18 +152,20 @@ RingmapData::RingmapData(const RingmapData &other,
 
 void RingmapData::filterBases() {
   assert(basesFiltered or
-         ranges::all_of(baseCoverages,
-                        [nReads = m_data.rows_size()](unsigned coverage) {
-                          return coverage <= nReads;
-                        }));
+         std::ranges::all_of(baseCoverages,
+                             [nReads = m_data.rows_size()](unsigned coverage) {
+                               return coverage <= nReads;
+                             }));
 
   std::vector<std::size_t> allowedBases;
   if (basesMask.empty() or basesFiltered) {
     allowedBases.resize(m_data.cols_size());
-    ranges::iota(allowedBases, static_cast<std::size_t>(0));
+    std::iota(std::ranges::begin(allowedBases), std::ranges::end(allowedBases),
+              static_cast<std::size_t>(0));
   } else {
-    allowedBases.resize(static_cast<std::size_t>(ranges::count(basesMask, 1.)));
-    auto allowedBaseIter = ranges::begin(allowedBases);
+    allowedBases.resize(
+        static_cast<std::size_t>(std::ranges::count(basesMask, 1.)));
+    auto allowedBaseIter = std::ranges::begin(allowedBases);
     std::size_t baseIndex = 0;
 
     for (bool allowed : basesMask) {
@@ -176,7 +174,7 @@ void RingmapData::filterBases() {
       ++baseIndex;
     }
 
-    assert(allowedBaseIter == ranges::end(allowedBases));
+    assert(allowedBaseIter == std::ranges::end(allowedBases));
   }
 
   std::vector<unsigned> usedCols;
@@ -196,11 +194,11 @@ void RingmapData::filterBases() {
       std::size_t baseIndex = [&, this] {
         if (basesFiltered) {
           auto oldColToNewIter =
-              ranges::find_if(oldColsToNew, [&](const auto oldAndNew) {
+              std::ranges::find_if(oldColsToNew, [&](const auto oldAndNew) {
                 return oldAndNew.second == colIndex;
               });
 
-          assert(oldColToNewIter != ranges::end(oldColsToNew));
+          assert(oldColToNewIter != std::ranges::end(oldColsToNew));
           return static_cast<std::size_t>(oldColToNewIter->first);
         } else
           return colIndex;
@@ -237,13 +235,12 @@ void RingmapData::filterBases() {
       oldColsToNew = std::move(newOldColsToNew);
       filtered.remove_cols(new_n_cols, filtered.cols_size());
       m_data = std::move(filtered);
-      baseCoverages.erase(ranges::transform(usedCols,
-                                            ranges::begin(baseCoverages),
-                                            [this](std::size_t index) {
-                                              return baseCoverages[index];
-                                            })
-                              .out,
-                          ranges::end(baseCoverages));
+      baseCoverages.erase(
+          std::ranges::transform(
+              usedCols, std::ranges::begin(baseCoverages),
+              [this](std::size_t index) { return baseCoverages[index]; })
+              .out,
+          std::ranges::end(baseCoverages));
     }
   }
 
@@ -256,7 +253,7 @@ void RingmapData::filterReads() {
 
   if (readsMap.empty()) {
     readsMap.resize(m_data.storedReads());
-    ranges::iota(readsMap, 0u);
+    std::iota(std::begin(readsMap), std::end(readsMap), 0u);
   }
 
   decltype(readsMap) newReadsMap;
@@ -321,11 +318,12 @@ auto RingmapData::getFilteredToNonFilteredMap() const
     -> decltype(oldColsToNew) {
   assert(basesFiltered);
   decltype(oldColsToNew) newColsToOld;
-  ranges::transform(oldColsToNew,
-                    ranges::inserter(newColsToOld, ranges::begin(newColsToOld)),
-                    [](const auto &oldAndNew) {
-                      return std::make_pair(oldAndNew.second, oldAndNew.first);
-                    });
+  std::ranges::transform(
+      oldColsToNew,
+      std::inserter(newColsToOld, std::ranges::begin(newColsToOld)),
+      [](const auto &oldAndNew) {
+        return std::make_pair(oldAndNew.second, oldAndNew.first);
+      });
   return newColsToOld;
 }
 
@@ -349,8 +347,8 @@ void RingmapData::remove(unsigned begin, unsigned end) {
   end = std::min(end, m_data.cols_size());
 
   /* We assume to change the baseCoverage proportionally */
-  ranges::transform(
-      baseCoverages, ranges::begin(baseCoverages),
+  std::ranges::transform(
+      baseCoverages, std::ranges::begin(baseCoverages),
       [oldSize = m_data.rows_size(),
        newSize = m_data.rows_size() + begin - end](auto coverage) {
         return static_cast<unsigned>(static_cast<double>(coverage) / oldSize *
@@ -358,8 +356,8 @@ void RingmapData::remove(unsigned begin, unsigned end) {
       });
 
   if (readsMap.size() > 0)
-    readsMap.erase(ranges::next(ranges::begin(readsMap), begin),
-                   ranges::next(ranges::begin(readsMap), end));
+    readsMap.erase(std::ranges::next(std::ranges::begin(readsMap), begin),
+                   std::ranges::next(std::ranges::begin(readsMap), end));
   m_data.remove_rows(begin, end);
   nSetReads -= end - begin;
 
@@ -396,8 +394,9 @@ RingmapData &RingmapData::operator+=(const RingmapData &other) {
 
   m_data.append(other.m_data);
   nSetReads += other.nSetReads;
-  ranges::transform(other.baseCoverages, baseCoverages,
-                    ranges::begin(baseCoverages), std::plus<unsigned>{});
+  std::ranges::transform(other.baseCoverages, baseCoverages,
+                         std::ranges::begin(baseCoverages),
+                         std::plus<unsigned>{});
   cachedBaseWeights.clear();
 
   return *this;
@@ -420,11 +419,11 @@ void RingmapData::shuffle() { m_data.shuffle(); }
 
 void RingmapData::resize(unsigned size) {
   // Fake coverage, should be fine for 'normal' operations
-  ranges::transform(baseCoverages, ranges::begin(baseCoverages),
-                    [oldSize = m_data.rows_size(), size](auto coverage) {
-                      return static_cast<unsigned>(
-                          static_cast<double>(coverage) / oldSize * size);
-                    });
+  std::ranges::transform(baseCoverages, std::ranges::begin(baseCoverages),
+                         [oldSize = m_data.rows_size(), size](auto coverage) {
+                           return static_cast<unsigned>(
+                               static_cast<double>(coverage) / oldSize * size);
+                         });
 
   if (size < nSetReads)
     nSetReads = size;
@@ -447,12 +446,13 @@ const std::vector<double> &RingmapData::getBaseWeights() const {
   if (cachedBaseWeights.size() > 0)
     return cachedBaseWeights;
 
-  unsigned highestCoverage = *ranges::max_element(baseCoverages);
+  unsigned highestCoverage = *std::ranges::max_element(baseCoverages);
   cachedBaseWeights.resize(baseCoverages.size());
-  ranges::transform(baseCoverages, ranges::begin(cachedBaseWeights),
-                    [highestCoverage](unsigned coverage) {
-                      return static_cast<double>(coverage) / highestCoverage;
-                    });
+  std::ranges::transform(baseCoverages, std::ranges::begin(cachedBaseWeights),
+                         [highestCoverage](unsigned coverage) {
+                           return static_cast<double>(coverage) /
+                                  highestCoverage;
+                         });
 
   return cachedBaseWeights;
 }
@@ -486,7 +486,7 @@ RingmapData::getUnfilteredWeights(const WeightedClusters &weights) const {
     for (const auto &oldAndNewCol : oldColsToNew) {
       auto &&baseWeights = weights[oldAndNewCol.second];
       auto &&newBaseWeights = allWeights[oldAndNewCol.first];
-      ranges::copy(baseWeights, ranges::begin(newBaseWeights));
+      std::ranges::copy(baseWeights, std::ranges::begin(newBaseWeights));
     }
 
     return allWeights;
@@ -512,7 +512,7 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights) const
         auto &&reducedWeight = reducedWeights[oldAndNewCol.second];
         assert(weight.span_size() == reducedWeight.span_size());
 
-        ranges::copy(weight, ranges::begin(reducedWeight));
+        std::ranges::copy(weight, std::ranges::begin(reducedWeight));
       }
 
       return const_cast<std::add_const_t<decltype(reducedWeights)> &>(
@@ -550,7 +550,7 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights) const
   for (auto &&read : m_data.rows()) {
     auto indices = std::cref(read.modifiedIndices());
     if (auto uniqueReadIter = uniqueReadsCount.find(indices);
-        uniqueReadIter != ranges::end(uniqueReadsCount))
+        uniqueReadIter != std::ranges::end(uniqueReadsCount))
       ++uniqueReadIter->second;
     else
       uniqueReadsCount[indices] = 1;
@@ -563,25 +563,26 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights) const
       cluster_pattern_type(usableWeights.getElementsSize(), 0));
   {
     std::vector<double> readScore(usableWeights.getClustersSize());
-    const auto readScoreEnd = ranges::end(readScore);
+    const auto readScoreEnd = std::ranges::end(readScore);
     std::vector<double> read(m_data.cols_size());
     for (auto &&pairedData : uniqueReadsCount) {
       auto &mutatedIndices = std::get<0>(pairedData);
       auto &&readOccurrences = std::get<1>(pairedData);
-      ranges::fill(read, 0.);
+      std::ranges::fill(read, 0.);
       for (std::size_t index : mutatedIndices.get())
         read[index] = 1.;
 
-      auto readScoreIter = ranges::begin(readScore);
-      ranges::fill(readScoreIter, readScoreEnd, 0);
+      auto readScoreIter = std::ranges::begin(readScore);
+      std::ranges::fill(readScoreIter, readScoreEnd, 0);
       for (auto &&cluster : usableWeights.clusters())
         *readScoreIter++ =
-            ranges::inner_product(read, ranges::begin(cluster), 0.);
+            std::inner_product(std::ranges::begin(read), std::ranges::end(read),
+                               std::ranges::begin(cluster), 0.);
 
       auto assignedReadIter = [&]() {
         typename clusters_assignment_type::iterator assignmentIter =
             clustersAssignment.find(mutatedIndices);
-        if (assignmentIter == ranges::end(clustersAssignment)) {
+        if (assignmentIter == std::ranges::end(clustersAssignment)) {
           assignmentIter =
               clustersAssignment
                   .emplace(mutatedIndices, std::vector<std::size_t>(
@@ -595,13 +596,13 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights) const
 
       std::vector<std::size_t> bestAssignmentIndices;
       {
-        auto bestScoreIter = ranges::max_element(readScore);
+        auto bestScoreIter = std::ranges::max_element(readScore);
         const auto bestScore = *bestScoreIter;
-        for (; bestScoreIter != ranges::end(readScore);
-             bestScoreIter = ranges::find(bestScoreIter, ranges::end(readScore),
-                                          bestScore)) {
-          bestAssignmentIndices.emplace_back(
-              ranges::distance(ranges::begin(readScore), bestScoreIter++));
+        for (; bestScoreIter != std::ranges::end(readScore);
+             bestScoreIter = std::ranges::find(
+                 bestScoreIter, std::ranges::end(readScore), bestScore)) {
+          bestAssignmentIndices.emplace_back(std::ranges::distance(
+              std::ranges::begin(readScore), bestScoreIter++));
         }
       }
 
@@ -610,15 +611,15 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights) const
       for (const std::size_t assignmentIndex : bestAssignmentIndices) {
         auto &pattern = patterns[assignmentIndex];
 
-        ranges::transform(read, pattern, ranges::begin(pattern),
-                          [readOccurrences = readOccurrences,
-                           nAssignments](auto &&isMutated, std::size_t count) {
-                            return static_cast<unsigned>(
-                                static_cast<double>(count) +
-                                isMutated *
-                                    static_cast<double>(readOccurrences) /
-                                    nAssignments);
-                          });
+        std::ranges::transform(
+            read, pattern, std::ranges::begin(pattern),
+            [readOccurrences = readOccurrences,
+             nAssignments](auto &&isMutated, std::size_t count) {
+              return static_cast<unsigned>(
+                  static_cast<double>(count) +
+                  isMutated * static_cast<double>(readOccurrences) /
+                      nAssignments);
+            });
         auto currentlyAssignedReads = readOccurrences / nAssignments;
         assignedRead[assignmentIndex] = currentlyAssignedReads;
         counts[assignmentIndex] += currentlyAssignedReads;
@@ -626,10 +627,11 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights) const
     }
   }
   clusters_fraction_type fractions(weights.getClustersSize());
-  auto const all_counts = ranges::accumulate(counts, std::size_t(0));
+  auto const all_counts =
+      std::accumulate(std::begin(counts), std::end(counts), std::size_t(0));
   if (all_counts != 0) {
-    ranges::transform(
-        counts, ranges::begin(fractions),
+    std::ranges::transform(
+        counts, std::ranges::begin(fractions),
         [&, all_counts = static_cast<double>(all_counts)](std::size_t count) {
           return static_cast<double>(count) / all_counts;
         });
@@ -651,7 +653,7 @@ double RingmapData::getUnfoldedFraction() const {
   arma::mat frequencies = m_data.covariance();
   {
     arma::vec coverages(baseCoverages.size());
-    ranges::copy(baseCoverages, ranges::begin(coverages));
+    std::ranges::copy(baseCoverages, std::ranges::begin(coverages));
     frequencies.each_col() /= coverages;
   }
   arma::mat unfoldedFrequencies = frequencies.diag() * frequencies.diag().t();
@@ -757,8 +759,9 @@ auto RingmapData::remapPatterns(const clusters_pattern_type &patterns) const
   if (patterns.empty())
     return {};
 
-  if (ranges::any_of(
-          ranges::next(ranges::begin(patterns)), ranges::end(patterns),
+  if (std::ranges::any_of(
+          std::ranges::next(std::ranges::begin(patterns)),
+          std::ranges::end(patterns),
           [&, frontSize = patterns.front().size()](const auto &pattern) {
             return pattern.size() != frontSize;
           }))
@@ -769,7 +772,7 @@ auto RingmapData::remapPatterns(const clusters_pattern_type &patterns) const
     auto const sequence_size = static_cast<unsigned>(sequence.size());
     for (unsigned baseIndex = 0; baseIndex < sequence_size; ++baseIndex) {
       if ((basesMask.empty() or basesMask[baseIndex] == 1) and
-          oldColsToNew.find(baseIndex) != ranges::end(oldColsToNew))
+          oldColsToNew.find(baseIndex) != std::ranges::end(oldColsToNew))
         ++usableBases;
     }
 
@@ -782,9 +785,9 @@ auto RingmapData::remapPatterns(const clusters_pattern_type &patterns) const
       patterns.size(),
       cluster_pattern_type(sequence.size(), static_cast<std::size_t>(0)));
 
-  auto mappedPatternIter = ranges::begin(mappedPatterns);
-  auto patternIter = ranges::begin(patterns);
-  for (; patternIter != ranges::end(patterns);
+  auto mappedPatternIter = std::ranges::begin(mappedPatterns);
+  auto patternIter = std::ranges::begin(patterns);
+  for (; patternIter != std::ranges::end(patterns);
        ++patternIter, ++mappedPatternIter) {
     const auto &pattern = *patternIter;
     auto &mappedPattern = *mappedPatternIter;
@@ -796,7 +799,7 @@ auto RingmapData::remapPatterns(const clusters_pattern_type &patterns) const
         continue;
 
       if (auto newColIter = oldColsToNew.find(baseIndex);
-          newColIter != ranges::end(oldColsToNew))
+          newColIter != std::ranges::end(oldColsToNew))
         mappedPattern[baseIndex] = pattern[newColIter->second];
     }
   }
@@ -820,22 +823,22 @@ void RingmapData::enqueueRingmapsFromMutationMap(
       std::ifstream whitelist_stream(whitelist_filename);
       for (std::string line; std::getline(whitelist_stream, line);
            line.clear()) {
-        ranges::transform(line, ranges::begin(line), [](char c) {
+        std::ranges::transform(line, std::ranges::begin(line), [](char c) {
           return static_cast<char>(std::tolower(c));
         });
         whitelisted_genes.emplace_back(std::move(line));
       }
     }
 
-    ranges::sort(whitelisted_genes);
+    std::ranges::sort(whitelisted_genes);
     std::string transcriptId;
     for (auto &&transcript : mutationMap) {
       transcriptId = transcript.getId();
-      ranges::transform(transcriptId, ranges::begin(transcriptId), [](char c) {
-        return static_cast<char>(std::tolower(c));
-      });
+      std::ranges::transform(
+          transcriptId, std::ranges::begin(transcriptId),
+          [](char c) { return static_cast<char>(std::tolower(c)); });
 
-      if (ranges::binary_search(whitelisted_genes, transcriptId)) {
+      if (std::ranges::binary_search(whitelisted_genes, transcriptId)) {
         queue.push(std::pair(transcript, RingmapData(transcript, args)));
       }
     }
@@ -872,8 +875,8 @@ RingmapData RingmapData::get_new_range(
   new_ringmap.shape = shape;
 
   auto &&rows = m_data.rows();
-  auto rows_iter = ranges::begin(rows);
-  auto const end_rows = ranges::end(rows);
+  auto rows_iter = std::ranges::begin(rows);
+  auto const end_rows = std::ranges::end(rows);
 
   for (unsigned row_index = 0; rows_iter < end_rows; ++rows_iter, ++row_index) {
     auto &&row = *rows_iter;
@@ -885,30 +888,29 @@ RingmapData RingmapData::get_new_range(
       }
 
       auto &&indices = row.modifiedIndices();
-      assert(ranges::is_sorted(indices));
+      assert(std::ranges::is_sorted(indices));
 
-      auto const first_index_iter = ranges::lower_bound(indices, begin);
-      auto const last_index_iter =
-          ranges::lower_bound(first_index_iter, ranges::end(indices), end);
+      auto const first_index_iter = std::ranges::lower_bound(indices, begin);
+      auto const last_index_iter = std::ranges::lower_bound(
+          first_index_iter, std::ranges::end(indices), end);
 
       ringmap_matrix::row_type new_row(static_cast<std::size_t>(
-          ranges::distance(first_index_iter, last_index_iter)));
+          std::ranges::distance(first_index_iter, last_index_iter)));
       new_row.begin_index = begin;
       new_row.end_index = end;
 
-      assert(
-          ranges::all_of(first_index_iter, last_index_iter, [&](auto &&index) {
-            return index >= begin and index < end;
-          }));
-      ranges::transform(first_index_iter, last_index_iter,
-                        ranges::begin(new_row),
-                        [begin](auto &&index) { return index - begin; });
+      assert(std::ranges::all_of(
+          first_index_iter, last_index_iter,
+          [&](auto &&index) { return index >= begin and index < end; }));
+      std::ranges::transform(first_index_iter, last_index_iter,
+                             std::ranges::begin(new_row),
+                             [begin](auto &&index) { return index - begin; });
       new_ringmap.m_data.addModifiedIndicesRow(std::move(new_row));
     }
   }
 
   new_ringmap.nSetReads = static_cast<unsigned>(new_ringmap.m_data.rows_size());
-  ranges::fill(new_ringmap.baseCoverages, new_ringmap.nSetReads);
+  std::ranges::fill(new_ringmap.baseCoverages, new_ringmap.nSetReads);
 
   return new_ringmap;
 }
@@ -953,8 +955,8 @@ std::vector<RingmapData> RingmapData::split_into_windows(
   }
 
   auto &&rows = m_data.rows();
-  auto rows_iter = ranges::begin(rows);
-  auto const end_rows = ranges::end(rows);
+  auto rows_iter = std::ranges::begin(rows);
+  auto const end_rows = std::ranges::end(rows);
 
   auto const calc_modifications_intersection = [](auto const &row,
                                                   auto const &window) {
@@ -963,7 +965,7 @@ std::vector<RingmapData> RingmapData::split_into_windows(
       return 0u;
 
     return static_cast<unsigned>(
-        ranges::count_if(row.modifiedIndices(), [&](auto base_index) {
+        std::ranges::count_if(row.modifiedIndices(), [&](auto base_index) {
           return base_index >= window.begin_index and
                  base_index < window.end_index;
         }));
@@ -1044,7 +1046,7 @@ std::vector<RingmapData> RingmapData::split_into_windows(
     // Still more than one candidate? Let's take the smaller window
     if (candidate_indices.size() > 1) {
       auto const best_candidate_index =
-          *ranges::min_element(candidate_indices, {}, [&](auto index) {
+          *std::ranges::min_element(candidate_indices, {}, [&](auto index) {
             auto const &window = windows[index];
             return window.end_index - window.begin_index;
           });
@@ -1057,27 +1059,29 @@ std::vector<RingmapData> RingmapData::split_into_windows(
     auto const &window = windows[best_candidate_index];
 
     auto const &indices = row.modifiedIndices();
-    assert(ranges::is_sorted(indices));
+    assert(std::ranges::is_sorted(indices));
 
     auto const new_row_begin =
         std::max(row.begin_index(), static_cast<unsigned>(window.begin_index));
     auto const new_row_end =
         std::min(row.end_index(), static_cast<unsigned>(window.end_index));
 
-    auto const first_index_iter = ranges::lower_bound(indices, new_row_begin);
-    auto const last_index_iter = ranges::lower_bound(
-        first_index_iter, ranges::end(indices), new_row_end);
+    auto const first_index_iter =
+        std::ranges::lower_bound(indices, new_row_begin);
+    auto const last_index_iter = std::ranges::lower_bound(
+        first_index_iter, std::ranges::end(indices), new_row_end);
 
     ringmap_matrix::row_type new_row(static_cast<std::size_t>(
-        ranges::distance(first_index_iter, last_index_iter)));
+        std::ranges::distance(first_index_iter, last_index_iter)));
     new_row.begin_index = new_row_begin;
     new_row.end_index = new_row_end;
 
-    assert(ranges::all_of(first_index_iter, last_index_iter, [&](auto &&index) {
-      return index >= new_row_begin and index < new_row_end;
-    }));
-    ranges::transform(
-        first_index_iter, last_index_iter, ranges::begin(new_row),
+    assert(std::ranges::all_of(
+        first_index_iter, last_index_iter, [&](auto &&index) {
+          return index >= new_row_begin and index < new_row_end;
+        }));
+    std::ranges::transform(
+        first_index_iter, last_index_iter, std::ranges::begin(new_row),
         [begin = window.begin_index](auto &&index) { return index - begin; });
     ringmap.m_data.addModifiedIndicesRow(std::move(new_row));
 

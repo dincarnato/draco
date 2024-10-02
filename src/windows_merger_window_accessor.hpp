@@ -5,6 +5,7 @@
 
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace windows_merger {
 
@@ -34,7 +35,7 @@ template <typename Merger> struct WindowsMergerWindowAccessor {
       WindowsMergerWindowAccessorCoveragesAccessor<Merger>;
   using iterator = WindowsMergerWindowBaseIterator<Merger>;
   using reverse_iterator =
-      ranges::reverse_iterator<WindowsMergerWindowBaseIterator<Merger>>;
+      std::reverse_iterator<WindowsMergerWindowBaseIterator<Merger>>;
   using self = WindowsMergerWindowAccessor;
 
   explicit WindowsMergerWindowAccessor(Merger &merger,

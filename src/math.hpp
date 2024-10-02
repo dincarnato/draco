@@ -11,7 +11,6 @@
 #include <functional>
 #include <memory>
 #include <numeric>
-#include <range/v3/iterator/concepts.hpp>
 #include <type_traits>
 #include <vector>
 
@@ -345,7 +344,7 @@ getBestMatchingIndices(IterA refBegin, IterA refEnd, IterB matchBegin,
         assert(elementIndex < scores.n_cols);
         assert(permutationIndex < scores.n_rows);
         assert(*matchIndexIter < matchingElements);
-        if constexpr (ranges::RandomAccessIterator<
+        if constexpr (std::random_access_iterator<
                           std::remove_reference_t<IterA>>)
           assert(refIter < refEnd);
         scores(permutationIndex, elementIndex) = scoreFun(

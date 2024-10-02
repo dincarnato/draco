@@ -2,8 +2,9 @@
 
 #include "weighted_clusters_span.hpp"
 
+#include <algorithm>
 #include <cassert>
-#include <range/v3/algorithm.hpp>
+#include <limits>
 
 template <typename T>
 WeightedClustersSpan<T>::WeightedClustersSpan(weights_reference weights,
@@ -17,7 +18,7 @@ template <typename T>
 auto WeightedClustersSpan<T>::operator=(concrete_type const &concrete_span)
     const noexcept -> WeightedClustersSpan const & {
   assert(concrete_span.size() == _span);
-  ranges::copy(concrete_span, ranges::begin(*this));
+  std::ranges::copy(concrete_span, std::ranges::begin(*this));
   return *this;
 }
 
@@ -25,7 +26,7 @@ template <typename T>
 auto WeightedClustersSpan<T>::operator=(concrete_type &&concrete_span)
     const noexcept -> WeightedClustersSpan const & {
   assert(concrete_span.size() == _span);
-  ranges::move(concrete_span, ranges::begin(*this));
+  std::ranges::move(concrete_span, std::ranges::begin(*this));
   return *this;
 }
 
@@ -89,6 +90,6 @@ std::size_t WeightedClustersSpan<T>::span_size() const noexcept {
 }
 
 static_assert(
-    ranges::RandomAccessIterator<WeightedClustersSpan<float>::iterator>);
+    std::random_access_iterator<WeightedClustersSpan<float>::iterator>);
 static_assert(
-    ranges::RandomAccessIterator<WeightedClustersSpan<const float>::iterator>);
+    std::random_access_iterator<WeightedClustersSpan<const float>::iterator>);

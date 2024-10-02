@@ -4,9 +4,10 @@
 #include "ringmap_data.hpp"
 
 #include <fstream>
-#include <range/v3/algorithm.hpp>
-#include <range/v3/iterator/insert_iterators.hpp>
+#include <iterator>
 #include <string_view>
+
+namespace ranges = std::ranges;
 
 constexpr std::array<std::uint8_t, 7> MutationMap::eofMarker;
 
@@ -93,11 +94,11 @@ void MutationMap::loadIndexFile() noexcept(false) {
   if (entries.empty())
     return;
 
-  ranges::transform(entries, ranges::back_inserter(transcripts),
+  ranges::transform(entries, std::back_inserter(transcripts),
                     [this](auto &entry) {
                       return MutationMapTranscript(*this, entry.offset);
                     });
 }
 
-static_assert(ranges::InputIterator<MutationMap::iterator>);
-static_assert(ranges::InputIterator<MutationMap::const_iterator>);
+static_assert(std::input_iterator<MutationMap::iterator>);
+static_assert(std::input_iterator<MutationMap::const_iterator>);

@@ -18,7 +18,7 @@ void WindowsMerger::add_window(bases_size_type start_offset, Weights &&weights,
     throw InvalidClustersSize("weights object have a wrong number of clusters");
 
   if (bool expected = false; dequeueing.compare_exchange_strong(
-          expected, true, std::memory_order::memory_order_acq_rel)) {
+          expected, true, std::memory_order::acq_rel)) {
     transform_window_to_native(start_offset, weights, coverages);
     process_queue();
   } else {

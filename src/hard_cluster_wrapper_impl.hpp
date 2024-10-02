@@ -8,7 +8,6 @@
 
 #include <cassert>
 #include <limits>
-#include <range/v3/algorithm.hpp>
 
 template <typename Cluster, bool complemented>
 HardClusterWrapper<Cluster, complemented>::HardClusterWrapper(
@@ -103,7 +102,7 @@ template <typename Cluster, bool complemented>
 auto HardClusterWrapper<Cluster, complemented>::operator=(
     concrete_type const &rhs) const noexcept -> HardClusterWrapper const & {
   assert(_cluster->nClusters > 0);
-  ranges::copy(rhs, ranges::begin(*this));
+  std::ranges::copy(rhs, std::ranges::begin(*this));
 
   return *this;
 }
@@ -112,7 +111,7 @@ template <typename Cluster, bool complemented>
 auto HardClusterWrapper<Cluster, complemented>::operator=(
     concrete_type &&rhs) const noexcept -> HardClusterWrapper const & {
   assert(_cluster->nClusters > 0);
-  ranges::move(rhs, ranges::begin(*this));
+  std::ranges::move(rhs, std::ranges::begin(*this));
 
   return *this;
 }

@@ -4,8 +4,7 @@
 #include "utils.hpp"
 
 #include <cassert>
-#include <range/v3/algorithm.hpp>
-#include <range/v3/numeric.hpp>
+#include <ranges>
 
 RingmapMatrix::RingmapMatrix(unsigned nBases) noexcept(false)
     : bases(nBases), readsCount(0) {}
@@ -69,18 +68,18 @@ auto RingmapMatrix::operator()(unsigned row, unsigned col) const noexcept
 
 void RingmapMatrix::remove_rows(unsigned begin, unsigned end) noexcept(false) {
   readsCount -= std::min(readsCount, end) - std::min(readsCount, begin);
-  data.erase(ranges::next(ranges::begin(data), begin),
-             ranges::next(ranges::begin(data), end));
+  data.erase(std::ranges::next(std::ranges::begin(data), begin),
+             std::ranges::next(std::ranges::begin(data), end));
 }
 
 void RingmapMatrix::remove_cols(unsigned begin, unsigned end) noexcept {
   bases -= std::min(bases, end) - std::min(bases, begin);
   for (auto &row : data) {
-    row.erase(ranges::remove_if(row,
-                                [begin, end](unsigned index) {
-                                  return index >= begin and index < end;
-                                }),
-              ranges::end(row));
+    auto [remove_begin, remove_end] =
+        std::ranges::remove_if(row, [begin, end](unsigned index) {
+          return index >= begin and index < end;
+        });
+    row.erase(remove_begin, remove_end);
   }
 }
 
@@ -145,8 +144,8 @@ arma::mat RingmapMatrix::covariance() const noexcept(false) {
     for (unsigned col = row; col < bases; ++col) {
       const auto &colVector = transposed.data[col];
       unsigned count = static_cast<unsigned>(count_intersections(
-          ranges::begin(rowVector), ranges::end(rowVector),
-          ranges::begin(colVector), ranges::end(colVector)));
+          std::ranges::begin(rowVector), std::ranges::end(rowVector),
+          std::ranges::begin(colVector), std::ranges::end(colVector)));
 
 #ifndef NDEBUG
       if (row == col)
@@ -164,33 +163,33 @@ bool RingmapMatrix::operator==(const RingmapMatrix &other) const noexcept {
   if (bases != other.bases or readsCount != other.readsCount)
     return false;
 
-  return ranges::equal(data | ranges::view::take(readsCount),
-                       other.data | ranges::view::take(readsCount));
+  return std::ranges::equal(data | std::views::take(readsCount),
+                            other.data | std::views::take(readsCount));
 }
 
 bool RingmapMatrix::operator!=(const RingmapMatrix &other) const noexcept {
   if (bases != other.bases or readsCount != other.readsCount)
     return true;
 
-  auto const end = ranges::next(ranges::begin(data), readsCount);
-  auto mismatch = ranges::mismatch(
-      ranges::begin(data), end, ranges::begin(other.data),
-      ranges::next(ranges::begin(other.data), other.readsCount));
+  auto const end = std::ranges::next(std::ranges::begin(data), readsCount);
+  auto mismatch = std::ranges::mismatch(
+      std::ranges::begin(data), end, std::ranges::begin(other.data),
+      std::ranges::next(std::ranges::begin(other.data), other.readsCount));
   return mismatch.in1 != end;
 }
 
 void RingmapMatrix::append(const RingmapMatrix &other) noexcept(false) {
   assert(bases == other.bases);
   data.resize(readsCount + other.readsCount);
-  ranges::copy(other.data | ranges::view::take(other.readsCount),
-               ranges::next(ranges::begin(data), readsCount));
+  std::ranges::copy(other.data | std::views::take(other.readsCount),
+                    std::ranges::next(std::ranges::begin(data), readsCount));
   readsCount += other.readsCount;
 }
 
 void RingmapMatrix::shuffle() noexcept(std::is_nothrow_swappable_v<row_type>) {
   std::random_device randomDevice;
   std::mt19937 randomGenerator(randomDevice());
-  ranges::shuffle(data, randomGenerator);
+  std::ranges::shuffle(data, randomGenerator);
 }
 
 void RingmapMatrix::resize(unsigned size) noexcept(false) {

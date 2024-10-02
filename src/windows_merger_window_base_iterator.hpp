@@ -4,7 +4,6 @@
 
 #include <cassert>
 #include <iterator>
-#include <range/v3/core.hpp>
 #include <type_traits>
 
 namespace windows_merger {
@@ -27,7 +26,7 @@ template <typename Merger> struct WindowsMergerWindowBaseIterator {
   using value_type = WindowsMergerWindowBase;
   using difference_type = signed_bases_size_type;
   using reference = base_accessor;
-  using iterator_category = ranges::random_access_iterator_tag;
+  using iterator_category = std::random_access_iterator_tag;
 
   WindowsMergerWindowBaseIterator() = default;
   explicit WindowsMergerWindowBaseIterator(

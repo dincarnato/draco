@@ -6,6 +6,7 @@
 
 #include <iterator>
 #include <tuple>
+#include <type_traits>
 
 namespace het::detail {
 
@@ -57,6 +58,12 @@ struct vec2d_rt_part_skip {};
 template <typename SizeT> struct vec2d_rt_part_with_lines {
   using size_type = SizeT;
 
+  template <typename S, typename = std::enable_if_t<std::is_same_v<
+                            std::decay_t<SizeT>, std::decay_t<S>>>>
+  constexpr inline vec2d_rt_part_with_lines(S &&lines) noexcept(
+      noexcept(SizeT(std::forward<S>(lines))))
+      : lines(std::move(lines)) {}
+
   inline vec2d_rt_part_with_lines(const vec2d_rt_part_with_lines &) = default;
   inline vec2d_rt_part_with_lines(vec2d_rt_part_with_lines &&) = default;
 
@@ -83,6 +90,12 @@ template <typename SizeT> struct vec2d_rt_part_skip_first_lines {
 template <typename SizeT> struct vec2d_rt_part_with_max_size {
   using size_type = SizeT;
 
+  template <typename S, typename = std::enable_if_t<std::is_same_v<
+                            std::decay_t<SizeT>, std::decay_t<S>>>>
+  inline constexpr vec2d_rt_part_with_max_size(S &&max_size) noexcept(
+      noexcept(SizeT(std::forward<S>(max_size))))
+      : max_size(std::forward<S>(max_size)) {}
+
   inline vec2d_rt_part_with_max_size(const vec2d_rt_part_with_max_size &) =
       default;
   inline vec2d_rt_part_with_max_size(vec2d_rt_part_with_max_size &&) = default;
@@ -103,6 +116,15 @@ template <typename SizeT> struct vec2d_rt_part_with_size {
 template <typename Fun, typename SizeT>
 struct vec2d_rt_part_with_fun_size : Fun {
   using function_type = Fun;
+
+  template <typename F, typename S,
+            typename = std::enable_if_t<
+                std::is_same_v<std::decay_t<F>, std::decay_t<Fun>> and
+                std::is_same_v<std::decay_t<S>, std::decay_t<SizeT>>>>
+  inline constexpr vec2d_rt_part_with_fun_size(F &&fun, S &&max_size) noexcept(
+      noexcept(Fun(std::forward<F>(fun))) and
+      noexcept(SizeT(std::forward<S>(max_size))))
+      : Fun(std::forward<F>(fun)), max_size(std::forward<S>(max_size)) {}
 
   inline vec2d_rt_part_with_fun_size(const vec2d_rt_part_with_fun_size &) =
       default;

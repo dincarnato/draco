@@ -3,7 +3,6 @@
 #include "jsonify_base.hpp"
 
 #include <algorithm>
-#include <range/v3/algorithm.hpp>
 
 namespace results {
 
@@ -11,7 +10,7 @@ template <typename CharT, typename Traits, typename T>
 std::enable_if_t<detail::is_jsonificable_v<std::decay_t<T>>,
                  std::basic_ostream<CharT, Traits> &>
 jsonify(std::basic_ostream<CharT, Traits> &os, T &&t) {
-  namespace rng = ::ranges;
+  namespace rng = std::ranges;
   using t_nocvref = std::remove_cv_t<std::remove_reference_t<T>>;
 
   if constexpr (std::is_arithmetic_v<t_nocvref>) {

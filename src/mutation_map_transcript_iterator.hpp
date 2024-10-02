@@ -6,7 +6,6 @@ struct MutationMapTranscriptEndTag {};
 
 #include <ios>
 #include <limits>
-#include <range/v3/core.hpp>
 
 class MutationMap;
 class MutationMapTranscript;
@@ -18,7 +17,7 @@ public:
   using value_type = MutationMapTranscriptRead;
   using reference = value_type const &;
   using pointer = value_type const *;
-  using iterator_category = ranges::input_iterator_tag;
+  using iterator_category = std::input_iterator_tag;
   using difference_type = std::ptrdiff_t;
 
   using self = MutationMapTranscriptIterator;

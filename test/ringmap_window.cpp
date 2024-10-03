@@ -76,7 +76,8 @@ get_window(RingmapData const &ringmap_data,
            std::vector<RingmapMatrixRow> const &rows, unsigned start_base) {
   unsigned end_base = start_base + window_size;
   std::tuple<std::vector<RingmapMatrixRow>, RingmapData> out{
-      {}, ringmap_data.get_new_range(start_base, end_base)};
+      std::vector<RingmapMatrixRow>{},
+      ringmap_data.get_new_range(start_base, end_base)};
 
   auto &filtered_rows = std::get<0>(out);
 

@@ -48,9 +48,9 @@ static void create_setter_function_for_arg(std::ostream &os, Arg const &arg) {
      << " = results[\"" << parameter_name << "\"].as<" << type_name << ">(); }";
 
   if constexpr (Arg::default_value_type::is_available) {
-    os << " else { _" << variable_name << " = std::get<" << ArgIndex
-       << ">(std::get<" << GroupIndex
-       << ">(::args::opts.groups).args).get_default_value(); }";
+    os << " else { _" << variable_name << " = static_cast<" << type_name
+       << ">(std::get<" << ArgIndex << ">(std::get<" << GroupIndex
+       << ">(::args::opts.groups).args).get_default_value()); }";
   }
   os << "\n";
 }

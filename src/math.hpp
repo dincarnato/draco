@@ -206,7 +206,7 @@ double covariance(IterableA &&iterableA, IterableB &&iterableB) {
     for (auto iterA = std::begin(iterableA); iterA != endA; ++iterA, ++iterB)
       covariance += (*iterA - meanA) * (*iterB - meanB);
   }
-  return covariance / (size - 1);
+  return covariance / static_cast<double>(size - 1);
 }
 
 template <CorrelationType correlationType, typename IterableA,

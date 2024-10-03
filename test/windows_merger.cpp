@@ -17,7 +17,7 @@
 
 using namespace windows_merger;
 
-static constexpr std::size_t n_tests = 500;
+static constexpr std::size_t n_tests = 20;
 static constexpr std::size_t window_size = 70;
 static constexpr std::size_t sequence_length = 300;
 

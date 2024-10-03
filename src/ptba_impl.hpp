@@ -4,8 +4,10 @@
 #include "ptba.hpp"
 
 #include <algorithm>
+#include <cstddef>
 
 #include <boost/math/distributions.hpp>
+#include <limits>
 
 template <typename Distribution>
 bool Ptba::is_distribution(
@@ -43,11 +45,13 @@ bool Ptba::is_distribution(
     }
   }
 
-  auto const threshold = kolmogorov_smirnov_critical_value(data_size, 0.10);
+  auto const threshold =
+      kolmogorov_smirnov_critical_value(static_cast<unsigned>(data_size), 0.10);
   auto const after_high_diff_index =
-      static_cast<std::size_t>(static_cast<double>(data_size) * 0.90);
+      static_cast<std::ptrdiff_t>(static_cast<double>(data_size) * 0.90);
   assert(after_high_diff_index > 0);
-  assert(after_high_diff_index <= data_size);
+  assert(data_size < std::numeric_limits<std::ptrdiff_t>::max() and
+         after_high_diff_index <= static_cast<std::ptrdiff_t>(data_size));
   auto const high_diff_iter =
       std::next(std::begin(diffs), after_high_diff_index - 1);
   std::nth_element(std::begin(diffs), high_diff_iter, std::end(diffs));

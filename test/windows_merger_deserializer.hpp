@@ -139,8 +139,8 @@ using Weights = std::vector<double>;
 struct Window {
   std::vector<Weights> clusters_weights;
   std::vector<unsigned> coverages;
-  unsigned short begin;
-  unsigned short end;
+  unsigned short begin{};
+  unsigned short end{};
 
   Window() = default;
   Window(unsigned char n_clusters)

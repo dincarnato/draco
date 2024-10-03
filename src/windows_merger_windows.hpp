@@ -203,8 +203,8 @@ private:
   bases_size_type n_bases_capacity = 0;
   windows_size_type n_windows_capacity = 0;
   windows_size_type n_windows = 0;
-  windows_data_type windows_data;
-  coverages_data_type coverages_data;
+  windows_data_type windows_data{};
+  coverages_data_type coverages_data{};
 };
 
 } // namespace windows_merger

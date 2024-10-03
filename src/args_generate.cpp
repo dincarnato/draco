@@ -89,7 +89,8 @@ static void create_setter_function(std::ostream &os) {
 }
 
 template <typename Stream> static void generate_on_stream(Stream &stream) {
-  stream << "#pragma once\n#include <string>\n\nstruct ArgsGenerated {\n";
+  stream << "#pragma once\n#include <string>\n#include <cstdint>\n\nstruct "
+            "ArgsGenerated {\n";
   dump_opts(stream);
   create_setter_function(stream);
   stream << "};";

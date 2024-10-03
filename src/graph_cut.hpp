@@ -31,7 +31,7 @@ public:
   GraphCut(const arma::mat &adjacency, Graph type = Graph::symmetricLaplacian);
 
   WeightedClusters run(std::uint8_t nClusters, float weightModule,
-                       unsigned nTries, std::uint16_t iterations,
+                       std::uint16_t nTries, std::uint16_t iterations,
                        FuzzyCut = fuzzy) const;
   HardClusters run(std::uint8_t nClusters, HardCut) const;
 

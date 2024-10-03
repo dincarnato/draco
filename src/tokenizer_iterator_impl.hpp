@@ -54,7 +54,10 @@ TokenizerIterator<String> TokenizerIterator<String>::operator++(int) {
 template <typename String> int TokenizerIterator<String>::toi() const {
 #if __cpp_lib_to_chars
   int out;
-  std::from_chars(iter, next, out);
+  auto result = std::from_chars(iter, next, out);
+  if (result.ptr == iter || result.ec == std::errc::result_out_of_range) {
+    throw std::runtime_error("unable to convert from characters to int");
+  }
   return out;
 #else
   return std::stoi(std::string(iter, next));
@@ -64,7 +67,11 @@ template <typename String> int TokenizerIterator<String>::toi() const {
 template <typename String> unsigned TokenizerIterator<String>::tou() const {
 #if __cpp_lib_to_chars
   unsigned out;
-  std::from_chars(iter, next, out);
+  auto result = std::from_chars(iter, next, out);
+  if (result.ptr == iter || result.ec == std::errc::result_out_of_range) {
+    throw std::runtime_error(
+        "unable to convert from characters to unsigned int");
+  }
   return out;
 #else
   return static_cast<unsigned>(std::stoi(std::string(iter, next)));

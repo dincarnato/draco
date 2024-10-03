@@ -34,7 +34,7 @@ Please see <http://www.gnu.org/licenses/> for more information.
 ## Prerequisites
 
 - Linux system
-- GCC v10 or higher (<https://gcc.gnu.org/gcc-10/>), or
+- GCC v14 or higher (<https://gcc.gnu.org/gcc-14/>), or
   <br/>Clang v10 or greater (<https://releases.llvm.org/download.html>)
 - CMake v3.8 or higher (<https://cmake.org/download/>)
 - OpenBLAS (<https://www.openblas.net>)

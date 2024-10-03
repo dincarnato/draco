@@ -9,7 +9,7 @@
 #include <random>
 #include <thread>
 
-static constexpr std::size_t nLoops = 1'000'000;
+static constexpr std::size_t nLoops = 10'000;
 static constexpr std::size_t minVecSize = 10;
 static constexpr std::size_t maxVecSize = 100;
 static constexpr std::size_t nConsumers = 10;

@@ -14,6 +14,8 @@ if(POLICY CMP0167)
   cmake_policy(SET CMP0167 OLD)
 endif()
 
+include(FetchContent)
+
 find_package(Boost 1.66 REQUIRED)
 find_package(Armadillo REQUIRED)
 find_package(OpenMP REQUIRED)
@@ -53,6 +55,14 @@ if(TBB_FOUND AND USE_TBB)
 else()
     set(TBB_LIBRARIES "")
 endif()
+
+FetchContent_Declare(
+  fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt
+  GIT_TAG        9cf9f38eded63e5e0fb95cd536ba51be601d7fa2) # 11.1.3
+
+message(STATUS "Fetching fmt library")
+FetchContent_MakeAvailable(fmt)
 
 if(SINGLE_THREAD)
     add_definitions(-DSINGLE_THREAD=1)

@@ -29,6 +29,7 @@ target_link_libraries(
     ${ARMADILLO_LIBRARIES}
     ${TBB_LIBRARIES}
     ${Boost_LIBRARIES}
+    fmt::fmt
 )
 
 target_include_directories(

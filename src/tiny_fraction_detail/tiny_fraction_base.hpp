@@ -226,7 +226,7 @@ template <typename T> struct TinyFractionBase {
   }
 
 protected:
-  value_type _value;
+  value_type _value{};
 
   constexpr explicit TinyFractionBase(value_type value) noexcept
       : _value(value) {}

@@ -600,9 +600,8 @@ int main(int argc, char *argv[]) {
                 window.start_base, window.start_base + window_size);
             Ptba ptba(window_ringmap_data, args);
 
+            auto const result = ptba.run();
             if (args.create_eigengaps_plots()) {
-              auto const result = ptba.result_from_run();
-
               window_n_clusters = result.significantIndices.size();
               auto const [eigengaps_filename,
                           perturbed_eigengaps_filename] = [&] {
@@ -632,7 +631,7 @@ int main(int argc, char *argv[]) {
                   result.perturbedEigenGaps,
                   (result_dir / perturbed_eigengaps_filename).c_str());
             } else {
-              window_n_clusters = ptba.run();
+              window_n_clusters = result.significantIndices.size();
             }
           }
         }

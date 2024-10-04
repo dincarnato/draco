@@ -63,8 +63,6 @@ Ptba::calculateEigenGaps(const RingmapData &data) {
                          std::move(adjacency));
 }
 
-unsigned Ptba::getNumberOfClusters() const { return run(); }
-
 void Ptba::dumpEigenVecs(const arma::mat &eigenVecs,
                          std::string_view eigenVecsFilename) {
   std::ofstream eigenVecsStream{fs::path{eigenVecsFilename}};
@@ -102,7 +100,7 @@ void Ptba::dumpPerturbedEigenGaps(PerturbedEigengaps const &perturbed_eigengaps,
 unsigned Ptba::getNumberOfClustersAndDumpData(
     std::string_view eigenVecsFilename, std::string_view eigenGapsFilename,
     std::string_view perturbedEigenGapsFilename) const {
-  PtbaResult result = result_from_run();
+  PtbaResult result = run();
   dumpEigenVecs(result.eigenVecs, std::move(eigenVecsFilename));
   dumpEigenGaps(result.eigenGaps, std::move(eigenGapsFilename));
   dumpPerturbedEigenGaps(result.perturbedEigenGaps,
@@ -113,7 +111,7 @@ unsigned Ptba::getNumberOfClustersAndDumpData(
 
 std::pair<unsigned, std::vector<unsigned>>
 Ptba::getNumberOfClustersAndSignificantIndices() const {
-  PtbaResult result = result_from_run();
+  PtbaResult result = run();
   return {result.nClusters, std::move(result.significantIndices)};
 }
 
@@ -121,7 +119,7 @@ std::pair<unsigned, std::vector<unsigned>>
 Ptba::getNumberOfClustersAndSignificantIndicesAndDumpData(
     std::string_view eigenGapsFilename,
     std::string_view perturbedEigenGapsFilename) const {
-  PtbaResult result = result_from_run();
+  PtbaResult result = run();
   dumpEigenGaps(result.eigenGaps, std::move(eigenGapsFilename));
   dumpPerturbedEigenGaps(result.perturbedEigenGaps,
                          std::move(perturbedEigenGapsFilename));
@@ -132,28 +130,14 @@ Ptba::getNumberOfClustersAndSignificantIndicesAndDumpData(
 void Ptba::setMaxClusters(unsigned value) { maxClusters = value; }
 
 std::vector<unsigned> Ptba::getAllSignificantEigenGapIndices() const {
-  return result_from_run().significantIndices;
+  return run().significantIndices;
 }
 
 void Ptba::setMinEigenGapThreshold(double value) {
   minEigenGapThreshold = value;
 }
 
-unsigned Ptba::run() const noexcept(false) {
-  auto result = result_from_run();
-
-  /*
-  {
-    Ptba::dumpEigenGaps(result.eigenGaps, "eigengaps.txt");
-    Ptba::dumpPerturbedEigenGaps(result.perturbedEigenGaps,
-                                 "perturbed_eigengaps.txt");
-  }
-  */
-
-  return result.significantIndices.size();
-}
-
-auto Ptba::result_from_run() const noexcept(false) -> PtbaResult {
+auto Ptba::run() const noexcept(false) -> PtbaResult {
   enum class PValueResult { significant, nonsignificant, inf, alternative };
 
   arma::mat dataEigenVecs;

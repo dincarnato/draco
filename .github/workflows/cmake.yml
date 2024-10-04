@@ -14,8 +14,8 @@ jobs:
     strategy:
       matrix:
         compiler:
-          - { distro: ubuntu-24.04, c: gcc-14, cxx: g++-14, flags: }
-          - { distro: ubuntu-20.04, c: clang-10, cxx: clang++-10, flags: -DUSE_LIBCXX=ON }
+          - { distro: ubuntu-24.04, c: gcc-14, cxx: g++-14, flags: , deps: }
+          - { distro: ubuntu-24.04, c: clang-16, cxx: clang++-16, flags: -DUSE_LIBCXX=ON, deps: libomp-16-dev libc++-16-dev libc++abi-16-dev }
         build_type: [Debug, RelWithDebInfo]
 
     runs-on: ${{ matrix.compiler.distro }}
@@ -26,7 +26,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libboost-dev libarmadillo-dev libdlib-dev libbtbb-dev ${{ matrix.compiler.c }} ${{ matrix.compiler.cxx }}
+        sudo apt-get install -y libboost-dev libarmadillo-dev libdlib-dev libbtbb-dev ${{ matrix.compiler.c }} ${{ matrix.compiler.cxx }} ${{ matrix.compiler.deps }}
 
     - name: Configure CMake
       run: |

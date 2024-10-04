@@ -44,7 +44,12 @@ static constexpr auto opts = args::Opts(
                          "number of clusters detected for each window. The "
                          "file is tab-separated and has the following format: "
                          "sequence_name <tab> window start offset <tab> window "
-                         "end offset <tab> n clusters.")),
+                         "end offset <tab> n clusters."),
+        ARG(std::string, log_level)
+            .optional()
+            .parameter_name("log-level")
+            .description("Specify the log level. Allowed values are: trace, "
+                         "debug, info, warn, error")),
 
     args::Group("Mutation filtering",
                 ARG(unsigned, minimum_base_coverage)

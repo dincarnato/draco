@@ -1,5 +1,6 @@
 #include "args.hpp"
 #include "graph_cut.hpp"
+#include "logger.hpp"
 #include "mutation_map.hpp"
 #include "parallel/blocking_queue.hpp"
 #include "ptba.hpp"
@@ -450,6 +451,16 @@ void set_uninformative_clusters_to_surrounding(
 
 int main(int argc, char *argv[]) {
   auto const args = Args(argc, argv);
+
+  auto &&log_level = args.log_level();
+  if (not log_level.empty()) {
+    auto level = logger::parse_level(log_level);
+    if (level.has_value()) {
+      logger::instance.set_level(*level);
+    } else {
+      logger::warn("Invalid debug level \"{}\"", log_level);
+    }
+  }
 
   std::cout << "\n[+] Starting DRACO analysis. This might take a while...\n";
 

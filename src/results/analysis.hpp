@@ -1,5 +1,7 @@
 #pragma once
 
+#include "transcript.hpp"
+
 #include <atomic>
 #include <condition_variable>
 #include <fstream>
@@ -10,8 +12,6 @@
 #include <thread>
 
 namespace results {
-
-struct Transcript;
 
 struct Analysis final {
   Analysis() = default;

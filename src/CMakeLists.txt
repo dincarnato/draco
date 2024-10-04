@@ -17,6 +17,7 @@ add_executable(
     spectral_partitioner.cpp
     windows_merger.cpp
     args.cpp
+    logger.cpp
     )
 
 add_executable(

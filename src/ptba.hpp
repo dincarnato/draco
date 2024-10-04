@@ -32,7 +32,6 @@ public:
 
   Ptba(const RingmapData &data, Args const &args);
 
-  unsigned getNumberOfClusters() const;
   unsigned getNumberOfClustersAndDumpData(
       std::string_view eigenVecsFilename, std::string_view eigenGapsFilename,
       std::string_view perturbedEigenGapsFilename) const;
@@ -46,8 +45,7 @@ public:
   std::vector<unsigned> getAllSignificantEigenGapIndices() const;
   void setMinEigenGapThreshold(double value);
 
-  unsigned run() const noexcept(false);
-  PtbaResult result_from_run() const noexcept(false);
+  PtbaResult run() const noexcept(false);
 
   static void dumpEigenVecs(const arma::mat &eigenVecs,
                             std::string_view eigenVecsFilename);

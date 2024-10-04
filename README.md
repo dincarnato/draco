@@ -79,7 +79,7 @@ Because of all this, the output files will be placed inside the `/my/mm/files`.
 
 - Linux system
 - GCC v14 or higher (<https://gcc.gnu.org/gcc-14/>), or
-  <br/>Clang v10 or greater (<https://releases.llvm.org/download.html>)
+  <br/>Clang v16 or greater (<https://releases.llvm.org/download.html>)
 - CMake v3.8 or higher (<https://cmake.org/download/>)
 - OpenBLAS (<https://www.openblas.net>)
 - Armadillo v9.850.1 or greater (<http://arma.sourceforge.net>)

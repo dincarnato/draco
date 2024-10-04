@@ -14,8 +14,8 @@ jobs:
     strategy:
       matrix:
         compiler:
-          - { distro: ubuntu-24.04, c: gcc-14, cxx: g++-14 }
-          - { distro: ubuntu-20.04, c: clang-10, cxx: clang++-10 }
+          - { distro: ubuntu-24.04, c: gcc-14, cxx: g++-14, flags: }
+          - { distro: ubuntu-20.04, c: clang-10, cxx: clang++-10, flags: -DUSE_LIBCXX=ON }
         build_type: [Debug, RelWithDebInfo]
 
     runs-on: ${{ matrix.compiler.distro }}
@@ -35,7 +35,8 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
           -DCMAKE_C_COMPILER=${{ matrix.compiler.c }} \
           -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }} \
-          -DCMAKE_CXX_FLAGS=${{ env.CXX_FLAGS }}
+          -DCMAKE_CXX_FLAGS=${{ env.CXX_FLAGS }} \
+          ${{ matrix.compiler.flags }}
 
     - name: Build
       run: |

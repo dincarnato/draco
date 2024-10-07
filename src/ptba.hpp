@@ -1,16 +1,108 @@
 #pragma once
 
 #include "args.hpp"
+#include "draco.hpp"
 #include "ptba_types.hpp"
+#include "results/transcript.hpp"
 #include "ringmap_data.hpp"
 
+#include <cmath>
 #include <stdexcept>
 #include <string_view>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <armadillo>
+
+namespace log_data {
+
+struct NotEnoughReads {
+  std::size_t reads;
+  std::size_t min_filtered_reads;
+};
+
+struct NotEnoughBases {
+  std::size_t bases;
+  std::size_t min_bases;
+};
+
+struct AllZeroEigenGaps {};
+
+struct NoUsefulEigenGaps {
+  std::size_t eigengaps;
+  std::size_t max_clusters;
+};
+
+namespace permuting {
+
+struct NotEnoughReads {
+  unsigned permutation;
+  std::size_t filtered_reads;
+  std::size_t min_filtered_reads;
+};
+
+struct NewValidEigengap {
+  unsigned permutation;
+  std::size_t previous_eigengap_index;
+  std::size_t new_eigengap_index;
+  bool distribution_is_evaluated;
+  double eigengap_difference;
+  double cumulative_difference;
+  double min_eigengap_threshold;
+};
+
+struct SignificantEigengapLowDifference {
+  unsigned permutation;
+  double eigengap_difference;
+  double eigengap_diff_absolute_threshold;
+  bool distribution_is_evaluated;
+  std::size_t valid_eigengap_index;
+  std::size_t current_eigengap_index;
+};
+
+struct NotSignificantEigengap {
+  unsigned permutation;
+  std::size_t valid_eigengap_index;
+  std::size_t current_eigengap_index;
+};
+
+namespace solution_found {
+
+struct UsefulEigengapIndex {};
+
+struct OverExtendedSearch {
+  std::size_t valid_eigengap_index;
+  std::size_t extended_search_eigengaps;
+};
+
+using Solution = std::variant<solution_found::UsefulEigengapIndex,
+                              solution_found::OverExtendedSearch>;
+
+} // namespace solution_found
+
+struct SolutionFound {
+  unsigned permutation;
+  std::size_t eigengap_index;
+  std::size_t useful_eigengaps;
+  solution_found::Solution solution;
+};
+
+using Data = std::variant<NotEnoughReads, NewValidEigengap,
+                          SignificantEigengapLowDifference,
+                          NotSignificantEigengap, SolutionFound>;
+} // namespace permuting
+
+struct Permuting {
+  std::vector<permuting::Data> data;
+};
+
+} // namespace log_data
+
+using LogData = std::variant<log_data::NotEnoughReads, log_data::NotEnoughBases,
+                             log_data::AllZeroEigenGaps,
+                             log_data::NoUsefulEigenGaps, log_data::Permuting>;
 
 struct PtbaResult {
   unsigned nClusters;
@@ -20,6 +112,25 @@ struct PtbaResult {
   std::vector<unsigned> significantIndices;
   std::vector<unsigned> filteredToUnfilteredBases;
   arma::mat adjacency;
+  LogData log_data;
+
+  PtbaResult(unsigned nClusters, arma::mat eigenVecs, arma::vec eigenGaps,
+             PerturbedEigengaps perturbedEigenGaps,
+             std::vector<unsigned> significantIndices,
+             std::vector<unsigned> filteredToUnfilteredBases,
+             arma::mat adjacency, LogData log_data)
+      : nClusters(nClusters), eigenVecs(std::move(eigenVecs)),
+        eigenGaps(std::move(eigenGaps)),
+        perturbedEigenGaps(std::move(perturbedEigenGaps)),
+        significantIndices(std::move(significantIndices)),
+        filteredToUnfilteredBases(std::move(filteredToUnfilteredBases)),
+        adjacency(std::move(adjacency)), log_data(std::move(log_data)) {}
+
+  PtbaResult(LogData log_data) : log_data(std::move(log_data)) {}
+  PtbaResult(const PtbaResult &) = default;
+  PtbaResult(PtbaResult &&) = default;
+  PtbaResult &operator=(const PtbaResult &) = default;
+  PtbaResult &operator=(PtbaResult &&) = default;
 };
 
 class Ptba /* Permutation test-based analysis */
@@ -78,5 +189,9 @@ private:
   unsigned minBasesSize = 10;
   unsigned char extended_search_eigengaps;
 };
+
+void print_log_data(LogData const &log_data, Window const &window,
+                    size_t window_index, unsigned window_size,
+                    results::Transcript const &transcript) noexcept;
 
 #include "ptba_impl.hpp"

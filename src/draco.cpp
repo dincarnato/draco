@@ -607,6 +607,10 @@ int main(int argc, char *argv[]) {
             Ptba ptba(window_ringmap_data, args);
 
             auto const result = ptba.run();
+            logger::on_debug_level(print_log_data, result.log_data, window,
+                                   static_cast<std::size_t>(std::distance(
+                                       std::cbegin(windows), windows_iter)),
+                                   window_size, transcriptResult);
             if (args.create_eigengaps_plots()) {
               window_n_clusters = result.significantIndices.size();
               auto const [eigengaps_filename,

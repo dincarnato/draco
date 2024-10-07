@@ -1,3 +1,4 @@
+#include "draco.hpp"
 #include "args.hpp"
 #include "graph_cut.hpp"
 #include "logger.hpp"
@@ -36,12 +37,6 @@ namespace fs = std::experimental::filesystem;
 #endif
 
 namespace ranges = std::ranges;
-
-struct Window {
-  unsigned short start_base;
-  WeightedClusters weights;
-  std::vector<unsigned> coverages;
-};
 
 struct WindowsSpan {
   std::size_t begin;

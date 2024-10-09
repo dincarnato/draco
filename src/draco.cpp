@@ -791,38 +791,22 @@ int main(int argc, char *argv[]) {
           }
 
           {
-            auto window_iter = std::begin(windows);
-            auto window_reads_indices_iter = std::begin(windows_reads_indices);
-            // std::ofstream merge_stream("merge.txt");
-            while (window_iter != std::end(windows)) {
+            auto window_iter = std::cbegin(windows);
+            auto window_reads_indices_iter = std::cbegin(windows_reads_indices);
+
+            for (; window_iter < std::cend(windows);
+                 ++window_iter, ++window_reads_indices_iter) {
+              auto &&window = *window_iter;
+              auto &&reads_indices = *window_reads_indices_iter;
               unsigned const n_clusters =
                   window_iter->weights.getClustersSize();
-              auto last_window = std::find_if(
-                  std::next(window_iter), std::end(windows),
-                  [n_clusters](auto &&window) {
-                    return window.weights.getClustersSize() != n_clusters;
-                  });
 
-              auto const last_window_reads_indices =
-                  std::next(window_reads_indices_iter,
-                            std::distance(window_iter, last_window));
-
-              auto const get_window_coverages = [&window_reads_indices_iter,
-                                                 &last_window_reads_indices,
-                                                 &ringmapData](
+              auto const get_window_coverages = [&reads_indices, &ringmapData](
                                                     std::size_t begin_index,
                                                     std::size_t end_index) {
                 auto const window_size = end_index - begin_index;
                 std::vector<unsigned> coverages(window_size, 0u);
                 {
-                  std::set<std::size_t> reads_indices;
-                  std::for_each(window_reads_indices_iter,
-                                last_window_reads_indices,
-                                [&](auto const &indices) {
-                                  reads_indices.insert(std::begin(indices),
-                                                       std::end(indices));
-                                });
-
                   auto &&data = ringmapData.data();
                   assert(std::all_of(
                       std::begin(reads_indices), std::end(reads_indices),
@@ -861,36 +845,25 @@ int main(int argc, char *argv[]) {
 
               if (n_clusters == 0) {
                 if (args.report_uninformative()) {
-                  std::for_each(window_iter, last_window, [&](auto &&window) {
-                    auto const coverages = get_window_coverages(
-                        window.start_base,
-                        window.start_base + window.coverages.size());
-                    auto result_window = results::Window(
-                        window.start_base, window.weights, coverages);
+                  auto const coverages = get_window_coverages(
+                      window.start_base,
+                      window.start_base + window.coverages.size());
+                  auto result_window = results::Window(
+                      window.start_base, window.weights, coverages);
 
-                    add_result_window(std::move(result_window));
-                  });
+                  add_result_window(std::move(result_window));
                 }
 
-                window_iter = last_window;
-                window_reads_indices_iter = last_window_reads_indices;
                 continue;
               }
 
-              windows_merger::WindowsMerger windows_merger(n_clusters);
-              std::for_each(window_iter, last_window, [&](auto &&window) {
-                windows_merger.add_window(window.start_base, window.weights,
-                                          window.coverages);
-              });
-
-              auto const merged_window = windows_merger.merge();
               auto const coverages = get_window_coverages(
-                  merged_window.begin_index(), merged_window.end_index());
-              auto result_window = results::Window(merged_window, coverages);
-              add_result_window(std::move(result_window));
+                  window.start_base,
+                  window.start_base + window.coverages.size());
+              auto result_window =
+                  results::Window(window.start_base, window.weights, coverages);
 
-              window_iter = last_window;
-              window_reads_indices_iter = last_window_reads_indices;
+              add_result_window(std::move(result_window));
             }
           }
 

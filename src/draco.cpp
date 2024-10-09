@@ -965,6 +965,14 @@ int main(int argc, char *argv[]) {
                 stop = false;
                 auto const result_window_begin = window.begin_index;
                 auto const result_window_end = window.end_index;
+                logger::debug(
+                    "Transcript {}, window {} (bases {}-{}), reducing number "
+                    "of clusters from {} to {} because a redundant weights "
+                    "pattern is found",
+                    transcriptResult.name,
+                    std::distance(std::begin(result_windows), windows_iter) + 1,
+                    result_window_begin + 1, result_window_end,
+                    window.fractions.size(), window.fractions.size() - 1);
                 assert(window.fractions.size() > 1);
                 auto const new_clusters_constraint =
                     static_cast<unsigned>(window.fractions.size() - 1);

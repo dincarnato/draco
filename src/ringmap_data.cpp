@@ -235,6 +235,23 @@ void RingmapData::filterBases() {
     if (oldColsToNew.empty() or new_n_cols != filtered.cols_size()) {
       oldColsToNew = std::move(newOldColsToNew);
       filtered.remove_cols(new_n_cols, filtered.cols_size());
+
+      {
+        auto &&filtered_rows = filtered.rows();
+        auto &&m_data_rows = m_data.rows();
+
+        for (auto filtered_iter = std::ranges::begin(filtered_rows),
+                  filtered_end = std::ranges::end(filtered_rows),
+                  data_iter = std::ranges::begin(m_data_rows);
+             filtered_iter < filtered_end; ++filtered_iter, ++data_iter) {
+          auto &&filtered_row = *filtered_iter;
+          auto &&data_row = *data_iter;
+
+          filtered_row.copy_begin_end_indices(data_row);
+          filtered_row.copy_window_begin_end_indices(data_row);
+        }
+      }
+
       m_data = std::move(filtered);
       baseCoverages.erase(
           std::ranges::transform(

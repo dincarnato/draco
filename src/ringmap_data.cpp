@@ -8,6 +8,7 @@
 #include "spectral_partitioner.hpp"
 #include "tokenizer_iterator.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <fstream>
@@ -512,7 +513,8 @@ RingmapData::getUnfilteredWeights(const WeightedClusters &weights) const {
     return weights;
 }
 
-auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights) const
+auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
+                                         double minimum_read_overlap) const
     -> std::tuple<clusters_fraction_type, clusters_pattern_type,
                   clusters_assignment_type> {
   assert(weights.getElementsSize() == sequence.size());
@@ -566,6 +568,23 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights) const
       std::size_t, rowHash, rowEqual>
       uniqueReadsCount;
   for (auto &&read : m_data.rows()) {
+    assert(read.original_begin_index() !=
+           std::numeric_limits<RingmapMatrixRow::base_index_type>::max());
+    auto read_size = read.original_end_index() - read.original_begin_index();
+    auto overlapping_size =
+        std::max(0, std::min(static_cast<int>(read.original_end_index()),
+                             static_cast<int>(read.window_end_index())) -
+                        std::max(static_cast<int>(read.original_begin_index()),
+                                 static_cast<int>(read.window_begin_index())));
+    auto max_overlap =
+        std::min(read_size, static_cast<unsigned>(read.window_end_index() -
+                                                  read.window_begin_index()));
+    if (static_cast<double>(overlapping_size) /
+            static_cast<double>(max_overlap) <
+        minimum_read_overlap) {
+      continue;
+    }
+
     auto indices = std::cref(read.modifiedIndices());
     if (auto uniqueReadIter = uniqueReadsCount.find(indices);
         uniqueReadIter != std::ranges::end(uniqueReadsCount))

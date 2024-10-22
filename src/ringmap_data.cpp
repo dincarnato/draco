@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <limits>
 #include <optional>
+#include <ranges>
 #include <regex>
 #include <sstream>
 #include <unordered_map>
@@ -495,6 +496,47 @@ bool RingmapData::operator==(const RingmapData &other) const {
 
 const std::string &RingmapData::getSequence() const { return sequence; }
 
+struct EnoughMutationsInOverlap {
+  constexpr EnoughMutationsInOverlap(
+      unsigned short minimum_mutations_in_overlap) noexcept
+      : minimum_mutations_in_overlap(minimum_mutations_in_overlap),
+        op(minimum_mutations_in_overlap == 0
+               ? EnoughMutationsInOverlap::noop_check
+               : EnoughMutationsInOverlap::real_check) {}
+  constexpr EnoughMutationsInOverlap(const EnoughMutationsInOverlap &) =
+      default;
+  constexpr EnoughMutationsInOverlap(EnoughMutationsInOverlap &&) = default;
+  constexpr EnoughMutationsInOverlap &
+  operator=(const EnoughMutationsInOverlap &) = default;
+  constexpr EnoughMutationsInOverlap &
+  operator=(EnoughMutationsInOverlap &&) = default;
+
+  constexpr inline bool
+  operator()(const RingmapMatrixRowAccessor<const RingmapMatrix> &read)
+      const noexcept {
+    return this->op(this->minimum_mutations_in_overlap, read);
+  }
+
+private:
+  unsigned short minimum_mutations_in_overlap;
+  std::add_pointer_t<bool(
+      unsigned short,
+      const RingmapMatrixRowAccessor<const RingmapMatrix> &) noexcept>
+      op;
+
+  static constexpr bool
+  noop_check(unsigned short,
+             const RingmapMatrixRowAccessor<const RingmapMatrix> &) noexcept {
+    return true;
+  }
+
+  static constexpr bool real_check(
+      unsigned short minimum_mutations_in_overlap,
+      const RingmapMatrixRowAccessor<const RingmapMatrix> &read) noexcept {
+    return read.modifiedIndices().size() >= minimum_mutations_in_overlap;
+  }
+};
+
 WeightedClusters
 RingmapData::getUnfilteredWeights(const WeightedClusters &weights) const {
   assert(weights.getElementsSize() == m_data.cols_size());
@@ -513,8 +555,9 @@ RingmapData::getUnfilteredWeights(const WeightedClusters &weights) const {
     return weights;
 }
 
-auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
-                                         double minimum_read_overlap) const
+auto RingmapData::fractionReadsByWeights(
+    const WeightedClusters &weights, double minimum_read_overlap,
+    unsigned short minimum_mutations_in_overlap) const
     -> std::tuple<clusters_fraction_type, clusters_pattern_type,
                   clusters_assignment_type> {
   assert(weights.getElementsSize() == sequence.size());
@@ -563,6 +606,9 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
     }
   };
 
+  auto enough_mutations_in_overlap =
+      EnoughMutationsInOverlap{minimum_mutations_in_overlap};
+
   std::unordered_map<
       std::reference_wrapper<const typename RingmapMatrix::row_type>,
       std::size_t, rowHash, rowEqual>
@@ -582,6 +628,10 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
     if (static_cast<double>(overlapping_size) /
             static_cast<double>(max_overlap) <
         minimum_read_overlap) {
+      continue;
+    }
+
+    if (not enough_mutations_in_overlap(read)) {
       continue;
     }
 

@@ -86,7 +86,8 @@ public:
   std::tuple<clusters_fraction_type, clusters_pattern_type,
              clusters_assignment_type>
   fractionReadsByWeights(const WeightedClusters &weights,
-                         double minimum_read_overlap) const;
+                         double minimum_read_overlap,
+                         unsigned short minimum_mutations_in_overlap) const;
   clusters_pattern_type
   remapPatterns(const clusters_pattern_type &patterns) const;
 

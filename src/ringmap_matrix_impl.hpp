@@ -33,8 +33,7 @@ void RingmapMatrix::addRead(
   while (readsCount >= data.size())
     data.emplace_back();
   data[readsCount] = std::forward<TranscriptRead>(transcriptRead).indices;
-  data[readsCount].begin_index = transcriptRead.begin;
-  data[readsCount].end_index = transcriptRead.end;
+  data[readsCount].copy_begin_end_indices(transcriptRead);
   ++readsCount;
 }
 

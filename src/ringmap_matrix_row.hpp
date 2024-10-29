@@ -3,6 +3,7 @@
 #include "mutation_map_transcript_read.hpp"
 #include "ringmap_matrix_traits.hpp"
 
+#include <algorithm>
 #include <concepts>
 #include <limits>
 #include <type_traits>
@@ -49,6 +50,8 @@ struct RingmapMatrixRow : std::vector<ringmap_matrix::base_index_type> {
 
   constexpr void copy_begin_end_indices(auto const &other_row) noexcept;
   constexpr void copy_window_begin_end_indices(auto const &window) noexcept;
+
+  constexpr bool is_valid() const noexcept;
 
 protected:
   base_index_type begin_index_ = std::numeric_limits<base_index_type>::max();
@@ -199,4 +202,22 @@ RingmapMatrixRow::copy_window_begin_end_indices(auto const &window) noexcept {
                          "RingmapMatrixWindowIndices, a results::Window, a "
                          "RingmapMatrixRow or a RingmapMatrixRowAccessor");
   }
+}
+
+inline constexpr bool RingmapMatrixRow::is_valid() const noexcept {
+  auto begin_index =
+      this->begin_index_ == std::numeric_limits<base_index_type>::max()
+          ? 0
+          : this->begin_index_;
+  auto end_index =
+      this->end_index_ == std::numeric_limits<base_index_type>::min()
+          ? std::numeric_limits<base_index_type>::max()
+          : this->end_index_;
+  auto min_end_index = std::min(end_index, this->window_end_index_);
+  return begin_index <= end_index and
+         this->window_begin_index_ <= this->window_end_index_ and
+         std::ranges::all_of(*this, [=, this](auto base_index) {
+           return base_index + this->window_begin_index_ >= begin_index and
+                  base_index + this->window_begin_index_ < min_end_index;
+         });
 }

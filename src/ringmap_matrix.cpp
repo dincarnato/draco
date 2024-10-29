@@ -20,7 +20,7 @@ void RingmapMatrix::addModifiedIndicesRow(row_type const &row) noexcept(false) {
 }
 
 void RingmapMatrix::addModifiedIndicesRow(row_type &&row) noexcept(false) {
-  assert(row.end_index() >= row.begin_index());
+  assert(row.is_valid());
   assert(row.end_index() - row.begin_index() <= bases);
   data.emplace_back(std::move(row));
   ++readsCount;

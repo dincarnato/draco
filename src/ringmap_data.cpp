@@ -1082,6 +1082,16 @@ std::vector<RingmapData> RingmapData::split_into_windows(
         first_index_iter, last_index_iter, [&](auto &&index) {
           return index >= new_row_begin and index < new_row_end;
         }));
+
+    /// The indices must be shifted by window.begin_index and not by
+    /// new_row_begin. The reason is that we want the new indices to have an
+    /// offset from the beginning of the window. At the same time, the
+    /// `begin_index` and the `end_index` should indicate the start and end of
+    /// the read one it is intersected with the window. The fact that
+    /// all the indices are within `[new_row_begin, new_row_end)` (because of
+    /// the assertion above) also means that it is not possible to have an
+    /// index less than `row.begin_index()`, because the `new_row_begin` is the
+    /// max of `row.begin_index()` and `window.begin_index`.
     std::ranges::transform(
         first_index_iter, last_index_iter, std::ranges::begin(new_row),
         [begin = window.begin_index](auto &&index) { return index - begin; });

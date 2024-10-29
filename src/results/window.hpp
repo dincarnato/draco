@@ -151,8 +151,8 @@ std::basic_ostream<CharT, Traits> &
 jsonify(std::basic_ostream<CharT, Traits> &os,
         RingmapMatrixRow const &ringmap_row) {
   os << '{';
-  jsonify(os, "start", ringmap_row.begin_index, "end", ringmap_row.end_index,
-          "mutatedIndexes",
+  jsonify(os, "start", ringmap_row.begin_index(), "end",
+          ringmap_row.end_index(), "mutatedIndexes",
           static_cast<RingmapMatrixRow::base_type const &>(ringmap_row));
   return os << "}";
 }

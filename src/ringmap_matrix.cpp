@@ -13,15 +13,15 @@ RingmapMatrix::RingmapMatrix(unsigned nReads, unsigned nBases) noexcept(false)
     : bases(nBases), readsCount(0), data(nReads) {}
 
 void RingmapMatrix::addModifiedIndicesRow(row_type const &row) noexcept(false) {
-  assert(row.end_index >= row.begin_index);
-  assert(row.end_index - row.begin_index <= bases);
+  assert(row.end_index() >= row.begin_index());
+  assert(row.end_index() - row.begin_index() <= bases);
   data.emplace_back(row);
   ++readsCount;
 }
 
 void RingmapMatrix::addModifiedIndicesRow(row_type &&row) noexcept(false) {
-  assert(row.end_index >= row.begin_index);
-  assert(row.end_index - row.begin_index <= bases);
+  assert(row.end_index() >= row.begin_index());
+  assert(row.end_index() - row.begin_index() <= bases);
   data.emplace_back(std::move(row));
   ++readsCount;
 }

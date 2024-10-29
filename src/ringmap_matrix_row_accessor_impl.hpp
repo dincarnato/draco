@@ -235,14 +235,14 @@ template <typename Matrix>
 ringmap_matrix::base_index_type
 RingmapMatrixRowAccessor<Matrix>::begin_index() const noexcept {
   assert(matrix);
-  return row->begin_index;
+  return row->begin_index();
 }
 
 template <typename Matrix>
 ringmap_matrix::base_index_type
 RingmapMatrixRowAccessor<Matrix>::end_index() const noexcept {
   assert(matrix);
-  return row->end_index;
+  return row->end_index();
 }
 
 template <typename Matrix>

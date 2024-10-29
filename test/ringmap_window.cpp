@@ -49,8 +49,8 @@ generate_random_ringmap() {
   }
 
   for (auto &&row : rows) {
-    row.begin_index = read_begin_dist(random_gen);
-    row.end_index = row.begin_index + read_size;
+    row.set_begin_index(read_begin_dist(random_gen));
+    row.set_end_index(row.begin_index() + read_size);
 
     auto const n_modifications = static_cast<std::uint8_t>(
         std::distance(std::begin(modification_cum_probabilities),
@@ -83,10 +83,10 @@ get_window(RingmapData const &ringmap_data,
 
   filtered_rows.reserve(n_reads);
   for (auto &&row : rows) {
-    if (row.begin_index <= start_base and row.end_index >= end_base) {
+    if (row.begin_index() <= start_base and row.end_index() >= end_base) {
       RingmapMatrixRow new_row;
-      new_row.begin_index = start_base;
-      new_row.end_index = end_base;
+      new_row.set_begin_index(start_base);
+      new_row.set_end_index(end_base);
 
       new_row.reserve(row.size());
       for (auto modified_index : row) {
@@ -207,8 +207,7 @@ static void test_filter_window() {
 
         for (auto &&row : filtered_rows) {
           RingmapMatrixRow new_row;
-          new_row.begin_index = row.begin_index;
-          new_row.end_index = row.end_index;
+          new_row.copy_begin_end_indices(row);
 
           std::copy_if(std::begin(row), std::end(row),
                        std::back_inserter(new_row), [&](auto base_index) {

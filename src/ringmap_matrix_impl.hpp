@@ -34,6 +34,7 @@ void RingmapMatrix::addRead(
     data.emplace_back();
   data[readsCount] = std::forward<TranscriptRead>(transcriptRead).indices;
   data[readsCount].copy_begin_end_indices(transcriptRead);
+  assert(data[readsCount].is_valid());
   ++readsCount;
 }
 

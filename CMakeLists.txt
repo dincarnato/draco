@@ -10,6 +10,10 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   endif()
 endif()
 
+if(POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif()
+
 find_package(Boost 1.66 REQUIRED)
 find_package(Armadillo REQUIRED)
 find_package(OpenMP REQUIRED)

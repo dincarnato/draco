@@ -3,12 +3,22 @@
 #include "mutation_map_transcript_read.hpp"
 #include "ringmap_matrix_traits.hpp"
 
+#include <concepts>
 #include <limits>
 #include <type_traits>
 #include <vector>
 
 class RingmapMatrix;
 template <typename> class RingmapMatrixRowAccessor;
+
+namespace results {
+struct Window;
+} /* namespace results */
+
+struct RingmapMatrixWindowIndices {
+  ringmap_matrix::base_index_type begin_index;
+  ringmap_matrix::base_index_type end_index;
+};
 
 struct RingmapMatrixRow : std::vector<ringmap_matrix::base_index_type> {
   using base_index_type = ringmap_matrix::base_index_type;
@@ -26,14 +36,26 @@ struct RingmapMatrixRow : std::vector<ringmap_matrix::base_index_type> {
   constexpr base_index_type begin_index() const noexcept;
   constexpr base_index_type end_index() const noexcept;
 
-  constexpr void set_begin_index(base_index_type begin_index) noexcept;
-  constexpr void set_end_index(base_index_type end_index) noexcept;
+  constexpr base_index_type original_begin_index() const noexcept;
+  constexpr base_index_type original_end_index() const noexcept;
+
+  constexpr base_index_type window_begin_index() const noexcept;
+  constexpr base_index_type window_end_index() const noexcept;
+
+  constexpr void
+  unsafe_set_original_begin_index(base_index_type begin_index) noexcept;
+  constexpr void
+  unsafe_set_original_end_index(base_index_type end_index) noexcept;
 
   constexpr void copy_begin_end_indices(auto const &other_row) noexcept;
+  constexpr void copy_window_begin_end_indices(auto const &window) noexcept;
 
 protected:
   base_index_type begin_index_ = std::numeric_limits<base_index_type>::max();
   base_index_type end_index_ = std::numeric_limits<base_index_type>::min();
+  base_index_type window_begin_index_ = 0;
+  base_index_type window_end_index_ =
+      std::numeric_limits<base_index_type>::max();
 };
 
 inline bool operator<(RingmapMatrixRow const &lhs,
@@ -86,21 +108,49 @@ inline bool operator>=(RingmapMatrixRow const &lhs,
 
 inline constexpr auto
 RingmapMatrixRow::begin_index() const noexcept -> base_index_type {
-  return this->begin_index_;
+  if (this->begin_index_ == std::numeric_limits<base_index_type>::max()) {
+    return std::numeric_limits<base_index_type>::max();
+  } else {
+    return std::max(this->begin_index_, this->window_begin_index_);
+  }
 }
 
 inline constexpr auto
 RingmapMatrixRow::end_index() const noexcept -> base_index_type {
+  if (this->end_index_ == std::numeric_limits<base_index_type>::min()) {
+    return std::numeric_limits<base_index_type>::min();
+  } else {
+    return std::min(this->end_index_, this->window_end_index_);
+  }
+}
+
+inline constexpr auto
+RingmapMatrixRow::original_begin_index() const noexcept -> base_index_type {
+  return this->begin_index_;
+}
+
+inline constexpr auto
+RingmapMatrixRow::original_end_index() const noexcept -> base_index_type {
   return this->end_index_;
 }
 
-inline constexpr void
-RingmapMatrixRow::set_begin_index(base_index_type begin_index) noexcept {
+inline constexpr auto
+RingmapMatrixRow::window_begin_index() const noexcept -> base_index_type {
+  return this->window_begin_index_;
+}
+
+inline constexpr auto
+RingmapMatrixRow::window_end_index() const noexcept -> base_index_type {
+  return this->window_end_index_;
+}
+
+inline constexpr void RingmapMatrixRow::unsafe_set_original_begin_index(
+    base_index_type begin_index) noexcept {
   this->begin_index_ = begin_index;
 }
 
-inline constexpr void
-RingmapMatrixRow::set_end_index(base_index_type end_index) noexcept {
+inline constexpr void RingmapMatrixRow::unsafe_set_original_end_index(
+    base_index_type end_index) noexcept {
   this->end_index_ = end_index;
 }
 
@@ -126,3 +176,27 @@ RingmapMatrixRow::copy_begin_end_indices(auto const &other) noexcept {
                   "RingmapMatrixRowAccessor or a MutationMapTranscriptRead");
   }
 };
+
+inline constexpr void
+RingmapMatrixRow::copy_window_begin_end_indices(auto const &window) noexcept {
+  using window_t = std::remove_cvref_t<decltype(window)>;
+
+  if constexpr (std::is_same_v<window_t, RingmapMatrixWindowIndices> ||
+                std::is_same_v<window_t, results::Window>) {
+    this->window_begin_index_ = window.begin_index;
+    this->window_end_index_ = window.end_index;
+  } else if constexpr (std::is_same_v<window_t, RingmapMatrixRow>) {
+    this->begin_index_ = window.begin_index_;
+    this->end_index_ = window.end_index_;
+  } else if constexpr (std::is_same_v<
+                           window_t, RingmapMatrixRowAccessor<RingmapMatrix>> ||
+                       std::is_same_v<window_t, RingmapMatrixRowAccessor<
+                                                    const RingmapMatrix>>) {
+    this->begin_index_ = window.original_begin_index();
+    this->end_index_ = window.original_end_index();
+  } else {
+    static_assert(false, "copy_window_begin_end_indices only accepts a "
+                         "RingmapMatrixWindowIndices, a results::Window, a "
+                         "RingmapMatrixRow or a RingmapMatrixRowAccessor");
+  }
+}

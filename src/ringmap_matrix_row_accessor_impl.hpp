@@ -246,6 +246,20 @@ RingmapMatrixRowAccessor<Matrix>::end_index() const noexcept {
 }
 
 template <typename Matrix>
+constexpr ringmap_matrix::base_index_type
+RingmapMatrixRowAccessor<Matrix>::original_begin_index() const noexcept {
+  assert(matrix);
+  return row->original_begin_index();
+}
+
+template <typename Matrix>
+constexpr ringmap_matrix::base_index_type
+RingmapMatrixRowAccessor<Matrix>::original_end_index() const noexcept {
+  assert(matrix);
+  return row->original_end_index();
+}
+
+template <typename Matrix>
 void RingmapMatrixRowAccessor<Matrix>::set_begin_index(
     ringmap_matrix::base_index_type value) noexcept {
   row->begin_index = value;

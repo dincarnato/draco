@@ -3,6 +3,7 @@
 #include "mutation_map_transcript.hpp"
 #include "ptba.hpp"
 #include "results/window.hpp"
+#include "ringmap_matrix_row.hpp"
 #include "rna_secondary_structure.hpp"
 #include "spectral_partitioner.hpp"
 #include "tokenizer_iterator.hpp"
@@ -896,8 +897,9 @@ RingmapData RingmapData::get_new_range(
 
       ringmap_matrix::row_type new_row(static_cast<std::size_t>(
           std::ranges::distance(first_index_iter, last_index_iter)));
-      new_row.set_begin_index(begin);
-      new_row.set_end_index(end);
+      new_row.copy_begin_end_indices(row);
+      new_row.copy_window_begin_end_indices(
+          RingmapMatrixWindowIndices{.begin_index = begin, .end_index = end});
 
       assert(std::ranges::all_of(
           first_index_iter, last_index_iter,
@@ -1073,8 +1075,8 @@ std::vector<RingmapData> RingmapData::split_into_windows(
 
     ringmap_matrix::row_type new_row(static_cast<std::size_t>(
         std::ranges::distance(first_index_iter, last_index_iter)));
-    new_row.set_begin_index(new_row_begin);
-    new_row.set_end_index(new_row_end);
+    new_row.copy_begin_end_indices(row);
+    new_row.copy_window_begin_end_indices(window);
 
     assert(std::ranges::all_of(
         first_index_iter, last_index_iter, [&](auto &&index) {

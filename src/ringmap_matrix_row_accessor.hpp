@@ -72,6 +72,10 @@ public:
   constexpr ringmap_matrix::base_index_type begin_index() const noexcept;
   constexpr ringmap_matrix::base_index_type end_index() const noexcept;
 
+  constexpr ringmap_matrix::base_index_type
+  original_begin_index() const noexcept;
+  constexpr ringmap_matrix::base_index_type original_end_index() const noexcept;
+
   void set_begin_index(ringmap_matrix::base_index_type value) noexcept;
   void set_end_index(ringmap_matrix::base_index_type value) noexcept;
 

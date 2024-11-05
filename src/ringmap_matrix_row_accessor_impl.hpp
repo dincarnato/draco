@@ -152,8 +152,8 @@ bool RingmapMatrixRowAccessor<Matrix>::operator==(
 }
 
 template <typename Matrix>
-auto RingmapMatrixRowAccessor<Matrix>::modifiedIndices() const noexcept
-    -> reference {
+constexpr auto RingmapMatrixRowAccessor<Matrix>::modifiedIndices()
+    const noexcept -> reference {
   assert(matrix);
   return *row;
 }
@@ -232,14 +232,14 @@ void RingmapMatrixRowAccessor<Matrix>::assign_from_row(Row &&row) const
 }
 
 template <typename Matrix>
-ringmap_matrix::base_index_type
+constexpr ringmap_matrix::base_index_type
 RingmapMatrixRowAccessor<Matrix>::begin_index() const noexcept {
   assert(matrix);
   return row->begin_index();
 }
 
 template <typename Matrix>
-ringmap_matrix::base_index_type
+constexpr ringmap_matrix::base_index_type
 RingmapMatrixRowAccessor<Matrix>::end_index() const noexcept {
   assert(matrix);
   return row->end_index();

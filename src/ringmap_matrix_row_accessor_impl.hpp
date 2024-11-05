@@ -285,6 +285,20 @@ void RingmapMatrixRowAccessor<Matrix>::set_end_index(
   row->end_index = value;
 }
 
+template <typename Matrix>
+template <typename, typename>
+void RingmapMatrixRowAccessor<Matrix>::copy_begin_end_indices(
+    auto const &other) const noexcept {
+  row->copy_begin_end_indices(other);
+}
+
+template <typename Matrix>
+template <typename, typename>
+void RingmapMatrixRowAccessor<Matrix>::copy_window_begin_end_indices(
+    auto const &other) const noexcept {
+  row->copy_window_begin_end_indices(other);
+}
+
 template <typename ML, typename MR>
 bool operator<(RingmapMatrixRowAccessor<ML> const &lhs,
                RingmapMatrixRowAccessor<MR> const &rhs) noexcept {

@@ -69,8 +69,8 @@ public:
       noexcept(false);
   operator value_type() const noexcept(false);
 
-  ringmap_matrix::base_index_type begin_index() const noexcept;
-  ringmap_matrix::base_index_type end_index() const noexcept;
+  constexpr ringmap_matrix::base_index_type begin_index() const noexcept;
+  constexpr ringmap_matrix::base_index_type end_index() const noexcept;
 
   void set_begin_index(ringmap_matrix::base_index_type value) noexcept;
   void set_end_index(ringmap_matrix::base_index_type value) noexcept;
@@ -87,7 +87,7 @@ public:
   template <typename T> T convTo() const noexcept(false);
   arma::rowvec operator*(const arma::mat &eigenVectors) const noexcept(false);
 
-  reference modifiedIndices() const noexcept;
+  constexpr reference modifiedIndices() const noexcept;
 
   RingmapMatrixAccessor<Matrix> operator[](unsigned index) const noexcept;
   template <typename _Matrix>

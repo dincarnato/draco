@@ -3,6 +3,7 @@
 #include "ringmap_matrix_iterator_type.hpp"
 #include "ringmap_matrix_traits.hpp"
 
+#include <concepts>
 #include <type_traits>
 
 #include <armadillo>
@@ -81,6 +82,14 @@ public:
 
   void set_begin_index(ringmap_matrix::base_index_type value) noexcept;
   void set_end_index(ringmap_matrix::base_index_type value) noexcept;
+
+  template <typename M = Matrix,
+            typename = std::enable_if_t<not std::is_const_v<M>>>
+  void copy_begin_end_indices(auto const &other) const noexcept;
+
+  template <typename M = Matrix,
+            typename = std::enable_if_t<not std::is_const_v<M>>>
+  void copy_window_begin_end_indices(auto const &other) const noexcept;
 
   iterator begin() const noexcept;
   iterator end() const noexcept;

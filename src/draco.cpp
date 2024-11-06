@@ -448,7 +448,7 @@ void assign_reads_to_clusters(
     results::Window &window,
     RingmapData::clusters_assignment_type &&clusters_assignment,
     RingmapData const &ringmap, RingmapData const &filteredRingmap,
-    double minimum_read_overlap) {
+    double minimum_read_overlap, unsigned short minimum_mutations_in_overlap) {
   std::vector assignments(std::move_iterator(std::begin(clusters_assignment)),
                           std::move_iterator(std::end(clusters_assignment)));
   assert(ranges::is_sorted(assignments, {}, [](auto &&pair) -> decltype(auto) {
@@ -483,6 +483,21 @@ void assign_reads_to_clusters(
                                  static_cast<int>(window.begin_index)));
     if (static_cast<double>(overlapping_size) / window_size <
         minimum_read_overlap) {
+      continue;
+    }
+
+    auto enough_mutations_in_overlap = ([&]() {
+      auto overlapping_mutations = std::ranges::distance(
+          original_row.modifiedIndices() |
+          std::views::filter([&](auto absolute_index) {
+            return absolute_index >= window.begin_index and
+                   absolute_index < window.end_index;
+          }));
+
+      return overlapping_mutations >= minimum_mutations_in_overlap;
+    })();
+
+    if (not enough_mutations_in_overlap) {
       continue;
     }
 
@@ -1084,7 +1099,8 @@ int main(int argc, char *argv[]) {
 
               assign_reads_to_clusters(
                   window, std::move(std::get<2>(fractions_result)), ringmap,
-                  filteredRingmap, args.minimum_read_overlap());
+                  filteredRingmap, args.minimum_read_overlap(),
+                  args.minimum_mutation_in_read_overlap());
 
               if (std::all_of(std::cbegin(*window.patterns),
                               std::cend(*window.patterns), [](auto &&pattern) {

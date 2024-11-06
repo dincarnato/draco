@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <concepts>
 #include <limits>
+#include <ranges>
 #include <type_traits>
 #include <vector>
 
@@ -52,6 +53,7 @@ struct RingmapMatrixRow : std::vector<ringmap_matrix::base_index_type> {
   constexpr void copy_window_begin_end_indices(auto const &window) noexcept;
 
   constexpr bool is_valid() const noexcept;
+  constexpr bool has_same_indices(RingmapMatrixRow const &other) const noexcept;
 
 protected:
   base_index_type begin_index_ = std::numeric_limits<base_index_type>::max();
@@ -220,4 +222,17 @@ inline constexpr bool RingmapMatrixRow::is_valid() const noexcept {
            return base_index + this->window_begin_index_ >= begin_index and
                   base_index + this->window_begin_index_ < min_end_index;
          });
+}
+
+inline constexpr bool RingmapMatrixRow::has_same_indices(
+    RingmapMatrixRow const &other) const noexcept {
+  return std::ranges::equal(
+      *this | std::views::transform([this](auto modified_index) {
+        return window_begin_index_ +
+               static_cast<base_index_type>(modified_index);
+      }),
+      other | std::views::transform([&other](auto modified_index) {
+        return other.window_begin_index_ +
+               static_cast<base_index_type>(modified_index);
+      }));
 }

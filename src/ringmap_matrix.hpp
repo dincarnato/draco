@@ -106,6 +106,8 @@ public:
 
   void append(const RingmapMatrix &other) noexcept(false);
 
+  bool has_same_indices(RingmapMatrix const &other) const noexcept;
+
 private:
   unsigned bases;
   unsigned readsCount;

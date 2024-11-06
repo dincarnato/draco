@@ -69,7 +69,14 @@ template <typename Weights>
 arma::mat RingmapMatrix::covariance(Weights &&baseWeights) const
     noexcept(false) {
   RingmapMatrix transposed = t();
-  assert(transposed.t() == *this);
+#ifndef NDEBUG
+  {
+    auto retransposed = transposed.t();
+    assert(retransposed.bases == this->bases and
+           retransposed.readsCount == this->readsCount and
+           retransposed.has_same_indices(*this));
+  }
+#endif
   arma::mat out(bases, bases, arma::fill::zeros);
   for (unsigned row = 0; row < bases; ++row) {
     double rowBaseWeight = baseWeights[row];

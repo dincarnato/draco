@@ -105,6 +105,12 @@ public:
 
   constexpr reference modifiedIndices() const noexcept;
 
+  template <typename Matrix2>
+  std::enable_if_t<std::is_same_v<std::decay_t<Matrix>, std::decay_t<Matrix2>>,
+                   bool>
+  has_same_indices(
+      RingmapMatrixRowAccessor<Matrix2> const &other) const noexcept;
+
   RingmapMatrixAccessor<Matrix> operator[](unsigned index) const noexcept;
   template <typename _Matrix>
   bool

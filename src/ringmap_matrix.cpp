@@ -137,7 +137,14 @@ RingmapMatrix RingmapMatrix::t() const noexcept(false) {
 
 arma::mat RingmapMatrix::covariance() const noexcept(false) {
   RingmapMatrix transposed = t();
-  assert(transposed.t() == *this);
+#ifndef NDEBUG
+  {
+    auto retransposed = transposed.t();
+    assert(retransposed.bases == this->bases and
+           retransposed.readsCount == this->readsCount and
+           retransposed.has_same_indices(*this));
+  }
+#endif
   arma::mat out(bases, bases, arma::fill::zeros);
   for (unsigned row = 0; row < bases; ++row) {
     const auto &rowVector = transposed.data[row];
@@ -200,4 +207,23 @@ void RingmapMatrix::resize(unsigned size) noexcept(false) {
 auto RingmapMatrix::getIndices(unsigned rowIndex) const noexcept
     -> const row_type & {
   return data[rowIndex];
+}
+
+bool RingmapMatrix::has_same_indices(
+    RingmapMatrix const &other) const noexcept {
+  auto &&this_rows = this->rows();
+  auto &&other_rows = other.rows();
+  for (auto &&other_rows_iter = std::ranges::begin(other_rows),
+            other_rows_end = std::ranges::end(other_rows),
+            this_rows_iter = std::ranges::begin(this_rows);
+       other_rows_iter < other_rows_end; ++other_rows_iter, ++this_rows_iter) {
+    auto &&other_row = *other_rows_iter;
+    auto &&this_row = *this_rows_iter;
+
+    if (not other_row.has_same_indices(this_row)) {
+      return false;
+    }
+  }
+
+  return true;
 }

@@ -11,7 +11,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 if(POLICY CMP0167)
-  cmake_policy(SET CMP0167 NEW)
+  cmake_policy(SET CMP0167 OLD)
 endif()
 
 find_package(Boost 1.66 REQUIRED)

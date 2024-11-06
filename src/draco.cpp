@@ -447,7 +447,8 @@ void set_uninformative_clusters_to_surrounding(
 void assign_reads_to_clusters(
     results::Window &window,
     RingmapData::clusters_assignment_type &&clusters_assignment,
-    RingmapData const &ringmap, RingmapData const &filteredRingmap) {
+    RingmapData const &ringmap, RingmapData const &filteredRingmap,
+    double minimum_read_overlap) {
   std::vector assignments(std::move_iterator(std::begin(clusters_assignment)),
                           std::move_iterator(std::end(clusters_assignment)));
   assert(ranges::is_sorted(assignments, {}, [](auto &&pair) -> decltype(auto) {
@@ -467,9 +468,23 @@ void assign_reads_to_clusters(
   auto &&rows_iter = ranges::cbegin(rows);
   auto const rows_end = ranges::cend(rows);
   auto &&original_indices_iter = ranges::begin(filteredRingmap.getReadsMap());
+  auto window_size = static_cast<double>(window.end_index - window.begin_index);
   for (; rows_iter < rows_end; ++rows_iter, ++original_indices_iter) {
     auto const original_index = *original_indices_iter;
     auto &&row = *rows_iter;
+
+    auto &&original_row = original_data.row(original_index);
+    assert(original_row.original_begin_index() !=
+           std::numeric_limits<RingmapMatrixRow::base_index_type>::max());
+    auto overlapping_size = std::max(
+        0, std::min(static_cast<int>(original_row.original_end_index()),
+                    static_cast<int>(window.end_index)) -
+               std::max(static_cast<int>(original_row.original_begin_index()),
+                        static_cast<int>(window.begin_index)));
+    if (static_cast<double>(overlapping_size) / window_size <
+        minimum_read_overlap) {
+      continue;
+    }
 
     auto assignment_iter_range = ranges::equal_range(
         assignments, row, [](auto &&a, auto &&b) { return a < b; },
@@ -483,13 +498,11 @@ void assign_reads_to_clusters(
         clusters_assignments, [](auto count) { return count != 0; });
 
     if (first_usable_cluster_iter != ranges::end(clusters_assignments)) {
-
       auto const assignment = ranges::distance(
           ranges::begin(clusters_assignments), first_usable_cluster_iter);
       window.assignments[original_index] = assignment;
       --*first_usable_cluster_iter;
 
-      auto &&original_row = original_data.row(original_index);
       auto const begin_index =
           std::max(original_row.begin_index(),
                    static_cast<unsigned>(window.begin_index));
@@ -1069,9 +1082,9 @@ int main(int argc, char *argv[]) {
               *window.patterns =
                   filteredRingmap.remapPatterns(*window.patterns);
 
-              assign_reads_to_clusters(window,
-                                       std::move(std::get<2>(fractions_result)),
-                                       ringmap, filteredRingmap);
+              assign_reads_to_clusters(
+                  window, std::move(std::get<2>(fractions_result)), ringmap,
+                  filteredRingmap, args.minimum_read_overlap());
 
               if (std::all_of(std::cbegin(*window.patterns),
                               std::cend(*window.patterns), [](auto &&pattern) {

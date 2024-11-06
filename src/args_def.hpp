@@ -186,6 +186,13 @@ static constexpr auto opts = args::Opts(
                          "cluster weights in order to find the lowest score")
             .DEFAULT_VALUE(0.005)),
 
+    args::Group("Reads assignment",
+                ARG(double, minimum_read_overlap)
+                    .parameter_name("minReadOverlap")
+                    .description("minimum overlap fraction between a read and "
+                                 "a window in order to assign it to a cluster")
+                    .DEFAULT_VALUE(0)),
+
     args::Group(
         "Windowed analysis",
         ARG(double, window_size_fraction)

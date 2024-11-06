@@ -5,8 +5,6 @@
 
 #include <array>
 #include <functional>
-#include <range/v3/algorithm.hpp>
-#include <range/v3/core.hpp>
 #include <type_traits>
 #include <vector>
 
@@ -38,8 +36,9 @@ combinations(
     typename std::vector<std::array<typename std::decay_t<Iterable>::value_type,
                                     k>>::iterator &&outIter,
     unsigned elementIndex) {
-  for (auto elementIter = ranges::next(ranges::begin(elements), elementIndex),
-            endIter = ranges::end(elements);
+  for (auto elementIter =
+                std::ranges::next(std::ranges::begin(elements), elementIndex),
+            endIter = std::ranges::end(elements);
        elementIter < endIter; ++elementIter, ++outIter)
     (*outIter)[depth] = *elementIter;
   return outIter;
@@ -60,7 +59,7 @@ combinations(
     std::size_t elementRepetitions =
         binomial(elements.size() - index - 1, k - depth - 1);
 
-    auto &&currentEnd = ranges::next(outIter, elementRepetitions);
+    auto &&currentEnd = std::ranges::next(outIter, elementRepetitions);
     for (auto iter = outIter; iter < currentEnd; ++iter)
       (*iter)[depth] = element;
 
@@ -85,7 +84,7 @@ auto combinations(Iterable &&elements)
   using value_type = typename std::decay_t<Iterable>::value_type;
   std::vector<std::array<value_type, k>> out(binomial(elements.size(), k));
   detail::combinations<k, 0u>(std::forward<Iterable>(elements),
-                              ranges::begin(out), 0);
+                              std::ranges::begin(out), 0);
   return out;
 }
 
@@ -97,11 +96,11 @@ std::size_t count_intersections(InputIt1 first1, InputIt1 last1,
 
   std::size_t count = 0;
   for (;;) {
-    first1 = ranges::lower_bound(first1, last1, *first2, comp);
+    first1 = std::ranges::lower_bound(first1, last1, *first2, comp);
     if (first1 == last1)
       break;
 
-    first2 = ranges::lower_bound(first2, last2, *first1, comp);
+    first2 = std::ranges::lower_bound(first2, last2, *first1, comp);
     if (first2 == last2)
       break;
 

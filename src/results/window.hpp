@@ -9,7 +9,6 @@
 
 #include <algorithm>
 #include <iomanip>
-#include <range/v3/algorithm.hpp>
 #include <vector>
 
 namespace windows_merger {
@@ -87,16 +86,17 @@ inline std::basic_ostream<CharT, Traits> &
 jsonify(std::basic_ostream<CharT, Traits> &os,
         WeightedClustersClusterWrapper<T> const &cluster_wrapper) {
   os << '[';
-  auto iter = ranges::begin(cluster_wrapper);
-  if (iter != ranges::end(cluster_wrapper)) {
+  auto iter = std::ranges::begin(cluster_wrapper);
+  if (iter != std::ranges::end(cluster_wrapper)) {
     IosSaver iosSaver(os);
     os << std::fixed << std::setprecision(3);
 
     jsonify(os, *iter++);
-    ranges::for_each(iter, ranges::end(cluster_wrapper), [&](auto &&weight) {
-      os << ',';
-      jsonify(os, weight);
-    });
+    std::ranges::for_each(iter, std::ranges::end(cluster_wrapper),
+                          [&](auto &&weight) {
+                            os << ',';
+                            jsonify(os, weight);
+                          });
   }
   return os << ']';
 }
@@ -130,16 +130,17 @@ jsonify(std::basic_ostream<CharT, Traits> &os, T &&window) {
   os << ",";
   jsonify(os, "weights") << ":[";
   auto &&clusters = window.weighted_clusters.clusters();
-  auto iter = ranges::begin(clusters);
-  if (iter != ranges::end(clusters)) {
+  auto iter = std::ranges::begin(clusters);
+  if (iter != std::ranges::end(clusters)) {
     IosSaver iosSaver(os);
     os << std::fixed << std::setprecision(3);
 
     jsonify(os, *iter++);
-    ranges::for_each(iter, ranges::end(clusters), [&](const auto &cluster) {
-      os << ',';
-      jsonify(os, cluster);
-    });
+    std::ranges::for_each(iter, std::ranges::end(clusters),
+                          [&](const auto &cluster) {
+                            os << ',';
+                            jsonify(os, cluster);
+                          });
   }
 
   return os << "]}";

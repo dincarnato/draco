@@ -2,6 +2,8 @@
 
 #include "weighted_clusters_clusters_wrapper.hpp"
 
+#include <algorithm>
+
 template <typename T>
 WeightedClustersClustersWrapper<T>::WeightedClustersClustersWrapper(
     weighted_clusters_type &weightedClusters) noexcept
@@ -17,7 +19,7 @@ auto WeightedClustersClustersWrapper<T>::operator=(
   assert(concrete_clusters.size() == weightedClusters->_clusters);
   assert(concrete_clusters.elements_size() == weightedClusters->_elements);
 
-  ranges::copy(concrete_clusters, begin());
+  std::ranges::copy(concrete_clusters, begin());
   return *this;
 }
 
@@ -29,7 +31,7 @@ auto WeightedClustersClustersWrapper<T>::operator=(
   assert(concrete_clusters.size() == weightedClusters->_clusters);
   assert(concrete_clusters.elements_size() == weightedClusters->_elements);
 
-  ranges::move(concrete_clusters, begin());
+  std::ranges::move(concrete_clusters, begin());
   return *this;
 }
 

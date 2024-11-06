@@ -1,7 +1,6 @@
 #pragma once
 
-#include <iterator>
-#include <range/v3/iterator/concepts.hpp>
+#include <ranges>
 #include <type_traits>
 #include <vector>
 
@@ -29,7 +28,7 @@ struct is_cluster_wrapper : std::bool_constant<false> {};
 
 template <typename T>
 struct is_cluster_wrapper<
-    T, std::enable_if_t<ranges::RandomAccessIterator<typename T::iterator>>>
+    T, std::enable_if_t<std::random_access_iterator<typename T::iterator>>>
     : std::bool_constant<true> {};
 
 template <typename T>

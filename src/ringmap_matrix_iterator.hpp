@@ -3,8 +3,6 @@
 #include "ringmap_matrix_iterator_type.hpp"
 #include "ringmap_matrix_traits.hpp"
 
-#include <range/v3/core.hpp>
-
 template <typename> class RingmapMatrixAccessor;
 
 template <typename Matrix, RingmapMatrixIteratorType Type>
@@ -20,7 +18,7 @@ public:
   using pointer = std::remove_reference_t<Matrix> *;
   using difference_type = std::ptrdiff_t;
   using reference = RingmapMatrixAccessor<Matrix>;
-  using iterator_category = ranges::random_access_iterator_tag;
+  using iterator_category = std::random_access_iterator_tag;
   using row_type = std::conditional_t<std::is_const<Matrix>::value,
                                       const ringmap_matrix::row_type,
                                       ringmap_matrix::row_type>;

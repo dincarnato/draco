@@ -1,7 +1,5 @@
 #include "graph_cut.hpp"
 
-#include <range/v3/algorithm.hpp>
-
 #include <algorithm>
 #include <armadillo>
 #include <array>
@@ -26,7 +24,7 @@ static const std::array<std::vector<int>, 3> expectedResults{
     std::vector{2, 3, 7, 11, 12}};
 
 int main() {
-  namespace rng = ::ranges;
+  namespace rng = std::ranges;
 
   GraphCut graphCut(arma::symmatu(adjacency));
   auto results = graphCut.run(3, GraphCut::hard);

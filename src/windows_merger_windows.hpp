@@ -7,8 +7,6 @@
 
 #include "tiny_fraction.hpp"
 
-#include <range/v3/core.hpp>
-
 namespace windows_merger {
 
 template <typename> struct WindowsMergerWindowsIterator;
@@ -52,9 +50,9 @@ struct WindowsMergerWindows
   using move_iterator = WindowsMergerWindowsIterator<WindowsMergerWindows &&>;
   using const_iterator =
       WindowsMergerWindowsIterator<const WindowsMergerWindows>;
-  using reverse_iterator = ranges::reverse_iterator<iterator>;
-  using move_reverse_iterator = ranges::reverse_iterator<move_iterator>;
-  using const_reverse_iterator = ranges::reverse_iterator<const_iterator>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
+  using move_reverse_iterator = std::reverse_iterator<move_iterator>;
+  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
   WindowsMergerWindows() = default;
   explicit WindowsMergerWindows(clusters_size_type n_clusters) noexcept;

@@ -3,7 +3,7 @@
 #include "weighted_clusters_cluster.hpp"
 #include "weighted_clusters_cluster_wrapper.hpp"
 
-#include <range/v3/core.hpp>
+#include <algorithm>
 
 template <typename T>
 WeightedClustersClusterWrapper<T>::WeightedClustersClusterWrapper(
@@ -70,7 +70,7 @@ template <typename T>
 auto WeightedClustersClusterWrapper<T>::operator=(concrete_type const &cluster)
     const noexcept(std::is_nothrow_copy_assignable_v<std::decay_t<T>>)
         -> WeightedClustersClusterWrapper & {
-  ranges::copy(cluster, ranges::begin(*this));
+  std::ranges::copy(cluster, std::ranges::begin(*this));
   return *this;
 }
 
@@ -78,7 +78,7 @@ template <typename T>
 auto WeightedClustersClusterWrapper<T>::operator=(concrete_type &&cluster) const
     noexcept(std::is_nothrow_move_assignable_v<std::decay_t<T>>)
         -> WeightedClustersClusterWrapper & {
-  ranges::move(cluster, ranges::begin(*this));
+  std::ranges::move(cluster, std::ranges::begin(*this));
   return *this;
 }
 

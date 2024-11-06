@@ -3,7 +3,6 @@
 #include "windows_merger_traits.hpp"
 
 #include "nostd/type_traits.hpp"
-#include <range/v3/core.hpp>
 
 namespace windows_merger {
 
@@ -21,7 +20,7 @@ template <typename Window> struct WindowsMergerWindowCoveragesAccessor {
       std::conditional_t<std::is_const_v<Window>, coverage_type const &,
                          coverage_type &>>;
   using iterator = WindowsMergerWindowCoveragesIterator<Window>;
-  using reverse_iterator = ranges::reverse_iterator<iterator>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
 
   WindowsMergerWindowCoveragesAccessor(Window &window) noexcept;
 

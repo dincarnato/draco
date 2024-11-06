@@ -4,12 +4,10 @@
 #include "ringmap_matrix_iterator.hpp"
 
 #include <algorithm>
-#include <iterator>
 #include <numeric>
 #include <random>
-#include <range/v3/algorithm.hpp>
-#include <range/v3/numeric.hpp>
-#include <range/v3/view.hpp>
+#include <stdexcept>
+#include <utility>
 
 template <typename Matrix>
 RingmapMatrixColAccessor<Matrix>::RingmapMatrixColAccessor(
@@ -23,7 +21,8 @@ unsigned RingmapMatrixColAccessor<Matrix>::size() const noexcept {
 
 template <typename Matrix>
 std::size_t RingmapMatrixColAccessor<Matrix>::sum() const noexcept {
-  return ranges::accumulate(*this, 0u);
+  return std::accumulate(std::ranges::begin(*this), std::ranges::end(*this),
+                         0u);
 }
 
 template <typename Matrix>
@@ -47,16 +46,16 @@ void RingmapMatrixColAccessor<Matrix>::shuffle(URBG &&g) const noexcept(false) {
   std::uniform_int_distribution<unsigned> distribution(0,
                                                        matrix->readsCount - 1);
   for (auto &&row : matrix->data) {
-    auto colIter = ranges::lower_bound(row, col);
-    if (colIter == ranges::end(row) or *colIter != col)
+    auto colIter = std::ranges::lower_bound(row, col);
+    if (colIter == std::ranges::end(row) or *colIter != col)
       continue;
 
     auto &otherRow = matrix->data[distribution(g)];
-    if (ranges::binary_search(otherRow, col))
+    if (std::ranges::binary_search(otherRow, col))
       continue;
 
     row.erase(colIter);
-    otherRow.insert(ranges::upper_bound(otherRow, col), col);
+    otherRow.insert(std::ranges::upper_bound(otherRow, col), col);
   }
 }
 
@@ -124,17 +123,18 @@ void RingmapMatrixColAccessor<Matrix>::copy_from_accessor(Accessor &&rhs) const
   if (matrix->readsCount < rhs.matrix->readsCount)
     matrix->readsCount = rhs.matrix->readsCount;
 
-  auto rowIter = ranges::begin(matrix->data);
-  auto const rowEnd = ranges::end(matrix->data);
-  auto rhsRowIter = ranges::begin(std::as_const(rhs.matrix->data));
+  auto rowIter = std::ranges::begin(matrix->data);
+  auto const rowEnd = std::ranges::end(matrix->data);
+  auto rhsRowIter = std::ranges::begin(std::as_const(rhs.matrix->data));
   for (; rowIter < rowEnd; ++rowIter, ++rhsRowIter) {
     auto &&rhsRow = *rhsRowIter;
     auto &row = *rowIter;
-    if (ranges::find(rhsRow, rhs.col) == ranges::end(rhsRow))
-      row.erase(ranges::remove(row, col), ranges::end(row));
-    else if (ranges::find(row, col) == ranges::end(row)) {
+    if (std::ranges::find(rhsRow, rhs.col) == std::ranges::end(rhsRow)) {
+      auto &&[begin, end] = std::ranges::remove(row, col);
+      row.erase(begin, end);
+    } else if (std::ranges::find(row, col) == std::ranges::end(row)) {
       row.emplace_back(col);
-      ranges::sort(row);
+      std::ranges::sort(row);
     }
   }
 }
@@ -146,13 +146,19 @@ auto RingmapMatrixColAccessor<Matrix>::operator=(value_type const &column) const
   if (column.size() != matrix->readsCount)
     throw std::runtime_error("invalid column size");
 
-  ranges::view::zip(column, *this) |
-      ranges::for_each([](bool element, auto &&accessor) {
-        if (element)
-          accessor.set();
-        else
-          accessor.clear();
-      });
+  auto col_iter = std::ranges::begin(column);
+  auto this_iter = std::ranges::begin(this);
+  for (; col_iter < std::ranges::end(column) and
+         this_iter < std::ranges::end(*this);
+       ++col_iter, ++this_iter) {
+    bool element = *col_iter;
+    auto &&accessor = *this_iter;
+
+    if (element)
+      accessor.set();
+    else
+      accessor.clear();
+  }
 
   return *this;
 }
@@ -160,11 +166,17 @@ auto RingmapMatrixColAccessor<Matrix>::operator=(value_type const &column) const
 template <typename Matrix>
 RingmapMatrixColAccessor<Matrix>::operator value_type() const noexcept(false) {
   value_type out(matrix->readsCount, false);
-  ranges::view::zip(*this, out) |
-      ranges::for_each([](auto &&accessor, bool &value) {
-        if (accessor.get())
-          value = true;
-      });
+
+  auto this_iter = std::ranges::begin(this);
+  auto out_iter = std::ranges::begin(out);
+  for (;
+       this_iter < std::ranges::end(*this) and out_iter < std::ranges::end(out);
+       ++this_iter, ++out_iter) {
+    auto &&accessor = *this_iter;
+
+    if (accessor.get())
+      *out_iter = true;
+  }
 
   return out;
 }

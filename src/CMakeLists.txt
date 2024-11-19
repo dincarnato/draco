@@ -18,6 +18,7 @@ add_executable(
     windows_merger.cpp
     args.cpp
     logger.cpp
+    mutation_map_writer.cpp
     )
 
 add_executable(

@@ -157,7 +157,20 @@ function(create_tests suffix)
   add_dependencies(ringmap_window_${ARGV0} run_args_generate)
   add_dependencies(weibull_fitter_${ARGV0} run_args_generate)
   
-  add_dependencies(check ringmap_base_${ARGV0} ringmap_shuffle_${ARGV0} ringmap_concat_${ARGV0} graph_cut_${ARGV0} matching_indices_${ARGV0} weighted_clusters_${ARGV0} blocking_queue_${ARGV0} windows_merger_${ARGV0} windows_merger_windows_${ARGV0} windows_merger_cache_indices_${ARGV0} ringmap_window_${ARGV0} weibull_fitter_${ARGV0})
+  add_dependencies(check
+    ringmap_base_${ARGV0}
+    ringmap_shuffle_${ARGV0}
+    ringmap_concat_${ARGV0}
+    graph_cut_${ARGV0}
+    matching_indices_${ARGV0}
+    weighted_clusters_${ARGV0}
+    blocking_queue_${ARGV0}
+    windows_merger_${ARGV0}
+    windows_merger_windows_${ARGV0}
+    windows_merger_cache_indices_${ARGV0}
+    ringmap_window_${ARGV0}
+    weibull_fitter_${ARGV0}
+  )
 endfunction()
 
 create_tests(aubsan -fsanitize=address,undefined)

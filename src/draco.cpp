@@ -449,15 +449,9 @@ void set_uninformative_clusters_to_surrounding(
 }
 
 void assign_reads_to_clusters(
-    results::Window &window, unsigned window_size,
+    results::Window &window,
     RingmapData::clusters_assignment_type &&clusters_assignment,
     RingmapData const &ringmap, RingmapData const &filteredRingmap) {
-  std::vector assignments(std::move_iterator(std::begin(clusters_assignment)),
-                          std::move_iterator(std::end(clusters_assignment)));
-  assert(ranges::is_sorted(assignments, {}, [](auto &&pair) -> decltype(auto) {
-    return pair.first;
-  }));
-
   if (not window.bases_coverages) {
     window.bases_coverages = std::vector<std::vector<unsigned>>{};
   }
@@ -467,50 +461,39 @@ void assign_reads_to_clusters(
       std::vector<unsigned>(window.end_index - window.begin_index, 0));
 
   auto &&original_data = ringmap.data();
-  auto &&rows = filteredRingmap.data().rows();
-  auto &&rows_iter = ranges::cbegin(rows);
-  auto const rows_end = ranges::cend(rows);
-  auto &&original_indices_iter = ranges::begin(filteredRingmap.getReadsMap());
-  for (; rows_iter < rows_end; ++rows_iter, ++original_indices_iter) {
-    auto const original_index = *original_indices_iter;
-    auto &&row = *rows_iter;
 
-    if (row.end_index() - row.begin_index() < window_size) {
-      continue;
-    }
+  auto &&original_indices_map = filteredRingmap.getReadsMap();
+  for (auto &&clusters_assignment_pair : clusters_assignment) {
+    auto &&read_clusters_assignments = std::get<1>(clusters_assignment_pair);
 
-    auto assignment_iter_range = ranges::equal_range(
-        assignments, row, [](auto &&a, auto &&b) { return a < b; },
-        [](auto &&pair) -> decltype(auto) { return pair.first; });
-    assert(assignment_iter_range.begin() != ranges::end(assignments));
-    assert(assignment_iter_range.end() ==
-           ranges::next(assignment_iter_range.begin()));
+    auto &&clusters_assignments = read_clusters_assignments.clusters();
+    auto const clusters_size = clusters_assignments.size();
+    assert(window.weighted_clusters.getClustersSize() == clusters_size);
 
-    auto &&clusters_assignments = assignment_iter_range.begin()->second;
-    auto const first_usable_cluster_iter = ranges::find_if(
-        clusters_assignments, [](auto count) { return count != 0; });
+    for (std::size_t cluster_index = 0; cluster_index < clusters_size;
+         ++cluster_index) {
+      auto &&cluster_assignments = clusters_assignments[cluster_index];
 
-    if (first_usable_cluster_iter != ranges::end(clusters_assignments)) {
+      for (auto filtered_read_index : cluster_assignments) {
+        auto original_read_index = original_indices_map[filtered_read_index];
+        window.assignments[original_read_index] = cluster_index;
 
-      auto const assignment = ranges::distance(
-          ranges::begin(clusters_assignments), first_usable_cluster_iter);
-      window.assignments[original_index] = assignment;
-      --*first_usable_cluster_iter;
+        auto &&original_row = original_data.row(original_read_index);
 
-      auto &&original_row = original_data.row(original_index);
-      auto const begin_index =
-          std::max(original_row.begin_index(),
-                   static_cast<unsigned>(window.begin_index));
-      auto const end_index = std::min(original_row.end_index(),
-                                      static_cast<unsigned>(window.end_index));
+        auto const begin_index =
+            std::max(original_row.begin_index(),
+                     static_cast<unsigned>(window.begin_index));
+        auto const end_index = std::min(
+            original_row.end_index(), static_cast<unsigned>(window.end_index));
 
-      assert(static_cast<std::size_t>(assignment) < bases_coverages.size());
-      auto &&cluster_bases_coverages = bases_coverages[assignment];
-      assert(cluster_bases_coverages.size() >= end_index - begin_index);
-      ranges::for_each(cluster_bases_coverages |
-                           std::views::drop(begin_index - window.begin_index) |
-                           std::views::take(end_index - begin_index),
-                       [](auto &&coverage) { ++coverage; });
+        auto &&cluster_bases_coverages = bases_coverages[cluster_index];
+        assert(cluster_bases_coverages.size() >= end_index - begin_index);
+        ranges::for_each(
+            cluster_bases_coverages |
+                std::views::drop(begin_index - window.begin_index) |
+                std::views::take(end_index - begin_index),
+            [](auto &&coverage) { ++coverage; });
+      }
     }
   }
 }
@@ -1122,7 +1105,7 @@ int main(int argc, char *argv[]) {
               *window.patterns =
                   filteredRingmap.remapPatterns(*window.patterns);
 
-              assign_reads_to_clusters(window, window_size,
+              assign_reads_to_clusters(window,
                                        std::move(std::get<2>(fractions_result)),
                                        ringmap, filteredRingmap);
 

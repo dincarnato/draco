@@ -3,18 +3,22 @@
 #include "mutation_map.hpp"
 #include "mutation_map_transcript.hpp"
 #include "ptba.hpp"
+#include "read_clusters_assignments.hpp"
 #include "results/window.hpp"
 #include "ringmap_matrix_row.hpp"
 #include "rna_secondary_structure.hpp"
 #include "spectral_partitioner.hpp"
 #include "tokenizer_iterator.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <fstream>
 #include <iomanip>
+#include <iterator>
 #include <limits>
 #include <optional>
+#include <random>
 #include <regex>
 #include <sstream>
 #include <unordered_map>
@@ -514,7 +518,7 @@ RingmapData::getUnfilteredWeights(const WeightedClusters &weights) const {
 }
 
 auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
-                                         std::uint32_t window_size) const
+                                         unsigned window_size) const
     -> std::tuple<clusters_fraction_type, clusters_pattern_type,
                   clusters_assignment_type> {
   assert(weights.getElementsSize() == sequence.size());
@@ -565,9 +569,12 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
 
   std::unordered_map<
       std::reference_wrapper<const typename RingmapMatrix::row_type>,
-      std::size_t, rowHash, rowEqual>
+      std::vector<std::size_t>, rowHash, rowEqual>
       uniqueReadsCount;
-  for (auto &&read : m_data.rows()) {
+  auto const reads_size = m_data.rows_size();
+  for (std::size_t read_index = 0; read_index < reads_size; ++read_index) {
+    assert(read_index < std::numeric_limits<unsigned>::max());
+    auto &&read = m_data.row(static_cast<unsigned>(read_index));
     assert(read.end_index() >= read.begin_index());
     if (read.end_index() - read.begin_index() < window_size) {
       logger::trace("Skipping read {}-{}, shorter than a window size",
@@ -578,9 +585,17 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
     auto indices = std::cref(read.modifiedIndices());
     if (auto uniqueReadIter = uniqueReadsCount.find(indices);
         uniqueReadIter != std::ranges::end(uniqueReadsCount))
-      ++uniqueReadIter->second;
+      uniqueReadIter->second.push_back(read_index);
     else
-      uniqueReadsCount[indices] = 1;
+      uniqueReadsCount[indices] = std::vector{read_index};
+  }
+
+  // We don't want to create a bias in the original reads when splitting them
+  // across different clusters
+  std::mt19937 random_gen{std::random_device{}()};
+  for (auto &&pair : uniqueReadsCount) {
+    auto &&read_original_indices = std::get<1>(pair);
+    std::ranges::shuffle(read_original_indices, random_gen);
   }
 
   std::vector<std::size_t> counts(usableWeights.getClustersSize(), 0);
@@ -594,7 +609,7 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
     std::vector<double> read(m_data.cols_size());
     for (auto &&pairedData : uniqueReadsCount) {
       auto &mutatedIndices = std::get<0>(pairedData);
-      auto &&readOccurrences = std::get<1>(pairedData);
+      auto &&readIndicesMap = std::get<1>(pairedData);
       std::ranges::fill(read, 0.);
       for (std::size_t index : mutatedIndices.get())
         read[index] = 1.;
@@ -612,30 +627,36 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
         if (assignmentIter == std::ranges::end(clustersAssignment)) {
           assignmentIter =
               clustersAssignment
-                  .emplace(mutatedIndices, std::vector<std::size_t>(
-                                               weights.getClustersSize(), 0))
+                  .emplace(mutatedIndices,
+                           ReadClustersAssignments{weights.getClustersSize()})
                   .first;
         }
 
         return assignmentIter;
       }();
-      auto &assignedRead = assignedReadIter->second;
+      auto &read_clusters_assignments = assignedReadIter->second;
 
-      std::vector<std::size_t> bestAssignmentIndices;
+      std::vector<std::uint8_t> bestAssignmentIndices;
       {
         auto bestScoreIter = std::ranges::max_element(readScore);
         const auto bestScore = *bestScoreIter;
         for (; bestScoreIter != std::ranges::end(readScore);
              bestScoreIter = std::ranges::find(
                  bestScoreIter, std::ranges::end(readScore), bestScore)) {
-          bestAssignmentIndices.emplace_back(std::ranges::distance(
-              std::ranges::begin(readScore), bestScoreIter++));
+          auto bestAssignmentIndex = std::ranges::distance(
+              std::ranges::begin(readScore), bestScoreIter++);
+          assert(bestAssignmentIndex <
+                 std::numeric_limits<std::uint8_t>::max());
+          bestAssignmentIndices.emplace_back(
+              static_cast<std::uint8_t>(bestAssignmentIndex));
         }
       }
 
       const auto nAssignments =
           static_cast<unsigned>(bestAssignmentIndices.size());
-      for (const std::size_t assignmentIndex : bestAssignmentIndices) {
+      auto readOccurrences = readIndicesMap.size();
+      std::size_t read_used_assignments = 0;
+      for (const std::uint8_t assignmentIndex : bestAssignmentIndices) {
         auto &pattern = patterns[assignmentIndex];
 
         std::ranges::transform(
@@ -648,7 +669,12 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
                       nAssignments);
             });
         auto currentlyAssignedReads = readOccurrences / nAssignments;
-        assignedRead[assignmentIndex] = currentlyAssignedReads;
+        std::ranges::copy(readIndicesMap |
+                              std::views::drop(read_used_assignments) |
+                              std::views::take(currentlyAssignedReads),
+                          std::back_inserter(read_clusters_assignments.cluster(
+                              assignmentIndex)));
+        read_used_assignments += currentlyAssignedReads;
         counts[assignmentIndex] += currentlyAssignedReads;
       }
     }

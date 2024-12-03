@@ -4,6 +4,7 @@
 #include "utils.hpp"
 
 #include <cassert>
+#include <cstddef>
 #include <ranges>
 
 RingmapMatrix::RingmapMatrix(unsigned nBases) noexcept(false)

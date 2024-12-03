@@ -2,6 +2,7 @@
 
 #include "args.hpp"
 #include "parallel/blocking_queue.hpp"
+#include "read_clusters_assignments.hpp"
 #include "ringmap_matrix.hpp"
 #include "weighted_clusters_impl.hpp"
 
@@ -82,7 +83,7 @@ public:
   using cluster_pattern_type = std::vector<std::size_t>;
   using clusters_pattern_type = std::vector<cluster_pattern_type>;
   using clusters_assignment_type =
-      std::map<data_type::row_type, std::vector<std::size_t>>;
+      std::map<data_type::row_type, ReadClustersAssignments>;
   std::tuple<clusters_fraction_type, clusters_pattern_type,
              clusters_assignment_type>
   fractionReadsByWeights(const WeightedClusters &weights,

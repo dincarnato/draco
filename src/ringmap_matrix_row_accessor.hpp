@@ -111,6 +111,8 @@ public:
   has_same_indices(
       RingmapMatrixRowAccessor<Matrix2> const &other) const noexcept;
 
+  constexpr bool is_valid() const noexcept;
+
   RingmapMatrixAccessor<Matrix> operator[](unsigned index) const noexcept;
   template <typename _Matrix>
   bool

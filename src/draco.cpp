@@ -3,6 +3,7 @@
 #include "graph_cut.hpp"
 #include "logger.hpp"
 #include "mutation_map.hpp"
+#include "mutation_map_writer.hpp"
 #include "parallel/blocking_queue.hpp"
 #include "ptba.hpp"
 #include "results/analysis.hpp"
@@ -14,12 +15,15 @@
 
 #include <algorithm>
 #include <charconv>
+#include <format>
 #include <iostream>
 #include <iterator>
 #include <mutex>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <sstream>
+#include <string_view>
 #include <thread>
 
 #include <armadillo>
@@ -507,6 +511,42 @@ void assign_reads_to_clusters(
   }
 }
 
+void dump_assignments(results::Transcript const &transcript,
+                      results::Window &window, RingmapData const &ringmap,
+                      std::string_view assignments_dump_directory) {
+  auto mm_basename = std::format("{}_{}-{}", transcript.name,
+                                 window.begin_index, window.end_index - 1);
+  auto mm_path = std::filesystem::path{assignments_dump_directory} /
+                 std::format("{}.mm", mm_basename);
+  MutationMapWriter mm_writer{mm_path};
+
+  auto ringmap_data = ringmap.data();
+  auto const n_reads = static_cast<std::uint32_t>(ringmap_data.rows_size());
+  assert(n_reads == window.assignments.size());
+
+  auto const n_clusters = static_cast<std::uint8_t>(window.fractions.size());
+  for (std::uint8_t cluster_index = 0; cluster_index < n_clusters;
+       ++cluster_index) {
+    auto mm_transcript = mm_writer.transcript(
+        std::format("{}_c{}", mm_basename, cluster_index), transcript.sequence);
+    for (std::uint32_t read_index = 0; read_index < n_reads; ++read_index) {
+      if (window.assignments[read_index] != cluster_index) {
+        continue;
+      }
+
+      auto read = ringmap_data.row(read_index);
+      assert(read.is_valid());
+
+      std::stringstream indices;
+      for (auto index : read.modifiedIndices()) {
+        indices << index << ',';
+      }
+
+      mm_transcript.add_read(read);
+    }
+  }
+}
+
 int main(int argc, char *argv[]) {
   auto const args = Args(argc, argv);
 
@@ -518,6 +558,11 @@ int main(int argc, char *argv[]) {
     } else {
       logger::warn("Invalid debug level \"{}\"", log_level);
     }
+  }
+
+  if (not args.assignments_dump_directory().empty()) {
+    logger::debug("Creating directory {}", args.assignments_dump_directory());
+    std::filesystem::create_directories(args.assignments_dump_directory());
   }
 
   std::cout << "\n[+] Starting DRACO analysis. This might take a while...\n";
@@ -1076,6 +1121,11 @@ int main(int argc, char *argv[]) {
               assign_reads_to_clusters(window,
                                        std::move(std::get<2>(fractions_result)),
                                        ringmap, filteredRingmap);
+
+              if (not args.assignments_dump_directory().empty()) {
+                dump_assignments(transcriptResult, window, ringmap,
+                                 args.assignments_dump_directory());
+              }
 
               if (std::all_of(std::cbegin(*window.patterns),
                               std::cend(*window.patterns), [](auto &&pattern) {

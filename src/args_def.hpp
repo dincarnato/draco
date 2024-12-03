@@ -231,5 +231,11 @@ static constexpr auto opts = args::Opts(
             .parameter_name("reportNonInformative")
             .description(
                 "Reports also non-informative windows in the output JSON file")
-            .DEFAULT_VALUE(false)));
+            .DEFAULT_VALUE(false),
+        ARG(std::string, assignments_dump_directory)
+            .optional()
+            .parameter_name("assignmentsDumpDir")
+            .description("when specified, an MM file is generated for each set "
+                         "of merged windows, and the parameter indicated the "
+                         "directory where to write the MM files")));
 } // namespace args

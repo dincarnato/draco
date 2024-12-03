@@ -512,7 +512,8 @@ RingmapData::getUnfilteredWeights(const WeightedClusters &weights) const {
     return weights;
 }
 
-auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights) const
+auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
+                                         std::uint32_t window_size) const
     -> std::tuple<clusters_fraction_type, clusters_pattern_type,
                   clusters_assignment_type> {
   assert(weights.getElementsSize() == sequence.size());
@@ -566,6 +567,11 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights) const
       std::size_t, rowHash, rowEqual>
       uniqueReadsCount;
   for (auto &&read : m_data.rows()) {
+    assert(read.end_index() >= read.begin_index());
+    if (read.end_index() - read.begin_index() < window_size) {
+      continue;
+    }
+
     auto indices = std::cref(read.modifiedIndices());
     if (auto uniqueReadIter = uniqueReadsCount.find(indices);
         uniqueReadIter != std::ranges::end(uniqueReadsCount))

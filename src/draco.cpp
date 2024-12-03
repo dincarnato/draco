@@ -449,7 +449,7 @@ void set_uninformative_clusters_to_surrounding(
 }
 
 void assign_reads_to_clusters(
-    results::Window &window,
+    results::Window &window, unsigned window_size,
     RingmapData::clusters_assignment_type &&clusters_assignment,
     RingmapData const &ringmap, RingmapData const &filteredRingmap) {
   std::vector assignments(std::move_iterator(std::begin(clusters_assignment)),
@@ -474,6 +474,10 @@ void assign_reads_to_clusters(
   for (; rows_iter < rows_end; ++rows_iter, ++original_indices_iter) {
     auto const original_index = *original_indices_iter;
     auto &&row = *rows_iter;
+
+    if (row.end_index() - row.begin_index() < window_size) {
+      continue;
+    }
 
     auto assignment_iter_range = ranges::equal_range(
         assignments, row, [](auto &&a, auto &&b) { return a < b; },
@@ -1034,7 +1038,7 @@ int main(int argc, char *argv[]) {
               filteredRingmap.filterBases();
 
               auto &&fractions_result = filteredRingmap.fractionReadsByWeights(
-                  window.weighted_clusters);
+                  window.weighted_clusters, window_size);
               std::tie(window.fractions, window.patterns, std::ignore) =
                   std::move(fractions_result);
               assert(window.fractions.size() > 1 or window.fractions.empty() or
@@ -1118,7 +1122,7 @@ int main(int argc, char *argv[]) {
               *window.patterns =
                   filteredRingmap.remapPatterns(*window.patterns);
 
-              assign_reads_to_clusters(window,
+              assign_reads_to_clusters(window, window_size,
                                        std::move(std::get<2>(fractions_result)),
                                        ringmap, filteredRingmap);
 

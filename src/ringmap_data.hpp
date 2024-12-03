@@ -85,7 +85,8 @@ public:
       std::map<data_type::row_type, std::vector<std::size_t>>;
   std::tuple<clusters_fraction_type, clusters_pattern_type,
              clusters_assignment_type>
-  fractionReadsByWeights(const WeightedClusters &weights) const;
+  fractionReadsByWeights(const WeightedClusters &weights,
+                         unsigned window_size) const;
   clusters_pattern_type
   remapPatterns(const clusters_pattern_type &patterns) const;
 

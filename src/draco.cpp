@@ -1021,7 +1021,8 @@ int main(int argc, char *argv[]) {
               filteredRingmap.filterBases();
 
               auto &&fractions_result = filteredRingmap.fractionReadsByWeights(
-                  window.weighted_clusters, window_size);
+                  window.weighted_clusters, window_size,
+                  args.skip_ambiguous_assignments());
               std::tie(window.fractions, window.patterns, std::ignore) =
                   std::move(fractions_result);
               assert(window.fractions.size() > 1 or window.fractions.empty() or

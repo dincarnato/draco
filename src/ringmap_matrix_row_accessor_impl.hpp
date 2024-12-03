@@ -299,6 +299,11 @@ void RingmapMatrixRowAccessor<Matrix>::copy_window_begin_end_indices(
   row->copy_window_begin_end_indices(other);
 }
 
+template <typename Matrix>
+constexpr bool RingmapMatrixRowAccessor<Matrix>::is_valid() const noexcept {
+  return row->is_valid();
+}
+
 template <typename Matrix1>
 template <typename Matrix2>
 std::enable_if_t<std::is_same_v<std::decay_t<Matrix1>, std::decay_t<Matrix2>>,

@@ -237,5 +237,11 @@ static constexpr auto opts = args::Opts(
             .parameter_name("assignmentsDumpDir")
             .description("when specified, an MM file is generated for each set "
                          "of merged windows, and the parameter indicated the "
-                         "directory where to write the MM files")));
+                         "directory where to write the MM files"),
+        ARG(bool, skip_ambiguous_assignments)
+            .parameter_name("skipAmbiguousAssignments")
+            .description(
+                "when specified, if the best assignment score for a read is "
+                "equal for more than on cluster, the read is discarded")
+            .DEFAULT_VALUE(false)));
 } // namespace args

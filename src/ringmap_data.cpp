@@ -518,7 +518,8 @@ RingmapData::getUnfilteredWeights(const WeightedClusters &weights) const {
 }
 
 auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
-                                         unsigned window_size) const
+                                         unsigned window_size,
+                                         bool skip_ambiguous_assignments) const
     -> std::tuple<clusters_fraction_type, clusters_pattern_type,
                   clusters_assignment_type> {
   assert(weights.getElementsSize() == sequence.size());
@@ -654,6 +655,10 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
 
       const auto nAssignments =
           static_cast<unsigned>(bestAssignmentIndices.size());
+      if (skip_ambiguous_assignments and nAssignments > 1) {
+        continue;
+      }
+
       auto readOccurrences = readIndicesMap.size();
       std::size_t read_used_assignments = 0;
       for (const std::uint8_t assignmentIndex : bestAssignmentIndices) {

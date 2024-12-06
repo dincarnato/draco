@@ -68,12 +68,10 @@ private:
   unsigned minFilteredReads = 5;
   unsigned maxPermutations = 400;
   unsigned minPermutations = 8;
-  double firstEigengapThreshold = 0.95;
   double minEigenGapThreshold = 0.10;
   double eigenGapDiffAbsoluteThreshold = 0.03;
   double alphaValue = 0.01;
   double betaValue = 0.2;
-  double firstEigengapBetaValue = 0.4;
   unsigned maxClusters = std::numeric_limits<unsigned>::max();
   unsigned alternative_check_permutations = 50;
   double min_null_stddev = 0.025;

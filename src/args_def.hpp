@@ -87,11 +87,6 @@ static constexpr auto opts = args::Opts(
             .description("Maximum number of permutations performed to build "
                          "the null model")
             .DEFAULT_VALUE(400),
-        ARG(double, first_eigengap_threshold)
-            .parameter_name("firstEigengapShift")
-            .description("How much the mean of the first eigengap's null model "
-                         "should be shifted by")
-            .DEFAULT_VALUE(0.90),
         ARG(double, min_eigengap_threshold)
             .parameter_name("eigengapCumRelThresh")
             .description("Minimum relative difference between the eigengap and "
@@ -118,10 +113,6 @@ static constexpr auto opts = args::Opts(
                 "and the eigengap is marked as non-informative "
                 "[Note: this threshold does not apply to the first eigengap]")
             .DEFAULT_VALUE(0.2),
-        ARG(double, first_eigengap_beta_value)
-            .parameter_name("firstEigengapBeta")
-            .description("Beta p-value threshold for the first eigengap")
-            .DEFAULT_VALUE(0.4),
         ARG(double, min_null_stddev)
             .parameter_name("minNullStdev")
             .description("Minimum standard deviation for the null model "

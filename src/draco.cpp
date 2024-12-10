@@ -874,7 +874,8 @@ int main(int argc, char *argv[]) {
                   auto graphCutResults = graphCut.run(
                       n_clusters, args.soft_clustering_weight_module(),
                       args.soft_clustering_initializations(),
-                      args.soft_clustering_iterations());
+                      args.soft_clustering_iterations(), window.start_base,
+                      window.start_base + window_size, transcriptResult);
                   auto clusters = filtered_data.getUnfilteredWeights(
                       std::move(graphCutResults));
 

@@ -1,4 +1,5 @@
 #include "graph_cut.hpp"
+#include "logger.hpp"
 #include "parallel/blocked_range.hpp"
 #include "parallel/parallel_for.hpp"
 #include "parallel/parallel_reduce.hpp"
@@ -10,6 +11,7 @@
 #include <iostream>
 #include <optional>
 #include <stdexcept>
+#include <thread>
 #include <tuple>
 
 GraphCut::GraphCut(const arma::mat &adjacency, Graph type)
@@ -73,6 +75,9 @@ arma::mat GraphCut::getGraphWithNoLoops(const arma::mat &matrix) const {
 
 auto GraphCut::run(std::uint8_t nClusters, float weightModule,
                    std::uint16_t nTries, std::uint16_t iterations,
+                   std::uint16_t window_begin_index,
+                   std::uint16_t window_end_index,
+                   results::Transcript const &transcript,
                    FuzzyCut) const -> WeightedClusters {
   if (nClusters < 2)
     throw std::logic_error("nClusters must be at least 2");
@@ -92,40 +97,86 @@ auto GraphCut::run(std::uint8_t nClusters, float weightModule,
         auto iter = std::begin(range);
         auto const end = std::end(range);
         if (not best_result.has_value() and iter != end) {
+          logger::trace("Graph partitioning, transcript {}, window {}-{}: "
+                        "initial run on iteration {} ",
+                        transcript.name, window_begin_index + 1,
+                        window_end_index, iter + 1);
           best_result.emplace(createPartitionGraph());
+          logger::trace("Graph partitioning, transcript {}, window {}-{}: "
+                        "initial best score on iteration {} is {}",
+                        transcript.name, window_begin_index + 1,
+                        window_end_index, iter + 1, std::get<1>(*best_result));
           ++iter;
         }
 
         auto [clusters, score] = *best_result;
         for (; iter != end; ++iter) {
+          logger::trace("Graph partitioning, transcript {}, window {}-{}: "
+                        "running iteration {}",
+                        transcript.name, window_begin_index + 1,
+                        window_end_index, iter + 1);
           auto [newClusters, newScore] = createPartitionGraph();
           if (not std::isnan(newScore) and newScore < score) {
+            logger::trace("Graph partitioning, transcript {}, window {}-{}: "
+                          "score on iteration {} ({}) "
+                          "is better than the best score ({})",
+                          transcript.name, window_begin_index + 1,
+                          window_end_index, iter + 1, newScore, score);
             clusters = std::move(newClusters);
             score = newScore;
+          } else {
+            logger::trace("Graph partitioning, transcript {}, window {}-{}: "
+                          "score on iteration {} ({}) "
+                          "is worse than the best score ({})",
+                          transcript.name, window_begin_index + 1,
+                          window_end_index, iter + 1, newScore, score);
           }
         }
 
         return best_result;
       },
-      [](std::optional<std::tuple<WeightedClusters, double>> &&result1,
-         std::optional<std::tuple<WeightedClusters, double>> &&result2) {
+      [window_begin_index, window_end_index, &transcript](
+          std::optional<std::tuple<WeightedClusters, double>> &&result1,
+          std::optional<std::tuple<WeightedClusters, double>> &&result2) {
         if (result1.has_value() && result2.has_value()) {
           auto const score1 = std::get<1>(*result1);
           auto const score2 = std::get<1>(*result2);
           if (std::isnan(score2) or
               (not std::isnan(score1) and score1 < score2)) {
+            logger::trace("Graph partitioning, transcript {}, window {}-{}: "
+                          "using score {} that is better than {}",
+                          transcript.name, window_begin_index + 1,
+                          window_end_index, score1, score2);
             return result1;
           } else {
+            logger::trace("Graph partitioning, transcript {}, window {}-{}: "
+                          "using score {} that is better than {}",
+                          transcript.name, window_begin_index + 1,
+                          window_end_index, score2, score1);
             return result2;
           }
         } else if (result2.has_value()) {
+          logger::trace(
+              "Graph partitioning, transcript {}, window {}-{}: using score {}",
+              transcript.name, window_begin_index + 1, window_end_index,
+              std::get<1>(*result2));
           return result2;
         } else {
+          if (result1.has_value()) {
+            logger::trace("Graph partitioning, transcript {}, window {}-{}: "
+                          "using score {}",
+                          transcript.name, window_begin_index + 1,
+                          window_end_index, std::get<1>(*result1));
+          }
           return result1;
         }
       });
 
   assert(result.has_value());
+  logger::debug(
+      "Graph partitioning, transcript {}, window {}-{}: best score is {}",
+      transcript.name, window_begin_index + 1, window_end_index,
+      std::get<1>(*result));
   return std::get<0>(std::move(*result));
 }
 

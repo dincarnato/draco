@@ -1,6 +1,8 @@
 #pragma once
 
+#include "draco.hpp"
 #include "hard_clusters.hpp"
+#include "results/transcript.hpp"
 #include "weighted_clusters.hpp"
 #include "weighted_clusters_cluster_wrapper.hpp"
 
@@ -32,6 +34,9 @@ public:
 
   WeightedClusters run(std::uint8_t nClusters, float weightModule,
                        std::uint16_t nTries, std::uint16_t iterations,
+                       std::uint16_t window_begin_index,
+                       std::uint16_t window_end_index,
+                       results::Transcript const &transcript,
                        FuzzyCut = fuzzy) const;
   HardClusters run(std::uint8_t nClusters, HardCut) const;
 

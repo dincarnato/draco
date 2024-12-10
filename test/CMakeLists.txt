@@ -56,7 +56,7 @@ function(create_tests suffix)
       ${PROJECT_SOURCE_DIR}/src/graph_cut.cpp)
   target_compile_options(graph_cut_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(graph_cut_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(graph_cut_${ARGV0} ${ARGN})
+  target_link_libraries(graph_cut_${ARGV0} ${ARGN} ${TBB_LIBRARIES})
   
   add_executable(matching_indices_${ARGV0} EXCLUDE_FROM_ALL
       matching_indices.cpp)
@@ -154,7 +154,7 @@ function(create_tests suffix)
   
   target_link_libraries(windows_merger_${ARGV0} ${TBB_LIBRARIES})
   target_link_libraries(ringmap_base_${ARGV0} ${ARMADILLO_LIBRARIES})
-  target_link_libraries(graph_cut_${ARGV0} ${ARMADILLO_LIBRARIES})
+  target_link_libraries(graph_cut_${ARGV0} ${ARMADILLO_LIBRARIES} ${TBB_LIBRARIES})
   target_link_libraries(ringmap_shuffle_${ARGV0} ${ARMADILLO_LIBRARIES})
   target_link_libraries(ringmap_concat_${ARGV0} ${ARMADILLO_LIBRARIES})
   target_link_libraries(ringmap_window_${ARGV0} ${ARMADILLO_LIBRARIES})

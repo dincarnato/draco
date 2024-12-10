@@ -1,10 +1,16 @@
 #include "graph_cut.hpp"
+#include "parallel/blocked_range.hpp"
+#include "parallel/parallel_for.hpp"
+#include "parallel/parallel_reduce.hpp"
 #include "rna_secondary_structure.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <iomanip>
 #include <iostream>
+#include <optional>
 #include <stdexcept>
+#include <tuple>
 
 GraphCut::GraphCut(const arma::mat &adjacency, Graph type)
     : graphType(type), adjacency(adjacency) {
@@ -77,16 +83,50 @@ auto GraphCut::run(std::uint8_t nClusters, float weightModule,
         [this](const auto &matrix) { return getGraphWithNoLoops(matrix); });
   };
 
-  auto [clusters, score] = createPartitionGraph();
-  for (std::uint16_t iteration = 1; iteration < iterations; ++iteration) {
-    auto [newClusters, newScore] = createPartitionGraph();
-    if (not std::isnan(newScore) and newScore < score) {
-      clusters = std::move(newClusters);
-      score = newScore;
-    }
-  }
+  auto result = parallel::parallel_reduce(
+      parallel::blocked_range<std::uint16_t>(
+          0, std::max(iterations, static_cast<std::uint16_t>(1))),
+      std::optional<std::tuple<WeightedClusters, double>>{},
+      [&](const parallel::blocked_range<std::uint16_t> &range,
+          std::optional<std::tuple<WeightedClusters, double>> &&best_result) {
+        auto iter = std::begin(range);
+        auto const end = std::end(range);
+        if (not best_result.has_value() and iter != end) {
+          best_result.emplace(createPartitionGraph());
+          ++iter;
+        }
 
-  return clusters;
+        auto [clusters, score] = *best_result;
+        for (; iter != end; ++iter) {
+          auto [newClusters, newScore] = createPartitionGraph();
+          if (not std::isnan(newScore) and newScore < score) {
+            clusters = std::move(newClusters);
+            score = newScore;
+          }
+        }
+
+        return best_result;
+      },
+      [](std::optional<std::tuple<WeightedClusters, double>> &&result1,
+         std::optional<std::tuple<WeightedClusters, double>> &&result2) {
+        if (result1.has_value() && result2.has_value()) {
+          auto const score1 = std::get<1>(*result1);
+          auto const score2 = std::get<1>(*result2);
+          if (std::isnan(score2) or
+              (not std::isnan(score1) and score1 < score2)) {
+            return result1;
+          } else {
+            return result2;
+          }
+        } else if (result2.has_value()) {
+          return result2;
+        } else {
+          return result1;
+        }
+      });
+
+  assert(result.has_value());
+  return std::get<0>(std::move(*result));
 }
 
 auto GraphCut::run(std::uint8_t nClusters, HardCut) const -> HardClusters {

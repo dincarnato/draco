@@ -534,6 +534,514 @@ void dump_assignments(results::Transcript const &transcript,
   }
 }
 
+void handle_transcript(MutationMapTranscript const &transcript,
+                       RingmapData &ringmapData,
+                       results::Analysis &analysisResult, Args const &args,
+                       std::optional<std::ofstream> &raw_n_clusters_stream,
+                       std::mutex &raw_n_clusters_stream_mutex) {
+  if (ringmapData.data().rows_size() == 0) {
+    std::cout << "\x1b[2K\r[+] Skipping transcript " << transcript.getId()
+              << " (no reads)" << std::endl;
+    return;
+  }
+  std::cout << "\x1b[2K\r[+] Analyzing transcript " << transcript.getId()
+            << std::flush;
+
+  results::Transcript transcriptResult;
+  transcriptResult.name = transcript.getId();
+  transcriptResult.reads = transcript.getReadsSize();
+  transcriptResult.sequence = transcript.getSequence();
+  assert(not transcriptResult.name.empty());
+
+  auto const median_read_size = [&] {
+    auto reads_sizes = ringmapData.data().rows() |
+                       std::views::transform([](auto &&row) {
+                         assert(row.end_index() >= row.begin_index());
+                         return static_cast<std::uint64_t>(row.end_index() -
+                                                           row.begin_index());
+                       }) |
+                       more_ranges::to_vector();
+
+    auto median_iter =
+        ranges::next(ranges::begin(reads_sizes), reads_sizes.size() / 2);
+    ranges::nth_element(reads_sizes, median_iter);
+    return *median_iter;
+  }();
+
+  std::size_t transcript_size = ringmapData.data().cols_size();
+  const auto window_size = [&] {
+    auto &&window_size = args.window_size();
+    if (window_size <= 0) {
+      window_size = static_cast<unsigned>(
+          static_cast<double>(median_read_size) * args.window_size_fraction());
+    }
+
+    return std::min(window_size, static_cast<unsigned>(transcript_size));
+  }();
+  const auto window_offset = [&] {
+    auto &&window_shift = args.window_shift();
+    if (window_shift > 0) {
+      return window_shift;
+    } else {
+      return static_cast<unsigned>(static_cast<double>(window_size) *
+                                   args.window_shift_fraction());
+    }
+  }();
+
+  assert(window_size <= transcript_size);
+
+  std::size_t n_windows = (transcript_size - window_size) / window_offset + 1;
+  if (n_windows * window_offset + window_size < transcript_size)
+    ++n_windows;
+
+  assert(n_windows > 0);
+  std::vector<Window> windows(n_windows);
+  if (n_windows > 1) {
+    auto const window_precise_offset =
+        static_cast<double>(transcript_size - window_size) /
+        static_cast<double>(n_windows - 1);
+    for (std::size_t window_index = 0; window_index < n_windows;
+         ++window_index) {
+      auto start_base = static_cast<std::size_t>(std::round(
+          static_cast<double>(window_index) * window_precise_offset));
+      if (start_base + window_size > transcript_size)
+        start_base = transcript_size - window_size;
+
+      windows[window_index].start_base =
+          static_cast<unsigned short>(start_base);
+    }
+  } else {
+    windows[0].start_base = 0;
+  }
+
+  std::vector<unsigned> windows_n_clusters(windows.size());
+  {
+    auto windows_iter = std::cbegin(windows);
+    auto const windows_end = std::cend(windows);
+    auto &&windows_n_clusters_iter = std::begin(windows_n_clusters);
+
+    for (; windows_iter < windows_end;
+         ++windows_iter, ++windows_n_clusters_iter) {
+      auto &&window = *windows_iter;
+      auto &&window_n_clusters = *windows_n_clusters_iter;
+
+      auto window_ringmap_data = ringmapData.get_new_range(
+          window.start_base, window.start_base + window_size);
+      Ptba ptba(window_ringmap_data, args);
+
+      auto const result = ptba.run();
+      logger::on_debug_level(print_log_data, result.log_data, window,
+                             static_cast<std::size_t>(std::distance(
+                                 std::cbegin(windows), windows_iter)),
+                             window_size, transcriptResult);
+      if (args.create_eigengaps_plots()) {
+        window_n_clusters = result.significantIndices.size();
+        auto const [eigengaps_filename, perturbed_eigengaps_filename] = [&] {
+          std::array<std::string, 2> filenames;
+          auto const start_base = window.start_base + 1;
+          auto const end_base = window.start_base + window_size;
+          std::stringstream buf;
+          buf << "window_" << start_base << '-' << end_base << "_eigengaps.txt";
+          filenames[0] = buf.str();
+
+          buf.str("");
+          buf << "window_" << start_base << '-' << end_base
+              << "_perturbed_eigengaps.txt";
+          filenames[1] = buf.str();
+
+          return filenames;
+        }();
+
+        auto const result_dir =
+            fs::path(args.eigengaps_plots_root_dir()) / transcriptResult.name;
+        fs::create_directory(result_dir);
+        Ptba::dumpEigenGaps(result.eigenGaps,
+                            (result_dir / eigengaps_filename).c_str());
+        Ptba::dumpPerturbedEigenGaps(
+            result.perturbedEigenGaps,
+            (result_dir / perturbed_eigengaps_filename).c_str());
+      } else {
+        window_n_clusters = result.significantIndices.size();
+      }
+    }
+  }
+
+  if (raw_n_clusters_stream) {
+    std::stringstream raw_n_clusters_data;
+
+    auto windows_iter = std::cbegin(windows);
+    auto windows_end = std::cend(windows);
+    auto windows_n_clusters_iter = std::cbegin(windows_n_clusters);
+    assert(
+        std::distance(windows_iter, windows_end) ==
+        std::distance(windows_n_clusters_iter, std::cend(windows_n_clusters)));
+
+    for (; windows_iter < windows_end;
+         ++windows_iter, ++windows_n_clusters_iter) {
+      auto &&window = *windows_iter;
+      auto n_clusters = *windows_n_clusters_iter;
+      raw_n_clusters_data << transcriptResult.name << '\t' << window.start_base
+                          << '\t' << window.start_base + window_size << '\t'
+                          << n_clusters << '\n';
+    }
+
+    {
+      std::lock_guard<std::mutex> lock(raw_n_clusters_stream_mutex);
+      *raw_n_clusters_stream << raw_n_clusters_data.rdbuf();
+    }
+    analysisResult.addTranscript(std::move(transcriptResult));
+    return;
+  }
+
+  auto const pre_collapsing_clusters = std::move(windows_n_clusters);
+  windows_n_clusters.clear();
+  std::vector<std::optional<unsigned>> windows_max_clusters_constraints(
+      windows.size(), std::nullopt);
+
+  for (bool stop = false; not stop;) {
+    stop = true;
+    transcriptResult.windows = std::nullopt;
+
+    windows_n_clusters = pre_collapsing_clusters;
+    ([&]() {
+      auto windows_n_clusters_iter = std::ranges::begin(windows_n_clusters);
+      const auto windows_n_clusters_end = std::ranges::end(windows_n_clusters);
+
+      auto windows_max_clusters_constraints_iter =
+          std::ranges::begin(windows_max_clusters_constraints);
+      const auto windows_max_clusters_constraints_end =
+          std::ranges::end(windows_max_clusters_constraints);
+
+      for (; windows_n_clusters_iter < windows_n_clusters_end and
+             windows_max_clusters_constraints_iter <
+                 windows_max_clusters_constraints_end;
+           ++windows_n_clusters_iter, ++windows_max_clusters_constraints_iter) {
+        auto &&window_n_clusters = *windows_n_clusters_iter;
+        auto &&constraint = *windows_max_clusters_constraints_iter;
+
+        if (constraint) {
+          window_n_clusters = std::min(window_n_clusters, *constraint);
+        }
+      }
+    })();
+
+    if (args.set_uninformative_clusters_to_surrounding()) {
+      set_uninformative_clusters_to_surrounding(
+          windows, windows_n_clusters, windows_max_clusters_constraints);
+
+      [[maybe_unused]] constexpr auto const zero_clusters =
+          [](auto n_clusters) { return n_clusters == 0; };
+      assert(ranges::none_of(windows_n_clusters, zero_clusters) or
+             ranges::all_of(windows_n_clusters, zero_clusters));
+    }
+
+    if (args.max_collapsing_windows() > 0)
+      collapse_outlayer_clusters(windows, windows_n_clusters,
+                                 windows_max_clusters_constraints, args);
+
+    if (args.set_all_uninformative_to_one()) {
+      if (ranges::all_of(windows_n_clusters,
+                         [](auto n_clusters) { return n_clusters == 0; })) {
+        ranges::fill(windows_n_clusters, 1u);
+      }
+    }
+
+    std::vector<std::vector<unsigned>> windows_reads_indices;
+    windows_reads_indices.reserve(windows.size());
+
+    {
+      auto windows_iter = std::begin(windows);
+      auto const windows_end = std::end(windows);
+      auto windows_n_clusters_iter = std::cbegin(windows_n_clusters);
+
+      for (; windows_iter < windows_end;
+           ++windows_iter, ++windows_n_clusters_iter) {
+
+        auto &&window = *windows_iter;
+        auto n_clusters = *windows_n_clusters_iter;
+
+        std::vector<unsigned> window_reads_indices;
+        auto window_ringmap_data = ringmapData.get_new_range(
+            window.start_base, window.start_base + window_size,
+            &window_reads_indices);
+
+        assert(window_reads_indices.size() ==
+               window_ringmap_data.data().rows_size());
+        assert(std::is_sorted(std::begin(window_reads_indices),
+                              std::end(window_reads_indices)));
+        assert(std::unique(std::begin(window_reads_indices),
+                           std::end(window_reads_indices)) ==
+               std::end(window_reads_indices));
+        window.coverages = window_ringmap_data.getBaseCoverages();
+
+        assert(window_reads_indices.size() ==
+               window_ringmap_data.data().rows_size());
+        windows_reads_indices.emplace_back(std::move(window_reads_indices));
+
+        auto filtered_data = window_ringmap_data;
+        filtered_data.filterBases();
+        filtered_data.filterReads();
+        filtered_data.filterBases();
+
+        typename RingmapData::clusters_pattern_type patterns;
+        for (;;) {
+          if (n_clusters > 1 and filtered_data.data().rows_size() > 0) {
+            auto covariance =
+                filtered_data.data().covariance(filtered_data.getBaseWeights());
+            GraphCut graphCut(covariance);
+
+            auto graphCutResults = graphCut.run(
+                n_clusters, args.soft_clustering_weight_module(),
+                args.soft_clustering_initializations(),
+                args.soft_clustering_iterations(), window.start_base,
+                window.start_base + window_size, transcriptResult);
+            auto clusters =
+                filtered_data.getUnfilteredWeights(std::move(graphCutResults));
+
+            assert(clusters.getElementsSize() == window_size);
+            window.weights = std::move(clusters);
+            break;
+          } else {
+            window.weights = WeightedClusters(window_size, n_clusters);
+            break;
+          }
+        }
+      }
+    }
+
+    {
+      auto window_iter = std::begin(windows);
+      auto window_reads_indices_iter = std::begin(windows_reads_indices);
+      // std::ofstream merge_stream("merge.txt");
+      while (window_iter != std::end(windows)) {
+        unsigned const n_clusters = window_iter->weights.getClustersSize();
+        auto last_window = std::find_if(
+            std::next(window_iter), std::end(windows),
+            [n_clusters](auto &&window) {
+              return window.weights.getClustersSize() != n_clusters;
+            });
+
+        auto const last_window_reads_indices = std::next(
+            window_reads_indices_iter, std::distance(window_iter, last_window));
+
+        auto const get_window_coverages = [&window_reads_indices_iter,
+                                           &last_window_reads_indices,
+                                           &ringmapData](
+                                              std::size_t begin_index,
+                                              std::size_t end_index) {
+          auto const window_size = end_index - begin_index;
+          std::vector<unsigned> coverages(window_size, 0u);
+          {
+            std::set<std::size_t> reads_indices;
+            std::for_each(window_reads_indices_iter, last_window_reads_indices,
+                          [&](auto const &indices) {
+                            reads_indices.insert(std::begin(indices),
+                                                 std::end(indices));
+                          });
+
+            auto &&data = ringmapData.data();
+            assert(
+                std::all_of(std::begin(reads_indices), std::end(reads_indices),
+                            [nrows = data.rows_size()](auto const read_index) {
+                              return read_index < nrows;
+                            }));
+
+            for (auto &&read_index : reads_indices) {
+              auto &&row = data.row(read_index);
+              auto const row_begin = std::max(
+                  row.begin_index(), static_cast<unsigned>(begin_index));
+              auto const row_end =
+                  std::min(row.end_index(), static_cast<unsigned>(end_index));
+              auto const row_size = static_cast<unsigned>(std::max(
+                  static_cast<int>(row_end) - static_cast<int>(row_begin), 0));
+
+              ranges::for_each(coverages |
+                                   std::views::drop(row_begin - begin_index) |
+                                   std::views::take(row_size),
+                               [](auto &&coverage) { ++coverage; });
+            }
+          }
+          return coverages;
+        };
+
+        auto const add_result_window = [&transcriptResult](
+                                           results::Window &&result_window) {
+          if (transcriptResult.windows)
+            transcriptResult.windows->emplace_back(std::move(result_window));
+          else
+            transcriptResult.windows.emplace({std::move(result_window)});
+        };
+
+        if (n_clusters == 0) {
+          if (args.report_uninformative()) {
+            std::for_each(window_iter, last_window, [&](auto &&window) {
+              auto const coverages = get_window_coverages(
+                  window.start_base,
+                  window.start_base + window.coverages.size());
+              auto result_window =
+                  results::Window(window.start_base, window.weights, coverages);
+
+              add_result_window(std::move(result_window));
+            });
+          }
+
+          window_iter = last_window;
+          window_reads_indices_iter = last_window_reads_indices;
+          continue;
+        }
+
+        windows_merger::WindowsMerger windows_merger(n_clusters);
+        std::for_each(window_iter, last_window, [&](auto &&window) {
+          windows_merger.add_window(window.start_base, window.weights,
+                                    window.coverages);
+        });
+
+        auto const merged_window = windows_merger.merge();
+        auto const coverages = get_window_coverages(merged_window.begin_index(),
+                                                    merged_window.end_index());
+        auto result_window = results::Window(merged_window, coverages);
+        add_result_window(std::move(result_window));
+
+        window_iter = last_window;
+        window_reads_indices_iter = last_window_reads_indices;
+      }
+    }
+
+    if (transcriptResult.windows) {
+      auto &result_windows = *transcriptResult.windows;
+      auto splitted_ringmaps =
+          RingmapData(ringmapData).split_into_windows(result_windows);
+
+      assert(splitted_ringmaps.size() == result_windows.size());
+
+      auto windows_iter = std::begin(result_windows);
+      auto const windows_end = std::end(result_windows);
+      auto splitted_ringmaps_iter = std::begin(splitted_ringmaps);
+      for (; windows_iter < windows_end;
+           ++windows_iter, ++splitted_ringmaps_iter) {
+        auto &window = *windows_iter;
+        if (window.weighted_clusters.getClustersSize() == 0) {
+          continue;
+        }
+
+        auto &ringmap = *splitted_ringmaps_iter;
+
+        window.assignments.resize(ringmap.data().rows_size());
+        ranges::fill(window.assignments, std::int8_t(-1));
+
+        auto filteredRingmap = ringmap;
+        filteredRingmap.filterBases();
+        filteredRingmap.filterReads();
+        filteredRingmap.filterBases();
+
+        auto &&fractions_result = filteredRingmap.fractionReadsByWeights(
+            window.weighted_clusters, window_size,
+            args.skip_ambiguous_assignments());
+        std::tie(window.fractions, window.patterns, std::ignore) =
+            std::move(fractions_result);
+        assert(window.fractions.size() > 1 or window.fractions.empty() or
+               window.fractions[0] >= 0.01);
+
+        bool const redundandPatterns = [&] {
+          auto patterns_iter = std::cbegin(*window.patterns);
+          auto const patterns_end = std::cend(*window.patterns);
+
+          for (; patterns_iter < patterns_end; ++patterns_iter) {
+            auto &&cur_pattern = *patterns_iter;
+            auto const begin_cur_pattern = std::cbegin(cur_pattern);
+            auto const end_cur_pattern = std::cend(cur_pattern);
+
+            if (std::any_of(std::next(patterns_iter), patterns_end,
+                            [&](auto &&next_pattern) {
+                              return std::equal(begin_cur_pattern,
+                                                end_cur_pattern,
+                                                std::cbegin(next_pattern),
+                                                std::cend(next_pattern));
+                            })) {
+              return true;
+            }
+          }
+
+          return false;
+        }();
+
+        if (redundandPatterns or
+            ranges::any_of(
+                window.fractions,
+                [min_cluster_fraction =
+                     args.minimum_cluster_fraction()](auto &&fraction) {
+                  return fraction < min_cluster_fraction;
+                })) {
+          stop = false;
+          auto const result_window_begin = window.begin_index;
+          auto const result_window_end = window.end_index;
+          logger::debug(
+              "Transcript {}, window {} (bases {}-{}), reducing number "
+              "of clusters from {} to {} because a redundant weights "
+              "pattern is found",
+              transcriptResult.name,
+              std::distance(std::begin(result_windows), windows_iter) + 1,
+              result_window_begin + 1, result_window_end,
+              window.fractions.size(), window.fractions.size() - 1);
+          assert(window.fractions.size() > 1);
+          auto const new_clusters_constraint =
+              static_cast<unsigned>(window.fractions.size() - 1);
+
+          ([&]() {
+            auto windows_iter = std::ranges::begin(windows);
+            const auto windows_end = std::ranges::end(windows);
+
+            auto windows_max_clusters_constraints_iter =
+                std::ranges::begin(windows_max_clusters_constraints);
+            const auto windows_max_clusters_constraints_end =
+                std::ranges::end(windows_max_clusters_constraints);
+
+            for (; windows_iter < windows_end and
+                   windows_max_clusters_constraints_iter <
+                       windows_max_clusters_constraints_end;
+                 ++windows_iter, ++windows_max_clusters_constraints_iter) {
+              auto &&window = *windows_iter;
+              auto &&window_constraint = *windows_max_clusters_constraints_iter;
+
+              if (window.start_base >= result_window_begin and
+                  window.start_base + window_size <= result_window_end) {
+
+                window_constraint = new_clusters_constraint;
+              }
+            }
+          })();
+        }
+
+        if (not stop)
+          continue;
+
+        *window.patterns = filteredRingmap.remapPatterns(*window.patterns);
+
+        assign_reads_to_clusters(window,
+                                 std::move(std::get<2>(fractions_result)),
+                                 ringmap, filteredRingmap);
+
+        if (not args.assignments_dump_directory().empty()) {
+          dump_assignments(transcriptResult, window, ringmap,
+                           args.assignments_dump_directory());
+        }
+
+        if (std::all_of(std::cbegin(*window.patterns),
+                        std::cend(*window.patterns), [](auto &&pattern) {
+                          return std::all_of(
+                              std::cbegin(pattern), std::cend(pattern),
+                              [](auto &&value) { return value == 0; });
+                        })) {
+          window.patterns = std::nullopt;
+          window.bases_coverages = std::nullopt;
+        }
+      }
+    }
+  }
+
+  analysisResult.addTranscript(std::move(transcriptResult));
+}
+
 int main(int argc, char *argv[]) {
   auto const args = Args(argc, argv);
 
@@ -609,527 +1117,9 @@ int main(int argc, char *argv[]) {
           break;
         auto const &transcript = std::get<0>(*poppedData);
         auto &ringmapData = std::get<1>(*poppedData);
-        if (ringmapData.data().rows_size() == 0) {
-          std::cout << "\x1b[2K\r[+] Skipping transcript " << transcript.getId()
-                    << " (no reads)" << std::endl;
-          continue;
-        }
-        std::cout << "\x1b[2K\r[+] Analyzing transcript " << transcript.getId()
-                  << std::flush;
 
-        results::Transcript transcriptResult;
-        transcriptResult.name = transcript.getId();
-        transcriptResult.reads = transcript.getReadsSize();
-        transcriptResult.sequence = transcript.getSequence();
-        assert(not transcriptResult.name.empty());
-
-        auto const median_read_size = [&] {
-          auto reads_sizes = ringmapData.data().rows() |
-                             std::views::transform([](auto &&row) {
-                               assert(row.end_index() >= row.begin_index());
-                               return static_cast<std::uint64_t>(
-                                   row.end_index() - row.begin_index());
-                             }) |
-                             more_ranges::to_vector();
-
-          auto median_iter =
-              ranges::next(ranges::begin(reads_sizes), reads_sizes.size() / 2);
-          ranges::nth_element(reads_sizes, median_iter);
-          return *median_iter;
-        }();
-
-        std::size_t transcript_size = ringmapData.data().cols_size();
-        const auto window_size = [&] {
-          auto &&window_size = args.window_size();
-          if (window_size <= 0) {
-            window_size =
-                static_cast<unsigned>(static_cast<double>(median_read_size) *
-                                      args.window_size_fraction());
-          }
-
-          return std::min(window_size, static_cast<unsigned>(transcript_size));
-        }();
-        const auto window_offset = [&] {
-          auto &&window_shift = args.window_shift();
-          if (window_shift > 0) {
-            return window_shift;
-          } else {
-            return static_cast<unsigned>(static_cast<double>(window_size) *
-                                         args.window_shift_fraction());
-          }
-        }();
-
-        assert(window_size <= transcript_size);
-
-        std::size_t n_windows =
-            (transcript_size - window_size) / window_offset + 1;
-        if (n_windows * window_offset + window_size < transcript_size)
-          ++n_windows;
-
-        assert(n_windows > 0);
-        std::vector<Window> windows(n_windows);
-        if (n_windows > 1) {
-          auto const window_precise_offset =
-              static_cast<double>(transcript_size - window_size) /
-              static_cast<double>(n_windows - 1);
-          for (std::size_t window_index = 0; window_index < n_windows;
-               ++window_index) {
-            auto start_base = static_cast<std::size_t>(std::round(
-                static_cast<double>(window_index) * window_precise_offset));
-            if (start_base + window_size > transcript_size)
-              start_base = transcript_size - window_size;
-
-            windows[window_index].start_base =
-                static_cast<unsigned short>(start_base);
-          }
-        } else {
-          windows[0].start_base = 0;
-        }
-
-        std::vector<unsigned> windows_n_clusters(windows.size());
-        {
-          auto windows_iter = std::cbegin(windows);
-          auto const windows_end = std::cend(windows);
-          auto &&windows_n_clusters_iter = std::begin(windows_n_clusters);
-
-          for (; windows_iter < windows_end;
-               ++windows_iter, ++windows_n_clusters_iter) {
-            auto &&window = *windows_iter;
-            auto &&window_n_clusters = *windows_n_clusters_iter;
-
-            auto window_ringmap_data = ringmapData.get_new_range(
-                window.start_base, window.start_base + window_size);
-            Ptba ptba(window_ringmap_data, args);
-
-            auto const result = ptba.run();
-            logger::on_debug_level(print_log_data, result.log_data, window,
-                                   static_cast<std::size_t>(std::distance(
-                                       std::cbegin(windows), windows_iter)),
-                                   window_size, transcriptResult);
-            if (args.create_eigengaps_plots()) {
-              window_n_clusters = result.significantIndices.size();
-              auto const [eigengaps_filename,
-                          perturbed_eigengaps_filename] = [&] {
-                std::array<std::string, 2> filenames;
-                auto const start_base = window.start_base + 1;
-                auto const end_base = window.start_base + window_size;
-                std::stringstream buf;
-                buf << "window_" << start_base << '-' << end_base
-                    << "_eigengaps.txt";
-                filenames[0] = buf.str();
-
-                buf.str("");
-                buf << "window_" << start_base << '-' << end_base
-                    << "_perturbed_eigengaps.txt";
-                filenames[1] = buf.str();
-
-                return filenames;
-              }();
-
-              auto const result_dir =
-                  fs::path(args.eigengaps_plots_root_dir()) /
-                  transcriptResult.name;
-              fs::create_directory(result_dir);
-              Ptba::dumpEigenGaps(result.eigenGaps,
-                                  (result_dir / eigengaps_filename).c_str());
-              Ptba::dumpPerturbedEigenGaps(
-                  result.perturbedEigenGaps,
-                  (result_dir / perturbed_eigengaps_filename).c_str());
-            } else {
-              window_n_clusters = result.significantIndices.size();
-            }
-          }
-        }
-
-        if (raw_n_clusters_stream) {
-          std::stringstream raw_n_clusters_data;
-
-          auto windows_iter = std::cbegin(windows);
-          auto windows_end = std::cend(windows);
-          auto windows_n_clusters_iter = std::cbegin(windows_n_clusters);
-          assert(std::distance(windows_iter, windows_end) ==
-                 std::distance(windows_n_clusters_iter,
-                               std::cend(windows_n_clusters)));
-
-          for (; windows_iter < windows_end;
-               ++windows_iter, ++windows_n_clusters_iter) {
-            auto &&window = *windows_iter;
-            auto n_clusters = *windows_n_clusters_iter;
-            raw_n_clusters_data
-                << transcriptResult.name << '\t' << window.start_base << '\t'
-                << window.start_base + window_size << '\t' << n_clusters
-                << '\n';
-          }
-
-          {
-            std::lock_guard<std::mutex> lock(raw_n_clusters_stream_mutex);
-            *raw_n_clusters_stream << raw_n_clusters_data.rdbuf();
-          }
-          analysisResult.addTranscript(std::move(transcriptResult));
-          continue;
-        }
-
-        auto const pre_collapsing_clusters = std::move(windows_n_clusters);
-        windows_n_clusters.clear();
-        std::vector<std::optional<unsigned>> windows_max_clusters_constraints(
-            windows.size(), std::nullopt);
-
-        for (bool stop = false; not stop;) {
-          stop = true;
-          transcriptResult.windows = std::nullopt;
-
-          windows_n_clusters = pre_collapsing_clusters;
-          ([&]() {
-            auto windows_n_clusters_iter =
-                std::ranges::begin(windows_n_clusters);
-            const auto windows_n_clusters_end =
-                std::ranges::end(windows_n_clusters);
-
-            auto windows_max_clusters_constraints_iter =
-                std::ranges::begin(windows_max_clusters_constraints);
-            const auto windows_max_clusters_constraints_end =
-                std::ranges::end(windows_max_clusters_constraints);
-
-            for (; windows_n_clusters_iter < windows_n_clusters_end and
-                   windows_max_clusters_constraints_iter <
-                       windows_max_clusters_constraints_end;
-                 ++windows_n_clusters_iter,
-                 ++windows_max_clusters_constraints_iter) {
-              auto &&window_n_clusters = *windows_n_clusters_iter;
-              auto &&constraint = *windows_max_clusters_constraints_iter;
-
-              if (constraint) {
-                window_n_clusters = std::min(window_n_clusters, *constraint);
-              }
-            }
-          })();
-
-          if (args.set_uninformative_clusters_to_surrounding()) {
-            set_uninformative_clusters_to_surrounding(
-                windows, windows_n_clusters, windows_max_clusters_constraints);
-
-            [[maybe_unused]] constexpr auto const zero_clusters =
-                [](auto n_clusters) { return n_clusters == 0; };
-            assert(ranges::none_of(windows_n_clusters, zero_clusters) or
-                   ranges::all_of(windows_n_clusters, zero_clusters));
-          }
-
-          if (args.max_collapsing_windows() > 0)
-            collapse_outlayer_clusters(windows, windows_n_clusters,
-                                       windows_max_clusters_constraints, args);
-
-          if (args.set_all_uninformative_to_one()) {
-            if (ranges::all_of(windows_n_clusters, [](auto n_clusters) {
-                  return n_clusters == 0;
-                })) {
-              ranges::fill(windows_n_clusters, 1u);
-            }
-          }
-
-          std::vector<std::vector<unsigned>> windows_reads_indices;
-          windows_reads_indices.reserve(windows.size());
-
-          {
-            auto windows_iter = std::begin(windows);
-            auto const windows_end = std::end(windows);
-            auto windows_n_clusters_iter = std::cbegin(windows_n_clusters);
-
-            for (; windows_iter < windows_end;
-                 ++windows_iter, ++windows_n_clusters_iter) {
-
-              auto &&window = *windows_iter;
-              auto n_clusters = *windows_n_clusters_iter;
-
-              std::vector<unsigned> window_reads_indices;
-              auto window_ringmap_data = ringmapData.get_new_range(
-                  window.start_base, window.start_base + window_size,
-                  &window_reads_indices);
-
-              assert(window_reads_indices.size() ==
-                     window_ringmap_data.data().rows_size());
-              assert(std::is_sorted(std::begin(window_reads_indices),
-                                    std::end(window_reads_indices)));
-              assert(std::unique(std::begin(window_reads_indices),
-                                 std::end(window_reads_indices)) ==
-                     std::end(window_reads_indices));
-              window.coverages = window_ringmap_data.getBaseCoverages();
-
-              assert(window_reads_indices.size() ==
-                     window_ringmap_data.data().rows_size());
-              windows_reads_indices.emplace_back(
-                  std::move(window_reads_indices));
-
-              auto filtered_data = window_ringmap_data;
-              filtered_data.filterBases();
-              filtered_data.filterReads();
-              filtered_data.filterBases();
-
-              typename RingmapData::clusters_pattern_type patterns;
-              for (;;) {
-                if (n_clusters > 1 and filtered_data.data().rows_size() > 0) {
-                  auto covariance = filtered_data.data().covariance(
-                      filtered_data.getBaseWeights());
-                  GraphCut graphCut(covariance);
-
-                  auto graphCutResults = graphCut.run(
-                      n_clusters, args.soft_clustering_weight_module(),
-                      args.soft_clustering_initializations(),
-                      args.soft_clustering_iterations(), window.start_base,
-                      window.start_base + window_size, transcriptResult);
-                  auto clusters = filtered_data.getUnfilteredWeights(
-                      std::move(graphCutResults));
-
-                  assert(clusters.getElementsSize() == window_size);
-                  window.weights = std::move(clusters);
-                  break;
-                } else {
-                  window.weights = WeightedClusters(window_size, n_clusters);
-                  break;
-                }
-              }
-            }
-          }
-
-          {
-            auto window_iter = std::begin(windows);
-            auto window_reads_indices_iter = std::begin(windows_reads_indices);
-            // std::ofstream merge_stream("merge.txt");
-            while (window_iter != std::end(windows)) {
-              unsigned const n_clusters =
-                  window_iter->weights.getClustersSize();
-              auto last_window = std::find_if(
-                  std::next(window_iter), std::end(windows),
-                  [n_clusters](auto &&window) {
-                    return window.weights.getClustersSize() != n_clusters;
-                  });
-
-              auto const last_window_reads_indices =
-                  std::next(window_reads_indices_iter,
-                            std::distance(window_iter, last_window));
-
-              auto const get_window_coverages = [&window_reads_indices_iter,
-                                                 &last_window_reads_indices,
-                                                 &ringmapData](
-                                                    std::size_t begin_index,
-                                                    std::size_t end_index) {
-                auto const window_size = end_index - begin_index;
-                std::vector<unsigned> coverages(window_size, 0u);
-                {
-                  std::set<std::size_t> reads_indices;
-                  std::for_each(window_reads_indices_iter,
-                                last_window_reads_indices,
-                                [&](auto const &indices) {
-                                  reads_indices.insert(std::begin(indices),
-                                                       std::end(indices));
-                                });
-
-                  auto &&data = ringmapData.data();
-                  assert(std::all_of(
-                      std::begin(reads_indices), std::end(reads_indices),
-                      [nrows = data.rows_size()](auto const read_index) {
-                        return read_index < nrows;
-                      }));
-
-                  for (auto &&read_index : reads_indices) {
-                    auto &&row = data.row(read_index);
-                    auto const row_begin = std::max(
-                        row.begin_index(), static_cast<unsigned>(begin_index));
-                    auto const row_end = std::min(
-                        row.end_index(), static_cast<unsigned>(end_index));
-                    auto const row_size = static_cast<unsigned>(std::max(
-                        static_cast<int>(row_end) - static_cast<int>(row_begin),
-                        0));
-
-                    ranges::for_each(
-                        coverages | std::views::drop(row_begin - begin_index) |
-                            std::views::take(row_size),
-                        [](auto &&coverage) { ++coverage; });
-                  }
-                }
-                return coverages;
-              };
-
-              auto const add_result_window =
-                  [&transcriptResult](results::Window &&result_window) {
-                    if (transcriptResult.windows)
-                      transcriptResult.windows->emplace_back(
-                          std::move(result_window));
-                    else
-                      transcriptResult.windows.emplace(
-                          {std::move(result_window)});
-                  };
-
-              if (n_clusters == 0) {
-                if (args.report_uninformative()) {
-                  std::for_each(window_iter, last_window, [&](auto &&window) {
-                    auto const coverages = get_window_coverages(
-                        window.start_base,
-                        window.start_base + window.coverages.size());
-                    auto result_window = results::Window(
-                        window.start_base, window.weights, coverages);
-
-                    add_result_window(std::move(result_window));
-                  });
-                }
-
-                window_iter = last_window;
-                window_reads_indices_iter = last_window_reads_indices;
-                continue;
-              }
-
-              windows_merger::WindowsMerger windows_merger(n_clusters);
-              std::for_each(window_iter, last_window, [&](auto &&window) {
-                windows_merger.add_window(window.start_base, window.weights,
-                                          window.coverages);
-              });
-
-              auto const merged_window = windows_merger.merge();
-              auto const coverages = get_window_coverages(
-                  merged_window.begin_index(), merged_window.end_index());
-              auto result_window = results::Window(merged_window, coverages);
-              add_result_window(std::move(result_window));
-
-              window_iter = last_window;
-              window_reads_indices_iter = last_window_reads_indices;
-            }
-          }
-
-          if (transcriptResult.windows) {
-            auto &result_windows = *transcriptResult.windows;
-            auto splitted_ringmaps =
-                RingmapData(ringmapData).split_into_windows(result_windows);
-
-            assert(splitted_ringmaps.size() == result_windows.size());
-
-            auto windows_iter = std::begin(result_windows);
-            auto const windows_end = std::end(result_windows);
-            auto splitted_ringmaps_iter = std::begin(splitted_ringmaps);
-            for (; windows_iter < windows_end;
-                 ++windows_iter, ++splitted_ringmaps_iter) {
-              auto &window = *windows_iter;
-              if (window.weighted_clusters.getClustersSize() == 0) {
-                continue;
-              }
-
-              auto &ringmap = *splitted_ringmaps_iter;
-
-              window.assignments.resize(ringmap.data().rows_size());
-              ranges::fill(window.assignments, std::int8_t(-1));
-
-              auto filteredRingmap = ringmap;
-              filteredRingmap.filterBases();
-              filteredRingmap.filterReads();
-              filteredRingmap.filterBases();
-
-              auto &&fractions_result = filteredRingmap.fractionReadsByWeights(
-                  window.weighted_clusters, window_size,
-                  args.skip_ambiguous_assignments());
-              std::tie(window.fractions, window.patterns, std::ignore) =
-                  std::move(fractions_result);
-              assert(window.fractions.size() > 1 or window.fractions.empty() or
-                     window.fractions[0] >= 0.01);
-
-              bool const redundandPatterns = [&] {
-                auto patterns_iter = std::cbegin(*window.patterns);
-                auto const patterns_end = std::cend(*window.patterns);
-
-                for (; patterns_iter < patterns_end; ++patterns_iter) {
-                  auto &&cur_pattern = *patterns_iter;
-                  auto const begin_cur_pattern = std::cbegin(cur_pattern);
-                  auto const end_cur_pattern = std::cend(cur_pattern);
-
-                  if (std::any_of(std::next(patterns_iter), patterns_end,
-                                  [&](auto &&next_pattern) {
-                                    return std::equal(begin_cur_pattern,
-                                                      end_cur_pattern,
-                                                      std::cbegin(next_pattern),
-                                                      std::cend(next_pattern));
-                                  })) {
-                    return true;
-                  }
-                }
-
-                return false;
-              }();
-
-              if (redundandPatterns or
-                  ranges::any_of(
-                      window.fractions,
-                      [min_cluster_fraction =
-                           args.minimum_cluster_fraction()](auto &&fraction) {
-                        return fraction < min_cluster_fraction;
-                      })) {
-                stop = false;
-                auto const result_window_begin = window.begin_index;
-                auto const result_window_end = window.end_index;
-                logger::debug(
-                    "Transcript {}, window {} (bases {}-{}), reducing number "
-                    "of clusters from {} to {} because a redundant weights "
-                    "pattern is found",
-                    transcriptResult.name,
-                    std::distance(std::begin(result_windows), windows_iter) + 1,
-                    result_window_begin + 1, result_window_end,
-                    window.fractions.size(), window.fractions.size() - 1);
-                assert(window.fractions.size() > 1);
-                auto const new_clusters_constraint =
-                    static_cast<unsigned>(window.fractions.size() - 1);
-
-                ([&]() {
-                  auto windows_iter = std::ranges::begin(windows);
-                  const auto windows_end = std::ranges::end(windows);
-
-                  auto windows_max_clusters_constraints_iter =
-                      std::ranges::begin(windows_max_clusters_constraints);
-                  const auto windows_max_clusters_constraints_end =
-                      std::ranges::end(windows_max_clusters_constraints);
-
-                  for (; windows_iter < windows_end and
-                         windows_max_clusters_constraints_iter <
-                             windows_max_clusters_constraints_end;
-                       ++windows_iter,
-                       ++windows_max_clusters_constraints_iter) {
-                    auto &&window = *windows_iter;
-                    auto &&window_constraint =
-                        *windows_max_clusters_constraints_iter;
-
-                    if (window.start_base >= result_window_begin and
-                        window.start_base + window_size <= result_window_end) {
-
-                      window_constraint = new_clusters_constraint;
-                    }
-                  }
-                })();
-              }
-
-              if (not stop)
-                continue;
-
-              *window.patterns =
-                  filteredRingmap.remapPatterns(*window.patterns);
-
-              assign_reads_to_clusters(window,
-                                       std::move(std::get<2>(fractions_result)),
-                                       ringmap, filteredRingmap);
-
-              if (not args.assignments_dump_directory().empty()) {
-                dump_assignments(transcriptResult, window, ringmap,
-                                 args.assignments_dump_directory());
-              }
-
-              if (std::all_of(std::cbegin(*window.patterns),
-                              std::cend(*window.patterns), [](auto &&pattern) {
-                                return std::all_of(
-                                    std::cbegin(pattern), std::cend(pattern),
-                                    [](auto &&value) { return value == 0; });
-                              })) {
-                window.patterns = std::nullopt;
-                window.bases_coverages = std::nullopt;
-              }
-            }
-          }
-        }
-
-        analysisResult.addTranscript(std::move(transcriptResult));
+        handle_transcript(transcript, ringmapData, analysisResult, args,
+                          raw_n_clusters_stream, raw_n_clusters_stream_mutex);
       }
     });
   }

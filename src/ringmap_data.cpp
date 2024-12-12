@@ -1,4 +1,5 @@
 #include "ringmap_data.hpp"
+#include "logger.hpp"
 #include "mutation_map.hpp"
 #include "mutation_map_transcript.hpp"
 #include "ptba.hpp"
@@ -569,6 +570,8 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
   for (auto &&read : m_data.rows()) {
     assert(read.end_index() >= read.begin_index());
     if (read.end_index() - read.begin_index() < window_size) {
+      logger::trace("Skipping read {}-{}, shorter than a window size",
+                    read.begin_index() + 1, read.end_index());
       continue;
     }
 

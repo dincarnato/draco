@@ -17,10 +17,11 @@ function(create_tests suffix)
       ${PROJECT_SOURCE_DIR}/src/mutation_map.cpp
       ${PROJECT_SOURCE_DIR}/src/paired_rna_secondary_structure.cpp
       ${PROJECT_SOURCE_DIR}/src/spectral_partitioner.cpp
-      ${PROJECT_SOURCE_DIR}/src/rna_secondary_structure.cpp)
+      ${PROJECT_SOURCE_DIR}/src/rna_secondary_structure.cpp
+      ${PROJECT_SOURCE_DIR}/src/logger.cpp)
   target_compile_options(ringmap_base_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(ringmap_base_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_base_${ARGV0} ${ARGN})
+  target_link_libraries(ringmap_base_${ARGV0} ${ARGN} fmt::fmt)
   
   add_executable(ringmap_shuffle_${ARGV0} EXCLUDE_FROM_ALL
       ringmap_shuffle.cpp
@@ -30,10 +31,11 @@ function(create_tests suffix)
       ${PROJECT_SOURCE_DIR}/src/mutation_map.cpp
       ${PROJECT_SOURCE_DIR}/src/paired_rna_secondary_structure.cpp
       ${PROJECT_SOURCE_DIR}/src/spectral_partitioner.cpp
-      ${PROJECT_SOURCE_DIR}/src/rna_secondary_structure.cpp)
+      ${PROJECT_SOURCE_DIR}/src/rna_secondary_structure.cpp
+      ${PROJECT_SOURCE_DIR}/src/logger.cpp)
   target_compile_options(ringmap_shuffle_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(ringmap_shuffle_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_shuffle_${ARGV0} ${ARGN})
+  target_link_libraries(ringmap_shuffle_${ARGV0} ${ARGN} fmt::fmt)
   
   add_executable(ringmap_concat_${ARGV0} EXCLUDE_FROM_ALL
       ringmap_concat.cpp
@@ -43,10 +45,11 @@ function(create_tests suffix)
       ${PROJECT_SOURCE_DIR}/src/mutation_map.cpp
       ${PROJECT_SOURCE_DIR}/src/paired_rna_secondary_structure.cpp
       ${PROJECT_SOURCE_DIR}/src/spectral_partitioner.cpp
-      ${PROJECT_SOURCE_DIR}/src/rna_secondary_structure.cpp)
+      ${PROJECT_SOURCE_DIR}/src/rna_secondary_structure.cpp
+      ${PROJECT_SOURCE_DIR}/src/logger.cpp)
   target_compile_options(ringmap_concat_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(ringmap_concat_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_concat_${ARGV0} ${ARGN})
+  target_link_libraries(ringmap_concat_${ARGV0} ${ARGN} fmt::fmt)
   
   add_executable(graph_cut_${ARGV0} EXCLUDE_FROM_ALL
       graph_cut.cpp
@@ -99,10 +102,11 @@ function(create_tests suffix)
       ${PROJECT_SOURCE_DIR}/src/mutation_map.cpp
       ${PROJECT_SOURCE_DIR}/src/mutation_map_transcript.cpp
       ${PROJECT_SOURCE_DIR}/src/paired_rna_secondary_structure.cpp
+      ${PROJECT_SOURCE_DIR}/src/logger.cpp
   )
   target_compile_options(ringmap_window_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(ringmap_window_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_window_${ARGV0} ${ARGN})
+  target_link_libraries(ringmap_window_${ARGV0} ${ARGN} fmt::fmt)
 
   add_executable(weibull_fitter_${ARGV0} EXCLUDE_FROM_ALL
       weibull_fitter.cpp)

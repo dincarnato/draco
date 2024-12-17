@@ -20,8 +20,6 @@ find_package(Boost 1.66 REQUIRED)
 find_package(Armadillo REQUIRED)
 find_package(OpenMP REQUIRED)
 
-option(USE_TBB "Use Thread Building Blocks for parallelization if available" ON)
-option(SINGLE_THREAD "Use a single thread, needs USE_TBB=OFF" OFF)
 option(ARMA_NO_WRAPPER "Do not use Armadillo wrappers. Increases speed." OFF)
 option(LINK_TIME_OPTIMIZATIONS "Optimize at link-time. Only set for Release building." OFF)
 option(NATIVE_BUILD "Build for native arch. This will probabily let everything crash if run on other computers" OFF)
@@ -48,13 +46,7 @@ if(NOT dlib_FOUND)
     set(dlib_USES_PKGCONFIG ON)
 endif()
 
-pkg_check_modules(TBB tbb)
-
-if(TBB_FOUND AND USE_TBB)
-    add_definitions(-DUSE_TBB=1)
-else()
-    set(TBB_LIBRARIES "")
-endif()
+pkg_check_modules(TBB tbb REQUIRED)
 
 FetchContent_Declare(
   fmt
@@ -63,10 +55,6 @@ FetchContent_Declare(
 
 message(STATUS "Fetching fmt library")
 FetchContent_MakeAvailable(fmt)
-
-if(SINGLE_THREAD)
-    add_definitions(-DSINGLE_THREAD=1)
-endif()
 
 if(ARMA_NO_WRAPPER)
     add_definitions(-DARMA_DONT_USE_WRAPPER)

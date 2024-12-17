@@ -19,6 +19,8 @@
 #include <iostream>
 #include <iterator>
 #include <mutex>
+#include <oneapi/tbb/info.h>
+#include <oneapi/tbb/parallel_pipeline.h>
 #include <optional>
 #include <ranges>
 #include <set>
@@ -27,6 +29,7 @@
 #include <thread>
 
 #include <armadillo>
+#include <tbb/global_control.h>
 
 #include <omp.h>
 
@@ -1089,13 +1092,17 @@ int main(int argc, char *argv[]) {
   });
   */
 
-  const auto nWorkers = [&] {
+  const auto max_allowed_parallelism = [&] {
     auto n_processors = args.n_processors();
-    if (n_processors == 0)
-      n_processors = std::thread::hardware_concurrency() - 1u;
+    if (n_processors == 0) {
+      n_processors = tbb::info::default_concurrency();
+    }
 
-    return static_cast<std::size_t>(std::max(n_processors, 1u));
+    return static_cast<std::size_t>(n_processors);
   }();
+
+  tbb::global_control tbb_global_control(
+      tbb::global_control::max_allowed_parallelism, max_allowed_parallelism);
 
   std::optional<std::ofstream> raw_n_clusters_stream;
   std::mutex raw_n_clusters_stream_mutex;
@@ -1105,28 +1112,24 @@ int main(int argc, char *argv[]) {
                       std::ios_base::out | std::ios_base::trunc);
   }
 
-  std::vector<std::thread> workers;
-  workers.reserve(nWorkers);
-  for (std::size_t workerIndex = 0; workerIndex < nWorkers; ++workerIndex) {
-    workers.emplace_back([&queue, &analysisResult, &args,
-                          &raw_n_clusters_stream,
-                          &raw_n_clusters_stream_mutex] {
-      for (;;) {
-        auto poppedData = queue.pop();
-        if (not poppedData)
-          break;
-        auto const &transcript = std::get<0>(*poppedData);
-        auto &ringmapData = std::get<1>(*poppedData);
+  tbb::parallel_pipeline(
+      max_allowed_parallelism,
+      tbb::make_filter<void, void>(
+          tbb::filter_mode::parallel, [&](tbb::flow_control &flow_control) {
+            auto poppedData = queue.pop();
+            if (not poppedData) {
+              flow_control.stop();
+              return;
+            }
 
-        handle_transcript(transcript, ringmapData, analysisResult, args,
-                          raw_n_clusters_stream, raw_n_clusters_stream_mutex);
-      }
-    });
-  }
+            auto const &transcript = std::get<0>(*poppedData);
+            auto &ringmapData = std::get<1>(*poppedData);
+
+            handle_transcript(transcript, ringmapData, analysisResult, args,
+                              raw_n_clusters_stream,
+                              raw_n_clusters_stream_mutex);
+          }));
 
   reader.join();
-  for (auto &worker : workers)
-    worker.join();
-
   std::cout << "\n[+] All done.\n\n";
 }

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "defaults.hpp"
-
 #include <atomic>
 #include <condition_variable>
 #include <limits>

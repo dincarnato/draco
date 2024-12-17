@@ -1,13 +1,11 @@
 #include "windows_merger.hpp"
 #include "weighted_clusters.hpp"
 
-#include "parallel/blocked_range.hpp"
-#include "parallel/parallel_for.hpp"
-
 #include <algorithm>
 #include <array>
 #include <fstream>
 #include <numeric>
+#include <oneapi/tbb/parallel_for.h>
 #include <random>
 #include <string_view>
 
@@ -65,7 +63,7 @@ static void test_add_windows_mt() {
   constexpr std::size_t n_clusters = 4;
 
   WindowsMerger merger(n_clusters);
-  parallel::parallel_for(std::size_t(0), n_tests, [&](std::size_t) {
+  tbb::parallel_for(std::size_t(0), n_tests, [&](std::size_t) {
     auto [weighted_clusters, coverages, start_index] =
         generate_random_windows(n_clusters);
     merger.add_window(start_index, std::move(weighted_clusters),

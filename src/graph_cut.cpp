@@ -1,14 +1,13 @@
 #include "graph_cut.hpp"
 #include "logger.hpp"
-#include "parallel/blocked_range.hpp"
-#include "parallel/parallel_for.hpp"
-#include "parallel/parallel_reduce.hpp"
 #include "rna_secondary_structure.hpp"
 
 #include <algorithm>
 #include <cassert>
 #include <iomanip>
 #include <iostream>
+#include <oneapi/tbb/blocked_range.h>
+#include <oneapi/tbb/parallel_reduce.h>
 #include <optional>
 #include <stdexcept>
 #include <thread>
@@ -88,11 +87,11 @@ auto GraphCut::run(std::uint8_t nClusters, float weightModule,
         [this](const auto &matrix) { return getGraphWithNoLoops(matrix); });
   };
 
-  auto result = parallel::parallel_reduce(
-      parallel::blocked_range<std::uint16_t>(
+  auto result = tbb::parallel_reduce(
+      tbb::blocked_range<std::uint16_t>(
           0, std::max(iterations, static_cast<std::uint16_t>(1))),
       std::optional<std::tuple<WeightedClusters, double>>{},
-      [&](const parallel::blocked_range<std::uint16_t> &range,
+      [&](const tbb::blocked_range<std::uint16_t> &range,
           std::optional<std::tuple<WeightedClusters, double>> &&best_result) {
         auto iter = std::begin(range);
         auto const end = std::end(range);

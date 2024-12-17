@@ -8,6 +8,13 @@ if (USE_LIBCXX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 endif()
 
+option(
+    TEST_WITH_TSAN
+    "By default, address and undefined sanitizers are used for the tests. If
+    this is ON, the thread sanitizer is used instead"
+    OFF
+)
+
 function(create_tests suffix)
   add_executable(ringmap_base_${ARGV0} EXCLUDE_FROM_ALL
       ringmap_base.cpp
@@ -192,5 +199,8 @@ function(create_tests suffix)
   )
 endfunction()
 
-create_tests(aubsan -fsanitize=address,undefined)
-create_tests(tsan -fsanitize=thread)
+if (TEST_WITH_TSAN)
+    create_tests(tsan -fsanitize=thread)
+else()
+    create_tests(aubsan -fsanitize=address,undefined)
+endif()

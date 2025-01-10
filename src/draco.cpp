@@ -1,5 +1,6 @@
 #include "draco.hpp"
 #include "args.hpp"
+#include "fmt/ostream.h"
 #include "graph_cut.hpp"
 #include "logger.hpp"
 #include "mutation_map.hpp"
@@ -544,26 +545,23 @@ void output_raw_n_clusters(std::ofstream &raw_n_clusters_stream,
                            std::vector<unsigned int> const &windows_n_clusters,
                            results::Transcript &transcript_result,
                            results::Analysis &analysis_result) {
-  std::stringstream raw_n_clusters_data;
-
   auto windows_iter = std::cbegin(windows);
   auto windows_end = std::cend(windows);
   auto windows_n_clusters_iter = std::cbegin(windows_n_clusters);
   assert(std::distance(windows_iter, windows_end) ==
          std::distance(windows_n_clusters_iter, std::cend(windows_n_clusters)));
 
-  for (; windows_iter < windows_end;
-       ++windows_iter, ++windows_n_clusters_iter) {
-    auto &&window = *windows_iter;
-    auto n_clusters = *windows_n_clusters_iter;
-    raw_n_clusters_data << transcript_result.name << '\t' << window.start_base
-                        << '\t' << window.start_base + window_size << '\t'
-                        << n_clusters << '\n';
-  }
-
   {
     std::lock_guard<std::mutex> lock(raw_n_clusters_stream_mutex);
-    raw_n_clusters_stream << raw_n_clusters_data.rdbuf();
+
+    for (; windows_iter < windows_end;
+         ++windows_iter, ++windows_n_clusters_iter) {
+      auto &&window = *windows_iter;
+      auto n_clusters = *windows_n_clusters_iter;
+      fmt::println(raw_n_clusters_stream, "{}\t{}\t{}\t{}",
+                   transcript_result.name, window.start_base,
+                   window.start_base + window_size, n_clusters);
+    }
   }
   analysis_result.addTranscript(std::move(transcript_result));
 }

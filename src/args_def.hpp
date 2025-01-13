@@ -40,11 +40,12 @@ static constexpr auto opts = args::Opts(
         ARG(std::string, output_raw_n_clusters)
             .optional()
             .parameter_name("outputRawNClusters")
-            .description("Outputs a file containing, for each sequence, the "
-                         "number of clusters detected for each window. The "
-                         "file is tab-separated and has the following format: "
-                         "sequence_name <tab> window start offset <tab> window "
-                         "end offset <tab> n clusters."),
+            .description(
+                "Outputs a file containing, for each sequence, the number of "
+                "clusters detected for each window. The file is tab-separated "
+                "and has the following format: sequence_name <tab> window "
+                "start offset <tab> window end offset <tab> n clusters <tab> "
+                "window shannon entropy."),
         ARG(std::string, log_level)
             .optional()
             .parameter_name("log-level")

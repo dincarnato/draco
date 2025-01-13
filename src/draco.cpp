@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <charconv>
+#include <cmath>
 #include <format>
 #include <iostream>
 #include <iterator>
@@ -538,29 +539,116 @@ void dump_assignments(results::Transcript const &transcript,
   }
 }
 
+static std::vector<double>
+calc_windows_shannon_entropy(unsigned int window_size,
+                             std::vector<Window> const &windows,
+                             RingmapData const &ringmap_data) {
+  std::vector<double> shannon_entropies(std::size(windows), 0.);
+
+  auto shannon_entropies_iter = std::begin(shannon_entropies);
+  auto windows_iter = std::cbegin(windows);
+  auto const windows_end = std::cend(windows);
+  auto pairs_comodifications =
+      arma::Mat<std::uint32_t>(window_size, window_size);
+  for (; windows_iter < windows_end; ++windows_iter, ++shannon_entropies_iter) {
+    auto &&window = *windows_iter;
+    pairs_comodifications.zeros();
+
+    auto window_ringmap_data = ringmap_data.get_new_range(
+        window.start_base, window.start_base + window_size);
+    window_ringmap_data.filterBases();
+    window_ringmap_data.filterReads();
+    window_ringmap_data.filterBases();
+
+    auto available_bases =
+        std::size(window_ringmap_data.getNonFilteredToFilteredMap());
+
+    if (available_bases == 0) {
+      continue;
+    }
+
+    auto &&rows = window_ringmap_data.data().rows();
+    auto rows_iter = std::ranges::begin(rows);
+    auto const rows_end = std::ranges::end(rows);
+    for (unsigned row_index = 0; rows_iter < rows_end;
+         ++rows_iter, ++row_index) {
+      auto &&row = *rows_iter;
+
+      auto read_begin_index = row.window_begin_index();
+      auto &&modified_bases = row.modifiedIndices();
+      auto modified_bases_iter = std::ranges::begin(modified_bases);
+      auto const modified_bases_end = std::ranges::end(modified_bases);
+      for (; modified_bases_iter < modified_bases_end; ++modified_bases_iter) {
+        assert(*modified_bases_iter >= read_begin_index);
+        auto modified_base_a = *modified_bases_iter - read_begin_index;
+        assert(modified_base_a < available_bases);
+
+        for (auto raw_modified_base_b : std::ranges::subrange(
+                 std::ranges::next(modified_bases_iter), modified_bases_end)) {
+          assert(raw_modified_base_b >= read_begin_index);
+          auto modified_base_b = raw_modified_base_b - read_begin_index;
+          assert(modified_base_b < available_bases);
+
+          ++pairs_comodifications(modified_base_a, modified_base_b);
+        }
+      }
+    }
+
+    auto normalization_factor =
+        1. / static_cast<double>(window_ringmap_data.data().rows_size());
+    double shannon_entropy = 0.;
+    for (std::uint32_t row = 0; row < available_bases; ++row) {
+      for (std::uint32_t col = row; col < available_bases; ++col) {
+        auto pair_comodifications = pairs_comodifications(row, col);
+        if (pair_comodifications == 0) {
+          continue;
+        }
+
+        auto comodification_probability =
+            static_cast<double>(pair_comodifications) * normalization_factor;
+        shannon_entropy -=
+            comodification_probability * std::log10(comodification_probability);
+      }
+    }
+
+    *shannon_entropies_iter =
+        shannon_entropy / static_cast<double>(available_bases);
+  }
+
+  return shannon_entropies;
+}
+
 void output_raw_n_clusters(std::ofstream &raw_n_clusters_stream,
                            std::mutex &raw_n_clusters_stream_mutex,
                            unsigned int window_size,
                            std::vector<Window> const &windows,
+                           RingmapData const &ringmap_data,
                            std::vector<unsigned int> const &windows_n_clusters,
                            results::Transcript &transcript_result,
                            results::Analysis &analysis_result) {
-  auto windows_iter = std::cbegin(windows);
-  auto windows_end = std::cend(windows);
-  auto windows_n_clusters_iter = std::cbegin(windows_n_clusters);
-  assert(std::distance(windows_iter, windows_end) ==
-         std::distance(windows_n_clusters_iter, std::cend(windows_n_clusters)));
+  auto shannon_entropies =
+      calc_windows_shannon_entropy(window_size, windows, ringmap_data);
 
   {
+    auto windows_iter = std::cbegin(windows);
+    auto shannon_entropies_iter = std::cbegin(shannon_entropies);
+    auto const windows_end = std::cend(windows);
+    auto windows_n_clusters_iter = std::cbegin(windows_n_clusters);
+    assert(
+        std::distance(windows_iter, windows_end) ==
+        std::distance(windows_n_clusters_iter, std::cend(windows_n_clusters)));
+
     std::lock_guard<std::mutex> lock(raw_n_clusters_stream_mutex);
 
     for (; windows_iter < windows_end;
-         ++windows_iter, ++windows_n_clusters_iter) {
+         ++windows_iter, ++windows_n_clusters_iter, ++shannon_entropies_iter) {
       auto &&window = *windows_iter;
       auto n_clusters = *windows_n_clusters_iter;
-      fmt::println(raw_n_clusters_stream, "{}\t{}\t{}\t",
+      auto shannon_entropy = *shannon_entropies_iter;
+      fmt::println(raw_n_clusters_stream, "{}\t{}\t{}\t{}\t{}",
                    transcript_result.name, window.start_base,
-                   window.start_base + window_size, n_clusters);
+                   window.start_base + window_size, n_clusters,
+                   shannon_entropy);
     }
   }
   analysis_result.addTranscript(std::move(transcript_result));
@@ -700,7 +788,7 @@ void handle_transcript(MutationMapTranscript const &transcript,
 
   if (raw_n_clusters_stream) {
     output_raw_n_clusters(*raw_n_clusters_stream, raw_n_clusters_stream_mutex,
-                          window_size, windows, windows_n_clusters,
+                          window_size, windows, ringmapData, windows_n_clusters,
                           transcriptResult, analysisResult);
     return;
   }

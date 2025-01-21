@@ -561,18 +561,22 @@ int main(int argc, char *argv[]) {
 
         assert(n_windows > 0);
         std::vector<Window> windows(n_windows);
-        auto const window_precise_offset =
-            static_cast<double>(transcript_size - window_size) /
-            static_cast<double>(n_windows - 1);
-        for (std::size_t window_index = 0; window_index < n_windows;
-             ++window_index) {
-          auto start_base = static_cast<std::size_t>(std::round(
-              static_cast<double>(window_index) * window_precise_offset));
-          if (start_base + window_size > transcript_size)
-            start_base = transcript_size - window_size;
+        if (n_windows > 1) {
+          auto const window_precise_offset =
+              static_cast<double>(transcript_size - window_size) /
+              static_cast<double>(n_windows - 1);
+          for (std::size_t window_index = 0; window_index < n_windows;
+               ++window_index) {
+            auto start_base = static_cast<std::size_t>(std::round(
+                static_cast<double>(window_index) * window_precise_offset));
+            if (start_base + window_size > transcript_size)
+              start_base = transcript_size - window_size;
 
-          windows[window_index].start_base =
-              static_cast<unsigned short>(start_base);
+            windows[window_index].start_base =
+                static_cast<unsigned short>(start_base);
+          }
+        } else {
+          windows[0].start_base = 0;
         }
 
         std::vector<unsigned> windows_n_clusters(windows.size());

@@ -3,7 +3,6 @@
 #include "weighted_clusters.hpp"
 
 #include <algorithm>
-#include <range/v3/iterator/concepts.hpp>
 
 inline WeightedClusters::WeightedClusters(std::size_t nElements,
                                           std::size_t nClusters,
@@ -113,17 +112,16 @@ WeightedClusters::operator<(const WeightedClusters &other) const noexcept {
   return false;
 }
 
+static_assert(std::random_access_iterator<typename WeightedClusters::iterator>);
 static_assert(
-    ranges::RandomAccessIterator<typename WeightedClusters::iterator>);
-static_assert(
-    ranges::RandomAccessIterator<typename WeightedClusters::const_iterator>);
+    std::random_access_iterator<typename WeightedClusters::const_iterator>);
 
-static_assert(ranges::RandomAccessIterator<
+static_assert(std::random_access_iterator<
               typename WeightedClusters::cluster_wrapper::iterator>);
-static_assert(ranges::RandomAccessIterator<
+static_assert(std::random_access_iterator<
               typename WeightedClusters::const_cluster_wrapper::iterator>);
 
-static_assert(ranges::RandomAccessIterator<
+static_assert(std::random_access_iterator<
               typename WeightedClusters::clusters_wrapper::iterator>);
-static_assert(ranges::RandomAccessIterator<
+static_assert(std::random_access_iterator<
               typename WeightedClusters::const_clusters_wrapper::iterator>);

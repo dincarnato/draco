@@ -13,7 +13,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <range/v3/iterator/concepts.hpp>
 
 namespace windows_merger {
 
@@ -900,7 +899,7 @@ auto operator==(T &&t, U &&u) noexcept
   return t.coverage() == u.coverage() and
          t.clusters_size() == u.clusters_size() and
          [ t_weights = t.weights(), u_weights = u.weights() ] {
-    return ranges::equal(t_weights, u_weights);
+    return std::ranges::equal(t_weights, u_weights);
   }
   ();
 }
@@ -923,7 +922,7 @@ auto operator==(T &&t, U &&u) noexcept
 
   return t.clusters_size() == u.clusters_size() and
          t.begin_index() == u.begin_index() and t.size() == u.size() and
-         ranges::equal(t, u);
+         std::ranges::equal(t, u);
 }
 
 template <typename T, typename U>
@@ -935,16 +934,15 @@ auto operator!=(T &&t, U &&u) noexcept
   return not(t == u);
 }
 
-static_assert(::ranges::RandomAccessIterator<WindowsMergerWindows::iterator>);
+static_assert(std::random_access_iterator<WindowsMergerWindows::iterator>);
+static_assert(std::random_access_iterator<WindowsMergerWindows::move_iterator>);
 static_assert(
-    ::ranges::RandomAccessIterator<WindowsMergerWindows::move_iterator>);
+    std::random_access_iterator<WindowsMergerWindows::const_iterator>);
 static_assert(
-    ::ranges::RandomAccessIterator<WindowsMergerWindows::const_iterator>);
+    std::random_access_iterator<WindowsMergerWindows::reverse_iterator>);
 static_assert(
-    ::ranges::RandomAccessIterator<WindowsMergerWindows::reverse_iterator>);
-static_assert(::ranges::RandomAccessIterator<
-              WindowsMergerWindows::move_reverse_iterator>);
-static_assert(::ranges::RandomAccessIterator<
-              WindowsMergerWindows::const_reverse_iterator>);
+    std::random_access_iterator<WindowsMergerWindows::move_reverse_iterator>);
+static_assert(
+    std::random_access_iterator<WindowsMergerWindows::const_reverse_iterator>);
 
 } // namespace windows_merger

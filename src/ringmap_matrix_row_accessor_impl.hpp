@@ -3,10 +3,6 @@
 #include "ringmap_matrix_iterator.hpp"
 #include "ringmap_matrix_row_accessor.hpp"
 
-#include <range/v3/algorithm.hpp>
-#include <range/v3/numeric.hpp>
-#include <range/v3/view.hpp>
-
 template <typename Matrix>
 template <typename M>
 RingmapMatrixRowAccessor<Matrix>::RingmapMatrixRowAccessor(
@@ -89,7 +85,7 @@ auto RingmapMatrixRowAccessor<Matrix>::end() const noexcept -> iterator {
 
 template <typename Matrix>
 std::size_t RingmapMatrixRowAccessor<Matrix>::sum() const noexcept {
-  return ranges::accumulate(begin(), end(), 0u);
+  return std::accumulate(begin(), end(), 0u);
 }
 
 template <typename Matrix>
@@ -128,15 +124,15 @@ template <typename URBG>
 void RingmapMatrixRowAccessor<Matrix>::shuffle(URBG &&g) const
     noexcept(std::is_nothrow_swappable_v<ringmap_matrix::value_type>) {
   std::uniform_int_distribution<unsigned> distribution(0, matrix->bases - 1);
-  auto iter = ranges::begin(*row);
+  auto iter = std::ranges::begin(*row);
   for (unsigned &index : *row) {
     do {
       index = distribution(g);
-    } while (ranges::find(ranges::begin(*row), iter, index) != iter);
+    } while (std::ranges::find(std::ranges::begin(*row), iter, index) != iter);
 
     ++iter;
   }
-  ranges::sort(*row);
+  std::ranges::sort(*row);
 }
 
 template <typename Matrix>
@@ -200,11 +196,17 @@ auto RingmapMatrixRowAccessor<Matrix>::operator=(value_type &&row) const
 template <typename Matrix>
 RingmapMatrixRowAccessor<Matrix>::operator value_type() const noexcept(false) {
   value_type out(matrix->bases, false);
-  ranges::view::zip(*this, out) |
-      ranges::for_each([](auto &&accessor, bool &value) {
-        if (accessor.get())
-          value = true;
-      });
+
+  auto this_iter = std::ranges::begin(*this);
+  auto out_iter = std::ranges::begin(out);
+
+  for (;
+       this_iter < std::ranges::end(*this) && out_iter < std::ranges::end(out);
+       ++this_iter, ++out_iter) {
+    auto &&accessor = *this_iter;
+    if (accessor.get())
+      *out_iter = true;
+  }
 
   return out;
 }
@@ -213,13 +215,20 @@ template <typename Matrix>
 template <typename Row>
 void RingmapMatrixRowAccessor<Matrix>::assign_from_row(Row &&row) const
     noexcept(false) {
-  ranges::view::zip(row, *this) |
-      ranges::for_each([](bool value, auto &&accessor) {
-        if (value)
-          accessor.set();
-        else
-          accessor.clear();
-      });
+  auto row_iter = std::ranges::begin(row);
+  auto this_iter = std::ranges::begin(*this);
+
+  for (;
+       row_iter < std::ranges::end(row) && this_iter < std::ranges::end(*this);
+       ++row_iter, ++this_iter) {
+    bool value = *row_iter;
+    auto &&accessor = *this_iter;
+
+    if (value)
+      accessor.set();
+    else
+      accessor.clear();
+  }
 }
 
 template <typename Matrix>

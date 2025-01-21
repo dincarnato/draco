@@ -3,7 +3,7 @@
 #include "windows_merger_cache_indices_accessor.hpp"
 #include "windows_merger_cache_indices_line.hpp"
 
-#include <range/v3/algorithm.hpp>
+#include <algorithm>
 
 namespace windows_merger {
 
@@ -23,7 +23,7 @@ template <typename Accessor>
 inline void WindowsMergerCacheIndicesLine::init_from_accessor(
     Accessor &&accessor) noexcept(false) {
   base_type::resize(accessor.size());
-  ranges::copy(accessor, ranges::begin(*this));
+  std::ranges::copy(accessor, std::ranges::begin(*this));
 }
 
 } // namespace windows_merger

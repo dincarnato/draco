@@ -2,6 +2,7 @@
 
 #include "windows_merger_cache_indices_accessor.hpp"
 #include "windows_merger_cache_indices_line.hpp"
+#include <algorithm>
 
 namespace windows_merger {
 
@@ -57,13 +58,13 @@ auto WindowsMergerCacheIndicesAccessor<Merger>::end() const noexcept
 template <typename Merger>
 auto WindowsMergerCacheIndicesAccessor<Merger>::rbegin() const noexcept
     -> reverse_iterator {
-  return ranges::reverse_iterator<iterator>(end());
+  return std::reverse_iterator<iterator>(end());
 }
 
 template <typename Merger>
 auto WindowsMergerCacheIndicesAccessor<Merger>::rend() const noexcept
     -> reverse_iterator {
-  return ranges::reverse_iterator<iterator>(begin());
+  return std::reverse_iterator<iterator>(begin());
 }
 
 template <typename Merger>
@@ -216,7 +217,7 @@ void WindowsMergerCacheIndicesAccessor<Merger>::assign_from_line(
 
   const auto lhs_indices =
       merger->template get_indices_first_pointer<1>(line_index);
-  ranges::copy(line, lhs_indices);
+  std::ranges::copy(line, lhs_indices);
   *lhs_size = rhs_size;
 }
 

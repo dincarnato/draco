@@ -4,8 +4,6 @@
 #include "hard_clusters_iterator.hpp"
 #include "hard_clusters_wrapper.hpp"
 
-#include <range/v3/algorithm.hpp>
-
 template <typename Cluster, bool complemented>
 HardClustersWrapper<Cluster, complemented>::HardClustersWrapper(
     Cluster &clusters) noexcept

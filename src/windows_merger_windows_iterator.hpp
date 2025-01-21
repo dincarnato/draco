@@ -5,7 +5,6 @@
 
 #include <cassert>
 #include <iterator>
-#include <range/v3/core.hpp>
 #include <type_traits>
 
 namespace windows_merger {
@@ -28,7 +27,7 @@ template <typename Merger> struct WindowsMergerWindowsIterator {
   using value_type = WindowsMergerWindow;
   using difference_type = signed_windows_size_type;
   using reference = accessor;
-  using iterator_category = ranges::random_access_iterator_tag;
+  using iterator_category = std::random_access_iterator_tag;
 
   WindowsMergerWindowsIterator() = default;
   explicit WindowsMergerWindowsIterator(

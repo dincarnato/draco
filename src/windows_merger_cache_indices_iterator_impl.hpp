@@ -3,6 +3,7 @@
 #include "windows_merger_cache_indices_accessor.hpp"
 #include "windows_merger_cache_indices_iterator.hpp"
 #include "windows_merger_cache_indices_line.hpp"
+#include <iterator>
 
 namespace windows_merger {
 
@@ -81,9 +82,9 @@ auto WindowsMergerCacheIndicesIterator<Merger>::operator-=(
 
 namespace windows_merger {
 
-static_assert(::ranges::RandomAccessIterator<
+static_assert(std::random_access_iterator<
               WindowsMergerCacheIndicesIterator<WindowsMergerWindows>>);
-static_assert(::ranges::RandomAccessIterator<
+static_assert(std::random_access_iterator<
               WindowsMergerCacheIndicesIterator<const WindowsMergerWindows>>);
 
 } // namespace windows_merger

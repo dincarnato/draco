@@ -7,12 +7,13 @@
 #include "results/transcript.hpp"
 #include "results/window.hpp"
 #include "ringmap_data.hpp"
+#include "to_vector.hpp"
 #include "windows_merger.hpp"
 
-#include "range/v3/algorithm.hpp"
-#include "range/v3/view.hpp"
+#include <algorithm>
 #include <charconv>
 #include <iostream>
+#include <iterator>
 #include <mutex>
 #include <optional>
 #include <set>
@@ -32,6 +33,8 @@ namespace fs = std::experimental::filesystem;
 #else
 #error "Missing filesystem header"
 #endif
+
+namespace ranges = std::ranges;
 
 struct Window {
   unsigned short start_base;
@@ -65,8 +68,9 @@ get_windows_spans(std::vector<Window> const &windows,
       return invalid_n_clusters - 1;
     } else {
       return ranges::min(windows_max_clusters_constraints |
-                         ranges::view::slice(span.begin, span.end) |
-                         ranges::view::transform([](auto &&constraint) {
+                         std::views::drop(span.begin) |
+                         std::views::take(span.end - span.begin) |
+                         std::views::transform([](auto &&constraint) {
                            if (constraint)
                              return *constraint;
                            else {
@@ -198,11 +202,12 @@ void windows_span_expander(std::vector<Window> const &windows,
       return windows_span.n_clusters <= windows_span.max_n_clusters;
     }));
 
-    assert(ranges::all_of(windows_spans, [&](auto &&windows_span) {
+    assert(std::ranges::all_of(windows_spans, [&](auto &&windows_span) {
       return ranges::all_of(
           windows_max_clusters_constraints |
-              ranges::view::slice(windows_span.begin, windows_span.end) |
-              ranges::view::filter(
+              std::views::drop(windows_span.begin) |
+              std::views::take(windows_span.end - windows_span.begin) |
+              ranges::views::filter(
                   [](auto &&constraint) { return constraint.has_value(); }),
           [&](auto &&constraint) {
             return windows_span.max_n_clusters <= *constraint;
@@ -391,8 +396,9 @@ void windows_span_expander(std::vector<Window> const &windows,
   assert(ranges::all_of(windows_spans, [&](auto &&windows_span) {
     return ranges::all_of(
         windows_max_clusters_constraints |
-            ranges::view::slice(windows_span.begin, windows_span.end) |
-            ranges::view::filter(
+            std::views::drop(windows_span.begin) |
+            std::views::take(windows_span.end - windows_span.begin) |
+            std::views::filter(
                 [](auto &&constraint) { return constraint.has_value(); }),
         [&](auto &&constraint) {
           return windows_span.max_n_clusters <= *constraint;
@@ -518,12 +524,12 @@ int main(int argc, char *argv[]) {
 
         auto const median_read_size = [&] {
           auto reads_sizes = ringmapData.data().rows() |
-                             ranges::view::transform([](auto &&row) {
+                             std::views::transform([](auto &&row) {
                                assert(row.end_index() >= row.begin_index());
                                return static_cast<std::uint64_t>(
                                    row.end_index() - row.begin_index());
                              }) |
-                             ranges::to_vector;
+                             more_ranges::to_vector();
 
           auto median_iter =
               ranges::next(ranges::begin(reads_sizes), reads_sizes.size() / 2);
@@ -669,15 +675,30 @@ int main(int argc, char *argv[]) {
           transcriptResult.windows = std::nullopt;
 
           windows_n_clusters = pre_collapsing_clusters;
-          ranges::for_each(ranges::view::zip(windows_n_clusters,
-                                             windows_max_clusters_constraints),
-                           [](auto &&data) {
-                             auto &&[window_n_clusters, constraint] = data;
-                             if (constraint) {
-                               window_n_clusters =
-                                   std::min(window_n_clusters, *constraint);
-                             }
-                           });
+          ([&]() {
+            auto windows_n_clusters_iter =
+                std::ranges::begin(windows_n_clusters);
+            const auto windows_n_clusters_end =
+                std::ranges::end(windows_n_clusters);
+
+            auto windows_max_clusters_constraints_iter =
+                std::ranges::begin(windows_max_clusters_constraints);
+            const auto windows_max_clusters_constraints_end =
+                std::ranges::end(windows_max_clusters_constraints);
+
+            for (; windows_n_clusters_iter < windows_n_clusters_end and
+                   windows_max_clusters_constraints_iter <
+                       windows_max_clusters_constraints_end;
+                 ++windows_n_clusters_iter,
+                 ++windows_max_clusters_constraints_iter) {
+              auto &&window_n_clusters = *windows_n_clusters_iter;
+              auto &&constraint = *windows_max_clusters_constraints_iter;
+
+              if (constraint) {
+                window_n_clusters = std::min(window_n_clusters, *constraint);
+              }
+            }
+          })();
 
           if (args.set_uninformative_clusters_to_surrounding()) {
             set_uninformative_clusters_to_surrounding(
@@ -815,9 +836,8 @@ int main(int argc, char *argv[]) {
                         0));
 
                     ranges::for_each(
-                        coverages |
-                            ranges::view::drop(row_begin - begin_index) |
-                            ranges::view::take(row_size),
+                        coverages | std::views::drop(row_begin - begin_index) |
+                            std::views::take(row_size),
                         [](auto &&coverage) { ++coverage; });
                   }
                 }
@@ -940,18 +960,31 @@ int main(int argc, char *argv[]) {
                 auto const new_clusters_constraint =
                     static_cast<unsigned>(window.fractions.size() - 1);
 
-                ranges::for_each(
-                    ranges::view::zip(windows,
-                                      windows_max_clusters_constraints),
-                    [&](auto &&data) {
-                      auto &&[window, window_constraint] = data;
-                      if (window.start_base >= result_window_begin and
-                          window.start_base + window_size <=
-                              result_window_end) {
+                ([&]() {
+                  auto windows_iter = std::ranges::begin(windows);
+                  const auto windows_end = std::ranges::end(windows);
 
-                        window_constraint = new_clusters_constraint;
-                      }
-                    });
+                  auto windows_max_clusters_constraints_iter =
+                      std::ranges::begin(windows_max_clusters_constraints);
+                  const auto windows_max_clusters_constraints_end =
+                      std::ranges::end(windows_max_clusters_constraints);
+
+                  for (; windows_iter < windows_end and
+                         windows_max_clusters_constraints_iter <
+                             windows_max_clusters_constraints_end;
+                       ++windows_iter,
+                       ++windows_max_clusters_constraints_iter) {
+                    auto &&window = *windows_iter;
+                    auto &&window_constraint =
+                        *windows_max_clusters_constraints_iter;
+
+                    if (window.start_base >= result_window_begin and
+                        window.start_base + window_size <= result_window_end) {
+
+                      window_constraint = new_clusters_constraint;
+                    }
+                  }
+                })();
               }
 
               if (not stop)
@@ -1027,11 +1060,11 @@ int main(int argc, char *argv[]) {
                         bases_coverages[assignment];
                     assert(cluster_bases_coverages.size() >=
                            end_index - begin_index);
-                    ranges::for_each(cluster_bases_coverages |
-                                         ranges::view::slice(
-                                             begin_index - window.begin_index,
-                                             end_index - window.begin_index),
-                                     [](auto &&coverage) { ++coverage; });
+                    ranges::for_each(
+                        cluster_bases_coverages |
+                            std::views::drop(begin_index - window.begin_index) |
+                            std::views::take(end_index - begin_index),
+                        [](auto &&coverage) { ++coverage; });
                   }
                 }
               }

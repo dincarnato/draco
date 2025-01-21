@@ -2,9 +2,9 @@
 
 #include "../ios_saver.hpp"
 
+#include <iterator>
 #include <optional>
 #include <ostream>
-#include <range/v3/iterator/concepts.hpp>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -96,7 +96,8 @@ template <typename, typename = void>
 struct is_iterable : std::bool_constant<false> {};
 
 template <typename T>
-struct is_iterable<T, std::enable_if_t<ranges::Iterator<typename T::iterator>>>
+struct is_iterable<
+    T, std::enable_if_t<std::input_or_output_iterator<typename T::iterator>>>
     : std::bool_constant<true> {};
 
 template <typename T>

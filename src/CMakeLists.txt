@@ -2,6 +2,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DARMA_NO_DEBUG")
 
 add_executable(
     draco
+    main.cpp
     draco.cpp
     ringmap_data.cpp
     ringmap_matrix.cpp

@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <charconv>
+#include <filesystem>
 #include <format>
 #include <iostream>
 #include <iterator>
@@ -34,16 +35,7 @@
 
 #include <omp.h>
 
-#if __has_include(<filesystem>)
-#include <filesystem>
 namespace fs = std::filesystem;
-#elif __has_include(<experimental/filesystem>)
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-#else
-#error "Missing filesystem header"
-#endif
-
 namespace ranges = std::ranges;
 
 struct WindowsSpan {

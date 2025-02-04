@@ -571,36 +571,65 @@ void merge_windows_and_add_window_results(
     std::vector<Window> const &windows,
     std::vector<std::vector<unsigned>> const &windows_reads_indices,
     RingmapData &ringmap_data, results::Transcript &transcript_result,
-    Args const &args) {
-  auto window_iter = std::begin(windows);
-  auto window_reads_indices_iter = std::begin(windows_reads_indices);
-  while (window_iter != std::end(windows)) {
-    auto const &window = *window_iter;
+    unsigned window_size, Args const &args) {
+  std::vector<std::optional<std::uint16_t>> previous_overlapping_region_ends;
+
+  auto windows_iter = std::cbegin(windows);
+  auto windows_reads_indices_iter = std::cbegin(windows_reads_indices);
+  while (windows_iter != std::cend(windows)) {
+    auto const &window = *windows_iter;
     assert(window.weights.getClustersSize() <=
            std::numeric_limits<unsigned>::max());
     auto const n_clusters =
         static_cast<unsigned>(window.weights.getClustersSize());
-    auto last_window = std::find_if(
-        std::next(window_iter), std::end(windows), [n_clusters](auto &&window) {
-          return window.weights.getClustersSize() != n_clusters;
-        });
+    if (std::size(previous_overlapping_region_ends) < n_clusters) {
+      previous_overlapping_region_ends.resize(n_clusters);
+    }
+    if (n_clusters > 0) {
+      auto const &previous_overlapping_region_end =
+          previous_overlapping_region_ends[n_clusters - 1];
+      if (previous_overlapping_region_end.has_value() and
+          window.start_base < *previous_overlapping_region_end) {
 
-    auto const last_window_reads_indices = std::next(
-        window_reads_indices_iter, std::distance(window_iter, last_window));
+        auto next_useful_window = std::ranges::find_if(
+            windows_iter, std::cend(windows), [&](auto const &window) {
+              return window.weights.getClustersSize() != n_clusters or
+                     window.start_base >= *previous_overlapping_region_end;
+            });
+        windows_reads_indices_iter +=
+            std::ranges::distance(windows_iter, next_useful_window);
+        windows_iter = next_useful_window;
 
-    auto const get_window_coverages = [&window_reads_indices_iter,
-                                       &last_window_reads_indices,
+        continue;
+      }
+    }
+
+    auto min_windows_overlap = static_cast<std::uint32_t>(
+        static_cast<double>(window_size) *
+        static_cast<double>(args.min_windows_overlap() / 100.));
+    auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
+        windows_iter, std::ranges::cend(windows), windows_reads_indices_iter,
+        std::ranges::cend(windows_reads_indices), min_windows_overlap);
+
+    auto const get_window_coverages = [windows_and_reads_indices_range,
+                                       n_clusters,
                                        &ringmap_data](std::size_t begin_index,
                                                       std::size_t end_index) {
       auto const window_size = end_index - begin_index;
       std::vector<unsigned> coverages(window_size, 0u);
       {
         std::set<std::uint32_t> reads_indices;
-        std::for_each(window_reads_indices_iter, last_window_reads_indices,
-                      [&](auto const &indices) {
-                        reads_indices.insert(std::begin(indices),
-                                             std::end(indices));
-                      });
+        std::ranges::for_each(
+            windows_and_reads_indices_range |
+                std::views::filter([&](auto const &pair) {
+                  return std::get<0>(pair).weights.getClustersSize() ==
+                         n_clusters;
+                }) |
+                std::views::transform(
+                    [](auto const &pair) { return std::get<1>(pair); }),
+            [&](auto const &indices) {
+              reads_indices.insert(std::begin(indices), std::end(indices));
+            });
 
         auto &&data = ringmap_data.data();
         assert(std::all_of(std::begin(reads_indices), std::end(reads_indices),
@@ -634,9 +663,25 @@ void merge_windows_and_add_window_results(
             transcript_result.windows.emplace({std::move(result_window)});
         };
 
+    auto const update_iters_and_region_helper =
+        [&, windows_and_reads_indices_range]() {
+          update_iters_and_region(windows_iter, windows_reads_indices_iter,
+                                  windows_and_reads_indices_range,
+                                  previous_overlapping_region_ends,
+                                  min_windows_overlap);
+        };
+
+    auto filtered_windows =
+        windows_and_reads_indices_range |
+        std::views::transform(
+            [](auto const &pair) { return std::get<0>(pair); }) |
+        std::views::filter([&](auto const &window) {
+          return window.weights.getClustersSize() == n_clusters;
+        });
+
     if (n_clusters == 0) {
       if (args.report_uninformative()) {
-        std::for_each(window_iter, last_window, [&](auto &&window) {
+        std::ranges::for_each(filtered_windows, [&](auto &&window) {
           auto const coverages = get_window_coverages(
               window.start_base, window.start_base + window.coverages.size());
           auto result_window =
@@ -646,15 +691,14 @@ void merge_windows_and_add_window_results(
         });
       }
 
-      window_iter = last_window;
-      window_reads_indices_iter = last_window_reads_indices;
+      update_iters_and_region_helper();
       continue;
     }
 
     assert(n_clusters <= std::numeric_limits<std::uint8_t>::max());
     windows_merger::WindowsMerger windows_merger(
         static_cast<std::uint8_t>(n_clusters));
-    std::for_each(window_iter, last_window, [&](auto &&window) {
+    std::ranges::for_each(filtered_windows, [&](auto &&window) {
       windows_merger.add_window(window.start_base, window.weights,
                                 window.coverages);
     });
@@ -665,8 +709,7 @@ void merge_windows_and_add_window_results(
     auto result_window = results::Window(merged_window, coverages);
     add_result_window(std::move(result_window));
 
-    window_iter = last_window;
-    window_reads_indices_iter = last_window_reads_indices;
+    update_iters_and_region_helper();
   }
 }
 
@@ -939,7 +982,8 @@ void handle_transcript(MutationMapTranscript const &transcript,
     }
 
     merge_windows_and_add_window_results(windows, windows_reads_indices,
-                                         ringmapData, transcriptResult, args);
+                                         ringmapData, transcriptResult,
+                                         window_size, args);
 
     if (transcriptResult.windows) {
       auto &result_windows = *transcriptResult.windows;

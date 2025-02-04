@@ -48,7 +48,8 @@ void test_merge_windows_and_add_window_results_not_merging() {
 
   results::Transcript transcript_results;
   merge_windows_and_add_window_results(windows, windows_reads_indices,
-                                       ringmap_data, transcript_results, args);
+                                       ringmap_data, transcript_results,
+                                       WINDOW_SIZE, args);
 
   assert(transcript_results.windows.has_value());
   assert(std::size(*transcript_results.windows) == WINDOWS);

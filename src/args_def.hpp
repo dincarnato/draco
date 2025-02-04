@@ -243,5 +243,13 @@ static constexpr auto opts = args::Opts(
             .description(
                 "when specified, if the best assignment score for a read is "
                 "equal for more than on cluster, the read is discarded")
-            .DEFAULT_VALUE(false)));
+            .DEFAULT_VALUE(false),
+        ARG(std::uint8_t, min_windows_overlap)
+            .parameter_name("minWindowsOverlap")
+            .description("the minimum overlap between two non-contiguous "
+                         "windows with the same number of conformations in "
+                         "order to merge them in the same region. The value is "
+                         "a percentage of the window size, specified with "
+                         "values between 0 and 100")
+            .DEFAULT_VALUE(100)));
 } // namespace args

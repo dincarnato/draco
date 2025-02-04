@@ -14,10 +14,13 @@
 #include "windows_merger.hpp"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <format>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <mutex>
 #include <oneapi/tbb/info.h>
 #include <oneapi/tbb/parallel_pipeline.h>
@@ -31,6 +34,10 @@
 #include <tbb/global_control.h>
 
 #include <omp.h>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 namespace fs = std::filesystem;
 namespace ranges = std::ranges;
@@ -377,8 +384,10 @@ void windows_span_expander(std::vector<Window> const &windows,
 
   auto const windows_n_clusters_begin = std::begin(windows_n_clusters);
   for (auto &&windows_span : windows_spans) {
-    std::fill(std::next(windows_n_clusters_begin, windows_span.begin),
-              std::next(windows_n_clusters_begin, windows_span.end),
+    std::fill(std::next(windows_n_clusters_begin,
+                        static_cast<std::ptrdiff_t>(windows_span.begin)),
+              std::next(windows_n_clusters_begin,
+                        static_cast<std::ptrdiff_t>(windows_span.end)),
               windows_span.n_clusters);
   }
 
@@ -462,14 +471,17 @@ void assign_reads_to_clusters(
     auto &&clusters_assignments = read_clusters_assignments.clusters();
     auto const clusters_size = clusters_assignments.size();
     assert(window.weighted_clusters.getClustersSize() == clusters_size);
+    assert(clusters_size <= std::numeric_limits<std::int8_t>::max());
 
-    for (std::size_t cluster_index = 0; cluster_index < clusters_size;
+    for (std::uint8_t cluster_index = 0;
+         cluster_index < static_cast<std::uint8_t>(clusters_size);
          ++cluster_index) {
       auto &&cluster_assignments = clusters_assignments[cluster_index];
 
       for (auto filtered_read_index : cluster_assignments) {
         auto original_read_index = original_indices_map[filtered_read_index];
-        window.assignments[original_read_index] = cluster_index;
+        window.assignments[original_read_index] =
+            static_cast<std::int8_t>(cluster_index);
 
         auto &&original_row = original_data.row(original_read_index);
 
@@ -584,7 +596,8 @@ void handle_transcript(MutationMapTranscript const &transcript,
                        more_ranges::to_vector();
 
     auto median_iter =
-        ranges::next(ranges::begin(reads_sizes), reads_sizes.size() / 2);
+        ranges::next(ranges::begin(reads_sizes),
+                     static_cast<std::ptrdiff_t>(reads_sizes.size() / 2));
     ranges::nth_element(reads_sizes, median_iter);
     return *median_iter;
   }();
@@ -655,8 +668,15 @@ void handle_transcript(MutationMapTranscript const &transcript,
                              static_cast<std::size_t>(std::distance(
                                  std::cbegin(windows), windows_iter)),
                              window_size, transcriptResult);
+
+      assert(result.significantIndices.size() <=
+             std::numeric_limits<
+                 std::remove_reference_t<decltype(window_n_clusters)>>::max());
+      window_n_clusters =
+          static_cast<std::remove_reference_t<decltype(window_n_clusters)>>(
+              result.significantIndices.size());
+
       if (args.create_eigengaps_plots()) {
-        window_n_clusters = result.significantIndices.size();
         auto const [eigengaps_filename, perturbed_eigengaps_filename] = [&] {
           std::array<std::string, 2> filenames;
           auto const start_base = window.start_base + 1;
@@ -681,8 +701,6 @@ void handle_transcript(MutationMapTranscript const &transcript,
         Ptba::dumpPerturbedEigenGaps(
             result.perturbedEigenGaps,
             (result_dir / perturbed_eigengaps_filename).c_str());
-      } else {
-        window_n_clusters = result.significantIndices.size();
       }
     }
   }
@@ -759,7 +777,9 @@ void handle_transcript(MutationMapTranscript const &transcript,
            ++windows_iter, ++windows_n_clusters_iter) {
 
         auto &&window = *windows_iter;
-        auto n_clusters = *windows_n_clusters_iter;
+        assert(*windows_n_clusters_iter <=
+               std::numeric_limits<std::uint8_t>::max());
+        auto n_clusters = static_cast<std::uint8_t>(*windows_n_clusters_iter);
 
         std::vector<unsigned> window_reads_indices;
         auto window_ringmap_data = ringmapData.get_new_range(
@@ -791,11 +811,16 @@ void handle_transcript(MutationMapTranscript const &transcript,
                 filtered_data.data().covariance(filtered_data.getBaseWeights());
             GraphCut graphCut(covariance);
 
+            assert(window.start_base <=
+                   std::numeric_limits<decltype(window.start_base)>::max() -
+                       window_size);
             auto graphCutResults = graphCut.run(
                 n_clusters, args.soft_clustering_weight_module(),
                 args.soft_clustering_initializations(),
                 args.soft_clustering_iterations(), window.start_base,
-                window.start_base + window_size, transcriptResult);
+                window.start_base +
+                    static_cast<decltype(window.start_base)>(window_size),
+                transcriptResult);
             auto clusters =
                 filtered_data.getUnfilteredWeights(std::move(graphCutResults));
 
@@ -815,7 +840,11 @@ void handle_transcript(MutationMapTranscript const &transcript,
       auto window_reads_indices_iter = std::begin(windows_reads_indices);
       // std::ofstream merge_stream("merge.txt");
       while (window_iter != std::end(windows)) {
-        unsigned const n_clusters = window_iter->weights.getClustersSize();
+        auto const &window = *window_iter;
+        assert(window.weights.getClustersSize() <=
+               std::numeric_limits<unsigned>::max());
+        auto const n_clusters =
+            static_cast<unsigned>(window.weights.getClustersSize());
         auto last_window = std::find_if(
             std::next(window_iter), std::end(windows),
             [n_clusters](auto &&window) {
@@ -833,7 +862,7 @@ void handle_transcript(MutationMapTranscript const &transcript,
           auto const window_size = end_index - begin_index;
           std::vector<unsigned> coverages(window_size, 0u);
           {
-            std::set<std::size_t> reads_indices;
+            std::set<std::uint32_t> reads_indices;
             std::for_each(window_reads_indices_iter, last_window_reads_indices,
                           [&](auto const &indices) {
                             reads_indices.insert(std::begin(indices),
@@ -891,7 +920,9 @@ void handle_transcript(MutationMapTranscript const &transcript,
           continue;
         }
 
-        windows_merger::WindowsMerger windows_merger(n_clusters);
+        assert(n_clusters <= std::numeric_limits<std::uint8_t>::max());
+        windows_merger::WindowsMerger windows_merger(
+            static_cast<std::uint8_t>(n_clusters));
         std::for_each(window_iter, last_window, [&](auto &&window) {
           windows_merger.add_window(window.start_base, window.weights,
                                     window.coverages);

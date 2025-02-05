@@ -1,5 +1,6 @@
 #include "windows_merger.hpp"
 
+#include <exception>
 #include <numeric>
 #include <type_traits>
 

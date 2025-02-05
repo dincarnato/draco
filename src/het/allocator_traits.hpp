@@ -160,7 +160,7 @@ template <typename HetAlloc> struct allocator_traits {
   template <typename T, typename... Args>
   static inline void destroy(HetAlloc &alloc, T *p) {
     if constexpr (nostd::is_detected_v<detail::has_destroy, HetAlloc>)
-      alloc.template destroy(p);
+      alloc.destroy(p);
     else
       p->~T();
   }

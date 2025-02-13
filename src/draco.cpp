@@ -58,8 +58,7 @@ constexpr static auto const invalid_n_clusters =
     std::numeric_limits<unsigned>::max();
 
 static std::vector<WindowsSpan>
-get_windows_spans(std::vector<Window> const &windows,
-                  std::vector<unsigned> const &windows_n_clusters,
+get_windows_spans(std::vector<unsigned> const &windows_n_clusters,
                   std::vector<std::optional<unsigned>> const
                       &windows_max_clusters_constraints) noexcept(false) {
 
@@ -99,8 +98,7 @@ get_windows_spans(std::vector<Window> const &windows,
     return max_n_clusters;
   };
 
-  auto const windows_size = windows.size();
-  assert(windows_size == windows_n_clusters.size());
+  auto const windows_size = windows_n_clusters.size();
   std::vector<WindowsSpan> windows_spans;
   {
     WindowsSpan span{std::size_t(0), std::size_t(0), invalid_n_clusters,
@@ -180,15 +178,14 @@ enum class LoopAction {
 };
 
 template <typename F1, typename F2, typename F3>
-void windows_span_expander(std::vector<Window> const &windows,
-                           std::vector<unsigned> &windows_n_clusters,
+void windows_span_expander(std::vector<unsigned> &windows_n_clusters,
                            std::vector<std::optional<unsigned>> const
                                &windows_max_clusters_constraints,
                            F1 &&loop_start_check, F2 &&same_clusters_check,
                            F3 &&different_clusters_check) noexcept(false) {
-  auto const windows_size = windows.size();
-  auto windows_spans = get_windows_spans(windows, windows_n_clusters,
-                                         windows_max_clusters_constraints);
+  auto const windows_size = windows_n_clusters.size();
+  auto windows_spans =
+      get_windows_spans(windows_n_clusters, windows_max_clusters_constraints);
 
   for (;;) {
     ranges::sort(windows_spans, {},
@@ -408,15 +405,14 @@ void windows_span_expander(std::vector<Window> const &windows,
   }));
 }
 
-void collapse_outlayer_clusters(std::vector<Window> const &windows,
-                                std::vector<unsigned> &windows_n_clusters,
+void collapse_outlayer_clusters(std::vector<unsigned> &windows_n_clusters,
                                 std::vector<std::optional<unsigned>> const
                                     &windows_max_clusters_constraints,
                                 Args const &args) noexcept(false) {
   auto const max_collapsing_windows = args.max_collapsing_windows();
   auto const min_surrounding_windows_size = args.min_surrounding_windows_size();
   windows_span_expander(
-      windows, windows_n_clusters, windows_max_clusters_constraints,
+      windows_n_clusters, windows_max_clusters_constraints,
       [=](auto &&window_span) {
         if (window_span.size() > max_collapsing_windows) {
           return LoopAction::Break;
@@ -434,12 +430,11 @@ void collapse_outlayer_clusters(std::vector<Window> const &windows,
 }
 
 void set_uninformative_clusters_to_surrounding(
-    std::vector<Window> const &windows,
     std::vector<unsigned> &windows_n_clusters,
     std::vector<std::optional<unsigned>> const
         &windows_max_clusters_constraints) noexcept(false) {
   windows_span_expander(
-      windows, windows_n_clusters, windows_max_clusters_constraints,
+      windows_n_clusters, windows_max_clusters_constraints,
       [](auto &&window_span) {
         if (window_span.n_clusters != 0) {
           return LoopAction::Continue;
@@ -892,7 +887,7 @@ void handle_transcript(MutationMapTranscript const &transcript,
 
     if (args.set_uninformative_clusters_to_surrounding()) {
       set_uninformative_clusters_to_surrounding(
-          windows, windows_n_clusters, windows_max_clusters_constraints);
+          windows_n_clusters, windows_max_clusters_constraints);
 
       [[maybe_unused]] constexpr auto const zero_clusters =
           [](auto n_clusters) { return n_clusters == 0; };
@@ -901,7 +896,7 @@ void handle_transcript(MutationMapTranscript const &transcript,
     }
 
     if (args.max_collapsing_windows() > 0)
-      collapse_outlayer_clusters(windows, windows_n_clusters,
+      collapse_outlayer_clusters(windows_n_clusters,
                                  windows_max_clusters_constraints, args);
 
     if (args.set_all_uninformative_to_one()) {

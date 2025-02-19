@@ -132,6 +132,25 @@ function(create_tests suffix)
   target_include_directories(mutation_map_writer_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
   target_link_libraries(mutation_map_writer_${ARGV0} ${ARGN})
 
+  add_executable(draco_${ARGV0} EXCLUDE_FROM_ALL
+      draco.cpp
+      ${PROJECT_SOURCE_DIR}/src/draco.cpp
+      ${PROJECT_SOURCE_DIR}/src/ringmap_data.cpp
+      ${PROJECT_SOURCE_DIR}/src/ringmap_matrix.cpp
+      ${PROJECT_SOURCE_DIR}/src/graph_cut.cpp
+      ${PROJECT_SOURCE_DIR}/src/windows_merger.cpp
+      ${PROJECT_SOURCE_DIR}/src/mutation_map.cpp
+      ${PROJECT_SOURCE_DIR}/src/mutation_map_transcript.cpp
+      ${PROJECT_SOURCE_DIR}/src/mutation_map_writer.cpp
+      ${PROJECT_SOURCE_DIR}/src/ptba.cpp
+      ${PROJECT_SOURCE_DIR}/src/kolmogorov_smirnov.cpp
+      ${PROJECT_SOURCE_DIR}/src/results/analysis.cpp
+      ${PROJECT_SOURCE_DIR}/src/logger.cpp
+  )
+  target_compile_options(draco_${ARGV0} PRIVATE ${ARGN})
+  target_include_directories(draco_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
+  target_link_libraries(draco_${ARGV0} ${ARGN})
+
   add_test(ringmap_base_${ARGV0} ringmap_base_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
   add_test(ringmap_shuffle_${ARGV0} ringmap_shuffle_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
   add_test(ringmap_concat_${ARGV0} ringmap_concat_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
@@ -145,6 +164,7 @@ function(create_tests suffix)
   add_test(ringmap_window_${ARGV0} ringmap_window_${ARGV0})
   add_test(weibull_fitter_${ARGV0} weibull_fitter_${ARGV0})
   add_test(mutation_map_writer_${ARGV0} mutation_map_writer_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/test.mm)
+  add_test(draco_${ARGV0} draco_${ARGV0})
 
   set_tests_properties(ringmap_base_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   set_tests_properties(ringmap_shuffle_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
@@ -159,6 +179,7 @@ function(create_tests suffix)
   set_tests_properties(ringmap_window_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   set_tests_properties(weibull_fitter_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   set_tests_properties(mutation_map_writer_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
+  set_tests_properties(draco_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   
   target_link_libraries(windows_merger_${ARGV0} ${TBB_LIBRARIES})
   target_link_libraries(ringmap_base_${ARGV0} ${ARMADILLO_LIBRARIES})
@@ -167,6 +188,19 @@ function(create_tests suffix)
   target_link_libraries(ringmap_concat_${ARGV0} ${ARMADILLO_LIBRARIES})
   target_link_libraries(ringmap_window_${ARGV0} ${ARMADILLO_LIBRARIES})
   target_link_libraries(weibull_fitter_${ARGV0} dlib::dlib)
+  target_link_libraries(draco_${ARGV0} ${ARMADILLO_LIBRARIES} ${TBB_LIBRARIES} ${Boost_LIBRARIES} fmt::fmt)
+  if (NOT dlib_USES_PKGCONFIG)
+    target_link_libraries(
+      draco_${ARGV0}
+      dlib::dlib
+    )
+  else()
+    target_link_libraries(
+      draco_${ARGV0}
+      ${dlib_LIBRARIES}
+    )
+  endif()
+
 
   add_dependencies(ringmap_base_${ARGV0} run_args_generate)
   add_dependencies(ringmap_shuffle_${ARGV0} run_args_generate)
@@ -181,6 +215,7 @@ function(create_tests suffix)
   add_dependencies(ringmap_window_${ARGV0} run_args_generate)
   add_dependencies(weibull_fitter_${ARGV0} run_args_generate)
   add_dependencies(mutation_map_writer_${ARGV0} run_args_generate)
+  add_dependencies(draco_${ARGV0} run_args_generate)
   
   add_dependencies(check
     ringmap_base_${ARGV0}
@@ -196,6 +231,7 @@ function(create_tests suffix)
     ringmap_window_${ARGV0}
     weibull_fitter_${ARGV0}
     mutation_map_writer_${ARGV0}
+    draco_${ARGV0}
   )
 endfunction()
 

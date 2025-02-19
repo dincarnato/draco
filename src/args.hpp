@@ -8,7 +8,7 @@
 #include "args_generated.hpp"
 
 struct Args : ArgsGenerated {
-  Args() = default;
+  Args() noexcept;
   Args(int argc, char *argv[]) noexcept;
 
 private:

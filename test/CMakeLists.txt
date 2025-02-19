@@ -19,6 +19,7 @@ function(create_tests suffix)
   add_executable(ringmap_base_${ARGV0} EXCLUDE_FROM_ALL
       ringmap_base.cpp
       ${PROJECT_SOURCE_DIR}/src/ringmap_data.cpp
+      ${PROJECT_SOURCE_DIR}/src/args.cpp
       ${PROJECT_SOURCE_DIR}/src/ringmap_matrix.cpp
       ${PROJECT_SOURCE_DIR}/src/mutation_map_transcript.cpp
       ${PROJECT_SOURCE_DIR}/src/mutation_map.cpp
@@ -33,6 +34,7 @@ function(create_tests suffix)
   add_executable(ringmap_shuffle_${ARGV0} EXCLUDE_FROM_ALL
       ringmap_shuffle.cpp
       ${PROJECT_SOURCE_DIR}/src/ringmap_data.cpp
+      ${PROJECT_SOURCE_DIR}/src/args.cpp
       ${PROJECT_SOURCE_DIR}/src/ringmap_matrix.cpp
       ${PROJECT_SOURCE_DIR}/src/mutation_map_transcript.cpp
       ${PROJECT_SOURCE_DIR}/src/mutation_map.cpp
@@ -47,6 +49,7 @@ function(create_tests suffix)
   add_executable(ringmap_concat_${ARGV0} EXCLUDE_FROM_ALL
       ringmap_concat.cpp
       ${PROJECT_SOURCE_DIR}/src/ringmap_data.cpp
+      ${PROJECT_SOURCE_DIR}/src/args.cpp
       ${PROJECT_SOURCE_DIR}/src/ringmap_matrix.cpp
       ${PROJECT_SOURCE_DIR}/src/mutation_map_transcript.cpp
       ${PROJECT_SOURCE_DIR}/src/mutation_map.cpp
@@ -135,6 +138,7 @@ function(create_tests suffix)
   add_executable(draco_${ARGV0} EXCLUDE_FROM_ALL
       draco.cpp
       ${PROJECT_SOURCE_DIR}/src/draco.cpp
+      ${PROJECT_SOURCE_DIR}/src/args.cpp
       ${PROJECT_SOURCE_DIR}/src/ringmap_data.cpp
       ${PROJECT_SOURCE_DIR}/src/ringmap_matrix.cpp
       ${PROJECT_SOURCE_DIR}/src/graph_cut.cpp

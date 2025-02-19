@@ -2,6 +2,10 @@
 
 #include <iostream>
 
+Args::Args() noexcept {
+  this->set_parameters_from_args(cxxopts::ParseResult{});
+}
+
 Args::Args(int argc, char *argv[]) noexcept { parse_options(argc, argv); }
 
 template <typename Arg>

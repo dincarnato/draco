@@ -5,10 +5,9 @@
 #include <vector>
 
 #include "jsonify_base.hpp"
+#include "window.hpp"
 
 namespace results {
-
-struct Window;
 
 struct Transcript {
   std::string name;

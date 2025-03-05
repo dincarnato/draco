@@ -36,8 +36,6 @@ private:
   buildAssignmentIndices(unsigned clusters, ArmaVec &&eigenVectorsIndices,
                          const std::string *scoresFilename) const;
 
-  std::tuple<std::unique_ptr<RingmapData>, const RingmapData *>
-  getFilteredData() const;
   template <typename Read>
   static std::tuple<double, unsigned>
   findNearestCentroid(Read &&read, const arma::mat &centroidsMatrix);

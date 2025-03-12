@@ -486,43 +486,47 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
 
 void print_log_data(LogData const &log_data, Window const &window,
                     size_t window_index, unsigned window_size,
-                    results::Transcript const &transcript) noexcept {
+                    results::Transcript const &transcript,
+                    std::size_t replicate_index) noexcept {
   std::visit(
       [&](auto const &log_data) {
         using variant = std::decay_t<decltype(log_data)>;
         if constexpr (std::is_same_v<variant, log_data::NotEnoughReads>) {
           logger::debug(
-              "Transcript {}, window {} (bases {}-{}) is skipped by "
-              "initial filtering: reads ({}) < min_filtered_reads ({}).",
-              transcript.name, window_index + 1, window.start_base + 1,
-              window.start_base + window_size, log_data.reads,
-              log_data.min_filtered_reads);
+              "Transcript {}, replicate {}, window {} (bases {}-{}) is skipped "
+              "by initial filtering: reads ({}) < min_filtered_reads ({}).",
+              transcript.name, replicate_index + 1, window_index + 1,
+              window.start_base + 1, window.start_base + window_size,
+              log_data.reads, log_data.min_filtered_reads);
         } else if constexpr (std::is_same_v<variant,
                                             log_data::NotEnoughBases>) {
-          logger::debug("Transcript {}, window {} (bases {}-{}) is skipped by "
-                        "initial filtering: bases ({}) < min_bases ({}).",
-                        transcript.name, window_index + 1,
-                        window.start_base + 1, window.start_base + window_size,
-                        log_data.bases, log_data.min_bases);
+          logger::debug(
+              "Transcript {}, replicate {}, window {} (bases {}-{}) "
+              "is skipped by initial filtering: bases ({}) < min_bases ({}).",
+              transcript.name, replicate_index + 1, window_index + 1,
+              window.start_base + 1, window.start_base + window_size,
+              log_data.bases, log_data.min_bases);
         } else if constexpr (std::is_same_v<variant,
                                             log_data::AllZeroEigenGaps>) {
-          logger::debug("Transcript {}, window {} (bases {}-{}) is skipped "
-                        "because all eigengaps are zero.",
-                        transcript.name, window_index + 1,
-                        window.start_base + 1, window.start_base + window_size);
+          logger::debug(
+              "Transcript {}, replicate {}, window {} (bases {}-{}) is skipped "
+              "because all eigengaps are zero.",
+              transcript.name, replicate_index + 1, window_index + 1,
+              window.start_base + 1, window.start_base + window_size);
         } else if constexpr (std::is_same_v<variant,
                                             log_data::NoUsefulEigenGaps>) {
-          logger::debug("Transcript {}, window {} (bases {}-{}) is skipped "
-                        "because the number of eigengaps ({}) or the max "
-                        "number of clusters ({}) is less than 1",
-                        transcript.name, window_index + 1,
-                        window.start_base + 1, window.start_base + window_size,
-                        log_data.eigengaps, log_data.max_clusters);
+          logger::debug(
+              "Transcript {}, replicate {}, window {} (bases {}-{}) is skipped "
+              "because the number of eigengaps ({}) or the max number of "
+              "clusters ({}) is less than 1",
+              transcript.name, replicate_index + 1, window_index + 1,
+              window.start_base + 1, window.start_base + window_size,
+              log_data.eigengaps, log_data.max_clusters);
         } else if constexpr (std::is_same_v<variant, log_data::Permuting>) {
           std::string message = std::format(
-              "Transcript {}, window {} (bases {}-{}):", transcript.name,
-              window_index + 1, window.start_base + 1,
-              window.start_base + window_size);
+              "Transcript {}, replicate {}, window {} (bases {}-{}):",
+              transcript.name, replicate_index + 1, window_index + 1,
+              window.start_base + 1, window.start_base + window_size);
 
           if (log_data.data.empty()) {
             logger::debug("{} finished PTBA without any information", message);

@@ -26,7 +26,8 @@ static const std::array<std::vector<int>, 3> expectedResults{
 int main() {
   namespace rng = std::ranges;
 
-  GraphCut graphCut(arma::symmatu(adjacency));
+  std::vector<arma::mat> adjancencies{arma::symmatu(adjacency)};
+  GraphCut graphCut(adjancencies);
   auto results = graphCut.run(3, GraphCut::hard);
   if (results.getClustersSize() == 0 or results.getElementsSize() == 0)
     return -1;

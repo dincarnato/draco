@@ -50,15 +50,15 @@ void test_merge_windows_and_add_window_results_not_merging() {
   RingmapData ringmap_data(sequence, std::move(ringmap_matrix), 0,
                            SEQUENCE_SIZE, args);
 
-  results::Transcript transcript_results;
+  results::Transcript transcript_results(1);
   merge_windows_and_add_window_results(windows, windows_reads_indices,
                                        ringmap_data, transcript_results,
-                                       WINDOW_SIZE, args);
+                                       WINDOW_SIZE, 0, args);
 
-  assert(transcript_results.windows.has_value());
-  assert(std::size(*transcript_results.windows) == WINDOWS);
+  assert(transcript_results.windows[0].has_value());
+  assert(std::size(*transcript_results.windows[0]) == WINDOWS);
   assert(std::ranges::equal(
-      *transcript_results.windows |
+      *transcript_results.windows[0] |
           std::views::transform([](auto const &window) {
             return window.weighted_clusters.getClustersSize();
           }),

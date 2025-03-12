@@ -9,8 +9,9 @@ static constexpr auto opts = args::Opts(
     "\n DRACO (v1.2)\n",
     args::Group(
         "",
-        ARG(std::string, mm_filename)
+        ARG(std::string, mm_filenames)
             .parameter_name("mm")
+            .multiplicity<multiplicity::Many>()
             .description("Input mutation map (MM) file"),
         ARG(std::string, output_filename)
             .parameter_name("output")

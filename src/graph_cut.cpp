@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <oneapi/tbb/blocked_range.h>
@@ -13,23 +14,25 @@
 #include <thread>
 #include <tuple>
 
-GraphCut::GraphCut(const arma::mat &adjacency, Graph type)
-    : graphType(type), adjacency(adjacency) {
-  for (std::size_t row = 0; row < adjacency.n_rows; ++row) {
-    if (arma::all(arma::abs(adjacency.row(row)) < 1e-6)) {
-      std::cerr << std::setprecision(2);
-      adjacency.print(std::cerr);
-      throw std::runtime_error(
-          "adjacency cannot have rows with all zero values");
+GraphCut::GraphCut(std::vector<arma::mat> const &adjacencies, Graph type)
+    : graphType(type), adjacencies(adjacencies) {
+  for (const auto &adjacency : adjacencies) {
+    for (std::size_t row = 0; row < adjacency.n_rows; ++row) {
+      if (arma::all(arma::abs(adjacency.row(row)) < 1e-6)) {
+        std::cerr << std::setprecision(2);
+        adjacency.print(std::cerr);
+        throw std::runtime_error(
+            "adjacency cannot have rows with all zero values");
+      }
     }
-  }
 
-  for (std::size_t col = 0; col < adjacency.n_cols; ++col) {
-    if (arma::all(arma::abs(adjacency.col(col)) < 1e-6)) {
-      std::cerr << std::setprecision(2);
-      adjacency.print(std::cerr);
-      throw std::runtime_error(
-          "adjacency cannot have cols with all zero values");
+    for (std::size_t col = 0; col < adjacency.n_cols; ++col) {
+      if (arma::all(arma::abs(adjacency.col(col)) < 1e-6)) {
+        std::cerr << std::setprecision(2);
+        adjacency.print(std::cerr);
+        throw std::runtime_error(
+            "adjacency cannot have cols with all zero values");
+      }
     }
   }
 }
@@ -76,8 +79,8 @@ auto GraphCut::run(std::uint8_t nClusters, float weightModule,
                    std::uint16_t nTries, std::uint16_t iterations,
                    std::uint16_t window_begin_index,
                    std::uint16_t window_end_index,
-                   results::Transcript const &transcript,
-                   FuzzyCut) const -> WeightedClusters {
+                   results::Transcript const &transcript, FuzzyCut) const
+    -> WeightedClusters {
   if (nClusters < 2)
     throw std::logic_error("nClusters must be at least 2");
 
@@ -193,7 +196,13 @@ auto GraphCut::run(std::uint8_t nClusters, HardCut) const -> HardClusters {
 double GraphCut::calculateClustersScore(
     const std::vector<std::vector<bool>> &rawClusters) const {
   assert(not rawClusters.empty());
-  const std::size_t nElements = adjacency.n_cols;
+  auto const &firstAdjacency = adjacencies[0];
+  assert(std::ranges::all_of(adjacencies | std::views::drop(1),
+                             [&](auto const &adjacency) {
+                               return adjacency.n_cols == firstAdjacency.n_cols;
+                             }));
+
+  const std::size_t nElements = firstAdjacency.n_cols;
 
 #ifndef NDEBUG
   for (const auto &cluster : rawClusters)
@@ -225,9 +234,17 @@ double GraphCut::calculateClustersScore(
     }
   }
 
-  return calculateCutScore(getGraphWithNoLoops(adjacency), hardClusters);
+  return std::ranges::fold_left(
+      adjacencies | std::views::transform([&](auto const &adjacency) {
+        return calculateCutScore(getGraphWithNoLoops(adjacency), hardClusters);
+      }),
+      0., std::plus{});
 }
 
 double GraphCut::calculateClustersScore(const HardClusters &clusters) const {
-  return calculateCutScore(getGraphWithNoLoops(adjacency), clusters);
+  return std::ranges::fold_left(
+      adjacencies | std::views::transform([&](auto const &adjacency) {
+        return calculateCutScore(getGraphWithNoLoops(adjacency), clusters);
+      }),
+      0., std::plus{});
 }

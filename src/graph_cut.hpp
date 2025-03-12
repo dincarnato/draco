@@ -30,7 +30,8 @@ public:
   constexpr static HardCut hard{};
 
   GraphCut() = default;
-  GraphCut(const arma::mat &adjacency, Graph type = Graph::symmetricLaplacian);
+  GraphCut(std::vector<arma::mat> const &adjacencies,
+           Graph type = Graph::symmetricLaplacian);
 
   WeightedClusters run(std::uint8_t nClusters, float weightModule,
                        std::uint16_t nTries, std::uint16_t iterations,
@@ -49,6 +50,9 @@ private:
   inline arma::mat createGraph(const arma::mat &adjacency) const;
   inline arma::mat createSymmetricLaplacian(const arma::mat &adjacency) const;
   template <typename Fun>
+    requires requires(Fun fun) {
+      { fun(std::declval<arma::mat const &>()) } -> std::same_as<arma::mat>;
+    }
   std::tuple<WeightedClusters, double>
   partitionGraph(std::uint8_t nClusters, float weightModule,
                  std::uint16_t nTries, Fun graphFun) const;
@@ -64,7 +68,7 @@ private:
   arma::mat getGraphWithNoLoops(const arma::mat &matrix) const;
 
   Graph graphType = Graph::symmetricLaplacian;
-  arma::mat adjacency;
+  std::vector<arma::mat> adjacencies;
   std::variant<std::monostate, HardClusters, WeightedClusters> initialClusters;
 };
 

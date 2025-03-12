@@ -192,6 +192,7 @@ private:
 
 void print_log_data(LogData const &log_data, Window const &window,
                     size_t window_index, unsigned window_size,
-                    results::Transcript const &transcript) noexcept;
+                    results::Transcript const &transcript,
+                    std::size_t replicate_index) noexcept;
 
 #include "ptba_impl.hpp"

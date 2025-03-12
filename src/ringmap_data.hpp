@@ -8,6 +8,7 @@
 
 #include <array>
 #include <map>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -98,6 +99,12 @@ public:
       parallel::blocking_queue<std::pair<MutationMapTranscript, RingmapData>>
           &queue,
       Args const &args);
+
+  template <typename R>
+    requires std::ranges::range<R> and
+             std::same_as<std::ranges::range_reference_t<R>, RingmapData &> and
+             std::random_access_iterator<std::ranges::iterator_t<R>>
+  static void filter_bases_on_replicates(R &ringmap_data_range);
 
 private:
   RingmapData(const std::string &sequence, data_type &&dataMatrix,

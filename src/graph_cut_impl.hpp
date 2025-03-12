@@ -3,13 +3,18 @@
 #include "clusters_traits.hpp"
 #include "graph_cut.hpp"
 
+#include <algorithm>
 #include <armadillo>
 #include <array>
 #include <cassert>
+#include <concepts>
+#include <functional>
 #include <limits>
+#include <numeric>
 #include <random>
 #include <ranges>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 template <typename Fun, typename Ret = decltype(std::declval<Fun>()(
@@ -20,31 +25,43 @@ static constexpr void checkGraphFunCallable() {
 }
 
 template <typename Fun>
+  requires requires(Fun fun) {
+    { fun(std::declval<arma::mat const &>()) } -> std::same_as<arma::mat>;
+  }
 std::tuple<WeightedClusters, double>
 GraphCut::partitionGraph(std::uint8_t nClusters, float weightModule,
                          std::uint16_t nTries, Fun graphFun) const {
   constexpr unsigned minClusterTotalWeight = 3;
 
+  auto const &firstAdjacency = adjacencies[0];
+  assert(std::ranges::all_of(adjacencies | std::views::drop(1),
+                             [&](auto const &adjacency) {
+                               return adjacency.n_rows == firstAdjacency.n_rows;
+                             }));
+
   checkGraphFunCallable<std::decay_t<Fun>>();
   nClusters =
       std::min(nClusters, static_cast<std::uint8_t>(std::min(
-                              adjacency.n_rows / minClusterTotalWeight,
+                              firstAdjacency.n_rows / minClusterTotalWeight,
                               static_cast<unsigned long long>(
                                   std::numeric_limits<std::uint8_t>::max()))));
   if (nClusters < 2) {
     if (auto init = std::get_if<WeightedClusters>(&initialClusters))
       return std::tuple{*init, NAN};
     else
-      return std::tuple{WeightedClusters(adjacency.n_rows, 1), NAN};
+      return std::tuple{WeightedClusters(firstAdjacency.n_rows, 1), NAN};
   }
 
-  auto graph = graphFun(adjacency);
+  auto graphs = adjacencies | std::views::transform([=](auto const &adjacency) {
+                  return graphFun(adjacency);
+                }) |
+                std::views::as_rvalue | std::ranges::to<std::vector>();
 
   WeightedClusters weights = [&, this] {
     if (auto init = std::get_if<WeightedClusters>(&initialClusters))
       return *init;
     else {
-      const std::size_t nBases = adjacency.n_rows;
+      const std::size_t nBases = firstAdjacency.n_rows;
       WeightedClusters weights(nBases, nClusters, false);
       std::mt19937 randomGen(std::random_device{}());
       // std::uniform_int_distribution<std::size_t> clusterAssigner(0,
@@ -185,7 +202,11 @@ GraphCut::partitionGraph(std::uint8_t nClusters, float weightModule,
             baseIndicesIter = currentBaseIndicesEnd;
           }
 
-          double score = calculateCutScore(graph, temporaryWeights);
+          double score = std::ranges::fold_left(
+              graphs | std::views::transform([&](auto const &graph) {
+                return calculateCutScore(graph, temporaryWeights);
+              }),
+              0., std::plus{});
           assert(not std::isnan(score));
 
           if (score < bestScore and not std::isinf(score)) {
@@ -207,12 +228,26 @@ GraphCut::partitionGraph(std::uint8_t nClusters, float weightModule,
   double bestScore = NAN;
 
   for (const auto clustersEnd = std::ranges::end(weightsClusters);;) {
-    bestScore = calculateCutScore(graph, weights);
+    bestScore = std::ranges::fold_left(
+        graphs | std::views::transform([&](auto const &graph) {
+          return calculateCutScore(graph, weights);
+        }),
+        0., std::plus{});
 
     if (std::isnan(bestScore)) {
-      std::cerr << "Invalid bestScore\nGraph content:\n";
-      graph.print(std::cerr);
-      std::cerr << '\n';
+      std::cerr << "Invalid bestScore\nGraphs content:\n";
+      std::ranges::for_each(
+          graphs | std::views::transform([&](auto const &graph) {
+            auto score = calculateCutScore(graph, weights);
+            return std::pair(graph, score);
+          }) | std::views::filter([](auto const &pair) {
+            return std::isnan(std::get<1>(pair));
+          }),
+          [](auto const &pair) {
+            auto const &graph = std::get<0>(pair);
+            graph.print(std::cerr);
+            std::cerr << "\n\n";
+          });
       std::abort();
     }
 
@@ -258,7 +293,11 @@ GraphCut::partitionGraph(std::uint8_t nClusters, float weightModule,
           fromClusterWeight -= currentWeightChange;
           toClusterWeight += currentWeightChange;
 
-          double currentScore = calculateCutScore(graph, weights);
+          double currentScore = std::ranges::fold_left(
+              graphs | std::views::transform([&](auto const &graph) {
+                return calculateCutScore(graph, weights);
+              }),
+              0., std::plus{});
           assert(not std::isnan(currentScore));
 
           if (currentScore < bestScore) {
@@ -303,13 +342,22 @@ template <typename Fun>
 HardClusters GraphCut::partitionGraphHard(std::uint8_t nClusters,
                                           Fun graphFun) const {
   checkGraphFunCallable<std::decay_t<Fun>>();
-  auto graph = graphFun(adjacency);
+  auto const &firstAdjacency = adjacencies[0];
+  assert(std::ranges::all_of(adjacencies | std::views::drop(1),
+                             [&](auto const &adjacency) {
+                               return adjacency.n_rows == firstAdjacency.n_rows;
+                             }));
+
+  auto graphs = adjacencies | std::views::transform([&](auto const &adjacency) {
+                  return graphFun(adjacency);
+                }) |
+                std::ranges::to<std::vector>();
 
   HardClusters hardClusters = [&, this] {
     if (auto init = std::get_if<HardClusters>(&initialClusters))
       return *init;
     else {
-      HardClusters hardClusters(adjacency.n_rows, nClusters);
+      HardClusters hardClusters(firstAdjacency.n_rows, nClusters);
       std::mt19937 randomGen(std::random_device{}());
       std::uniform_int_distribution<std::uint8_t> clusterAssigner(0, nClusters -
                                                                          1);
@@ -317,14 +365,17 @@ HardClusters GraphCut::partitionGraphHard(std::uint8_t nClusters,
       do {
         hardClusters.clear();
 
-        for (unsigned baseIndex = 0; baseIndex < adjacency.n_rows; ++baseIndex)
+        for (unsigned baseIndex = 0; baseIndex < firstAdjacency.n_rows;
+             ++baseIndex)
           hardClusters[baseIndex].set(clusterAssigner(randomGen));
       } while (std::ranges::any_of(hardClustersWrapper,
                                    [](const auto &cluster) {
                                      return std::ranges::count(cluster, true) <
                                             3;
                                    }) or
-               std::isinf(calculateCutScore(graph, hardClusters)));
+               std::ranges::any_of(graphs, [&](auto const &graph) {
+                 return std::isinf(calculateCutScore(graph, hardClusters));
+               }));
 
       return hardClusters;
     }
@@ -333,11 +384,25 @@ HardClusters GraphCut::partitionGraphHard(std::uint8_t nClusters,
   auto clusters = hardClusters.clusters();
 
   for (const auto clustersEnd = std::ranges::end(clusters);;) {
-    double bestScore = calculateCutScore(graph, hardClusters);
+    double bestScore = std::ranges::fold_left(
+        graphs | std::views::transform([&](auto const &graph) {
+          return calculateCutScore(graph, hardClusters);
+        }),
+        0., std::plus{});
     if (std::isnan(bestScore)) {
-      std::cerr << "Invalid bestScore\nGraph content:\n";
-      graph.print(std::cerr);
-      std::cerr << '\n';
+      std::cerr << "Invalid bestScore\nGraphs content:\n";
+      std::ranges::for_each(
+          graphs | std::views::transform([&](auto const &graph) {
+            auto score = calculateCutScore(graph, hardClusters);
+            return std::pair(graph, score);
+          }) | std::views::filter([](auto const &pair) {
+            return std::isnan(std::get<1>(pair));
+          }),
+          [](auto const &pair) {
+            auto const &graph = std::get<0>(pair);
+            graph.print(std::cerr);
+            std::cerr << "\n\n";
+          });
       std::abort();
     }
 
@@ -377,7 +442,11 @@ HardClusters GraphCut::partitionGraphHard(std::uint8_t nClusters,
 
           fromClusterCurrent.swap(toClusterCurrent);
 
-          double currentScore = calculateCutScore(graph, hardClusters);
+          double currentScore = std::ranges::fold_left(
+              graphs | std::views::transform([&](auto const &graph) {
+                return calculateCutScore(graph, hardClusters);
+              }),
+              0., std::plus{});
           assert(not std::isnan(currentScore));
 
           if (not std::isinf(currentScore) and currentScore < bestScore) {

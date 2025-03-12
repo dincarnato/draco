@@ -20,7 +20,7 @@ struct Analysis final {
 
   void addTranscript(Transcript &&transcript);
 
-  std::string filename;
+  std::vector<std::string> filenames;
 
 private:
   void streamerLoop() noexcept;

@@ -2,8 +2,10 @@
 
 #include "weighted_clusters.hpp"
 
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <mutex>
 #include <ranges>
 #include <vector>
@@ -24,25 +26,26 @@ struct Transcript;
 
 struct Args;
 
-void handle_transcript(MutationMapTranscript const &transcript,
-                       RingmapData &ringmapData,
-                       results::Analysis &analysisResult, Args const &args,
-                       std::optional<std::ofstream> &raw_n_clusters_stream,
-                       std::mutex &raw_n_clusters_stream_mutex);
+void handle_transcripts(
+    std::vector<MutationMapTranscript const *> const &transcripts,
+    std::vector<RingmapData *> const &ringmapsData,
+    results::Analysis &analysisResult, Args const &args,
+    std::optional<std::ofstream> &raw_n_clusters_stream,
+    std::mutex &raw_n_clusters_stream_mutex);
 
 void merge_windows_and_add_window_results(
     std::vector<Window> const &windows,
-    std::vector<std::vector<unsigned>> const &windows_reads_indices,
-    RingmapData &ringmap_data, results::Transcript &transcript_result,
-    unsigned window_size, Args const &args);
+    std::span<std::vector<unsigned>> const &windows_reads_indices,
+    RingmapData const &ringmap_data, results::Transcript &transcript_result,
+    unsigned window_size, std::size_t replicate_index, Args const &args);
 
+template <typename WRII, std::sentinel_for<WRII> S>
+  requires std::input_or_output_iterator<WRII> and
+           std::same_as<typename WRII::value_type, std::vector<std::uint32_t>>
 inline auto make_windows_and_reads_indices_range(
     std::vector<Window>::const_iterator windows_iter,
     std::vector<Window>::const_iterator windows_iter_end,
-    std::vector<std::vector<std::uint32_t>>::const_iterator
-        windows_reads_indices_iter,
-    std::vector<std::vector<std::uint32_t>>::const_iterator
-        windows_reads_indices_iter_end,
+    WRII windows_reads_indices_iter, S windows_reads_indices_iter_end,
     std::uint32_t min_windows_overlap) {
   auto const n_clusters = windows_iter->weights.getClustersSize();
   auto const window_size = windows_iter->weights.getElementsSize();
@@ -79,17 +82,18 @@ inline auto make_windows_and_reads_indices_range(
   return std::ranges::subrange(std::ranges::begin(zip), zip_maybe_end);
 }
 
-template <typename R>
-  requires std::ranges::range<R> &&
+template <typename WRII, typename R>
+  requires std::input_or_output_iterator<WRII> and
+           std::same_as<typename WRII::value_type,
+                        std::vector<unsigned int>> and
+           std::ranges::range<R> and
            (std::same_as<std::ranges::range_value_t<R>,
                          std::tuple<Window, std::vector<unsigned int>>> ||
             std::same_as<std::ranges::range_value_t<R>,
                          std::pair<Window, std::vector<unsigned int>>>)
 void update_iters_and_region(
     typename std::vector<Window>::const_iterator &window_iter,
-    typename std::vector<std::vector<unsigned int>>::const_iterator
-        &window_reads_indices_iter,
-    R windows_and_reads_indices_range,
+    WRII &window_reads_indices_iter, R windows_and_reads_indices_range,
     std::vector<std::optional<std::uint16_t>> &previous_overlapping_region_ends,
     unsigned min_windows_overlap) {
   auto const n_clusters = window_iter->weights.getClustersSize();
@@ -142,3 +146,12 @@ void update_iters_and_region(
   window_iter += region_size;
   window_reads_indices_iter += region_size;
 };
+
+struct PtbaOnReplicate {
+  std::vector<unsigned> pre_collapsing_clusters;
+  std::vector<Window> windows;
+  unsigned int window_size;
+};
+
+std::vector<unsigned> get_best_pre_collapsing_clusters(
+    std::span<std::optional<PtbaOnReplicate>> ptba_on_replicate_results);

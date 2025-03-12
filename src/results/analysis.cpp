@@ -47,7 +47,7 @@ void Analysis::initStream() {
     return;
 
   jsonStream << '{';
-  jsonify(jsonStream, "filename", filename) << ',';
+  jsonify(jsonStream, "filenames", filenames) << ',';
   jsonify(jsonStream, "transcripts") << ":[";
 }
 

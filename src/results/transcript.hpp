@@ -1,6 +1,8 @@
 #pragma once
 
+#include <algorithm>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -10,12 +12,16 @@
 namespace results {
 
 struct Transcript {
+  explicit constexpr Transcript(std::size_t replicates)
+      : reads(replicates), coverages(replicates), windows(replicates),
+        errors(replicates) {}
+
   std::string name;
   std::string sequence;
-  unsigned reads;
-  std::optional<std::vector<unsigned>> coverages;
-  std::optional<std::vector<Window>> windows;
-  std::optional<std::string> error;
+  std::vector<unsigned> reads;
+  std::vector<std::optional<std::vector<unsigned>>> coverages;
+  std::vector<std::optional<std::vector<Window>>> windows;
+  std::vector<std::optional<std::string>> errors;
 };
 
 } // namespace results
@@ -30,19 +36,25 @@ jsonify(std::basic_ostream<CharT, Traits> &os, T &&transcript) {
   jsonify(os, "id", transcript.name, "sequence", transcript.sequence, "nReads",
           transcript.reads);
 
-  if (transcript.coverages) {
+  if (std::ranges::any_of(transcript.coverages, [](auto const &maybeCoverages) {
+        return maybeCoverages.has_value();
+      })) {
     os << ',';
-    jsonify(os, "preCoverage", transcript.coverages);
+    jsonify(os, "preCoverages", transcript.coverages);
   }
 
-  if (transcript.windows) {
+  if (std::ranges::any_of(transcript.windows, [](auto const &maybeWindows) {
+        return maybeWindows.has_value();
+      })) {
     os << ',';
     jsonify(os, "windows", transcript.windows);
   }
 
-  if (transcript.error) {
+  if (std::ranges::any_of(transcript.errors, [](auto const &maybeError) {
+        return maybeError.has_value();
+      })) {
     os << ',';
-    jsonify(os, "error", transcript.error);
+    jsonify(os, "errors", transcript.errors);
   }
 
   return os << '}';

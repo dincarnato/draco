@@ -492,6 +492,76 @@ void test_update_iters_and_region_overlapping_clusters() {
   assert(*previous_region_ends[2] == 39 + window_size - min_bases_overlap);
 }
 
+void test_get_best_pre_collapsing_clusters_one_window() {
+  constexpr std::size_t window_size = 10;
+
+  auto const make_window = [&](std::uint8_t n_clusters,
+                               unsigned short start_base) {
+    return Window{
+        .start_base = start_base,
+        .weights = WeightedClusters(window_size, n_clusters),
+        .coverages = std::vector<unsigned>(),
+    };
+  };
+
+  std::vector ptba_on_replicate_results{
+      std::optional(
+          PtbaOnReplicate{.pre_collapsing_clusters = std::vector{3u, 5u},
+                          .windows =
+                              std::vector{
+                                  make_window(3, 0),
+                                  make_window(5, 5),
+                              },
+                          .window_size = window_size}),
+      std::optional(
+          PtbaOnReplicate{.pre_collapsing_clusters = std::vector{1u, 1u},
+                          .windows =
+                              std::vector{
+                                  make_window(1, 0),
+                                  make_window(1, 5),
+                              },
+                          .window_size = window_size}),
+      std::optional(
+          PtbaOnReplicate{.pre_collapsing_clusters = std::vector{4u, 2u},
+                          .windows =
+                              std::vector{
+                                  make_window(4, 0),
+                                  make_window(2, 5),
+                              },
+                          .window_size = window_size}),
+      std::optional(
+          PtbaOnReplicate{.pre_collapsing_clusters = std::vector{2u, 1u},
+                          .windows =
+                              std::vector{
+                                  make_window(2, 0),
+                                  make_window(1, 5),
+                              },
+                          .window_size = window_size}),
+  };
+
+  {
+    auto results = get_best_pre_collapsing_clusters(ptba_on_replicate_results);
+    assert(std::size(results) == 2);
+    assert(results[0] == 2);
+    assert(results[1] == 1);
+  }
+
+  ptba_on_replicate_results.emplace_back(
+      PtbaOnReplicate{.pre_collapsing_clusters = std::vector{6u, 6u},
+                      .windows =
+                          std::vector{
+                              make_window(6, 0),
+                              make_window(6, 5),
+                          },
+                      .window_size = window_size});
+  {
+    auto results = get_best_pre_collapsing_clusters(ptba_on_replicate_results);
+    assert(std::size(results) == 2);
+    assert(results[0] == 3);
+    assert(results[1] == 2);
+  }
+}
+
 int main() {
   test_merge_windows_and_add_window_results_not_merging();
   test_make_windows_and_reads_indices_range_same_clusters();

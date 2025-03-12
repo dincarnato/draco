@@ -41,7 +41,7 @@ target_include_directories(
         ${Boost_INCLUDE_DIRS}
 )
 
-
+install(TARGETS draco DESTINATION bin)
 
 if (NOT dlib_USES_PKGCONFIG)
     target_link_libraries(

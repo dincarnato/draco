@@ -3,6 +3,9 @@
 #include <fstream>
 #include <sstream>
 #include <string_view>
+#include <tuple>
+#include <type_traits>
+#include <utility>
 
 template <typename Arg> static void dump_arg(std::ostream &os, Arg const &arg) {
   auto const type_name = arg.get_type_name().c_str();
@@ -79,6 +82,29 @@ static void create_setter_function_for_groups(std::ostream &os,
    ...);
 }
 
+template <typename Group, std::size_t... Idx>
+constexpr bool
+any_arg_in_group_has_multiplicity_many(std::index_sequence<Idx...>) noexcept {
+  return (std::is_same_v<typename std::tuple_element_t<
+                             Idx, typename Group::args_type>::multiplicity_type,
+                         args::multiplicity::Many> ||
+          ...);
+}
+
+template <std::size_t Idx>
+using opts_group_t =
+    std::tuple_element_t<Idx, typename decltype(args::opts)::groups_type>;
+
+template <std::size_t... Idx>
+static constexpr bool
+any_group_has_multiplicity_many(std::index_sequence<Idx...>) noexcept {
+  return (
+      any_arg_in_group_has_multiplicity_many<opts_group_t<Idx>>(
+          std::make_index_sequence<
+              std::tuple_size_v<typename opts_group_t<Idx>::args_type>>()) ||
+      ...);
+}
+
 static void create_setter_function(std::ostream &os) {
   os << "protected:\nvoid set_parameters_from_args(cxxopts::ParseResult const& "
         "results) {\n";
@@ -89,7 +115,14 @@ static void create_setter_function(std::ostream &os) {
 }
 
 template <typename Stream> static void generate_on_stream(Stream &stream) {
-  stream << "#pragma once\n#include <string>\n#include <cstdint>\n\nstruct "
+  stream << "#pragma once\n#include <string>\n#include <cstdint>\n";
+  if constexpr (any_group_has_multiplicity_many(
+                    std::make_index_sequence<std::tuple_size_v<
+                        typename decltype(args::opts)::groups_type>>())) {
+    stream << "#include <vector>\n";
+  }
+
+  stream << "\nstruct "
             "ArgsGenerated {\n";
   dump_opts(stream);
   create_setter_function(stream);

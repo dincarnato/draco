@@ -1,7 +1,10 @@
 #pragma once
 
+#include <concepts>
+#include <stdexcept>
 #include <tuple>
 #include <type_traits>
+#include <vector>
 
 #include "cte/string.hpp"
 #include "default_value.hpp"
@@ -13,16 +16,25 @@ enum class Optionality {
   Optional,
 };
 
+namespace multiplicity {
+struct One {};
+struct Many {};
+
+template <typename T>
+concept multiplicity = std::same_as<T, One> or std::same_as<T, Many>;
+} // namespace multiplicity
+
 template <typename Type, typename Default, std::size_t TypenameSize,
           std::size_t VariableSize, std::size_t ParameterSize,
-          std::size_t DescriptionSize>
+          std::size_t DescriptionSize, multiplicity::multiplicity Multiplicity>
 struct Arg {
   static_assert(is_default_value_v<Default>);
   static_assert(!Default::is_available or
                 is_convertible_from_default_value_v<Type, Default>);
   template <typename, typename, std::size_t, std::size_t, std::size_t,
-            std::size_t>
+            std::size_t, multiplicity::multiplicity>
   friend struct Arg;
+  using multiplicity_type = Multiplicity;
   using arg_type = Type;
   using default_value_type = Default;
 
@@ -37,7 +49,7 @@ struct Arg {
   constexpr auto
   parameter_name(cte::string<_ParameterSize> parameter_name) noexcept {
     return Arg<Type, Default, TypenameSize, VariableSize, _ParameterSize,
-               DescriptionSize>{
+               DescriptionSize, Multiplicity>{
         std::move(_type_name),     std::move(_variable_name),
         std::move(parameter_name), std::move(_description),
         std::move(_optionality),   std::move(_default_value)};
@@ -47,7 +59,7 @@ struct Arg {
   constexpr auto
   parameter_name(char const (&parameter_name)[ArgSize]) noexcept {
     return Arg<Type, Default, TypenameSize, VariableSize, ArgSize - 1,
-               DescriptionSize>{
+               DescriptionSize, Multiplicity>{
         std::move(_type_name),       std::move(_variable_name),
         cte::string(parameter_name), std::move(_description),
         std::move(_optionality),     std::move(_default_value)};
@@ -57,7 +69,7 @@ struct Arg {
   constexpr auto
   description(cte::string<_DescriptionSize> description) noexcept {
     return Arg<Type, Default, TypenameSize, VariableSize, ParameterSize,
-               _DescriptionSize>{
+               _DescriptionSize, Multiplicity>{
         std::move(_type_name),      std::move(_variable_name),
         std::move(_parameter_name), std::move(description),
         std::move(_optionality),    std::move(_default_value)};
@@ -66,7 +78,7 @@ struct Arg {
   template <std::size_t ArgSize>
   constexpr auto description(char const (&description)[ArgSize]) noexcept {
     return Arg<Type, Default, TypenameSize, VariableSize, ParameterSize,
-               ArgSize - 1>{
+               ArgSize - 1, Multiplicity>{
         std::move(_type_name),        std::move(_variable_name),
         cte::string(_parameter_name), std::move(description),
         std::move(_optionality),      std::move(_default_value)};
@@ -93,10 +105,39 @@ struct Arg {
   template <typename _Default>
   constexpr auto default_value(_Default value) noexcept {
     return Arg<Type, _Default, TypenameSize, VariableSize, ParameterSize,
-               DescriptionSize>{
+               DescriptionSize, Multiplicity>{
         std::move(_type_name),      std::move(_variable_name),
         std::move(_parameter_name), std::move(_description),
         std::move(_optionality),    value};
+  }
+
+  template <multiplicity::multiplicity Mult>
+  constexpr auto multiplicity() noexcept {
+    constexpr bool is_same_multiplicity = std::is_same_v<Multiplicity, Mult>;
+    constexpr bool needs_vector =
+        std::is_same_v<Multiplicity, multiplicity::One> and
+        std::is_same_v<Mult, multiplicity::Many>;
+
+    auto type_name = ([&]() constexpr {
+      if constexpr (is_same_multiplicity) {
+        return std::move(_type_name);
+      } else if constexpr (needs_vector) {
+        return cte::string("std::vector<").append(_type_name).append(">");
+      } else {
+        throw new std::runtime_error("unimplemented");
+      }
+    })();
+
+    using new_type =
+        std::conditional_t<is_same_multiplicity, Type,
+                           std::conditional_t<needs_vector, std::vector<Type>,
+                                              /* unimplemented */ void>>;
+
+    return Arg<new_type, Default, decltype(type_name)::max_size, VariableSize,
+               ParameterSize, DescriptionSize, Mult>{
+        std::move(type_name),       std::move(_variable_name),
+        std::move(_parameter_name), std::move(_description),
+        std::move(_optionality),    std::move(_default_value)};
   }
 
   constexpr cte::string<TypenameSize> const &get_type_name() const noexcept {
@@ -159,9 +200,9 @@ template <typename T> struct is_arg : std::false_type {};
 
 template <typename Type, typename Default, std::size_t TypenameSize,
           std::size_t VariableSize, std::size_t ParameterSize,
-          std::size_t DescriptionSize>
+          std::size_t DescriptionSize, multiplicity::multiplicity Multiplicity>
 struct is_arg<Arg<Type, Default, TypenameSize, VariableSize, ParameterSize,
-                  DescriptionSize>> : std::true_type {};
+                  DescriptionSize, Multiplicity>> : std::true_type {};
 
 template <typename T> constexpr bool is_arg_v = is_arg<T>::value;
 
@@ -187,12 +228,12 @@ template <std::size_t DescriptionSize, typename... Args> struct Group {
 };
 
 template <std::size_t DescriptionSize, typename... Args>
-Group(cte::string<DescriptionSize>,
-      Args &&...) -> Group<DescriptionSize, std::decay_t<Args>...>;
+Group(cte::string<DescriptionSize>, Args &&...)
+    -> Group<DescriptionSize, std::decay_t<Args>...>;
 
 template <std::size_t StringSize, typename... Args>
-Group(char const (&)[StringSize],
-      Args &&...) -> Group<StringSize - 1, std::decay_t<Args>...>;
+Group(char const (&)[StringSize], Args &&...)
+    -> Group<StringSize - 1, std::decay_t<Args>...>;
 
 template <typename T> struct is_group : std::false_type {};
 
@@ -222,19 +263,20 @@ template <std::size_t DescriptionSize, typename... Groups> struct Opts {
 };
 
 template <std::size_t DescriptionSize, typename... Groups>
-Opts(cte::string<DescriptionSize> description,
-     Groups &&...groups) -> Opts<DescriptionSize, Groups...>;
+Opts(cte::string<DescriptionSize> description, Groups &&...groups)
+    -> Opts<DescriptionSize, Groups...>;
 
 template <std::size_t DescriptionSize, typename... Groups>
-Opts(char const (&description)[DescriptionSize],
-     Groups &&...groups) -> Opts<DescriptionSize - 1, Groups...>;
+Opts(char const (&description)[DescriptionSize], Groups &&...groups)
+    -> Opts<DescriptionSize - 1, Groups...>;
 
 } // namespace args
 
 #define ARG(type, name)                                                        \
   ::args::Arg<type, ::DefaultValue<0, ::DefaultValueType::None>,               \
               ::cte::string(#type).size(), ::cte::string(#name).size(),        \
-              ::cte::string(#name).size(), ::std::size_t(0)>(                  \
-      cte::string(#type), cte::string(#name))
+              ::cte::string(#name).size(), ::std::size_t(0),                   \
+              ::args::multiplicity::One>(cte::string(#type),                   \
+                                         cte::string(#name))
 
 #define DEFAULT_VALUE(x) default_value(MAKE_DEFAULT_VALUE(x))

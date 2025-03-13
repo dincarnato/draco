@@ -31,7 +31,51 @@ This program is free software, and can be redistribute and/or modified under the
 Please see <http://www.gnu.org/licenses/> for more information.
 
 
-## Prerequisites
+## Installation
+
+Clone the DRACO git repository:
+
+```bash
+git clone https://github.com/dincarnato/draco
+```
+This will create a "draco" folder.
+
+There are two ways you can compile and use DRACO.
+
+### Using Docker (recommended)
+
+You can use [docker](https://www.docker.com/) in order to build an image with all the necessary to compile DRACO and then run it.
+
+#### Building the image
+
+```shell
+cd draco
+docker build --tag draco .
+```
+
+#### Running DRACO
+
+In order to run DRACO using the docker image just built, it is necessary to expose the input and output directories to the docker container that is being spawned.
+
+For instance, if you have you `.mm` files inside the `/my/mm/files` folder, you need to do this:
+
+```shell
+docker run --init --rm -u $(id -u ${USER}):$(id -g ${USER}) -v /my/mm/files:/data draco --mm rna.mm <other draco params>...
+```
+
+Let's analyse the command line:
+
+- `--init` is necessary to forward the signals to the process (i.e stopping using CTRL+C);
+- `--rm` is to clean up the container after its usage;
+- `-u $(id -u ${USER}):$(id -g ${USER})` is to run DRACO with the user and group id;
+- `-v /my/mm/files:/data` is to mount the directory `/my/mm/files` (given as example) to `/data` inside the container. DRACO runs inside this directory, therefore all the paths should be relative and within the directory `/my/mm/files`. See the next argument for more information.
+- `--mm rna.mm` is part of the arguments to pass to DRACO. In example, `rna.mm` is inside the `/my/mm/files` directory, but the file in the command line is given as relative path to directory. This is because the `/my/mm/files` is mounted in the `/data` directory of the container (because of the `-v` parameter), and DRACO runs inside the `/data` inside the container by default.
+
+Because of all this, the output files will be placed inside the `/my/mm/files`.
+
+### Compiling and running DRACO without Docker
+
+#### Prerequisites
 
 - Linux system
 - GCC v14 or higher (<https://gcc.gnu.org/gcc-14/>), or
@@ -43,17 +87,8 @@ Please see <http://www.gnu.org/licenses/> for more information.
 - dlib v19.4.0 or greater (<http://dlib.net>)
 - Intel oneAPI Thread Building Blocks (<https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onetbb.html>)
 
-To compile the `simulate_mm` utility, Rust and Cargo are also needed (<https://doc.rust-lang.org/cargo/getting-started/installation.html>).
+#### Compilation
 
-
-## Installation
-
-Clone the DRACO git repository:
-
-```bash
-git clone https://github.com/dincarnato/draco
-```
-This will create a "draco" folder.<br/>
 To compile DRACO:
 
 ```bash
@@ -65,8 +100,15 @@ make -jN
 ```
 where *N* is the number of processors on your computer. The parameter `CMAKE_INSTALL_PREFIX` can be used to set the installation directory. For example, to install DRACO in `/usr/local/bin`, just set it to `/usr/local`.<br/>
 The `draco` executable will be located under `build/src/`.
-<br/>
-To compile the `simulate_mm` utility:
+
+
+### Compiling and running the `simulate_mm` utility
+
+#### Prerequisites
+
+To compile the `simulate_mm` utility, Rust and Cargo are needed (<https://doc.rust-lang.org/cargo/getting-started/installation.html>).
+
+#### Compilation
 
 ```bash
 cd extra/simulate_mm
@@ -92,7 +134,15 @@ Under `examples/` it is possible to find three sample MM files, each one contain
 To analyze these samples, simply run:
 
 ```bash
-draco --mm 1conf.mm        # 1 conformation
-draco --mm 2confs.mm       # 2 conformations
-draco --mm 3confs.mm       # 3 conformations
+docker run --init --rm -u $(id -u ${USER}):$(id -g ${USER}) -v examples:/data draco --mm 1conf.mm        # 1 conformation
+docker run --init --rm -u $(id -u ${USER}):$(id -g ${USER}) -v examples:/data draco --mm 2confs.mm       # 2 conformations
+docker run --init --rm -u $(id -u ${USER}):$(id -g ${USER}) -v examples:/data draco --mm 3confs.mm       # 3 conformations
+```
+
+in case DRACO is compiled within Docker. Otherwise:
+
+```bash
+./build/src/draco --mm examples/1conf.mm        # 1 conformation
+./build/src/draco --mm examples/2confs.mm       # 2 conformations
+./build/src/draco --mm examples/3confs.mm       # 3 conformations
 ```

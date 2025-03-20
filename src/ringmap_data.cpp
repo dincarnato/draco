@@ -494,7 +494,12 @@ bool RingmapData::operator==(const RingmapData &other) const {
          allowedMismatches == other.allowedMismatches and
 #endif
          m_data == other.m_data and oldColsToNew == other.oldColsToNew and
-         readsMap == other.readsMap and baseCoverages == other.baseCoverages;
+         readsMap == other.readsMap and baseCoverages == other.baseCoverages and
+         minimumModificationsPerBase == other.minimumModificationsPerBase and
+         minimumModificationsPerRead == other.minimumModificationsPerRead and
+         minimumModificationsPerBaseFraction ==
+             other.minimumModificationsPerBaseFraction and
+         basesMask == other.basesMask and shape == other.shape;
 }
 
 const std::string &RingmapData::getSequence() const { return sequence; }

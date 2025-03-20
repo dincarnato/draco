@@ -212,8 +212,42 @@ void test_filter_bases_on_replicates_different_data() {
   }));
 }
 
+void test_filter_bases_on_replicates_and_reads() {
+  constexpr std::string_view sequence_view = "ACATATTACGGAGGGTACTT";
+  constexpr auto n_reads = 10000u;
+  constexpr auto n_bases = static_cast<unsigned>(std::size(sequence_view));
+
+  std::string sequence(sequence_view);
+  std::vector<RingmapData> ringmaps_data;
+
+  Args args;
+  {
+    constexpr auto low_freq_bases = std::array{2u, 8u, 16u};
+    auto matrix = generate_ringmap_matrix(sequence, low_freq_bases, n_reads,
+                                          n_bases, 100u, 900u);
+
+    ringmaps_data.emplace_back(sequence, RingmapMatrix(matrix), 0, n_bases,
+                               args);
+  }
+  {
+    constexpr auto low_freq_bases = std::array{1u, 2u, 9u};
+    auto matrix = generate_ringmap_matrix(sequence, low_freq_bases, n_reads,
+                                          n_bases, 100u, 900u);
+
+    ringmaps_data.emplace_back(sequence, RingmapMatrix(matrix), 0, n_bases,
+                               args);
+  }
+
+  RingmapData::filter_bases_on_replicates(ringmaps_data);
+  for (auto &ringmap_data : ringmaps_data) {
+    ringmap_data.filterReads();
+  }
+  RingmapData::filter_bases_on_replicates(ringmaps_data);
+}
+
 int main() {
   test_filter_bases_on_replicates_same_data();
   test_filter_bases_on_replicates_same_data_refilter();
   test_filter_bases_on_replicates_different_data();
+  test_filter_bases_on_replicates_and_reads();
 }

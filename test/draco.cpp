@@ -92,13 +92,13 @@ void test_make_windows_and_reads_indices_range_same_clusters() {
       std::ranges::to<std::vector>();
 
   auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
-      std::ranges::cbegin(windows), std::ranges::cend(windows),
-      std::ranges::cbegin(windows_reads_indices),
+      std::ranges::cbegin(windows), std::ranges::cbegin(windows),
+      std::ranges::cend(windows), std::ranges::cbegin(windows_reads_indices),
       std::ranges::cend(windows_reads_indices), 0);
 
   assert(std::ranges::begin(windows_and_reads_indices_range) !=
          std::ranges::end(windows_and_reads_indices_range));
-  assert(std::addressof(std::get<0>(
+  assert(std::addressof(std::get<1>(
              *std::ranges::begin(windows_and_reads_indices_range))) ==
          std::addressof(*std::begin(windows)));
   assert(std::ranges::distance(windows_and_reads_indices_range) ==
@@ -140,13 +140,13 @@ void test_make_windows_and_reads_indices_range_separated_clusters() {
 
   {
     auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
-        std::ranges::cbegin(windows), std::ranges::cend(windows),
-        std::ranges::cbegin(windows_reads_indices),
+        std::ranges::cbegin(windows), std::ranges::cbegin(windows),
+        std::ranges::cend(windows), std::ranges::cbegin(windows_reads_indices),
         std::ranges::cend(windows_reads_indices), 0);
 
     assert(std::ranges::begin(windows_and_reads_indices_range) !=
            std::ranges::end(windows_and_reads_indices_range));
-    assert(std::addressof(std::get<0>(
+    assert(std::addressof(std::get<1>(
                *std::ranges::begin(windows_and_reads_indices_range))) ==
            std::addressof(*std::begin(windows)));
     assert(std::ranges::distance(windows_and_reads_indices_range) == 11);
@@ -157,12 +157,13 @@ void test_make_windows_and_reads_indices_range_separated_clusters() {
     auto windows_reads_indices_iter =
         std::ranges::next(std::ranges::cbegin(windows_reads_indices), 10);
     auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
-        windows_iter, std::ranges::cend(windows), windows_reads_indices_iter,
-        std::ranges::cend(windows_reads_indices), 0);
+        std::ranges::cbegin(windows), windows_iter, std::ranges::cend(windows),
+        windows_reads_indices_iter, std::ranges::cend(windows_reads_indices),
+        0);
 
     assert(std::ranges::begin(windows_and_reads_indices_range) !=
            std::ranges::end(windows_and_reads_indices_range));
-    assert(std::addressof(std::get<0>(
+    assert(std::addressof(std::get<1>(
                *std::ranges::begin(windows_and_reads_indices_range))) ==
            std::addressof(*windows_iter));
     assert(std::ranges::distance(windows_and_reads_indices_range) == 11);
@@ -173,12 +174,13 @@ void test_make_windows_and_reads_indices_range_separated_clusters() {
     auto windows_reads_indices_iter =
         std::ranges::next(std::ranges::cbegin(windows_reads_indices), 20);
     auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
-        windows_iter, std::ranges::cend(windows), windows_reads_indices_iter,
-        std::ranges::cend(windows_reads_indices), 0);
+        std::ranges::cbegin(windows), windows_iter, std::ranges::cend(windows),
+        windows_reads_indices_iter, std::ranges::cend(windows_reads_indices),
+        0);
 
     assert(std::ranges::begin(windows_and_reads_indices_range) !=
            std::ranges::end(windows_and_reads_indices_range));
-    assert(std::addressof(std::get<0>(
+    assert(std::addressof(std::get<1>(
                *std::ranges::begin(windows_and_reads_indices_range))) ==
            std::addressof(*windows_iter));
     assert(std::ranges::distance(windows_and_reads_indices_range) == 10);
@@ -220,13 +222,13 @@ void test_make_windows_and_reads_indices_range_overlapping_clusters() {
 
   {
     auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
-        std::ranges::cbegin(windows), std::ranges::cend(windows),
-        std::ranges::cbegin(windows_reads_indices),
+        std::ranges::cbegin(windows), std::ranges::cbegin(windows),
+        std::ranges::cend(windows), std::ranges::cbegin(windows_reads_indices),
         std::ranges::cend(windows_reads_indices), 2);
 
     assert(std::ranges::begin(windows_and_reads_indices_range) !=
            std::ranges::end(windows_and_reads_indices_range));
-    assert(std::addressof(std::get<0>(
+    assert(std::addressof(std::get<1>(
                *std::ranges::begin(windows_and_reads_indices_range))) ==
            std::addressof(*std::begin(windows)));
     assert(std::ranges::distance(windows_and_reads_indices_range) == 19);
@@ -264,8 +266,8 @@ void test_update_iters_and_region_same_clusters() {
   auto windows_reads_indices_iter = std::ranges::cbegin(windows_reads_indices);
 
   auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
-      windows_iter, std::ranges::cend(windows), windows_reads_indices_iter,
-      std::ranges::cend(windows_reads_indices), 0);
+      std::ranges::cbegin(windows), windows_iter, std::ranges::cend(windows),
+      windows_reads_indices_iter, std::ranges::cend(windows_reads_indices), 0);
 
   update_iters_and_region(windows_iter, windows_reads_indices_iter,
                           windows_and_reads_indices_range, previous_region_ends,
@@ -321,8 +323,9 @@ void test_update_iters_and_region_separated_clusters() {
 
   {
     auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
-        windows_iter, std::ranges::cend(windows), windows_reads_indices_iter,
-        std::ranges::cend(windows_reads_indices), 0);
+        std::ranges::cbegin(windows), windows_iter, std::ranges::cend(windows),
+        windows_reads_indices_iter, std::ranges::cend(windows_reads_indices),
+        0);
 
     update_iters_and_region(windows_iter, windows_reads_indices_iter,
                             windows_and_reads_indices_range,
@@ -340,8 +343,9 @@ void test_update_iters_and_region_separated_clusters() {
 
   {
     auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
-        windows_iter, std::ranges::cend(windows), windows_reads_indices_iter,
-        std::ranges::cend(windows_reads_indices), 0);
+        std::ranges::cbegin(windows), windows_iter, std::ranges::cend(windows),
+        windows_reads_indices_iter, std::ranges::cend(windows_reads_indices),
+        0);
 
     update_iters_and_region(windows_iter, windows_reads_indices_iter,
                             windows_and_reads_indices_range,
@@ -360,8 +364,9 @@ void test_update_iters_and_region_separated_clusters() {
 
   {
     auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
-        windows_iter, std::ranges::cend(windows), windows_reads_indices_iter,
-        std::ranges::cend(windows_reads_indices), 0);
+        std::ranges::cbegin(windows), windows_iter, std::ranges::cend(windows),
+        windows_reads_indices_iter, std::ranges::cend(windows_reads_indices),
+        0);
 
     update_iters_and_region(windows_iter, windows_reads_indices_iter,
                             windows_and_reads_indices_range,
@@ -418,8 +423,9 @@ void test_update_iters_and_region_overlapping_clusters() {
   constexpr auto min_bases_overlap = 8u;
   {
     auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
-        windows_iter, std::ranges::cend(windows), windows_reads_indices_iter,
-        std::ranges::cend(windows_reads_indices), min_bases_overlap);
+        std::ranges::cbegin(windows), windows_iter, std::ranges::cend(windows),
+        windows_reads_indices_iter, std::ranges::cend(windows_reads_indices),
+        min_bases_overlap);
 
     update_iters_and_region(windows_iter, windows_reads_indices_iter,
                             windows_and_reads_indices_range,
@@ -436,8 +442,9 @@ void test_update_iters_and_region_overlapping_clusters() {
 
   {
     auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
-        windows_iter, std::ranges::cend(windows), windows_reads_indices_iter,
-        std::ranges::cend(windows_reads_indices), min_bases_overlap);
+        std::ranges::cbegin(windows), windows_iter, std::ranges::cend(windows),
+        windows_reads_indices_iter, std::ranges::cend(windows_reads_indices),
+        min_bases_overlap);
 
     update_iters_and_region(windows_iter, windows_reads_indices_iter,
                             windows_and_reads_indices_range,
@@ -455,8 +462,9 @@ void test_update_iters_and_region_overlapping_clusters() {
 
   {
     auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
-        windows_iter, std::ranges::cend(windows), windows_reads_indices_iter,
-        std::ranges::cend(windows_reads_indices), min_bases_overlap);
+        std::ranges::cbegin(windows), windows_iter, std::ranges::cend(windows),
+        windows_reads_indices_iter, std::ranges::cend(windows_reads_indices),
+        min_bases_overlap);
 
     update_iters_and_region(windows_iter, windows_reads_indices_iter,
                             windows_and_reads_indices_range,
@@ -474,8 +482,9 @@ void test_update_iters_and_region_overlapping_clusters() {
 
   {
     auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
-        windows_iter, std::ranges::cend(windows), windows_reads_indices_iter,
-        std::ranges::cend(windows_reads_indices), 0);
+        std::ranges::cbegin(windows), windows_iter, std::ranges::cend(windows),
+        windows_reads_indices_iter, std::ranges::cend(windows_reads_indices),
+        0);
 
     update_iters_and_region(windows_iter, windows_reads_indices_iter,
                             windows_and_reads_indices_range,

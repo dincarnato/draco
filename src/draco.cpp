@@ -613,8 +613,9 @@ void merge_windows_and_add_window_results(
         static_cast<double>(window_size) *
         static_cast<double>(args.min_windows_overlap() / 100.));
     auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
-        windows_iter, std::ranges::cend(windows), windows_reads_indices_iter,
-        std::ranges::cend(windows_reads_indices), min_windows_overlap);
+        std::ranges::cbegin(windows), windows_iter, std::ranges::cend(windows),
+        windows_reads_indices_iter, std::ranges::cend(windows_reads_indices),
+        min_windows_overlap);
 
     auto const get_window_coverages = [windows_and_reads_indices_range,
                                        n_clusters,
@@ -626,12 +627,12 @@ void merge_windows_and_add_window_results(
         std::set<std::uint32_t> reads_indices;
         std::ranges::for_each(
             windows_and_reads_indices_range |
-                std::views::filter([&](auto const &pair) {
-                  return std::get<0>(pair).weights.getClustersSize() ==
+                std::views::filter([&](auto const &tuple) {
+                  return std::get<1>(tuple).weights.getClustersSize() ==
                          n_clusters;
                 }) |
                 std::views::transform(
-                    [](auto const &pair) { return std::get<1>(pair); }),
+                    [](auto const &tuple) { return std::get<2>(tuple); }),
             [&](auto const &indices) {
               reads_indices.insert(std::begin(indices), std::end(indices));
             });
@@ -681,7 +682,7 @@ void merge_windows_and_add_window_results(
     auto filtered_windows =
         windows_and_reads_indices_range |
         std::views::transform(
-            [](auto const &pair) { return std::get<0>(pair); }) |
+            [](auto const &pair) { return std::get<1>(pair); }) |
         std::views::filter([&](auto const &window) {
           return window.weights.getClustersSize() == n_clusters;
         });

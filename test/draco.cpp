@@ -3,6 +3,7 @@
 #include "results/transcript.hpp"
 #include "ringmap_matrix.hpp"
 #include "weighted_clusters.hpp"
+#include "window_clusters_with_confidence.hpp"
 
 #include <algorithm>
 #include <array>
@@ -669,6 +670,92 @@ void test_window_info_get_start_base() {
   }
 }
 
+void test_add_detected_clusters_with_confidence() {
+  auto pre_collapsing_clusters =
+      std::views::repeat(
+          PreCollapsingClusters{.n_clusters = 999, .confidence = 1.}) |
+      std::views::take(10) | std::ranges::to<std::vector>();
+  std::ranges::for_each(std::views::repeat(PreCollapsingClusters{
+                            .n_clusters = 1, .confidence = 1}) |
+                            std::views::take(5) | std::views::as_rvalue,
+                        [&](auto &&value) {
+                          pre_collapsing_clusters.push_back(std::move(value));
+                        });
+  std::ranges::for_each(std::views::repeat(PreCollapsingClusters{
+                            .n_clusters = 1, .confidence = 0.5}) |
+                            std::views::take(3) | std::views::as_rvalue,
+                        [&](auto &&value) {
+                          pre_collapsing_clusters.push_back(std::move(value));
+                        });
+  std::ranges::for_each(std::views::repeat(PreCollapsingClusters{
+                            .n_clusters = 2, .confidence = 0.5}) |
+                            std::views::take(4) | std::views::as_rvalue,
+                        [&](auto &&value) {
+                          pre_collapsing_clusters.push_back(std::move(value));
+                        });
+  std::ranges::for_each(std::views::repeat(PreCollapsingClusters{
+                            .n_clusters = 2, .confidence = 1}) |
+                            std::views::take(2) | std::views::as_rvalue,
+                        [&](auto &&value) {
+                          pre_collapsing_clusters.push_back(std::move(value));
+                        });
+  std::ranges::for_each(std::views::repeat(PreCollapsingClusters{
+                            .n_clusters = 999, .confidence = 1}) |
+                            std::views::take(5) | std::views::as_rvalue,
+                        [&](auto &&value) {
+                          pre_collapsing_clusters.push_back(std::move(value));
+                        });
+
+  std::vector<WindowClustersWithConfidence> detected_clusters_with_confidence;
+  std::size_t window_size = 17;
+  std::size_t window_offset = 5;
+  WindowsInfo windows_info{
+      .transcript_size = 165,
+      .window_size = static_cast<unsigned>(window_size),
+      .window_offset = static_cast<unsigned>(window_offset),
+  };
+  auto n_windows_and_precise_offset =
+      windows_info.get_n_windows_and_precise_offset();
+  add_detected_clusters_with_confidence(
+      detected_clusters_with_confidence,
+      results::WindowRange{.window_index_begin = 10, .window_index_end = 24},
+      pre_collapsing_clusters, windows_info);
+
+  assert(std::size(detected_clusters_with_confidence) == 4);
+
+  assert(detected_clusters_with_confidence[0].n_clusters == 1);
+  assert(detected_clusters_with_confidence[0].confidence == 1.);
+  assert(detected_clusters_with_confidence[0].start_base ==
+         windows_info.get_start_base(n_windows_and_precise_offset, 10));
+  assert(detected_clusters_with_confidence[0].end_base ==
+         windows_info.get_start_base(n_windows_and_precise_offset, 14) +
+             window_size);
+
+  assert(detected_clusters_with_confidence[1].n_clusters == 1);
+  assert(detected_clusters_with_confidence[1].confidence == 0.5);
+  assert(detected_clusters_with_confidence[1].start_base ==
+         windows_info.get_start_base(n_windows_and_precise_offset, 15));
+  assert(detected_clusters_with_confidence[1].end_base ==
+         windows_info.get_start_base(n_windows_and_precise_offset, 17) +
+             window_size);
+
+  assert(detected_clusters_with_confidence[2].n_clusters == 2);
+  assert(detected_clusters_with_confidence[2].confidence == 0.5);
+  assert(detected_clusters_with_confidence[2].start_base ==
+         windows_info.get_start_base(n_windows_and_precise_offset, 18));
+  assert(detected_clusters_with_confidence[2].end_base ==
+         windows_info.get_start_base(n_windows_and_precise_offset, 21) +
+             window_size);
+
+  assert(detected_clusters_with_confidence[3].n_clusters == 2);
+  assert(detected_clusters_with_confidence[3].confidence == 1.);
+  assert(detected_clusters_with_confidence[3].start_base ==
+         windows_info.get_start_base(n_windows_and_precise_offset, 22));
+  assert(detected_clusters_with_confidence[3].end_base ==
+         windows_info.get_start_base(n_windows_and_precise_offset, 23) +
+             window_size);
+}
+
 int main() {
   test_merge_windows_and_add_window_results_not_merging();
   test_make_windows_and_reads_indices_range_same_clusters();
@@ -679,4 +766,5 @@ int main() {
   test_update_iters_and_region_overlapping_clusters();
   test_window_info_get_n_windows_and_precise_offset();
   test_window_info_get_start_base();
+  test_add_detected_clusters_with_confidence();
 }

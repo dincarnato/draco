@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "../window_clusters_with_confidence.hpp"
 #include "jsonify_base.hpp"
 #include "window.hpp"
 
@@ -27,12 +28,36 @@ struct Transcript {
   std::vector<std::optional<std::vector<unsigned>>> coverages;
   std::vector<std::optional<std::vector<Window>>> windows;
   std::vector<WindowRange> window_ranges;
+  std::vector<WindowClustersWithConfidence> detected_clusters_with_confidence;
   std::vector<std::optional<std::string>> errors;
 };
 
 } // namespace results
 
 namespace results {
+
+template <typename CharT, typename Traits>
+std::basic_ostream<CharT, Traits> &jsonify_window_clusters_with_confidence(
+    std::basic_ostream<CharT, Traits> &os,
+    std::vector<WindowClustersWithConfidence> const
+        &detected_clusters_with_confidence) {
+  os << '[';
+  auto write_data = [&](auto const &data) {
+    os << '{';
+    jsonify(os, "nClusters", data.n_clusters, "confidence", data.confidence,
+            "start", data.start_base, "end", data.end_base);
+    os << '}';
+  };
+  write_data(detected_clusters_with_confidence[0]);
+  std::ranges::for_each(detected_clusters_with_confidence | std::views::drop(1),
+                        [&](auto const &data) {
+                          os << ',';
+                          write_data(data);
+                        });
+  os << ']';
+
+  return os;
+}
 
 template <typename CharT, typename Traits, typename T>
 std::enable_if_t<std::is_convertible_v<std::decay_t<T>, Transcript>,
@@ -54,6 +79,12 @@ jsonify(std::basic_ostream<CharT, Traits> &os, T &&transcript) {
       })) {
     os << ',';
     jsonify(os, "windows", transcript.windows);
+  }
+
+  if (not transcript.detected_clusters_with_confidence.empty()) {
+    os << ",\"replicateClusters\":";
+    jsonify_window_clusters_with_confidence(
+        os, transcript.detected_clusters_with_confidence);
   }
 
   if (std::ranges::any_of(transcript.errors, [](auto const &maybeError) {

@@ -959,3 +959,78 @@ void handle_transcripts(
                             end_base, transcript_result);
       });
 }
+
+void add_detected_clusters_with_confidence(
+    std::vector<WindowClustersWithConfidence>
+        &detected_clusters_with_confidence,
+    results::WindowRange const &region_range,
+    std::vector<PreCollapsingClusters> const &pre_collapsing_clusters,
+    WindowsInfo const &windows_info) {
+
+  assert(region_range.window_index_begin <= std::size(pre_collapsing_clusters));
+  assert(region_range.window_index_end <= std::size(pre_collapsing_clusters));
+  auto &&region_window_clusters = std::ranges::subrange(
+      std::ranges::next(
+          std::ranges::cbegin(pre_collapsing_clusters),
+          static_cast<std::ptrdiff_t>(region_range.window_index_begin)),
+      std::ranges::next(
+          std::ranges::cbegin(pre_collapsing_clusters),
+          static_cast<std::ptrdiff_t>(region_range.window_index_end)));
+  if (not region_window_clusters.empty()) {
+    auto n_windows_and_precise_offset =
+        windows_info.get_n_windows_and_precise_offset();
+
+    auto region_window_clusters_with_start_base =
+        std::views::zip(region_window_clusters,
+                        std::views::iota(region_range.window_index_begin,
+                                         region_range.window_index_end) |
+                            std::views::transform([&](auto window_index) {
+                              return windows_info.get_start_base(
+                                  n_windows_and_precise_offset, window_index);
+                            }));
+
+    auto region_end_base = ([&](std::size_t start_base) {
+      if (region_range.window_index_end > 0 and
+          region_range.window_index_end > region_range.window_index_begin) {
+        return std::min(
+            start_base + windows_info.window_size,
+            windows_info.get_start_base(n_windows_and_precise_offset,
+                                        region_range.window_index_end - 1) +
+                windows_info.window_size);
+      } else {
+        return std::max(start_base, windows_info.get_start_base(
+                                        n_windows_and_precise_offset,
+                                        region_range.window_index_begin));
+      }
+    });
+    auto last_window_clusters = ([&]() {
+      auto [first_window_clusters, start_base] =
+          region_window_clusters_with_start_base.front();
+
+      return WindowClustersWithConfidence{
+          .n_clusters = first_window_clusters.n_clusters,
+          .confidence = first_window_clusters.confidence,
+          .start_base = std::max(
+              start_base,
+              windows_info.get_start_base(n_windows_and_precise_offset,
+                                          region_range.window_index_begin)),
+          .end_base = region_end_base(start_base),
+      };
+    })();
+
+    std::ranges::for_each(
+        region_window_clusters_with_start_base | std::views::drop(1),
+        [&](const auto &pair) {
+          auto &&[window_clusters, start_base] = pair;
+          if (last_window_clusters != window_clusters) {
+            detected_clusters_with_confidence.push_back(last_window_clusters);
+            last_window_clusters.n_clusters = window_clusters.n_clusters;
+            last_window_clusters.confidence = window_clusters.confidence;
+            last_window_clusters.start_base = start_base;
+          }
+
+          last_window_clusters.end_base = region_end_base(start_base);
+        });
+    detected_clusters_with_confidence.push_back(last_window_clusters);
+  }
+}

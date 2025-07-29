@@ -4,7 +4,9 @@
 #include "logger.hpp"
 #include "mutation_map_transcript.hpp"
 #include "results/analysis.hpp"
+#include "results/transcript.hpp"
 #include "weighted_clusters.hpp"
+#include "window_clusters_with_confidence.hpp"
 
 #include <armadillo>
 #include <concepts>
@@ -168,6 +170,12 @@ struct PreCollapsingClusters {
   bool operator==(const PreCollapsingClusters &other) const noexcept {
     return n_clusters == other.n_clusters && confidence == other.confidence;
   }
+
+  bool operator==(const WindowClustersWithConfidence
+                      &window_clusters_with_confidence) const noexcept {
+    return n_clusters == window_clusters_with_confidence.n_clusters &&
+           confidence == window_clusters_with_confidence.confidence;
+  }
 };
 
 std::vector<PreCollapsingClusters> get_best_pre_collapsing_clusters(
@@ -242,6 +250,13 @@ struct WindowsInfo {
     return start_base;
   }
 };
+
+void add_detected_clusters_with_confidence(
+    std::vector<WindowClustersWithConfidence>
+        &detected_clusters_with_confidence,
+    results::WindowRange const &region_range,
+    std::vector<PreCollapsingClusters> const &pre_collapsing_clusters,
+    WindowsInfo const &window_info);
 
 struct HandleTranscripts {
   std::vector<MutationMapTranscript const *> const &transcripts;

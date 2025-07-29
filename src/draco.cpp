@@ -871,7 +871,7 @@ ptba_on_replicate(std::size_t replicate_index, RingmapData const &ringmap_data,
   };
 }
 
-std::vector<unsigned> get_best_pre_collapsing_clusters(
+std::vector<PreCollapsingClusters> get_best_pre_collapsing_clusters(
     std::span<std::optional<PtbaOnReplicate>> ptba_on_replicate_results) {
   auto const windows_size = std::size(ptba_on_replicate_results[0]->windows);
   std::vector<unsigned> window_pre_collapsing_clusters(
@@ -896,7 +896,15 @@ std::vector<unsigned> get_best_pre_collapsing_clusters(
                std::ranges::begin(window_pre_collapsing_clusters));
 
            std::ranges::sort(window_pre_collapsing_clusters);
-           return window_pre_collapsing_clusters[median_index];
+           unsigned n_clusters = window_pre_collapsing_clusters[median_index];
+           float confidence =
+               static_cast<float>(std::ranges::count(
+                   window_pre_collapsing_clusters, n_clusters)) /
+               static_cast<float>(std::size(ptba_on_replicate_results));
+           return PreCollapsingClusters{
+               n_clusters,
+               confidence,
+           };
          }) |
          std::ranges::to<std::vector>();
 }

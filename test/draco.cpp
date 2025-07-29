@@ -551,8 +551,11 @@ void test_get_best_pre_collapsing_clusters_one_window() {
   {
     auto results = get_best_pre_collapsing_clusters(ptba_on_replicate_results);
     assert(std::size(results) == 2);
-    assert(results[0] == 2);
-    assert(results[1] == 1);
+    assert(results[0].n_clusters == 2);
+    assert(results[0].confidence == 1. / 4.);
+
+    assert(results[0].n_clusters == 1);
+    assert(results[0].confidence == 1. / 2.);
   }
 
   ptba_on_replicate_results.emplace_back(
@@ -566,8 +569,10 @@ void test_get_best_pre_collapsing_clusters_one_window() {
   {
     auto results = get_best_pre_collapsing_clusters(ptba_on_replicate_results);
     assert(std::size(results) == 2);
-    assert(results[0] == 3);
-    assert(results[1] == 2);
+    assert(results[0].n_clusters == 3);
+    assert(results[0].confidence == 1. / 5.);
+    assert(results[1].n_clusters == 2);
+    assert(results[0].confidence == 1. / 5.);
   }
 }
 

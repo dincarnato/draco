@@ -161,7 +161,16 @@ struct PtbaOnReplicate {
   unsigned int window_size;
 };
 
-std::vector<unsigned> get_best_pre_collapsing_clusters(
+struct PreCollapsingClusters {
+  unsigned n_clusters;
+  float confidence;
+
+  bool operator==(const PreCollapsingClusters &other) const noexcept {
+    return n_clusters == other.n_clusters && confidence == other.confidence;
+  }
+};
+
+std::vector<PreCollapsingClusters> get_best_pre_collapsing_clusters(
     std::span<std::optional<PtbaOnReplicate>> ptba_on_replicate_results);
 
 void set_uninformative_clusters_to_surrounding(
@@ -268,8 +277,12 @@ struct HandleTranscripts {
     for (bool stop = false; not stop;) {
       stop = true;
       std::ranges::fill(transcript_result.windows, std::nullopt);
-
-      windows_n_clusters = pre_collapsing_clusters;
+      windows_n_clusters =
+          pre_collapsing_clusters |
+          std::views::transform([](auto const &pre_collapsing_clusters) {
+            return pre_collapsing_clusters.n_clusters;
+          }) |
+          std::ranges::to<std::vector>();
       ([&]() {
         auto windows_n_clusters_iter = std::ranges::begin(windows_n_clusters);
         const auto windows_n_clusters_end =

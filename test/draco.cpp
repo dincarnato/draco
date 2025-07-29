@@ -504,6 +504,7 @@ void test_update_iters_and_region_overlapping_clusters() {
 
 void test_get_best_pre_collapsing_clusters_one_window() {
   constexpr std::size_t window_size = 10;
+  constexpr std::size_t window_offset = 1;
 
   auto const make_window = [&](std::uint8_t n_clusters,
                                unsigned short start_base) {
@@ -522,31 +523,38 @@ void test_get_best_pre_collapsing_clusters_one_window() {
                                   make_window(3, 0),
                                   make_window(5, 5),
                               },
-                          .window_size = window_size}),
-      std::optional(
-          PtbaOnReplicate{.pre_collapsing_clusters = std::vector{1u, 1u},
-                          .windows =
-                              std::vector{
-                                  make_window(1, 0),
-                                  make_window(1, 5),
-                              },
-                          .window_size = window_size}),
-      std::optional(
-          PtbaOnReplicate{.pre_collapsing_clusters = std::vector{4u, 2u},
-                          .windows =
-                              std::vector{
-                                  make_window(4, 0),
-                                  make_window(2, 5),
-                              },
-                          .window_size = window_size}),
-      std::optional(
-          PtbaOnReplicate{.pre_collapsing_clusters = std::vector{2u, 1u},
-                          .windows =
-                              std::vector{
-                                  make_window(2, 0),
-                                  make_window(1, 5),
-                              },
-                          .window_size = window_size}),
+                          .window_size = window_size,
+                          .window_offset = window_offset}),
+      std::optional(PtbaOnReplicate{
+          .pre_collapsing_clusters = std::vector{1u, 1u},
+          .windows =
+              std::vector{
+                  make_window(1, 0),
+                  make_window(1, 5),
+              },
+          .window_size = window_size,
+          .window_offset = window_offset,
+      }),
+      std::optional(PtbaOnReplicate{
+          .pre_collapsing_clusters = std::vector{4u, 2u},
+          .windows =
+              std::vector{
+                  make_window(4, 0),
+                  make_window(2, 5),
+              },
+          .window_size = window_size,
+          .window_offset = window_offset,
+      }),
+      std::optional(PtbaOnReplicate{
+          .pre_collapsing_clusters = std::vector{2u, 1u},
+          .windows =
+              std::vector{
+                  make_window(2, 0),
+                  make_window(1, 5),
+              },
+          .window_size = window_size,
+          .window_offset = window_offset,
+      }),
   };
 
   {
@@ -559,14 +567,16 @@ void test_get_best_pre_collapsing_clusters_one_window() {
     assert(results[0].confidence == 1. / 2.);
   }
 
-  ptba_on_replicate_results.emplace_back(
-      PtbaOnReplicate{.pre_collapsing_clusters = std::vector{6u, 6u},
-                      .windows =
-                          std::vector{
-                              make_window(6, 0),
-                              make_window(6, 5),
-                          },
-                      .window_size = window_size});
+  ptba_on_replicate_results.emplace_back(PtbaOnReplicate{
+      .pre_collapsing_clusters = std::vector{6u, 6u},
+      .windows =
+          std::vector{
+              make_window(6, 0),
+              make_window(6, 5),
+          },
+      .window_size = window_size,
+      .window_offset = window_offset,
+  });
   {
     auto results = get_best_pre_collapsing_clusters(ptba_on_replicate_results);
     assert(std::size(results) == 2);

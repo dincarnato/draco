@@ -886,6 +886,7 @@ ptba_on_replicate(std::size_t replicate_index, RingmapData const &ringmap_data,
       .pre_collapsing_clusters = std::move(windows_n_clusters),
       .windows = std::move(windows),
       .window_size = window_size,
+      .window_offset = window_offset,
   };
 }
 

@@ -161,6 +161,7 @@ struct PtbaOnReplicate {
   std::vector<unsigned> pre_collapsing_clusters;
   std::vector<Window> windows;
   unsigned int window_size;
+  unsigned int window_offset;
 };
 
 struct PreCollapsingClusters {

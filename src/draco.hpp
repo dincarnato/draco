@@ -277,6 +277,8 @@ struct HandleTranscripts {
     for (bool stop = false; not stop;) {
       stop = true;
       std::ranges::fill(transcript_result.windows, std::nullopt);
+      transcript_result.window_ranges.clear();
+
       windows_n_clusters =
           pre_collapsing_clusters |
           std::views::transform([](auto const &pre_collapsing_clusters) {

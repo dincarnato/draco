@@ -662,13 +662,23 @@ void merge_windows_and_add_window_results(
     };
 
     auto const add_result_window =
-        [&transcript_result, replicate_index](results::Window &&result_window) {
+        [&transcript_result, replicate_index](results::Window &&result_window,
+                                              std::size_t window_index_begin,
+                                              std::size_t window_index_end) {
           if (transcript_result.windows[replicate_index])
             transcript_result.windows[replicate_index]->emplace_back(
                 std::move(result_window));
           else
             transcript_result.windows[replicate_index].emplace(
                 {std::move(result_window)});
+
+          if (replicate_index == 0) {
+            auto windows_size = std::size(*transcript_result.windows[0]);
+            transcript_result.window_ranges.resize(windows_size);
+            transcript_result.window_ranges[windows_size - 1] =
+                results::WindowRange{.window_index_begin = window_index_begin,
+                                     .window_index_end = window_index_end};
+          }
         };
 
     auto const update_iters_and_region_helper =
@@ -681,21 +691,22 @@ void merge_windows_and_add_window_results(
 
     auto filtered_windows =
         windows_and_reads_indices_range |
-        std::views::transform(
-            [](auto const &pair) { return std::get<1>(pair); }) |
-        std::views::filter([&](auto const &window) {
-          return window.weights.getClustersSize() == n_clusters;
+        std::views::filter([&](auto const &pair) {
+          return std::get<1>(pair).weights.getClustersSize() == n_clusters;
         });
 
     if (n_clusters == 0) {
       if (args.report_uninformative()) {
-        std::ranges::for_each(filtered_windows, [&](auto &&window) {
+        std::ranges::for_each(filtered_windows, [&](auto &&pair) {
+          std::size_t window_index = std::get<0>(pair);
+          auto &&window = std::get<1>(pair);
           auto const coverages = get_window_coverages(
               window.start_base, window.start_base + window.coverages.size());
           auto result_window =
               results::Window(window.start_base, window.weights, coverages);
 
-          add_result_window(std::move(result_window));
+          add_result_window(std::move(result_window), window_index,
+                            window_index + 1);
         });
       }
 
@@ -706,7 +717,13 @@ void merge_windows_and_add_window_results(
     assert(n_clusters <= std::numeric_limits<std::uint8_t>::max());
     windows_merger::WindowsMerger windows_merger(
         static_cast<std::uint8_t>(n_clusters));
-    std::ranges::for_each(filtered_windows, [&](auto &&window) {
+    auto const window_range_begin = std::get<0>(filtered_windows.front());
+    auto const window_range_end = std::get<0>(filtered_windows.back()) + 1;
+    assert(static_cast<std::ptrdiff_t>(window_range_end) -
+               static_cast<std::ptrdiff_t>(window_range_begin) >=
+           std::ranges::distance(filtered_windows));
+    std::ranges::for_each(filtered_windows, [&](auto &&pair) {
+      auto &&window = std::get<1>(pair);
       windows_merger.add_window(window.start_base, window.weights,
                                 window.coverages);
     });
@@ -715,7 +732,8 @@ void merge_windows_and_add_window_results(
     auto const coverages = get_window_coverages(merged_window.begin_index(),
                                                 merged_window.end_index());
     auto result_window = results::Window(merged_window, coverages);
-    add_result_window(std::move(result_window));
+    add_result_window(std::move(result_window), window_range_begin,
+                      window_range_end);
 
     update_iters_and_region_helper();
   }

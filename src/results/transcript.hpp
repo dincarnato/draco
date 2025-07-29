@@ -11,6 +11,11 @@
 
 namespace results {
 
+struct WindowRange {
+  std::size_t window_index_begin;
+  std::size_t window_index_end;
+};
+
 struct Transcript {
   explicit constexpr Transcript(std::size_t replicates)
       : reads(replicates), coverages(replicates), windows(replicates),
@@ -21,6 +26,7 @@ struct Transcript {
   std::vector<unsigned> reads;
   std::vector<std::optional<std::vector<unsigned>>> coverages;
   std::vector<std::optional<std::vector<Window>>> windows;
+  std::vector<WindowRange> window_ranges;
   std::vector<std::optional<std::string>> errors;
 };
 

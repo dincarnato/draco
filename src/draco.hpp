@@ -331,6 +331,7 @@ struct HandleTranscripts {
 
     // auto &windows = ptba_on_replicate_result->windows;
     auto const window_size = ptba_on_replicate_results[0]->window_size;
+    auto const window_offset = ptba_on_replicate_results[0]->window_offset;
     auto const windows_size = std::size(ptba_on_replicate_results[0]->windows);
 
     auto const pre_collapsing_clusters =
@@ -344,6 +345,7 @@ struct HandleTranscripts {
       stop = true;
       std::ranges::fill(transcript_result.windows, std::nullopt);
       transcript_result.window_ranges.clear();
+      transcript_result.detected_clusters_with_confidence.clear();
 
       windows_n_clusters =
           pre_collapsing_clusters |
@@ -747,6 +749,21 @@ struct HandleTranscripts {
                   window.bases_coverages = std::nullopt;
                 }
               });
+
+          if (stop) {
+            if (transcripts.size() > 1) {
+              auto &&region_range =
+                  transcript_result.window_ranges[window_index];
+              WindowsInfo windows_info{
+                  .transcript_size = ringmaps_data[0]->data().cols_size(),
+                  .window_size = window_size,
+                  .window_offset = window_offset,
+              };
+              add_detected_clusters_with_confidence(
+                  transcript_result.detected_clusters_with_confidence,
+                  region_range, pre_collapsing_clusters, windows_info);
+            }
+          }
         }
       }
     }

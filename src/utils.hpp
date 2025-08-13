@@ -22,7 +22,7 @@ cleanStructures(const RingmapData &ringmapData,
                 const std::vector<std::vector<unsigned>> &assignments,
                 Args const &args);
 
-constexpr std::size_t operator"" _sz(unsigned long long n) { return n; }
+constexpr std::size_t operator""_sz(unsigned long long n) { return n; }
 
 namespace detail {
 

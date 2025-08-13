@@ -29,7 +29,7 @@ function(create_tests suffix)
       ${PROJECT_SOURCE_DIR}/src/logger.cpp)
   target_compile_options(ringmap_base_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(ringmap_base_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_base_${ARGV0} ${ARGN} fmt::fmt)
+  target_link_libraries(ringmap_base_${ARGV0} ${ARGN} fmt::fmt ${TBB_LIBRARIES})
   
   add_executable(ringmap_shuffle_${ARGV0} EXCLUDE_FROM_ALL
       ringmap_shuffle.cpp
@@ -44,7 +44,7 @@ function(create_tests suffix)
       ${PROJECT_SOURCE_DIR}/src/logger.cpp)
   target_compile_options(ringmap_shuffle_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(ringmap_shuffle_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_shuffle_${ARGV0} ${ARGN} fmt::fmt)
+  target_link_libraries(ringmap_shuffle_${ARGV0} ${ARGN} fmt::fmt ${TBB_LIBRARIES})
   
   add_executable(ringmap_concat_${ARGV0} EXCLUDE_FROM_ALL
       ringmap_concat.cpp
@@ -59,7 +59,7 @@ function(create_tests suffix)
       ${PROJECT_SOURCE_DIR}/src/logger.cpp)
   target_compile_options(ringmap_concat_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(ringmap_concat_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_concat_${ARGV0} ${ARGN} fmt::fmt)
+  target_link_libraries(ringmap_concat_${ARGV0} ${ARGN} fmt::fmt ${TBB_LIBRARIES})
 
   add_executable(ringmap_data_${ARGV0} EXCLUDE_FROM_ALL
       ringmap_data.cpp
@@ -71,7 +71,7 @@ function(create_tests suffix)
       ${PROJECT_SOURCE_DIR}/src/logger.cpp)
   target_compile_options(ringmap_data_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(ringmap_data_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_data_${ARGV0} ${ARGN} fmt::fmt)
+  target_link_libraries(ringmap_data_${ARGV0} ${ARGN} fmt::fmt ${TBB_LIBRARIES})
   
   add_executable(graph_cut_${ARGV0} EXCLUDE_FROM_ALL
       graph_cut.cpp
@@ -129,7 +129,7 @@ function(create_tests suffix)
   )
   target_compile_options(ringmap_window_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(ringmap_window_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_window_${ARGV0} ${ARGN} fmt::fmt)
+  target_link_libraries(ringmap_window_${ARGV0} ${ARGN} fmt::fmt ${TBB_LIBRARIES})
 
   add_executable(weibull_fitter_${ARGV0} EXCLUDE_FROM_ALL
       weibull_fitter.cpp)

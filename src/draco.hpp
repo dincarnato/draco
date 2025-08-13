@@ -187,6 +187,7 @@ struct HandleTranscripts {
   Args const &args;
   std::optional<std::ofstream> &raw_n_clusters_stream;
   std::mutex &raw_n_clusters_stream_mutex;
+  bool use_stdout;
 
   void operator()(
       InvocableR<std::optional<PtbaOnReplicate>, std::size_t,
@@ -199,12 +200,16 @@ struct HandleTranscripts {
     if (std::ranges::any_of(ringmaps_data, [](auto const &ringmap_data) {
           return ringmap_data->data().rows_size() == 0;
         })) {
-      std::cout << "\x1b[2K\r[+] Skipping transcript "
-                << first_transcript.getId() << " (no reads)" << std::endl;
+      if (use_stdout) {
+        std::cout << "\x1b[2K\r[+] Skipping transcript "
+                  << first_transcript.getId() << " (no reads)" << std::endl;
+      }
       return;
     }
-    std::cout << "\x1b[2K\r[+] Analyzing transcript "
-              << first_transcript.getId() << std::flush;
+    if (use_stdout) {
+      std::cout << "\x1b[2K\r[+] Analyzing transcript "
+                << first_transcript.getId() << std::flush;
+    }
 
     results::Transcript transcript_result(std::size(transcripts));
     transcript_result.name = first_transcript.getId();

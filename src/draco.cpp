@@ -913,6 +913,7 @@ void handle_transcripts(
       .args = args,
       .raw_n_clusters_stream = raw_n_clusters_stream,
       .raw_n_clusters_stream_mutex = raw_n_clusters_stream_mutex,
+      .use_stdout = true,
   }(
       [&](auto replicate_index, auto const &ringmap_data,
           auto &transcript_result) {

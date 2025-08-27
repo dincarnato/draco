@@ -55,7 +55,7 @@ void Analysis::addTranscript(Transcript &&transcript) {
   assert(not stop.load(std::memory_order_acquire));
 
   std::lock_guard lock(queueMutex);
-  transcripts.push(std::move(transcript));
+  transcripts_.push(std::move(transcript));
   queueCv.notify_one();
 }
 
@@ -63,14 +63,14 @@ void Analysis::streamerLoop() noexcept {
   while (not stop.load(std::memory_order_acquire)) {
     auto transcript = [&] {
       std::unique_lock lock(queueMutex);
-      if (transcripts.empty())
+      if (transcripts_.empty())
         queueCv.wait(lock);
 
-      if (transcripts.empty())
+      if (transcripts_.empty())
         return std::optional<Transcript>{};
 
-      std::optional<Transcript> transcript = std::move(transcripts.front());
-      transcripts.pop();
+      std::optional<Transcript> transcript = std::move(transcripts_.front());
+      transcripts_.pop();
 
       return transcript;
     }();

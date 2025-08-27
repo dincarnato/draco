@@ -31,7 +31,7 @@ private:
   std::atomic_bool stop{false};
   mutable std::mutex queueMutex;
   std::condition_variable queueCv;
-  std::queue<Transcript> transcripts;
+  std::queue<Transcript> transcripts_;
   std::ofstream jsonStream;
   std::thread streamer;
 };

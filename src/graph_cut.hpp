@@ -1,6 +1,5 @@
 #pragma once
 
-#include "draco.hpp"
 #include "hard_clusters.hpp"
 #include "results/transcript.hpp"
 #include "weighted_clusters.hpp"

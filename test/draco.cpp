@@ -1,5 +1,8 @@
 #include "draco.hpp"
 #include "args.hpp"
+#include "mutation_map.hpp"
+#include "mutation_map_transcript.hpp"
+#include "results/analysis.hpp"
 #include "results/transcript.hpp"
 #include "ringmap_matrix.hpp"
 #include "weighted_clusters.hpp"
@@ -9,10 +12,14 @@
 #include <array>
 #include <cassert>
 #include <cstdint>
+#include <cstring>
 #include <iterator>
 #include <memory>
 #include <optional>
 #include <ranges>
+#include <span>
+#include <stdexcept>
+#include <string_view>
 #include <vector>
 
 void test_merge_windows_and_add_window_results_not_merging() {
@@ -766,6 +773,144 @@ void test_add_detected_clusters_with_confidence() {
              window_size);
 }
 
+void test_handle_transcripts_clusters_confidences() {
+  constexpr std::string_view sequence = "ACACCCAAACACAAACAAACCCACAAACACAACACAC";
+  constexpr unsigned n_reads = 1000;
+  constexpr unsigned window_size = 10;
+  constexpr unsigned window_offset = 3;
+  constexpr unsigned n_windows =
+      (std::size(sequence) - window_size) / window_offset;
+  assert((std::size(sequence) - window_size) % window_offset == 0);
+
+  std::vector<MutationMapTranscript> owned_transcripts{
+      MutationMapTranscript(MutationMap(), "test_1", 0),
+      MutationMapTranscript(MutationMap(), "test_2", 0),
+      MutationMapTranscript(MutationMap(), "test_3", 0),
+  };
+
+  for (auto &transcript : owned_transcripts) {
+    transcript.setSequence(sequence);
+    transcript.setReads(n_reads);
+  }
+
+  auto transcripts = owned_transcripts |
+                     std::views::transform(
+                         [](auto const &transcript) { return &transcript; }) |
+                     std::ranges::to<std::vector>();
+
+  Args args;
+
+  std::vector<RingmapData> owned_ringmap_data{
+      RingmapData(sequence, RingmapMatrix(n_reads, std::size(sequence)), 0,
+                  std::size(sequence), args),
+      RingmapData(sequence, RingmapMatrix(n_reads, std::size(sequence)), 0,
+                  std::size(sequence), args),
+      RingmapData(sequence, RingmapMatrix(n_reads, std::size(sequence)), 0,
+                  std::size(sequence), args),
+  };
+  auto ringmap_data =
+      owned_ringmap_data |
+      std::views::transform([](auto &ringmap_data) { return &ringmap_data; }) |
+      std::ranges::to<std::vector>();
+
+  results::Analysis analysis_result;
+
+  std::optional<std::ofstream> raw_n_clusters_stream = std::nullopt;
+  std::mutex raw_n_clusters_stream_mutex;
+
+  auto const make_window = [&](std::uint8_t n_clusters,
+                               unsigned short start_base) {
+    return Window{
+        .start_base = start_base,
+        .weights = WeightedClusters(window_size, n_clusters),
+        .coverages = std::vector<unsigned>(),
+    };
+  };
+
+  HandleTranscripts{.transcripts = transcripts,
+                    .ringmaps_data = ringmap_data,
+                    .analysis_result = analysis_result,
+                    .args = args,
+                    .raw_n_clusters_stream = raw_n_clusters_stream,
+                    .raw_n_clusters_stream_mutex = raw_n_clusters_stream_mutex,
+                    .use_stdout = false}(
+      [&](auto replicate_index, auto const &, auto &) {
+        std::vector<unsigned> pre_collapsing_clusters(n_windows, 1);
+        switch (replicate_index) {
+        case 0:
+          break;
+        case 1:
+          std::ranges::fill_n(
+              std::next(std::ranges::begin(pre_collapsing_clusters),
+                        n_windows / 3),
+              n_windows / 3, 2);
+          break;
+        case 2:
+          std::ranges::fill(
+              pre_collapsing_clusters | std::views::drop(n_windows / 2), 2);
+          break;
+        default:
+          throw new std::runtime_error("unexpected replicate index");
+        }
+
+        auto windows = std::views::iota(0u, n_windows) |
+                       std::views::transform([&](auto window_index) {
+                         auto start_base = static_cast<unsigned short>(
+                             window_index * window_offset);
+                         return make_window(1, start_base);
+                       }) |
+                       std::ranges::to<std::vector>();
+
+        PtbaOnReplicate ptba_on_replicate{
+            .pre_collapsing_clusters = pre_collapsing_clusters,
+            .windows = windows,
+            .window_size = window_size,
+            .window_offset = window_offset,
+        };
+        return std::optional(std::move(ptba_on_replicate));
+      },
+      [&](unsigned short start_base, unsigned short end_base,
+          std::uint8_t n_clusters, std::vector<arma::mat> const &,
+          results::Transcript const &) {
+        return WeightedClusters(end_base - start_base, n_clusters);
+      });
+
+  auto &analysis_transcripts = analysis_result.transcripts();
+  assert(std::size(analysis_transcripts) == 1);
+  auto const &transcript = analysis_transcripts.front();
+  assert(std::size(transcript.detected_clusters_with_confidence) == 4);
+
+  assert(transcript.detected_clusters_with_confidence[0].start_base == 0);
+  assert(transcript.detected_clusters_with_confidence[0].end_base ==
+         (n_windows / 3 - 1) * window_offset + window_size);
+  assert(transcript.detected_clusters_with_confidence[0].confidence == 1.);
+  assert(transcript.detected_clusters_with_confidence[0].n_clusters == 1);
+
+  assert(transcript.detected_clusters_with_confidence[1].start_base ==
+         n_windows / 3 * window_offset);
+  assert(transcript.detected_clusters_with_confidence[1].end_base ==
+         (n_windows / 2 - 1) * window_offset + window_size);
+  assert(std::abs(transcript.detected_clusters_with_confidence[1].confidence -
+                  2. / 3.) < 0.0001);
+  assert(transcript.detected_clusters_with_confidence[1].n_clusters == 1);
+
+  assert(transcript.detected_clusters_with_confidence[2].start_base ==
+         n_windows / 2 * window_offset);
+  assert(transcript.detected_clusters_with_confidence[2].end_base ==
+         (n_windows * 2 / 3 - 1) * window_offset + window_size);
+  assert(std::abs(transcript.detected_clusters_with_confidence[2].confidence -
+                  2. / 3.) < 0.0001);
+  assert(transcript.detected_clusters_with_confidence[2].n_clusters == 2);
+
+  assert(transcript.detected_clusters_with_confidence[3].start_base ==
+         n_windows * 2 / 3 * window_offset);
+  assert(transcript.detected_clusters_with_confidence[3].end_base ==
+         (n_windows - 1) * window_offset + window_size);
+  assert(std::abs(transcript.detected_clusters_with_confidence[3].confidence -
+                  2. / 3.) < 0.0001);
+  assert(transcript.detected_clusters_with_confidence[3].n_clusters == 1);
+}
+
 int main() {
   test_merge_windows_and_add_window_results_not_merging();
   test_make_windows_and_reads_indices_range_same_clusters();
@@ -777,4 +922,5 @@ int main() {
   test_window_info_get_n_windows_and_precise_offset();
   test_window_info_get_start_base();
   test_add_detected_clusters_with_confidence();
+  test_handle_transcripts_clusters_confidences();
 }

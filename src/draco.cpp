@@ -746,8 +746,17 @@ ptba_on_replicate(std::size_t replicate_index, RingmapData const &ringmap_data,
   const auto window_size = [&] {
     auto &&window_size = args.window_size();
     if (window_size <= 0) {
-      window_size = static_cast<unsigned>(
-          static_cast<double>(median_read_size) * args.window_size_fraction());
+      auto window_size_fraction_transcript_size =
+          args.window_size_fraction_transcript_size();
+      if (window_size_fraction_transcript_size <= 0.) {
+        window_size =
+            static_cast<unsigned>(static_cast<double>(median_read_size) *
+                                  args.window_size_fraction());
+      } else {
+        window_size = static_cast<unsigned>(
+            std::min(window_size_fraction_transcript_size, 1.) *
+            static_cast<double>(transcript_size));
+      }
     }
 
     return std::min(window_size, static_cast<unsigned>(transcript_size));

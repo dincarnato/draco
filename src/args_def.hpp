@@ -183,14 +183,20 @@ static constexpr auto opts = args::Opts(
         ARG(double, window_size_fraction)
             .parameter_name("winLenFraction")
             .description("Length of the window as fraction of the median read "
-                         "length [Note: this parameter "
+                         "length [Note: this parameter, \"--winLenFracRnaLen\" "
                          "and \"--absWinSize\" are mutually exclusive")
             .DEFAULT_VALUE(0.9),
+        ARG(double, window_size_fraction_transcript_size)
+            .parameter_name("winLenFracRnaLen")
+            .description("Length of the window as fraction of length of the "
+                         "RNA [Note: this parameter, \"--winLenFraction\" and "
+                         "\"--absWinSize\" are mutually exclusive")
+            .DEFAULT_VALUE(0),
         ARG(unsigned, window_size)
             .parameter_name("absWinLen")
             .description("Absolute length of the window [Note: this parameter "
-                         "and \"--winSizeFraction\" "
-                         "are mutually exclusive")
+                         "\"--winSizeFraction\" and \"--winLenFracRnaLen\" are "
+                         "mutually exclusive")
             .DEFAULT_VALUE(0u),
         ARG(double, window_shift_fraction)
             .parameter_name("winOffsetFraction")

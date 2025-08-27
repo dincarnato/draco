@@ -59,6 +59,10 @@ void Analysis::addTranscript(Transcript &&transcript) {
   queueCv.notify_one();
 }
 
+std::queue<Transcript> const &Analysis::transcripts() const noexcept {
+  return transcripts_;
+}
+
 void Analysis::streamerLoop() noexcept {
   while (not stop.load(std::memory_order_acquire)) {
     auto transcript = [&] {

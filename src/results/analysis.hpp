@@ -19,6 +19,7 @@ struct Analysis final {
   ~Analysis() noexcept;
 
   void addTranscript(Transcript &&transcript);
+  std::queue<Transcript> const &transcripts() const noexcept;
 
   std::vector<std::string> filenames;
 

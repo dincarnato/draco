@@ -21,11 +21,11 @@
 #include <random>
 #include <regex>
 #include <sstream>
+#include <string_view>
 #include <unordered_map>
 
-RingmapData::RingmapData(const std::string &filename,
-                         const std::string &sequence, Args const &args,
-                         bool keepFragments)
+RingmapData::RingmapData(const std::string &filename, std::string_view sequence,
+                         Args const &args, bool keepFragments)
     : minimumCoverage(args.minimum_base_coverage()),
       minimumModificationsPerBase(args.minimum_modifications_per_base()),
       minimumModificationsPerRead(args.minimum_modifications_per_read()),
@@ -95,7 +95,7 @@ RingmapData::RingmapData(const std::string &filename,
   nSetReads = readIndex;
 }
 
-RingmapData::RingmapData(const std::string &sequence, data_type &&dataMatrix,
+RingmapData::RingmapData(std::string_view sequence, data_type &&dataMatrix,
                          unsigned startIndex, unsigned endIndex,
                          Args const &args)
     : startIndex(startIndex), endIndex(endIndex),
@@ -108,7 +108,7 @@ RingmapData::RingmapData(const std::string &sequence, data_type &&dataMatrix,
       sequence(sequence), baseCoverages(sequence.size(), nSetReads),
       m_data(std::move(dataMatrix)), shape(args.shape()) {}
 
-RingmapData::RingmapData(const std::string &sequence, data_type &&dataMatrix,
+RingmapData::RingmapData(std::string_view sequence, data_type &&dataMatrix,
                          unsigned startIndex, unsigned endIndex)
     : startIndex(startIndex), endIndex(endIndex),
       nSetReads(dataMatrix.storedReads()), sequence(sequence),

@@ -10,6 +10,7 @@
 #include <map>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <vector>
 
 class MutationMap;
@@ -32,13 +33,13 @@ public:
   friend struct test::RingmapData;
 
   RingmapData() = default;
-  RingmapData(const std::string &sequence, data_type &&dataMatrix,
+  RingmapData(std::string_view sequence, data_type &&dataMatrix,
               unsigned startIndex, unsigned endIndex, Args const &args);
-  RingmapData(const std::string &filename, const std::string &sequence,
+  RingmapData(const std::string &filename, std::string_view sequence,
               Args const &args, bool keepFragments = true);
   RingmapData(const MutationMapTranscript &transcript, Args const &args);
   template <typename Iter>
-  RingmapData(const std::string &sequence, unsigned nReads, Iter readsBegin,
+  RingmapData(std::string_view sequence, unsigned nReads, Iter readsBegin,
               Iter readsEnd, Args const &args);
   RingmapData(const RingmapData &other,
               const std::vector<unsigned> &subsetIndices);
@@ -107,7 +108,7 @@ public:
   static void filter_bases_on_replicates(R &ringmap_data_range);
 
 private:
-  RingmapData(const std::string &sequence, data_type &&dataMatrix,
+  RingmapData(std::string_view sequence, data_type &&dataMatrix,
               unsigned startIndex, unsigned endIndex);
 
 #ifndef NDEBUG

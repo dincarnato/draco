@@ -8,7 +8,7 @@
 #include <stdexcept>
 
 template <typename Iter>
-RingmapData::RingmapData(const std::string &sequence, unsigned nReads,
+RingmapData::RingmapData(std::string_view sequence, unsigned nReads,
                          Iter readsBegin, Iter readsEnd, Args const &args)
     : startIndex(0), endIndex(static_cast<unsigned>(sequence.size())),
       nSetReads(nReads), minimumCoverage(args.minimum_base_coverage()),

@@ -33,7 +33,7 @@ public:
   std::array<std::vector<std::size_t>, 2> calculateMutationsAndCoverage() const
       noexcept(false);
 
-  void setSequence(const std::string &value) noexcept(false);
+  void setSequence(std::string_view value) noexcept(false);
   void setSequence(std::string &&value) noexcept(
       std::is_nothrow_move_assignable_v<std::string>);
   void setReads(unsigned value) noexcept;

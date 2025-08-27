@@ -103,7 +103,7 @@ MutationMapTranscript &MutationMapTranscript::operator=(
   return *this;
 }
 
-void MutationMapTranscript::setSequence(const std::string &value) noexcept(
+void MutationMapTranscript::setSequence(std::string_view value) noexcept(
     false) {
   sequence = value;
 }

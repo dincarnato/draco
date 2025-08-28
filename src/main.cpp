@@ -88,7 +88,8 @@ int main(int argc, char *argv[]) {
   const auto max_allowed_parallelism = [&] {
     auto n_processors = args.n_processors();
     if (n_processors == 0) {
-      n_processors = tbb::info::default_concurrency();
+      n_processors =
+          static_cast<unsigned>(std::max(tbb::info::default_concurrency(), 1));
     }
 
     return static_cast<std::size_t>(n_processors);

@@ -576,6 +576,69 @@ void test_get_best_pre_collapsing_clusters_one_window() {
   }
 }
 
+void test_window_info_get_n_windows_and_precise_offset() {
+  {
+    auto n_windows_and_precise_offset =
+        WindowsInfo{
+            .transcript_size = 29,
+            .window_size = 7,
+            .window_offset = 3,
+        }
+            .get_n_windows_and_precise_offset();
+    assert(n_windows_and_precise_offset.n_windows == 8);
+    assert(std::abs(n_windows_and_precise_offset.window_precise_offset -
+                    3.142857143) < 0.0001);
+  }
+
+  {
+    auto n_windows_and_precise_offset =
+        WindowsInfo{
+            .transcript_size = 28,
+            .window_size = 7,
+            .window_offset = 3,
+        }
+            .get_n_windows_and_precise_offset();
+    assert(n_windows_and_precise_offset.n_windows == 8);
+    assert(n_windows_and_precise_offset.window_precise_offset == 3);
+  }
+
+  {
+    auto n_windows_and_precise_offset =
+        WindowsInfo{
+            .transcript_size = 5,
+            .window_size = 4,
+            .window_offset = 3,
+        }
+            .get_n_windows_and_precise_offset();
+    assert(n_windows_and_precise_offset.n_windows == 1);
+    assert(n_windows_and_precise_offset.window_precise_offset == 0.);
+  }
+
+  {
+    auto n_windows_and_precise_offset =
+        WindowsInfo{
+            .transcript_size = 5,
+            .window_size = 5,
+            .window_offset = 3,
+        }
+            .get_n_windows_and_precise_offset();
+    assert(n_windows_and_precise_offset.n_windows == 1);
+    assert(n_windows_and_precise_offset.window_precise_offset == 0.);
+  }
+
+  {
+    auto n_windows_and_precise_offset =
+        WindowsInfo{
+            .transcript_size = 10,
+            .window_size = 9,
+            .window_offset = 1,
+        }
+            .get_n_windows_and_precise_offset();
+    assert(n_windows_and_precise_offset.n_windows == 2);
+    assert(n_windows_and_precise_offset.window_precise_offset == 1.);
+  }
+}
+
 int main() {
   test_merge_windows_and_add_window_results_not_merging();
   test_make_windows_and_reads_indices_range_same_clusters();
@@ -584,4 +647,5 @@ int main() {
   test_update_iters_and_region_same_clusters();
   test_update_iters_and_region_separated_clusters();
   test_update_iters_and_region_overlapping_clusters();
+  test_window_info_get_n_windows_and_precise_offset();
 }

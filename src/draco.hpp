@@ -193,6 +193,56 @@ void dump_assignments(results::Transcript const &transcript,
                       std::optional<std::size_t> replicate_index,
                       std::string_view assignments_dump_directory);
 
+struct NWindowsAndPreciseOffset {
+  std::size_t n_windows;
+  double window_precise_offset;
+};
+
+struct WindowsInfo {
+  std::size_t transcript_size;
+  unsigned window_size;
+  unsigned window_offset;
+
+  constexpr NWindowsAndPreciseOffset
+  get_n_windows_and_precise_offset() const noexcept {
+    assert(window_size <= transcript_size);
+
+    std::size_t n_windows = (transcript_size - window_size) / window_offset + 1;
+    if (n_windows * window_offset + window_size < transcript_size)
+      ++n_windows;
+
+    double window_precise_offset;
+    if (n_windows > 1) {
+      window_precise_offset =
+          static_cast<double>(transcript_size - window_size) /
+          static_cast<double>(n_windows - 1);
+    } else {
+      window_precise_offset = 0.;
+    }
+
+    return NWindowsAndPreciseOffset{
+        .n_windows = n_windows,
+        .window_precise_offset = window_precise_offset,
+    };
+  }
+
+  constexpr std::size_t
+  get_start_base(NWindowsAndPreciseOffset const &n_windows_and_precise_offset,
+                 std::size_t window_index) const noexcept {
+    if (n_windows_and_precise_offset.n_windows == 0) {
+      return 0;
+    }
+
+    auto start_base = static_cast<std::size_t>(
+        std::round(static_cast<double>(window_index) *
+                   n_windows_and_precise_offset.window_precise_offset));
+    if (start_base + window_size > transcript_size)
+      start_base = transcript_size - window_size;
+
+    return start_base;
+  }
+};
+
 struct HandleTranscripts {
   std::vector<MutationMapTranscript const *> const &transcripts;
   std::vector<RingmapData *> const &ringmaps_data;

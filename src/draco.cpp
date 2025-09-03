@@ -792,22 +792,22 @@ ptba_on_replicate(std::size_t replicate_index, RingmapData const &ringmap_data,
 
   assert(window_size <= transcript_size);
 
-  std::size_t n_windows = (transcript_size - window_size) / window_offset + 1;
-  if (n_windows * window_offset + window_size < transcript_size)
-    ++n_windows;
+  auto windows_info = WindowsInfo{
+      .transcript_size = transcript_size,
+      .window_size = window_size,
+      .window_offset = window_offset,
+  };
+  auto n_windows_and_precise_offset =
+      windows_info.get_n_windows_and_precise_offset();
 
+  auto const n_windows = n_windows_and_precise_offset.n_windows;
   assert(n_windows > 0);
   std::vector<Window> windows(n_windows);
   if (n_windows > 1) {
-    auto const window_precise_offset =
-        static_cast<double>(transcript_size - window_size) /
-        static_cast<double>(n_windows - 1);
     for (std::size_t window_index = 0; window_index < n_windows;
          ++window_index) {
-      auto start_base = static_cast<std::size_t>(std::round(
-          static_cast<double>(window_index) * window_precise_offset));
-      if (start_base + window_size > transcript_size)
-        start_base = transcript_size - window_size;
+      auto start_base = windows_info.get_start_base(
+          n_windows_and_precise_offset, window_index);
 
       windows[window_index].start_base =
           static_cast<unsigned short>(start_base);

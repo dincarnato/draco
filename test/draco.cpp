@@ -639,6 +639,36 @@ void test_window_info_get_n_windows_and_precise_offset() {
   }
 }
 
+void test_window_info_get_start_base() {
+  {
+    WindowsInfo windows_info{
+        .transcript_size = 29,
+        .window_size = 7,
+        .window_offset = 3,
+    };
+    auto n_windows_and_precise_offset =
+        windows_info.get_n_windows_and_precise_offset();
+    assert(windows_info.get_start_base(n_windows_and_precise_offset, 0) == 0);
+    assert(windows_info.get_start_base(n_windows_and_precise_offset, 1) == 3);
+    assert(windows_info.get_start_base(n_windows_and_precise_offset, 4) == 13);
+    assert(windows_info.get_start_base(n_windows_and_precise_offset, 7) == 22);
+  }
+
+  {
+    WindowsInfo windows_info{
+        .transcript_size = 28,
+        .window_size = 7,
+        .window_offset = 3,
+    };
+    auto n_windows_and_precise_offset =
+        windows_info.get_n_windows_and_precise_offset();
+    assert(windows_info.get_start_base(n_windows_and_precise_offset, 0) == 0);
+    assert(windows_info.get_start_base(n_windows_and_precise_offset, 1) == 3);
+    assert(windows_info.get_start_base(n_windows_and_precise_offset, 4) == 12);
+    assert(windows_info.get_start_base(n_windows_and_precise_offset, 7) == 21);
+  }
+}
+
 int main() {
   test_merge_windows_and_add_window_results_not_merging();
   test_make_windows_and_reads_indices_range_same_clusters();
@@ -648,4 +678,5 @@ int main() {
   test_update_iters_and_region_separated_clusters();
   test_update_iters_and_region_overlapping_clusters();
   test_window_info_get_n_windows_and_precise_offset();
+  test_window_info_get_start_base();
 }

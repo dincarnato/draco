@@ -67,6 +67,7 @@ function(create_tests suffix)
     weibull_fitter
     mutation_map_writer
     draco
+    kmeans
   )
   set(ringmap_base_args ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
   set(ringmap_shuffle_args ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)

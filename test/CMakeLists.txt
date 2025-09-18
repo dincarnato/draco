@@ -169,6 +169,13 @@ function(create_tests suffix)
   target_include_directories(draco_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
   target_link_libraries(draco_${ARGV0} ${ARGN})
 
+  add_executable(kmeans_${ARGV0} EXCLUDE_FROM_ALL
+      kmeans.cpp
+  )
+  target_compile_options(kmeans_${ARGV0} PRIVATE ${ARGN})
+  target_include_directories(kmeans_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
+  target_link_libraries(kmeans_${ARGV0} ${ARGN})
+
   add_test(ringmap_base_${ARGV0} ringmap_base_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
   add_test(ringmap_shuffle_${ARGV0} ringmap_shuffle_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
   add_test(ringmap_concat_${ARGV0} ringmap_concat_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
@@ -184,6 +191,7 @@ function(create_tests suffix)
   add_test(weibull_fitter_${ARGV0} weibull_fitter_${ARGV0})
   add_test(mutation_map_writer_${ARGV0} mutation_map_writer_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/test.mm)
   add_test(draco_${ARGV0} draco_${ARGV0})
+  add_test(kmeans_${ARGV0} kmeans_${ARGV0})
 
   set_tests_properties(ringmap_base_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   set_tests_properties(ringmap_shuffle_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
@@ -200,6 +208,7 @@ function(create_tests suffix)
   set_tests_properties(weibull_fitter_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   set_tests_properties(mutation_map_writer_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   set_tests_properties(draco_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
+  set_tests_properties(kmeans_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   
   target_link_libraries(windows_merger_${ARGV0} ${TBB_LIBRARIES} fmt::fmt)
   target_link_libraries(ringmap_base_${ARGV0} ${ARMADILLO_LIBRARIES})
@@ -221,6 +230,7 @@ function(create_tests suffix)
       ${dlib_LIBRARIES}
     )
   endif()
+  target_link_libraries(kmeans_${ARGV0} ${ARMADILLO_LIBRARIES})
 
 
   add_dependencies(ringmap_base_${ARGV0} run_args_generate)
@@ -255,6 +265,7 @@ function(create_tests suffix)
     weibull_fitter_${ARGV0}
     mutation_map_writer_${ARGV0}
     draco_${ARGV0}
+    kmeans_${ARGV0}
   )
 endfunction()
 

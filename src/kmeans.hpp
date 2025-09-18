@@ -113,4 +113,83 @@ template <typename T> struct Result {
   arma::Mat<T> centroids;
 };
 
+template <typename T, typename Gen>
+Result<T> run(arma::subview<T> const &points, std::uint8_t n_clusters,
+              Gen &&random_generator) {
+  if (n_clusters <= 1) {
+    std::vector<std::vector<arma::uword>> clusters_indices{
+        std::views::iota(static_cast<arma::uword>(0), points.n_rows) |
+        std::ranges::to<std::vector>()};
+
+    arma::Row<T> centroid(points.n_cols);
+    for (arma::uword point_index = 0; point_index < points.n_rows;
+         ++point_index) {
+      auto &&point = points.row(point_index);
+      centroid += point;
+    }
+    centroid *= static_cast<T>(1) / static_cast<T>(points.n_rows);
+    return Result{.clusters_indices = clusters_indices,
+                  .centroids = arma::mat{centroid}};
+  }
+
+  std::vector<arma::uword> centroids_indices;
+  kmeans_pp_centroids_initialization(points, n_clusters, centroids_indices,
+                                     random_generator);
+  arma::Mat<T> centroids(std::size(centroids_indices), points.n_cols);
+  for (auto &&[row_index, centroid_index] : std::views::zip(
+           std::views::iota(static_cast<arma::uword>(0)), centroids_indices)) {
+    centroids.row(row_index) = points.row(centroid_index);
+  }
+
+  std::vector<std::vector<arma::uword>> assignments(n_clusters);
+  // TODO: implement history check to avoid infinite iterations and/or
+  // maximum number of iterations
+  for (;;) {
+    for (auto &assignment : assignments) {
+      assignment.clear();
+    }
+
+    for (arma::uword point_index = 0; point_index < points.n_rows;
+         ++point_index) {
+      auto &&point = points.row(point_index);
+      auto best_centroid_index = *std::ranges::min_element(
+          std::views::iota(static_cast<arma::uword>(0),
+                           static_cast<arma::uword>(n_clusters)),
+          {}, [&](auto index) {
+            auto centroid = centroids.row(index);
+            return distance_squared(point, centroid);
+          });
+      assignments[static_cast<std::size_t>(best_centroid_index)].push_back(
+          point_index);
+    };
+
+    bool finished = true;
+    arma::Row<T> new_centroid;
+    for (auto &&[index, assignment] : std::views::zip(
+             std::views::iota(static_cast<arma::uword>(0)), assignments)) {
+      auto centroid = centroids.row(index);
+      new_centroid.resize(points.n_cols);
+      new_centroid.fill(static_cast<T>(0));
+
+      for (auto point_index : assignment) {
+        auto &&point = points.row(point_index);
+        new_centroid += point;
+      }
+      new_centroid *= static_cast<T>(1) / static_cast<T>(std::size(assignment));
+
+      if (arma::any(arma::abs(new_centroid - centroid) >
+                    static_cast<T>(MAX_CENTROID_DIMENSION_DISTANCE))) {
+        centroid = new_centroid;
+        finished = false;
+      }
+    }
+
+    if (finished) {
+      break;
+    }
+  }
+
+  return Result{.clusters_indices = assignments, .centroids = centroids};
+}
+
 } // namespace kmeans

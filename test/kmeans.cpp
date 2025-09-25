@@ -41,7 +41,7 @@ void test_kmeans() {
 
   std::mt19937 random_generator(42);
   auto results = kmeans::run(points.submat(arma::span::all, arma::span::all), 3,
-                             random_generator);
+                             1, random_generator);
   assert(std::size(results.clusters_indices) == 3);
   {
     bool condition =
@@ -99,7 +99,7 @@ void test_kmeans_trivial() {
   {
     std::mt19937 random_generator(42);
     auto results = kmeans::run(points.submat(arma::span::all, arma::span::all),
-                               1, random_generator);
+                               1, 1, random_generator);
     assert(results.centroids.n_rows == 1);
     assert(arma::all(results.centroids.row(0) == expected_centroid));
     assert(std::size(results.clusters_indices) == 1);
@@ -109,7 +109,7 @@ void test_kmeans_trivial() {
   {
     std::mt19937 random_generator(42);
     auto results = kmeans::run(points.submat(arma::span::all, arma::span::all),
-                               0, random_generator);
+                               0, 0, random_generator);
     assert(results.centroids.n_rows == 1);
     assert(arma::all(results.centroids.row(0) == expected_centroid));
     assert(std::size(results.clusters_indices) == 1);

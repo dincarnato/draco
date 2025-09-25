@@ -117,9 +117,72 @@ void test_kmeans_trivial() {
   }
 }
 
+void test_kmeans_multiple_iterations() {
+  constexpr std::uint64_t random_seed = 1;
+  arma::mat points{
+      {9., 9.5}, {0.7, 1.7}, {21., 2.2}, {1.5, 2.2},
+      {20., 2.}, {1., 2.},   {8., 9.2},  {8.5, 10.},
+
+  };
+
+  // Pre-check
+  {
+    std::mt19937 random_generator(random_seed);
+    auto results = kmeans::run(points.submat(arma::span::all, arma::span::all),
+                               3, 1, random_generator);
+    assert(std::size(results.clusters_indices) == 3);
+    {
+      bool condition =
+          results.clusters_indices[0] ==
+          std::vector{static_cast<arma::uword>(0), static_cast<arma::uword>(1),
+                      static_cast<arma::uword>(3), static_cast<arma::uword>(5),
+                      static_cast<arma::uword>(6), static_cast<arma::uword>(7)};
+      assert(condition);
+    }
+    {
+      bool condition = results.clusters_indices[1] ==
+                       std::vector{static_cast<arma::uword>(2)};
+      assert(condition);
+    }
+    {
+      bool condition =
+          results.clusters_indices[2] == std::vector{
+                                             static_cast<arma::uword>(4),
+                                         };
+      assert(condition);
+    }
+  }
+
+  std::mt19937 random_generator(random_seed);
+  auto results = kmeans::run(points.submat(arma::span::all, arma::span::all), 3,
+                             10, random_generator);
+  assert(std::size(results.clusters_indices) == 3);
+  {
+    bool condition =
+        results.clusters_indices[0] ==
+        std::vector{static_cast<arma::uword>(2), static_cast<arma::uword>(4)};
+    assert(condition);
+  }
+  {
+    bool condition =
+        results.clusters_indices[1] == std::vector{static_cast<arma::uword>(1),
+                                                   static_cast<arma::uword>(3),
+                                                   static_cast<arma::uword>(5)};
+    assert(condition);
+  }
+  {
+    bool condition =
+        results.clusters_indices[2] == std::vector{static_cast<arma::uword>(0),
+                                                   static_cast<arma::uword>(6),
+                                                   static_cast<arma::uword>(7)};
+    assert(condition);
+  }
+}
+
 int main() {
   test_distance_squared_functions();
   test_kmeans_pp_centroids_initialization();
   test_kmeans();
   test_kmeans_trivial();
+  test_kmeans_multiple_iterations();
 }

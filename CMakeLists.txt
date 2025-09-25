@@ -51,7 +51,7 @@ pkg_check_modules(TBB tbb REQUIRED)
 FetchContent_Declare(
   fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt
-  GIT_TAG        9cf9f38eded63e5e0fb95cd536ba51be601d7fa2) # 11.1.3
+  GIT_TAG        12.0.0)
 
 message(STATUS "Fetching fmt library")
 FetchContent_MakeAvailable(fmt)

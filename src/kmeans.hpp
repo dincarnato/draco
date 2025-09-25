@@ -114,34 +114,24 @@ template <typename T> struct Result {
 };
 
 template <typename T, typename Gen>
-Result<T> run(arma::subview<T> const &points, std::uint8_t n_clusters,
-              Gen &&random_generator) {
-  if (n_clusters <= 1) {
-    std::vector<std::vector<arma::uword>> clusters_indices{
-        std::views::iota(static_cast<arma::uword>(0), points.n_rows) |
-        std::ranges::to<std::vector>()};
+void single_iteration(arma::subview<T> const &points, std::uint8_t n_clusters,
+                      Result<T> &result,
+                      std::vector<arma::uword> &centroids_indices,
+                      Gen &&random_generator) {
+  auto &centroids = result.centroids;
+  auto &assignments = result.clusters_indices;
 
-    arma::Row<T> centroid(points.n_cols);
-    for (arma::uword point_index = 0; point_index < points.n_rows;
-         ++point_index) {
-      auto &&point = points.row(point_index);
-      centroid += point;
-    }
-    centroid *= static_cast<T>(1) / static_cast<T>(points.n_rows);
-    return Result{.clusters_indices = clusters_indices,
-                  .centroids = arma::mat{centroid}};
-  }
-
-  std::vector<arma::uword> centroids_indices;
   kmeans_pp_centroids_initialization(points, n_clusters, centroids_indices,
                                      random_generator);
-  arma::Mat<T> centroids(std::size(centroids_indices), points.n_cols);
+  centroids.resize(std::size(centroids_indices), points.n_cols);
+
   for (auto &&[row_index, centroid_index] : std::views::zip(
            std::views::iota(static_cast<arma::uword>(0)), centroids_indices)) {
     centroids.row(row_index) = points.row(centroid_index);
   }
 
-  std::vector<std::vector<arma::uword>> assignments(n_clusters);
+  assignments.resize(n_clusters);
+
   // TODO: implement history check to avoid infinite iterations and/or
   // maximum number of iterations
   for (;;) {
@@ -188,8 +178,69 @@ Result<T> run(arma::subview<T> const &points, std::uint8_t n_clusters,
       break;
     }
   }
+}
 
-  return Result{.clusters_indices = assignments, .centroids = centroids};
+template <typename T>
+T result_cumulative_centroids_distance_squared(arma::subview<T> const &points,
+                                               Result<T> const &result) {
+  return std::ranges::fold_left(
+      std::views::zip(result.clusters_indices,
+                      std::views::iota(static_cast<arma::uword>(0)) |
+                          std::views::transform([&](auto row_index) {
+                            return result.centroids.row(row_index);
+                          })) |
+          std::views::transform([&](auto &&tuple) {
+            auto &&[cluster_indices, centroid] = tuple;
+            return std::ranges::fold_left(
+                cluster_indices | std::views::transform([&](auto point_index) {
+                  return distance_squared(points.row(point_index), centroid);
+                }),
+                static_cast<T>(0), std::plus<T>{});
+          }),
+      static_cast<T>(0), std::plus<T>{});
+}
+
+template <typename T, typename Gen>
+Result<T> run(arma::subview<T> const &points, std::uint8_t n_clusters,
+              std::uint16_t iterations, Gen &&random_generator) {
+  iterations = std::max(iterations, static_cast<std::uint16_t>(1));
+
+  if (n_clusters <= 1) {
+    std::vector<std::vector<arma::uword>> clusters_indices{
+        std::views::iota(static_cast<arma::uword>(0), points.n_rows) |
+        std::ranges::to<std::vector>()};
+
+    arma::Row<T> centroid(points.n_cols);
+    for (arma::uword point_index = 0; point_index < points.n_rows;
+         ++point_index) {
+      auto &&point = points.row(point_index);
+      centroid += point;
+    }
+    centroid *= static_cast<T>(1) / static_cast<T>(points.n_rows);
+    return Result{.clusters_indices = clusters_indices,
+                  .centroids = arma::mat{centroid}};
+  }
+
+  Result<T> best_result;
+  std::vector<arma::uword> centroid_indices;
+  single_iteration(points, n_clusters, best_result, centroid_indices,
+                   random_generator);
+  auto best_centroids_distance =
+      result_cumulative_centroids_distance_squared(points, best_result);
+
+  Result<T> result;
+  for (std::uint16_t iteration = 1; iteration < iterations; ++iteration) {
+    single_iteration(points, n_clusters, result, centroid_indices,
+                     random_generator);
+    auto centroids_distance =
+        result_cumulative_centroids_distance_squared(points, result);
+    if (centroids_distance < best_centroids_distance) {
+      std::swap(best_result, result);
+      best_centroids_distance = centroids_distance;
+    }
+  }
+
+  return best_result;
 }
 
 } // namespace kmeans

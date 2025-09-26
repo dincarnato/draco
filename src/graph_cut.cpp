@@ -1,9 +1,12 @@
 #include "graph_cut.hpp"
 #include "logger.hpp"
 #include "rna_secondary_structure.hpp"
+#include "weighted_clusters.hpp"
 
 #include <algorithm>
+#include <armadillo>
 #include <cassert>
+#include <cmath>
 #include <exception>
 #include <functional>
 #include <iomanip>
@@ -257,4 +260,23 @@ double GraphCut::calculateClustersScore(const HardClusters &clusters) const {
         return calculateCutScore(getGraphWithNoLoops(adjacency), clusters);
       }),
       0., std::plus{});
+}
+
+arma::mat pairwise_distances(arma::mat const &a, arma::subview<double> b) {
+  if (a.n_cols != b.n_cols) {
+    throw new std::runtime_error("the matrices given to pairwise_distances "
+                                 "must have the same number of columns");
+  }
+
+  arma::mat out(a.n_rows, b.n_rows);
+  // Armadillo matrices are column-first, it's better to iterate over rows first
+  // in order to improve caching
+  for (arma::uword b_index = 0; b_index < b.n_rows; ++b_index) {
+    auto b_row = b.row(b_index);
+    for (arma::uword a_index = 0; a_index < a.n_rows; ++a_index) {
+      out[a_index, b_index] =
+          std::sqrt(arma::sum(arma::pow(a.row(a_index) - b_row, 2)));
+    }
+  }
+  return out;
 }

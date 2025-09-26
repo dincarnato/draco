@@ -71,4 +71,6 @@ private:
   std::variant<std::monostate, HardClusters, WeightedClusters> initialClusters;
 };
 
+arma::mat pairwise_distances(arma::mat const &a, arma::subview<double> b);
+
 #include "graph_cut_impl.hpp"

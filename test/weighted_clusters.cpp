@@ -1,7 +1,10 @@
 #include "weighted_clusters.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cassert>
+#include <iterator>
+#include <ranges>
 #include <utility>
 
 namespace ranges = std::ranges;
@@ -268,6 +271,19 @@ static void test_weighted_clusters(T &&weightedClusters) {
   }
 }
 
+void test_initialize_weighted_clusters_with_initializer_lists() {
+  auto cluster_a = {0.1f, 0.2f, 0.3f, 0.4f};
+  auto cluster_b = {0.7f, 0.3f, 0.1f, 0.3f};
+  auto cluster_c = {0.2f, 0.5f, 0.6f, 0.3f};
+  WeightedClusters weighted_clusters({cluster_a, cluster_b, cluster_c});
+
+  assert(weighted_clusters.getClustersSize() == 3);
+  assert(weighted_clusters.getElementsSize() == 4);
+  assert(std::ranges::equal(weighted_clusters.cluster(0), cluster_a));
+  assert(std::ranges::equal(weighted_clusters.cluster(1), cluster_b));
+  assert(std::ranges::equal(weighted_clusters.cluster(2), cluster_c));
+}
+
 int main() {
   {
     WeightedClusters weightedClusters;
@@ -311,4 +327,6 @@ int main() {
   test_weighted_clusters<true, true>(std::as_const(weightedClusters));
   test_weighted_clusters<true, false>(weightedClusters);
   test_weighted_clusters<true, false>(std::as_const(weightedClusters));
+
+  test_initialize_weighted_clusters_with_initializer_lists();
 }

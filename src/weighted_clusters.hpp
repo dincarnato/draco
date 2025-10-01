@@ -6,6 +6,7 @@
 #include "weighted_clusters_iterator.hpp"
 #include "weighted_clusters_span.hpp"
 
+#include <initializer_list>
 #include <vector>
 
 class WeightedClusters {
@@ -32,6 +33,8 @@ public:
   WeightedClusters() = default;
   WeightedClusters(std::size_t nElements, std::size_t nClusters,
                    bool setDefaultCluster = true);
+  WeightedClusters(
+      std::initializer_list<std::initializer_list<weight_type>> weights);
 
   iterator begin();
   iterator end();

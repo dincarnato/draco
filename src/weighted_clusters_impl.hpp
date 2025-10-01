@@ -3,6 +3,8 @@
 #include "weighted_clusters.hpp"
 
 #include <algorithm>
+#include <ranges>
+#include <stdexcept>
 
 inline WeightedClusters::WeightedClusters(std::size_t nElements,
                                           std::size_t nClusters,
@@ -14,6 +16,33 @@ inline WeightedClusters::WeightedClusters(std::size_t nElements,
          iter += static_cast<typename weights_type::difference_type>(_clusters))
       *iter = 1.f;
   }
+}
+
+inline WeightedClusters::WeightedClusters(
+    std::initializer_list<std::initializer_list<WeightedClusters::weight_type>>
+        weights)
+    : elements(std::empty(weights) ? 0
+                                   : std::size(*std::ranges::begin(weights))),
+      _clusters(std::size(weights)), weights(elements * _clusters) {
+  if (std::ranges::any_of(
+          weights | std::views::drop(1),
+          [&](auto cluster_size) { return cluster_size != elements; },
+          [](auto &&cluster_weights) { return std::size(cluster_weights); })) {
+    throw std::runtime_error("invalid initializer list for WeightedClusters");
+  }
+
+  std::ranges::for_each(
+      std::views::zip(std::views::iota(0uz) |
+                          std::views::transform([this](auto cluster_index) {
+                            return this->weights |
+                                   std::views::drop(cluster_index) |
+                                   std::views::stride(_clusters);
+                          }),
+                      weights),
+      [](auto &&tuple) {
+        auto &&[cluster_to_assign, cluster] = tuple;
+        std::ranges::copy(cluster, std::ranges::begin(cluster_to_assign));
+      });
 }
 
 inline auto WeightedClusters::begin() -> iterator { return iterator{*this, 0}; }
@@ -37,8 +66,8 @@ inline auto WeightedClusters::operator[](std::size_t index) -> span_type {
               static_cast<std::ptrdiff_t>(_clusters)};
 }
 
-inline auto
-WeightedClusters::operator[](std::size_t index) const -> const_span_type {
+inline auto WeightedClusters::operator[](std::size_t index) const
+    -> const_span_type {
   assert(index < elements);
   return {weights, _clusters,
           static_cast<std::ptrdiff_t>(index) *
@@ -49,8 +78,8 @@ inline auto WeightedClusters::cluster(std::size_t index) -> cluster_wrapper {
   return {*this, static_cast<std::ptrdiff_t>(index)};
 }
 
-inline auto
-WeightedClusters::cluster(std::size_t index) const -> const_cluster_wrapper {
+inline auto WeightedClusters::cluster(std::size_t index) const
+    -> const_cluster_wrapper {
   return {*this, static_cast<std::ptrdiff_t>(index)};
 }
 

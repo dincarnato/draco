@@ -5,6 +5,7 @@
 #include <cassert>
 #include <iterator>
 #include <ranges>
+#include <stdexcept>
 #include <utility>
 
 namespace ranges = std::ranges;
@@ -284,6 +285,19 @@ void test_initialize_weighted_clusters_with_initializer_lists() {
   assert(std::ranges::equal(weighted_clusters.cluster(2), cluster_c));
 }
 
+void test_invalid_weighted_clusters_initialization() {
+  auto cluster_a = {0.1f, 0.2f, 0.3f, 0.4f};
+  auto cluster_b = {0.7f, 0.3f, 0.1f};
+  auto cluster_c = {0.2f, 0.5f, 0.6f, 0.3f};
+  try {
+    WeightedClusters weighted_clusters({cluster_a, cluster_b, cluster_c});
+  } catch (std::runtime_error const &) {
+    return;
+  }
+
+  throw std::runtime_error("test failed");
+}
+
 int main() {
   {
     WeightedClusters weightedClusters;
@@ -329,4 +343,5 @@ int main() {
   test_weighted_clusters<true, false>(std::as_const(weightedClusters));
 
   test_initialize_weighted_clusters_with_initializer_lists();
+  test_invalid_weighted_clusters_initialization();
 }

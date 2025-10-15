@@ -1019,8 +1019,6 @@ std::vector<RingmapData> RingmapData::split_into_windows(
   }
 
   auto &&rows = m_data.rows();
-  auto rows_iter = std::ranges::begin(rows);
-  auto const end_rows = std::ranges::end(rows);
 
   auto const calc_modifications_intersection = [](auto const &row,
                                                   auto const &window) {
@@ -1035,137 +1033,58 @@ std::vector<RingmapData> RingmapData::split_into_windows(
         }));
   };
 
-  auto const calc_intersection = [](auto const &row,
-                                    auto const &window) -> unsigned {
-    auto const row_begin = row.begin_index();
-    auto const row_end = row.end_index();
-
-    if (row_begin <= window.begin_index) {
-      if (row_end <= window.end_index) {
-        return row_end - window.begin_index;
-      } else {
-        return window.end_index - window.begin_index;
-      }
-    } else if (row_begin < window.end_index) {
-      if (row_end <= window.end_index) {
-        return row_end - row_begin;
-      } else {
-        return window.end_index - row_begin;
-      }
-    } else {
-      return 0u;
-    }
-  };
-
-  std::vector<std::size_t> candidate_indices, last_step_indices;
-  for (; rows_iter < end_rows; ++rows_iter) {
-    candidate_indices.clear();
-    auto &&row = *rows_iter;
-
-    {
-      // Put the first window as a candidate
-      candidate_indices.resize(1);
-      candidate_indices[0] = 0;
-      unsigned best_intersection_size =
-          calc_modifications_intersection(row, windows[0]);
-
-      for (std::size_t window_index = 1; window_index < windows_size;
-           ++window_index) {
-        if (auto intersection_value =
-                calc_modifications_intersection(row, windows[window_index]);
-            intersection_value > best_intersection_size) {
-          candidate_indices.resize(1);
-          candidate_indices[0] = window_index;
-          best_intersection_size = intersection_value;
-        } else if (intersection_value == best_intersection_size) {
-          candidate_indices.emplace_back(window_index);
-        }
-      }
-
-      if (best_intersection_size == 0u)
+  for (auto &&[window, ringmap] : std::views::zip(windows, splitted_ringmaps)) {
+    for (auto const row : rows) {
+      if (calc_modifications_intersection(row, window) <
+          minimumModificationsPerRead) {
         continue;
+      }
+
+      auto const &indices = row.modifiedIndices();
+      assert(std::ranges::is_sorted(indices));
+
+      auto const new_row_begin = std::max(
+          row.begin_index(), static_cast<unsigned>(window.begin_index));
+      auto const new_row_end =
+          std::min(row.end_index(), static_cast<unsigned>(window.end_index));
+
+      auto const first_index_iter =
+          std::ranges::lower_bound(indices, new_row_begin);
+      auto const last_index_iter = std::ranges::lower_bound(
+          first_index_iter, std::ranges::end(indices), new_row_end);
+
+      ringmap_matrix::row_type new_row(static_cast<std::size_t>(
+          std::ranges::distance(first_index_iter, last_index_iter)));
+      new_row.copy_begin_end_indices(row);
+      new_row.copy_window_begin_end_indices(window);
+
+      assert(std::ranges::all_of(
+          first_index_iter, last_index_iter, [&](auto &&index) {
+            return index >= new_row_begin and index < new_row_end;
+          }));
+
+      /// The indices must be shifted by window.begin_index and not by
+      /// new_row_begin. The reason is that we want the new indices to have an
+      /// offset from the beginning of the window. At the same time, the
+      /// `begin_index` and the `end_index` should indicate the start and end of
+      /// the read one it is intersected with the window. The fact that
+      /// all the indices are within `[new_row_begin, new_row_end)` (because of
+      /// the assertion above) also means that it is not possible to have an
+      /// index less than `row.begin_index()`, because the `new_row_begin` is
+      /// the max of `row.begin_index()` and `window.begin_index`.
+      std::ranges::transform(
+          first_index_iter, last_index_iter, std::ranges::begin(new_row),
+          [begin = window.begin_index](auto &&index) { return index - begin; });
+      ringmap.m_data.addModifiedIndicesRow(std::move(new_row));
+
+      auto const base_coverages_begin = std::begin(ringmap.baseCoverages);
+      auto const first_base_cov =
+          std::next(base_coverages_begin, new_row_begin - window.begin_index);
+      std::transform(
+          first_base_cov,
+          std::next(base_coverages_begin, new_row_end - window.begin_index),
+          first_base_cov, [](auto base_coverage) { return base_coverage + 1; });
     }
-
-    // More than one candidate using modified bases. Using read intersection.
-    if (candidate_indices.size() > 1) {
-      std::swap(candidate_indices, last_step_indices);
-      candidate_indices.resize(1);
-      candidate_indices[0] = last_step_indices[0];
-      unsigned best_intersection_size =
-          calc_intersection(row, windows[last_step_indices[0]]);
-
-      std::for_each(std::next(std::begin(last_step_indices)),
-                    std::end(last_step_indices), [&](auto window_index) {
-                      if (auto intersection_value =
-                              calc_intersection(row, windows[window_index]);
-                          intersection_value > best_intersection_size) {
-                        candidate_indices.resize(1);
-                        candidate_indices[0] = window_index;
-                      } else if (intersection_value == best_intersection_size) {
-                        candidate_indices.emplace_back(window_index);
-                      }
-                    });
-    }
-
-    // Still more than one candidate? Let's take the smaller window
-    if (candidate_indices.size() > 1) {
-      auto const best_candidate_index =
-          *std::ranges::min_element(candidate_indices, {}, [&](auto index) {
-            auto const &window = windows[index];
-            return window.end_index - window.begin_index;
-          });
-
-      candidate_indices[0] = best_candidate_index;
-    }
-
-    auto const best_candidate_index = candidate_indices[0];
-    auto &ringmap = splitted_ringmaps[best_candidate_index];
-    auto const &window = windows[best_candidate_index];
-
-    auto const &indices = row.modifiedIndices();
-    assert(std::ranges::is_sorted(indices));
-
-    auto const new_row_begin =
-        std::max(row.begin_index(), static_cast<unsigned>(window.begin_index));
-    auto const new_row_end =
-        std::min(row.end_index(), static_cast<unsigned>(window.end_index));
-
-    auto const first_index_iter =
-        std::ranges::lower_bound(indices, new_row_begin);
-    auto const last_index_iter = std::ranges::lower_bound(
-        first_index_iter, std::ranges::end(indices), new_row_end);
-
-    ringmap_matrix::row_type new_row(static_cast<std::size_t>(
-        std::ranges::distance(first_index_iter, last_index_iter)));
-    new_row.copy_begin_end_indices(row);
-    new_row.copy_window_begin_end_indices(window);
-
-    assert(std::ranges::all_of(
-        first_index_iter, last_index_iter, [&](auto &&index) {
-          return index >= new_row_begin and index < new_row_end;
-        }));
-
-    /// The indices must be shifted by window.begin_index and not by
-    /// new_row_begin. The reason is that we want the new indices to have an
-    /// offset from the beginning of the window. At the same time, the
-    /// `begin_index` and the `end_index` should indicate the start and end of
-    /// the read one it is intersected with the window. The fact that
-    /// all the indices are within `[new_row_begin, new_row_end)` (because of
-    /// the assertion above) also means that it is not possible to have an
-    /// index less than `row.begin_index()`, because the `new_row_begin` is the
-    /// max of `row.begin_index()` and `window.begin_index`.
-    std::ranges::transform(
-        first_index_iter, last_index_iter, std::ranges::begin(new_row),
-        [begin = window.begin_index](auto &&index) { return index - begin; });
-    ringmap.m_data.addModifiedIndicesRow(std::move(new_row));
-
-    auto const base_coverages_begin = std::begin(ringmap.baseCoverages);
-    auto const first_base_cov =
-        std::next(base_coverages_begin, new_row_begin - window.begin_index);
-    std::transform(
-        first_base_cov,
-        std::next(base_coverages_begin, new_row_end - window.begin_index),
-        first_base_cov, [](auto base_coverage) { return base_coverage + 1; });
   }
 
   for (auto &ringmap : splitted_ringmaps) {

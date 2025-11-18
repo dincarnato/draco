@@ -1,4 +1,5 @@
 #include "graph_cut.hpp"
+#include "logger.hpp"
 #include "weighted_clusters.hpp"
 
 #include <algorithm>
@@ -9,13 +10,11 @@
 #include <functional>
 #include <iomanip>
 #include <iostream>
-#include <iterator>
 #include <oneapi/tbb/blocked_range.h>
 #include <oneapi/tbb/parallel_reduce.h>
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
-#include <utility>
 #include <vector>
 
 GraphCut::GraphCut(std::vector<arma::mat> const &adjacencies, Graph type)
@@ -96,73 +95,6 @@ auto GraphCut::run(std::uint8_t nClusters,
       nClusters, kmeans_iterations,
       [this](const auto &matrix) { return getGraphWithNoLoops(matrix); },
       std::mt19937(std::random_device{}()));
-}
-
-auto GraphCut::run(std::uint8_t nClusters, HardCut) const -> HardClusters {
-  if (nClusters < 2)
-    throw std::logic_error("nClusters must be at least 2");
-
-  auto clusters = partitionGraphHard(nClusters, [this](const auto &matrix) {
-    return getGraphWithNoLoops(matrix);
-  });
-
-  return clusters;
-}
-
-double GraphCut::calculateClustersScore(
-    const std::vector<std::vector<bool>> &rawClusters) const {
-  assert(not rawClusters.empty());
-  auto const &firstAdjacency = adjacencies[0];
-  assert(std::ranges::all_of(adjacencies | std::views::drop(1),
-                             [&](auto const &adjacency) {
-                               return adjacency.n_cols == firstAdjacency.n_cols;
-                             }));
-
-  const std::size_t nElements = firstAdjacency.n_cols;
-
-#ifndef NDEBUG
-  for (const auto &cluster : rawClusters)
-    assert(cluster.size() == nElements);
-#endif
-
-  HardClusters hardClusters(nElements,
-                            static_cast<std::uint8_t>(rawClusters.size()));
-  {
-    auto &&clusters = hardClusters.clusters();
-    auto clusterIter = std::ranges::begin(clusters);
-    const auto clustersEnd = std::ranges::end(clusters);
-    auto rawClusterIter = std::ranges::begin(rawClusters);
-
-    for (; clusterIter < clustersEnd; ++clusterIter, ++rawClusterIter) {
-      auto &&cluster = *clusterIter;
-      auto &&rawCluster = *rawClusterIter;
-
-      auto baseIter = std::ranges::begin(cluster);
-      const auto clusterEnd = std::ranges::end(cluster);
-      auto rawBaseIter = std::ranges::begin(rawCluster);
-
-      for (; baseIter < clusterEnd; ++baseIter, ++rawBaseIter) {
-        if (*rawBaseIter) {
-          auto wrapper = *baseIter;
-          wrapper.set();
-        }
-      }
-    }
-  }
-
-  return std::ranges::fold_left(
-      adjacencies | std::views::transform([&](auto const &adjacency) {
-        return calculateCutScore(getGraphWithNoLoops(adjacency), hardClusters);
-      }),
-      0., std::plus{});
-}
-
-double GraphCut::calculateClustersScore(const HardClusters &clusters) const {
-  return std::ranges::fold_left(
-      adjacencies | std::views::transform([&](auto const &adjacency) {
-        return calculateCutScore(getGraphWithNoLoops(adjacency), clusters);
-      }),
-      0., std::plus{});
 }
 
 arma::mat pairwise_distances(arma::mat const &a, arma::subview<double> b) {

@@ -2,8 +2,12 @@
 
 #include "weighted_clusters.hpp"
 
+#include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
+#include <ranges>
 #include <span>
 #include <vector>
 
@@ -20,6 +24,42 @@ constexpr std::size_t distances_size(std::uint8_t replicates,
       static_cast<std::size_t>(replicates - 1) / 2;
   return replicates_combinations * clusters * clusters;
 }
+
+struct ReplicatesPairDistances {
+  constexpr ReplicatesPairDistances(std::span<double const> distances,
+                                    std::uint8_t clusters) noexcept
+      : distances_(distances), clusters_(clusters) {
+    assert(clusters * clusters == std::size(distances));
+  }
+
+  constexpr double clusters_distance(
+      std::span<const std::uint8_t> replicate_a_coupling_indices,
+      std::span<const std::uint8_t> replicate_b_coupling_indices) noexcept {
+    assert(std::size(replicate_a_coupling_indices) ==
+           std::size(replicate_b_coupling_indices));
+    assert(std::size(replicate_a_coupling_indices) == clusters_);
+    assert(std::ranges::all_of(replicate_a_coupling_indices,
+                               [&](auto index) { return index < clusters_; }));
+    assert(std::ranges::all_of(replicate_b_coupling_indices,
+                               [&](auto index) { return index < clusters_; }));
+
+    return std::ranges::fold_left(
+        std::views::zip(replicate_a_coupling_indices,
+                        replicate_b_coupling_indices),
+        0., [&](double acc, auto &&tuple) {
+          auto &&[cluster_a_index, cluster_b_index] = tuple;
+          auto linear_index = static_cast<std::size_t>(cluster_a_index) *
+                                  static_cast<std::size_t>(clusters_) +
+                              static_cast<std::size_t>(cluster_b_index);
+          assert(linear_index < std::size(distances_));
+          return acc + distances_[linear_index];
+        });
+  }
+
+private:
+  std::span<double const> distances_;
+  std::uint8_t clusters_;
+};
 
 struct PermutationsDistances {
   PermutationsDistances(std::vector<WeightedClusters> &replicates_clusters);

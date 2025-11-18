@@ -176,6 +176,13 @@ function(create_tests suffix)
   target_include_directories(kmeans_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
   target_link_libraries(kmeans_${ARGV0} ${ARGN})
 
+  add_executable(clusters_replicates_${ARGV0} EXCLUDE_FROM_ALL
+      clusters_replicates.cpp
+  )
+  target_compile_options(clusters_replicates_${ARGV0} PRIVATE ${ARGN})
+  target_include_directories(clusters_replicates_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
+  target_link_libraries(clusters_replicates_${ARGV0} ${ARGN})
+
   add_test(ringmap_base_${ARGV0} ringmap_base_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
   add_test(ringmap_shuffle_${ARGV0} ringmap_shuffle_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
   add_test(ringmap_concat_${ARGV0} ringmap_concat_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
@@ -192,6 +199,7 @@ function(create_tests suffix)
   add_test(mutation_map_writer_${ARGV0} mutation_map_writer_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/test.mm)
   add_test(draco_${ARGV0} draco_${ARGV0})
   add_test(kmeans_${ARGV0} kmeans_${ARGV0})
+  add_test(clusters_replicates_${ARGV0} clusters_replicates_${ARGV0})
 
   set_tests_properties(ringmap_base_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   set_tests_properties(ringmap_shuffle_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
@@ -209,6 +217,7 @@ function(create_tests suffix)
   set_tests_properties(mutation_map_writer_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   set_tests_properties(draco_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   set_tests_properties(kmeans_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
+  set_tests_properties(clusters_replicates_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   
   target_link_libraries(windows_merger_${ARGV0} ${TBB_LIBRARIES} fmt::fmt)
   target_link_libraries(ringmap_base_${ARGV0} ${ARMADILLO_LIBRARIES})
@@ -231,6 +240,7 @@ function(create_tests suffix)
     )
   endif()
   target_link_libraries(kmeans_${ARGV0} ${ARMADILLO_LIBRARIES})
+  target_link_libraries(clusters_replicates_${ARGV0} ${ARMADILLO_LIBRARIES})
 
 
   add_dependencies(ringmap_base_${ARGV0} run_args_generate)
@@ -248,6 +258,7 @@ function(create_tests suffix)
   add_dependencies(weibull_fitter_${ARGV0} run_args_generate)
   add_dependencies(mutation_map_writer_${ARGV0} run_args_generate)
   add_dependencies(draco_${ARGV0} run_args_generate)
+  add_dependencies(clusters_replicates_${ARGV0} run_args_generate)
   
   add_dependencies(check
     ringmap_base_${ARGV0}
@@ -266,6 +277,7 @@ function(create_tests suffix)
     mutation_map_writer_${ARGV0}
     draco_${ARGV0}
     kmeans_${ARGV0}
+    clusters_replicates_${ARGV0}
   )
 endfunction()
 

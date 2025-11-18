@@ -68,6 +68,7 @@ function(create_tests suffix)
     mutation_map_writer
     draco
     kmeans
+    clusters_replicates
   )
   set(ringmap_base_args ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
   set(ringmap_shuffle_args ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)

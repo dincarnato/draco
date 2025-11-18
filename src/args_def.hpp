@@ -164,23 +164,6 @@ static constexpr auto opts = args::Opts(
                          "[Note: if this threshold is not met, the number of "
                          "clusters is automatically decreased]")
             .DEFAULT_VALUE(0.005),
-        ARG(std::uint16_t, soft_clustering_initializations)
-            .parameter_name("softClusteringInits")
-            .description(
-                "Number of iterations for the initialization process of the "
-                "graph-cut "
-                "[Note: the initialization with the lowest score is picked]")
-            .DEFAULT_VALUE(500),
-        ARG(std::uint16_t, soft_clustering_iterations)
-            .parameter_name("softClusteringIters")
-            .description("Number of iterations performed on graph-cut "
-                         "[Note: The cut with the lowest score is picked]")
-            .DEFAULT_VALUE(50),
-        ARG(float, soft_clustering_weight_module)
-            .parameter_name("softClusteringWeightModule")
-            .description("The module of the weight that is used to change the "
-                         "cluster weights in order to find the lowest score")
-            .DEFAULT_VALUE(0.005),
         ARG(std::uint16_t, soft_clustering_kmeans_iterations)
             .parameter_name("softClusteringKmeansIters")
             .description("Number of iterations of kmeans performed on "

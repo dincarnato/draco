@@ -180,7 +180,12 @@ static constexpr auto opts = args::Opts(
             .parameter_name("softClusteringWeightModule")
             .description("The module of the weight that is used to change the "
                          "cluster weights in order to find the lowest score")
-            .DEFAULT_VALUE(0.005)),
+            .DEFAULT_VALUE(0.005),
+        ARG(std::uint16_t, soft_clustering_kmeans_iterations)
+            .parameter_name("softClusteringKmeansIters")
+            .description("Number of iterations of kmeans performed on "
+                         "graph-cut when more than 2 clusters are found")
+            .DEFAULT_VALUE(20)),
 
     args::Group(
         "Windowed analysis",

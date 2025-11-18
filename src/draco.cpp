@@ -3,6 +3,7 @@
 #include "fmt/base.h"
 #include "fmt/ostream.h"
 #include "graph_cut.hpp"
+#include "kmeans.hpp"
 #include "logger.hpp"
 #include "mutation_map_transcript.hpp"
 #include "mutation_map_writer.hpp"
@@ -15,7 +16,6 @@
 #include "windows_merger.hpp"
 
 #include <algorithm>
-#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -973,15 +973,11 @@ void handle_transcripts(
             replicate_index, ringmap_data, args, raw_n_clusters_stream,
             raw_n_clusters_stream_mutex, transcript_result);
       },
-      [&](unsigned short start_base, unsigned short end_base,
-          std::uint8_t n_clusters,
-          std::vector<arma::mat> const &replicates_covariance,
-          results::Transcript const &transcript_result) {
+      [&](std::uint8_t n_clusters,
+          std::vector<arma::mat> const &replicates_covariance) {
         GraphCut graphCut(replicates_covariance);
-        return graphCut.run(n_clusters, args.soft_clustering_weight_module(),
-                            args.soft_clustering_initializations(),
-                            args.soft_clustering_iterations(), start_base,
-                            end_base, transcript_result);
+        return graphCut.run(n_clusters,
+                            args.soft_clustering_kmeans_iterations());
       });
 }
 

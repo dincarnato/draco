@@ -76,10 +76,11 @@ function(create_tests suffix)
   add_executable(graph_cut_${ARGV0} EXCLUDE_FROM_ALL
       graph_cut.cpp
       ${PROJECT_SOURCE_DIR}/src/graph_cut.cpp
-      ${PROJECT_SOURCE_DIR}/src/logger.cpp)
+      ${PROJECT_SOURCE_DIR}/src/clusters_replicates.cpp
+  )
   target_compile_options(graph_cut_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(graph_cut_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(graph_cut_${ARGV0} ${ARGN} ${TBB_LIBRARIES} fmt::fmt)
+  target_link_libraries(graph_cut_${ARGV0} ${ARGN} ${TBB_LIBRARIES})
   
   add_executable(matching_indices_${ARGV0} EXCLUDE_FROM_ALL
       matching_indices.cpp)
@@ -164,6 +165,7 @@ function(create_tests suffix)
       ${PROJECT_SOURCE_DIR}/src/kolmogorov_smirnov.cpp
       ${PROJECT_SOURCE_DIR}/src/results/analysis.cpp
       ${PROJECT_SOURCE_DIR}/src/logger.cpp
+      ${PROJECT_SOURCE_DIR}/src/clusters_replicates.cpp
   )
   target_compile_options(draco_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(draco_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)

@@ -275,9 +275,8 @@ struct HandleTranscripts {
       InvocableR<std::optional<PtbaOnReplicate>, std::size_t,
                  RingmapData const &, results::Transcript &> auto
           &&ptba_on_replicate,
-      InvocableR<WeightedClusters, unsigned short, unsigned short, std::uint8_t,
-                 std::vector<arma::mat> const &,
-                 results::Transcript const &> auto &&get_weighted_clusters) {
+      InvocableR<WeightedClusters, std::uint8_t,
+                 std::vector<arma::mat> const &> auto &&get_weighted_clusters) {
     auto const &first_transcript = *transcripts[0];
     if (std::ranges::any_of(ringmaps_data, [](auto const &ringmap_data) {
           return ringmap_data->data().rows_size() == 0;
@@ -490,7 +489,6 @@ struct HandleTranscripts {
           RingmapData::filter_bases_on_replicates(replicates_filtered_data);
 
           typename RingmapData::clusters_pattern_type patterns;
-          auto const &first_result_window = first_result_windows[window_index];
           for (;;) {
             if (n_clusters > 1 and
                 std::ranges::any_of(
@@ -508,16 +506,8 @@ struct HandleTranscripts {
                   }) |
                   std::views::as_rvalue | std::ranges::to<std::vector>();
 
-              assert(first_result_window.start_base <=
-                     std::numeric_limits<
-                         decltype(first_result_window.start_base)>::max() -
-                         window_size);
-              auto graphCutResults = get_weighted_clusters(
-                  first_result_window.start_base,
-                  first_result_window.start_base +
-                      static_cast<decltype(first_result_window.start_base)>(
-                          window_size),
-                  n_clusters, replicates_covariance, transcript_result);
+              auto graphCutResults =
+                  get_weighted_clusters(n_clusters, replicates_covariance);
 
               std::ranges::for_each(
                   std::views::zip(replicates_filtered_data,

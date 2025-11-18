@@ -178,6 +178,7 @@ function(create_tests suffix)
 
   add_executable(clusters_replicates_${ARGV0} EXCLUDE_FROM_ALL
       clusters_replicates.cpp
+      ${PROJECT_SOURCE_DIR}/src/clusters_replicates.cpp
   )
   target_compile_options(clusters_replicates_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(clusters_replicates_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)

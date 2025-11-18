@@ -7,6 +7,7 @@
 #include <numeric>
 #include <oneapi/tbb/parallel_for.h>
 #include <random>
+#include <ranges>
 #include <string_view>
 
 #include "windows_merger_deserializer.hpp"

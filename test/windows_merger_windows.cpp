@@ -1,11 +1,10 @@
 #include "windows_merger_windows.hpp"
 
-#include "windows_merger_window_base_impl.hpp"
-
 #include <algorithm>
 #include <cassert>
 #include <numeric>
 #include <random>
+#include <ranges>
 
 using namespace windows_merger;
 

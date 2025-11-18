@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdint>
 #include <initializer_list>
+#include <numeric>
 #include <ranges>
 #include <vector>
 
@@ -29,6 +30,23 @@ static double calc_clusters_distance(auto const &cluster_a,
                                                       std::get<1>(weights));
                                     }),
                                 0., std::plus{});
+}
+
+static double calc_replicates_clusters_distance(
+    WeightedClusters const &replicate_a,
+    std::span<const std::uint8_t> replicate_a_permutations,
+    WeightedClusters const &replicate_b,
+    std::span<const std::uint8_t> replicate_b_permutations) noexcept {
+  return std::ranges::fold_left(
+      std::views::zip(replicate_a_permutations, replicate_b_permutations) |
+          std::views::transform([&](auto &&tuple) {
+            auto [cluster_a_index, cluster_b_index] = tuple;
+            auto &&cluster_a = replicate_a.cluster(cluster_a_index);
+            auto &&cluster_b = replicate_b.cluster(cluster_b_index);
+
+            return calc_clusters_distance(cluster_a, cluster_b);
+          }),
+      0., std::plus{});
 }
 
 static void test_permutations_distances_constructor() {
@@ -126,7 +144,108 @@ static void test_permutations_distances_constructor() {
   }
 }
 
+static void test_replicates_pair_distances() {
+  std::array<std::initializer_list<float>, 4> replicate_1{{
+      {0.1f, 0.2f, 0.2f, 0.3f, 0.4f},
+      {0.4f, 0.2f, 0.4f, 0.2f, 0.1f},
+      {0.3f, 0.5f, 0.1f, 0.4f, 0.2f},
+      {0.2f, 0.1f, 0.3f, 0.1f, 0.3f},
+  }};
+
+  std::array<std::initializer_list<float>, 4> replicate_2 = {{
+      {0.3f, 0.4f, 0.1f, 0.2f, 0.2f},
+      {0.1f, 0.2f, 0.2f, 0.3f, 0.4f},
+      {0.4f, 0.3f, 0.6f, 0.2f, 0.1f},
+      {0.2f, 0.1f, 0.1f, 0.3f, 0.3f},
+  }};
+
+  std::array<std::initializer_list<float>, 4> replicate_3 = {{
+      {0.5f, 0.3f, 0.3f, 0.2f, 0.3f},
+      {0.2f, 0.4f, 0.1f, 0.3f, 0.2f},
+      {0.2f, 0.1f, 0.3f, 0.3f, 0.1f},
+      {0.1f, 0.2f, 0.3f, 0.2f, 0.4f},
+  }};
+
+  std::array<std::initializer_list<float>, 4> replicate_4 = {{
+      {0.5f, 0.3f, 0.3f, 0.2f, 0.3f},
+      {0.2f, 0.1f, 0.3f, 0.3f, 0.1f},
+      {0.1f, 0.2f, 0.3f, 0.2f, 0.4f},
+      {0.2f, 0.4f, 0.1f, 0.3f, 0.2f},
+  }};
+
+  std::array<std::initializer_list<float>, 4> replicate_5{{
+      {0.2f, 0.1f, 0.3f, 0.1f, 0.3f},
+      {0.1f, 0.2f, 0.2f, 0.3f, 0.4f},
+      {0.3f, 0.5f, 0.1f, 0.4f, 0.2f},
+      {0.4f, 0.2f, 0.4f, 0.2f, 0.1f},
+  }};
+
+  std::vector<WeightedClusters> replicates_clusters{
+      WeightedClusters{
+          replicate_1[0],
+          replicate_1[1],
+          replicate_1[2],
+          replicate_1[3],
+      },
+      WeightedClusters{
+          replicate_2[0],
+          replicate_2[1],
+          replicate_2[2],
+          replicate_2[3],
+      },
+      WeightedClusters{
+          replicate_3[0],
+          replicate_3[1],
+          replicate_3[2],
+          replicate_3[3],
+      },
+      WeightedClusters{
+          replicate_4[0],
+          replicate_4[1],
+          replicate_4[2],
+          replicate_4[3],
+      },
+      WeightedClusters{
+          replicate_5[0],
+          replicate_5[1],
+          replicate_5[2],
+          replicate_5[3],
+      },
+  };
+
+  PermutationsDistances permutations_distances(replicates_clusters);
+
+  auto assert_replicate_distances = [&](std::uint8_t replicate_a_index,
+                                        std::uint8_t replicate_b_index) {
+    auto replicates_distances =
+        permutations_distances.replicates_pair_distances(replicate_a_index,
+                                                         replicate_b_index);
+
+    std::array<std::uint8_t, 4> replicate_a_permutations;
+    std::array<std::uint8_t, 4> replicate_b_permutations;
+
+    std::ranges::iota(replicate_a_permutations, static_cast<std::uint8_t>(0));
+    do {
+      std::ranges::iota(replicate_b_permutations, static_cast<std::uint8_t>(0));
+      do {
+        assert(replicates_distances.clusters_distance(
+                   replicate_a_permutations, replicate_b_permutations) ==
+               calc_replicates_clusters_distance(
+                   replicates_clusters[replicate_a_index],
+                   replicate_a_permutations,
+                   replicates_clusters[replicate_b_index],
+                   replicate_b_permutations));
+      } while (std::ranges::next_permutation(replicate_b_permutations).found);
+    } while (std::ranges::next_permutation(replicate_a_permutations).found);
+  };
+
+  assert_replicate_distances(0, 1);
+  assert_replicate_distances(0, 3);
+  assert_replicate_distances(1, 3);
+}
+
 int main() {
   test_distances_size();
   test_permutations_distances_constructor();
+  test_replicates_pair_distances();
 }

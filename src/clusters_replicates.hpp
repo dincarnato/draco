@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
+#include <numeric>
 #include <ranges>
 #include <span>
 #include <vector>
@@ -104,6 +105,53 @@ private:
   std::uint8_t clusters_;
   std::uint16_t replicates_combinations;
   std::vector<double> distances_;
+};
+
+struct ReplicatesClustersPermutations {
+  constexpr ReplicatesClustersPermutations(std::uint8_t replicates,
+                                           std::uint8_t clusters)
+      : indices_(static_cast<std::size_t>(replicates) *
+                 static_cast<std::size_t>(clusters)),
+        clusters_(clusters) {
+    auto chunks = indices_ | std::views::chunk(clusters);
+    for (auto &&chunk : chunks) {
+      std::ranges::iota(chunk, static_cast<std::uint8_t>(0));
+    }
+  }
+
+  constexpr std::span<std::uint8_t>
+  operator[](std::size_t replicate_index) noexcept {
+    return std::span(
+        std::ranges::next(
+            std::ranges::begin(indices_),
+            static_cast<std::ptrdiff_t>(replicate_index *
+                                        static_cast<std::size_t>(clusters_))),
+        static_cast<std::size_t>(clusters_));
+  }
+
+  constexpr std::span<std::uint8_t const> indices() const noexcept {
+    return indices_;
+  }
+  constexpr std::span<std::uint8_t> indices() noexcept { return indices_; }
+
+  constexpr auto replicates(this auto &self) noexcept {
+    return self.indices_ | std::views::chunk(self.clusters_);
+  }
+
+  constexpr auto clusters(this auto &self) noexcept {
+    return std::views::iota(static_cast<std::uint8_t>(0), self.clusters_) |
+           std::views::transform([&](auto cluster_index) {
+             return self.indices_ | std::views::drop(cluster_index) |
+                    std::views::stride(self.clusters_);
+           });
+  }
+
+  constexpr auto begin() noexcept { return std::ranges::begin(replicates()); }
+  constexpr auto end() noexcept { return std::ranges::end(replicates()); }
+
+private:
+  std::vector<std::uint8_t> indices_;
+  std::uint8_t clusters_;
 };
 
 } // namespace clusters_replicates

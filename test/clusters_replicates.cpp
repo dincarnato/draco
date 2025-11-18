@@ -244,6 +244,116 @@ static void test_replicates_pair_distances() {
   assert_replicate_distances(1, 3);
 }
 
+static void test_reorder_best_permutation_more_iterations() {
+  std::array<std::initializer_list<float>, 5> replicate_1{{
+      {0.10f, 0.10f, 0.25f, 0.35f, 0.30f},
+      {0.10f, 0.30f, 0.35f, 0.20f, 0.25f},
+      {0.30f, 0.40f, 0.10f, 0.35f, 0.15f},
+      {0.15f, 0.05f, 0.20f, 0.05f, 0.10f},
+      {0.05f, 0.15f, 0.10f, 0.05f, 0.20f},
+  }};
+
+  std::array<std::initializer_list<float>, 5> replicate_2{{
+      {0.30f, 0.40f, 0.10f, 0.35f, 0.15f},
+      {0.10f, 0.30f, 0.35f, 0.20f, 0.25f},
+      {0.05f, 0.15f, 0.10f, 0.05f, 0.20f},
+      {0.15f, 0.05f, 0.20f, 0.05f, 0.10f},
+      {0.10f, 0.10f, 0.25f, 0.35f, 0.30f},
+  }};
+
+  std::array<std::initializer_list<float>, 5> replicate_3{{
+      {0.15f, 0.05f, 0.20f, 0.05f, 0.10f},
+      {0.05f, 0.15f, 0.10f, 0.05f, 0.20f},
+      {0.30f, 0.40f, 0.10f, 0.35f, 0.15f},
+      {0.10f, 0.10f, 0.25f, 0.35f, 0.30f},
+      {0.10f, 0.30f, 0.35f, 0.20f, 0.25f},
+  }};
+
+  std::array<std::initializer_list<float>, 5> replicate_4{{
+      {0.10f, 0.10f, 0.25f, 0.35f, 0.30f},
+      {0.30f, 0.40f, 0.10f, 0.35f, 0.15f},
+      {0.10f, 0.30f, 0.35f, 0.20f, 0.25f},
+      {0.15f, 0.05f, 0.20f, 0.05f, 0.10f},
+      {0.05f, 0.15f, 0.10f, 0.05f, 0.20f},
+  }};
+
+  std::vector<WeightedClusters> replicates_weighted_clusters{
+      WeightedClusters{
+          replicate_1[0],
+          replicate_1[1],
+          replicate_1[2],
+          replicate_1[3],
+          replicate_1[4],
+      },
+      WeightedClusters{
+          replicate_2[0],
+          replicate_2[1],
+          replicate_2[2],
+          replicate_2[3],
+          replicate_2[4],
+      },
+      WeightedClusters{
+          replicate_3[0],
+          replicate_3[1],
+          replicate_3[2],
+          replicate_3[3],
+          replicate_3[4],
+      },
+      WeightedClusters{
+          replicate_4[0],
+          replicate_4[1],
+          replicate_4[2],
+          replicate_4[3],
+          replicate_4[4],
+      },
+  };
+
+  reorder_best_permutation(replicates_weighted_clusters);
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(0),
+                            replicate_1[0]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(1),
+                            replicate_1[1]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(2),
+                            replicate_1[2]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(3),
+                            replicate_1[3]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(4),
+                            replicate_1[4]));
+
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(0),
+                            replicate_2[4]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(1),
+                            replicate_2[1]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(2),
+                            replicate_2[0]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(3),
+                            replicate_2[3]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(4),
+                            replicate_2[2]));
+
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(0),
+                            replicate_3[3]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(1),
+                            replicate_3[4]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(2),
+                            replicate_3[2]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(3),
+                            replicate_3[0]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(4),
+                            replicate_3[1]));
+
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(0),
+                            replicate_4[0]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(1),
+                            replicate_4[2]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(2),
+                            replicate_4[1]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(3),
+                            replicate_4[3]));
+  assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(4),
+                            replicate_4[4]));
+}
+
 static void test_reorder_best_permutation() {
   std::array<std::initializer_list<float>, 3> replicate_1{{
       {0.10f, 0.20f, 0.30f, 0.40f, 0.50f},
@@ -307,4 +417,5 @@ int main() {
   test_permutations_distances_constructor();
   test_replicates_pair_distances();
   test_reorder_best_permutation();
+  test_reorder_best_permutation_more_iterations();
 }

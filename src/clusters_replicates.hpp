@@ -14,6 +14,9 @@
 
 namespace clusters_replicates {
 
+void reorder_best_permutation(
+    std::vector<WeightedClusters> &replicates_clusters);
+
 constexpr std::size_t distances_size(std::uint8_t replicates,
                                      std::uint8_t clusters) noexcept {
   if (replicates <= 1) {

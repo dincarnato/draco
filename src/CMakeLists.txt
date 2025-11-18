@@ -20,6 +20,7 @@ add_executable(
     args.cpp
     logger.cpp
     mutation_map_writer.cpp
+    clusters_replicates.cpp
     )
 
 add_executable(

@@ -6,6 +6,9 @@
 #include "weighted_clusters_cluster_wrapper.hpp"
 
 #include <armadillo>
+#include <concepts>
+#include <cstdint>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -32,12 +35,8 @@ public:
   GraphCut(std::vector<arma::mat> const &adjacencies,
            Graph type = Graph::symmetricLaplacian);
 
-  WeightedClusters run(std::uint8_t nClusters, float weightModule,
-                       std::uint16_t nTries, std::uint16_t iterations,
-                       std::uint16_t window_begin_index,
-                       std::uint16_t window_end_index,
-                       results::Transcript const &transcript,
-                       FuzzyCut = fuzzy) const;
+  WeightedClusters run(std::uint8_t nClusters,
+                       std::uint16_t kmeans_iterations) const;
   HardClusters run(std::uint8_t nClusters, HardCut) const;
 
   double calculateClustersScore(
@@ -48,13 +47,13 @@ public:
 private:
   inline arma::mat createGraph(const arma::mat &adjacency) const;
   inline arma::mat createSymmetricLaplacian(const arma::mat &adjacency) const;
-  template <typename Fun>
+  template <typename Fun, typename Gen>
     requires requires(Fun fun) {
       { fun(std::declval<arma::mat const &>()) } -> std::same_as<arma::mat>;
     }
-  std::tuple<WeightedClusters, double>
-  partitionGraph(std::uint8_t nClusters, float weightModule,
-                 std::uint16_t nTries, Fun graphFun) const;
+  WeightedClusters partitionGraph(std::uint8_t nClusters,
+                                  std::uint16_t kmeans_iterations, Fun graphFun,
+                                  Gen &&random_generator) const;
   template <typename Fun>
   HardClusters partitionGraphHard(std::uint8_t nClusters, Fun graphFun) const;
   template <typename Clusters>

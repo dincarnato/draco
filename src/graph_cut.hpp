@@ -79,4 +79,7 @@ arma::mat eigenvectors_to_weighted_clusters(arma::mat const &eigenvectors,
                                             std::uint16_t kmeans_iterations,
                                             Gen &&rundom_generator);
 
+WeightedClusters
+merge_weighted_clusters(std::vector<WeightedClusters> &&all_weighted_clusters);
+
 #include "graph_cut_impl.hpp"

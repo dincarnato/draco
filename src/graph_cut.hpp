@@ -73,4 +73,10 @@ private:
 
 arma::mat pairwise_distances(arma::mat const &a, arma::subview<double> b);
 
+template <typename Gen>
+arma::mat eigenvectors_to_weighted_clusters(arma::mat const &eigenvectors,
+                                            std::uint8_t n_clusters,
+                                            std::uint16_t kmeans_iterations,
+                                            Gen &&rundom_generator);
+
 #include "graph_cut_impl.hpp"

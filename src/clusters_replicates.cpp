@@ -14,6 +14,95 @@
 
 namespace clusters_replicates {
 
+void reorder_best_permutation(
+    std::vector<WeightedClusters> &replicates_clusters) {
+  std::size_t const n_replicates = std::size(replicates_clusters);
+  if (n_replicates <= 1) {
+    return;
+  }
+
+  PermutationsDistances permutation_distances(replicates_clusters);
+  ReplicatesClustersPermutations replicates_clusters_permutations(
+      permutation_distances.replicates(), permutation_distances.clusters());
+
+  double best_clusters_distance = std::numeric_limits<double>::infinity();
+  auto best_replicates_clusters_permutations = replicates_clusters_permutations;
+  for (;;) {
+    // TODO: maybe we should cache part of the calculation
+    double total_clusters_distance = 0.;
+    for (std::uint8_t replicate_1 = 0;
+         replicate_1 < permutation_distances.replicates(); ++replicate_1) {
+      auto replicate_1_clusters_permutations =
+          replicates_clusters_permutations[replicate_1];
+
+      for (std::uint8_t replicate_2 = replicate_1 + 1;
+           replicate_2 < permutation_distances.replicates(); ++replicate_2) {
+        auto replicate_2_clusters_permutations =
+            replicates_clusters_permutations[replicate_2];
+        auto replicates_distances =
+            permutation_distances.replicates_pair_distances(replicate_1,
+                                                            replicate_2);
+
+        auto current_clusters_distance = replicates_distances.clusters_distance(
+            replicate_1_clusters_permutations,
+            replicate_2_clusters_permutations);
+        total_clusters_distance += current_clusters_distance;
+      }
+    }
+
+    if (total_clusters_distance < best_clusters_distance) {
+      best_clusters_distance = total_clusters_distance;
+      std::ranges::copy(
+          replicates_clusters_permutations.indices(),
+          std::ranges::begin(best_replicates_clusters_permutations.indices()));
+    }
+
+    std::uint8_t replicate_index = permutation_distances.replicates() - 1;
+    for (;;) {
+      if (std::ranges::next_permutation(
+              replicates_clusters_permutations[replicate_index])
+              .found) {
+        break;
+      }
+
+      // We don't need to create different combinations for the first replicate
+      if (replicate_index <= 1) {
+        goto finished;
+      } else {
+        --replicate_index;
+      }
+    }
+  }
+finished:
+
+  assert(not std::isinf(best_clusters_distance));
+  std::ranges::for_each(
+      std::views::zip(best_replicates_clusters_permutations,
+                      replicates_clusters) |
+          std::views::drop(1),
+      [&](auto &&tuple) {
+        auto &&[replicate_permutations, replicate_weighted_clusters] = tuple;
+
+        for (std::uint8_t cluster_index = 0;
+             cluster_index < permutation_distances.clusters() - 1;
+             ++cluster_index) {
+
+          auto &current_cluster_index = replicate_permutations[cluster_index];
+          if (cluster_index != current_cluster_index) {
+            auto swapping_cluster_iter = std::ranges::find(
+                replicate_permutations | std::views::drop(cluster_index + 1),
+                cluster_index);
+            assert(swapping_cluster_iter !=
+                   std::ranges::end(replicate_permutations));
+            replicate_weighted_clusters.swap_clusters(cluster_index,
+                                                      current_cluster_index);
+            std::swap(current_cluster_index, *swapping_cluster_iter);
+          }
+        }
+        assert(std::ranges::is_sorted(replicate_permutations));
+      });
+}
+
 PermutationsDistances::PermutationsDistances(
     std::vector<WeightedClusters> &replicates_clusters)
     : replicates_(([&] {

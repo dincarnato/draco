@@ -1,10 +1,12 @@
 #include "graph_cut.hpp"
+#include "weighted_clusters.hpp"
 
 #include <algorithm>
 #include <armadillo>
 #include <cassert>
 #include <cmath>
 #include <random>
+#include <vector>
 
 void test_pairwise_distance() {
   arma::mat a{{1., 2.}, {3., 4.}, {5., 6.}};
@@ -254,9 +256,43 @@ void test_eigenvectors_to_weighted_clusters_3_clusters() {
   assert(arma::approx_equal(weights, expected_weights, "absdiff", 1e-6));
 }
 
+void test_merge_weighted_clusters() {
+  std::vector all_weighted_clusters{
+      WeightedClusters{
+          {0.1f, 0.2f, 0.3f, 0.4f, 0.5f},
+          {0.6f, 0.3f, 0.6f, 0.2f, 0.3f},
+          {0.3f, 0.5f, 0.1f, 0.4f, 0.2f},
+      },
+      WeightedClusters{
+          {0.1f, 0.2f, 0.2f, 0.4f, 0.4f},
+          {0.5f, 0.3f, 0.6f, 0.2f, 0.4f},
+          {0.4f, 0.5f, 0.2f, 0.4f, 0.2f},
+      },
+      WeightedClusters{
+          {0.2f, 0.2f, 0.3f, 0.4f, 0.5f},
+          {0.6f, 0.3f, 0.6f, 0.3f, 0.3f},
+          {0.2f, 0.5f, 0.1f, 0.3f, 0.2f},
+      },
+  };
+
+  auto merged_weighted_clusters =
+      merge_weighted_clusters(std::move(all_weighted_clusters));
+  WeightedClusters expected_weighted_clusters{
+      {0.4f / 3.f, 0.2f, 0.8f / 3.f, 0.4f, 1.4f / 3.f},
+      {1.7f / 3.f, 0.3f, 0.6f, 0.7f / 3.f, 1.f / 3.f},
+      {0.3f, 0.5f, 0.4f / 3.f, 1.1f / 3.f, 0.2f},
+  };
+  assert(std::ranges::equal(
+      merged_weighted_clusters, expected_weighted_clusters,
+      [](auto &&merged_base_weights, auto &&expected_base_weights) {
+        return std::ranges::equal(merged_base_weights, expected_base_weights);
+      }));
+}
+
 int main() {
   test_pairwise_distance();
   test_eigenvectors_to_weighted_clusters_2_clusters();
   test_eigenvectors_to_weighted_clusters_2_clusters_zero_eigenvec();
   test_eigenvectors_to_weighted_clusters_3_clusters();
+  test_merge_weighted_clusters();
 }

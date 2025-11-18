@@ -79,6 +79,14 @@ arma::mat eigenvectors_to_weighted_clusters(arma::mat const &eigenvectors,
                                             std::uint16_t kmeans_iterations,
                                             Gen &&rundom_generator);
 
+template <typename Fun, typename Gen>
+  requires requires(Fun fun) {
+    { fun(std::declval<arma::mat const &>()) } -> std::same_as<arma::mat>;
+  }
+WeightedClusters weighted_clusters_from_adjacency(
+    std::uint8_t nClusters, std::uint16_t kmeans_iterations, Fun graphFun,
+    Gen &&random_generator, arma::mat const &adjacency);
+
 WeightedClusters
 merge_weighted_clusters(std::vector<WeightedClusters> &&all_weighted_clusters);
 

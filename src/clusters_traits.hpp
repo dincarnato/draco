@@ -1,27 +1,11 @@
 #pragma once
 
-#include <ranges>
 #include <type_traits>
 #include <vector>
 
 using weighted_clusters_weight_type = float;
 using weighted_clusters_weights_type =
     std::vector<weighted_clusters_weight_type>;
-
-template <typename> struct HardClustersBase;
-
-template <typename, typename = void> struct HardClustersTraits {};
-
-template <typename Type> struct HardClustersTraits<HardClustersBase<Type>> {
-  using cluster_type = HardClustersBase<Type>;
-  using index_type = Type;
-};
-
-template <typename Type>
-struct HardClustersTraits<const HardClustersBase<Type>> {
-  using cluster_type = HardClustersBase<Type>;
-  using index_type = Type;
-};
 
 template <typename T, typename = void>
 struct is_cluster_wrapper : std::bool_constant<false> {};

@@ -11,13 +11,17 @@
 #include <functional>
 #include <iomanip>
 #include <iostream>
+#include <iterator>
 #include <oneapi/tbb/blocked_range.h>
 #include <oneapi/tbb/parallel_reduce.h>
 #include <optional>
+#include <ranges>
 #include <sstream>
 #include <stdexcept>
 #include <thread>
 #include <tuple>
+#include <utility>
+#include <vector>
 
 GraphCut::GraphCut(std::vector<arma::mat> const &adjacencies, Graph type)
     : graphType(type), adjacencies(adjacencies) {
@@ -279,4 +283,29 @@ arma::mat pairwise_distances(arma::mat const &a, arma::subview<double> b) {
     }
   }
   return out;
+}
+
+WeightedClusters
+merge_weighted_clusters(std::vector<WeightedClusters> &&all_weighted_clusters) {
+  auto n_replicates = static_cast<double>(std::size(all_weighted_clusters));
+
+  WeightedClusters weights(std::move(all_weighted_clusters[0]));
+
+  for (auto &&[base_index, base_weights] :
+       std::views::zip(std::views::iota(0uz), weights)) {
+    for (auto &&[cluster_index, weight] :
+         std::views::zip(std::views::iota(0uz), base_weights)) {
+      weight = static_cast<float>(
+          std::ranges::fold_left(
+              all_weighted_clusters | std::views::drop(1) |
+                  std::views::transform([&](auto const &cluster_weights) {
+                    return static_cast<double>(
+                        cluster_weights[base_index][cluster_index]);
+                  }),
+              static_cast<double>(weight), std::plus{}) /
+          n_replicates);
+    }
+  }
+
+  return weights;
 }

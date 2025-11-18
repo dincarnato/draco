@@ -298,6 +298,17 @@ void test_invalid_weighted_clusters_initialization() {
   throw std::runtime_error("test failed");
 }
 
+static void test_swap_clusters() {
+  auto cluster_a = {0.1f, 0.2f, 0.3f, 0.4f};
+  auto cluster_b = {0.7f, 0.3f, 0.1f, 0.3f};
+  auto cluster_c = {0.2f, 0.5f, 0.6f, 0.3f};
+  WeightedClusters weighted_clusters({cluster_a, cluster_b, cluster_c});
+  weighted_clusters.swap_clusters(1, 2);
+  assert(std::ranges::equal(weighted_clusters.cluster(1), cluster_c));
+  assert(std::ranges::equal(weighted_clusters.cluster(2), cluster_b));
+  assert(std::ranges::equal(weighted_clusters.cluster(0), cluster_a));
+}
+
 int main() {
   {
     WeightedClusters weightedClusters;
@@ -344,4 +355,5 @@ int main() {
 
   test_initialize_weighted_clusters_with_initializer_lists();
   test_invalid_weighted_clusters_initialization();
+  test_swap_clusters();
 }

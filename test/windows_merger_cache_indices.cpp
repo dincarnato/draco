@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <random>
+#include <ranges>
 
 using namespace windows_merger;
 namespace ranges = std::ranges;

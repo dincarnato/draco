@@ -35,6 +35,7 @@ function(create_tests suffix)
       ${PROJECT_SOURCE_DIR}/src/rna_secondary_structure.cpp
       ${PROJECT_SOURCE_DIR}/src/spectral_partitioner.cpp
       ${PROJECT_SOURCE_DIR}/src/windows_merger.cpp
+      ${PROJECT_SOURCE_DIR}/src/clusters_replicates.cpp
   )
   target_compile_options(draco_test_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(draco_test_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)

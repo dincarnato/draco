@@ -70,6 +70,35 @@ struct PermutationsDistances {
   constexpr std::uint8_t replicates() const noexcept { return replicates_; }
   constexpr std::uint8_t clusters() const noexcept { return clusters_; }
 
+  constexpr auto
+  replicate_linear_index(std::uint8_t replicate_1_index,
+                         std::uint8_t replicate_2_index) const noexcept {
+    return static_cast<std::size_t>(
+        replicates_combinations -
+        (static_cast<std::uint16_t>(replicates_ - replicate_1_index) *
+         static_cast<std::uint16_t>(replicates_ - replicate_1_index - 1) / 2) +
+        static_cast<std::uint16_t>(replicate_2_index - replicate_1_index - 1));
+  }
+
+  constexpr auto
+  replicates_pair_distances(std::uint8_t replicate_1_index,
+                            std::uint8_t replicate_2_index) const {
+    auto clusters_squared =
+        static_cast<std::size_t>(static_cast<std::uint16_t>(clusters_) *
+                                 static_cast<std::uint16_t>(clusters_));
+    auto begin_index =
+        replicate_linear_index(replicate_1_index, replicate_2_index) *
+        clusters_squared;
+    assert(begin_index < std::size(distances_));
+    assert(begin_index + clusters_squared <= std::size(distances_));
+
+    auto replicates_distances =
+        std::span(std::ranges::next(std::ranges::begin(distances_),
+                                    static_cast<std::ptrdiff_t>(begin_index)),
+                  clusters_squared);
+    return ReplicatesPairDistances(replicates_distances, clusters_);
+  }
+
 private:
   std::uint8_t replicates_;
   std::uint8_t clusters_;

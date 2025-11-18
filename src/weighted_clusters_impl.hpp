@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <ranges>
 #include <stdexcept>
+#include <utility>
 
 inline WeightedClusters::WeightedClusters(std::size_t nElements,
                                           std::size_t nClusters,
@@ -139,6 +140,17 @@ WeightedClusters::operator<(const WeightedClusters &other) const noexcept {
   }
 
   return false;
+}
+
+inline void
+WeightedClusters::swap_clusters(std::size_t cluster_1_index,
+                                std::size_t cluster_2_index) noexcept {
+  auto cluster_1 = cluster(cluster_1_index);
+  auto cluster_2 = cluster(cluster_2_index);
+
+  for (auto &&[element_1, element_2] : std::views::zip(cluster_1, cluster_2)) {
+    std::swap(element_1, element_2);
+  }
 }
 
 static_assert(std::random_access_iterator<typename WeightedClusters::iterator>);

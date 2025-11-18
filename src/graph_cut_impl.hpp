@@ -600,3 +600,39 @@ arma::mat eigenvectors_to_weighted_clusters(arma::mat const &eigenvectors,
   weights.each_col([](arma::vec &col) { col /= arma::sum(col); });
   return weights;
 }
+
+template <typename Fun, typename Gen>
+  requires requires(Fun fun) {
+    { fun(std::declval<arma::mat const &>()) } -> std::same_as<arma::mat>;
+  }
+WeightedClusters weighted_clusters_from_adjacency(
+    std::uint8_t n_clusters, std::uint16_t kmeans_iterations, Fun graph_fun,
+    Gen &&random_generator, arma::mat const &adjacency) {
+  auto graph = graph_fun(adjacency);
+  arma::vec eigenvalues;
+  arma::mat eigenvectors;
+  arma::eig_sym(eigenvalues, eigenvectors, graph);
+
+  // TODO: avoid allocating a matrix and then create a WeightedClusters.
+  // Try to work directly with a WeightedClusters instead.
+  auto weighted_clusters_mat = eigenvectors_to_weighted_clusters(
+      eigenvectors, n_clusters, kmeans_iterations, random_generator);
+
+  WeightedClusters weighted_clusters(weighted_clusters_mat.n_cols,
+                                     weighted_clusters_mat.n_rows, false);
+  std::ranges::for_each(
+      std::views::zip(std::views::iota(static_cast<arma::uword>(0)) |
+                          std::views::transform([&](auto cluster_index) {
+                            return weighted_clusters_mat.row(cluster_index);
+                          }),
+                      weighted_clusters.clusters()),
+      [](auto tuple) {
+        auto &&[cluster_vec, cluster] = tuple;
+        for (auto &&[element_index, weight] : std::views::zip(
+                 std::views::iota(static_cast<arma::uword>(0)), cluster)) {
+          weight = static_cast<float>(cluster_vec[element_index]);
+        }
+      });
+
+  return weighted_clusters;
+}

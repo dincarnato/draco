@@ -62,6 +62,9 @@ public:
   bool operator==(const WeightedClusters &other) const noexcept;
   bool operator<(const WeightedClusters &other) const noexcept;
 
+  void swap_clusters(std::size_t cluster_1_index,
+                     std::size_t cluster_2_index) noexcept;
+
 private:
   std::size_t elements = 0;
   std::size_t _clusters = 0;

@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <span>
 #include <vector>
 
 namespace clusters_replicates {
@@ -22,6 +23,12 @@ constexpr std::size_t distances_size(std::uint8_t replicates,
 
 struct PermutationsDistances {
   PermutationsDistances(std::vector<WeightedClusters> &replicates_clusters);
+
+  constexpr std::span<double const> distances() const noexcept {
+    return distances_;
+  }
+  constexpr std::uint8_t replicates() const noexcept { return replicates_; }
+  constexpr std::uint8_t clusters() const noexcept { return clusters_; }
 
 private:
   std::uint8_t replicates_;

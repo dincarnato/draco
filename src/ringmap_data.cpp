@@ -1011,10 +1011,14 @@ std::vector<RingmapData> RingmapData::split_into_windows(
       ringmap.modificationsFilter = modificationsFilter;
       ringmap.minimumCoverage = minimumCoverage;
       ringmap.minimumModificationsPerBase = minimumModificationsPerBase;
+      ringmap.minimumModificationsPerRead = minimumModificationsPerRead;
+      ringmap.minimumModificationsPerBaseFraction =
+          minimumModificationsPerBaseFraction;
       ringmap.sequence =
           sequence.substr(window.begin_index - startIndex, window_size);
       ringmap.baseCoverages.resize(window_size, 0);
       ringmap.m_data = RingmapMatrix(window_size);
+      ringmap.shape = shape;
     }
   }
 

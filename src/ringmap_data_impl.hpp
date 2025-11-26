@@ -156,7 +156,7 @@ void RingmapData::filter_bases_on_replicates(R &ringmap_data_range) {
                              .col(static_cast<unsigned>(original_base_index))
                              .sum());
 
-                     return modifications_on_col >
+                     return modifications_on_col >=
                                 minimum_modifications_per_base and
                             (bases_filtered or
                              (ringmap_data.baseCoverages[original_base_index] >=

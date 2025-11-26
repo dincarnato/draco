@@ -628,11 +628,11 @@ struct HandleTranscripts {
                         return replicate_splitted_ringmaps[window_index];
                       }),
               std::ranges::begin(filtered_ringmaps));
-          RingmapData::filter_bases_on_replicates(filtered_ringmaps);
+          RingmapData::filter_bases_on_replicates_for_assignments(
+              filtered_ringmaps);
           for (auto &filtered_ringmap : filtered_ringmaps) {
             filtered_ringmap.filterReads();
           }
-          RingmapData::filter_bases_on_replicates(filtered_ringmaps);
 
           std::ranges::for_each(
               std::views::zip(

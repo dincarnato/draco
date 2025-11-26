@@ -107,9 +107,22 @@ public:
              std::random_access_iterator<std::ranges::iterator_t<R>>
   static void filter_bases_on_replicates(R &ringmap_data_range);
 
+  template <typename R>
+    requires std::ranges::range<R> and
+             std::same_as<std::ranges::range_reference_t<R>, RingmapData &> and
+             std::random_access_iterator<std::ranges::iterator_t<R>>
+  static void filter_bases_on_replicates_for_assignments(R &ringmap_data_range);
+
 private:
   RingmapData(std::string_view sequence, data_type &&dataMatrix,
               unsigned startIndex, unsigned endIndex);
+
+  template <typename R, typename F>
+    requires std::ranges::range<R> and
+             std::same_as<std::ranges::range_reference_t<R>, RingmapData &> and
+             std::random_access_iterator<std::ranges::iterator_t<R>>
+  static void filter_bases_on_replicates_inner(R &ringmap_data_range,
+                                               F base_filter);
 
 #ifndef NDEBUG
   bool allowedMismatches = false;

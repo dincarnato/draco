@@ -12,6 +12,7 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <format>
 #include <iterator>
 #include <mutex>
 #include <oneapi/tbb/parallel_for.h>
@@ -267,6 +268,7 @@ struct HandleTranscripts {
   std::optional<std::ofstream> &raw_n_clusters_stream;
   std::mutex &raw_n_clusters_stream_mutex;
   bool use_stdout;
+  bool allow_empty_patterns;
 
   void operator()(
       InvocableR<std::optional<PtbaOnReplicate>, std::size_t,
@@ -660,6 +662,19 @@ struct HandleTranscripts {
                        window.fractions.empty() or window.fractions[0] >= 0.01);
 
                 bool const redundand_patterns = [&] {
+                  if (!allow_empty_patterns and
+                      std::ranges::any_of(
+                          *window.patterns, [](auto const &pattern) {
+                            return std::ranges::all_of(
+                                pattern, [](auto value) { return value == 0; });
+                          })) {
+                    throw std::runtime_error(std::format(
+                        "A pattern for window {}-{} of transcript {} contains "
+                        "only zeros. This should never happen.",
+                        window.begin_index, window.end_index,
+                        transcript_result.name));
+                  }
+
                   auto patterns_iter = std::cbegin(*window.patterns);
                   auto const patterns_end = std::cend(*window.patterns);
 

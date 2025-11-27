@@ -211,7 +211,7 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
   for (unsigned permutation = 0;
        permutation < maxPermutations and eigenGapIndex < useful_eigengaps and
        (valid_eigengap_index == std::numeric_limits<unsigned>::max() or
-        eigenGapIndex <= valid_eigengap_index + extended_search_eigengaps);
+        eigenGapIndex <= valid_eigengap_index + extended_search_eigengaps + 1);
        ++permutation) {
     RingmapData perturbedData = initialData;
     perturbedData.perturb();
@@ -347,8 +347,9 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
     if (valid_eigengap_index == std::numeric_limits<unsigned>::max()) {
       valid_eigengap_index = 0u;
     }
-    for (; eigenGapIndex < useful_eigengaps and
-           eigenGapIndex <= valid_eigengap_index + extended_search_eigengaps;
+    for (;
+         eigenGapIndex < useful_eigengaps and
+         eigenGapIndex <= valid_eigengap_index + extended_search_eigengaps + 1;
          ++eigenGapIndex) {
       auto result_and_evaluated_distribution =
           isPValueSignificative(eigenGapIndex);
@@ -357,7 +358,8 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
 
       if (result == PValueResult::inf or
           result == PValueResult::nonsignificant) {
-        if (eigenGapIndex > valid_eigengap_index + extended_search_eigengaps or
+        if (eigenGapIndex >
+                valid_eigengap_index + extended_search_eigengaps + 1 or
             permutation < maxPermutations - 1)
           break;
       }
@@ -418,7 +420,7 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
     }
 
     if (eigenGapIndex == useful_eigengaps or
-        eigenGapIndex > valid_eigengap_index + extended_search_eigengaps) {
+        eigenGapIndex > valid_eigengap_index + extended_search_eigengaps + 1) {
       assert(valid_eigengap_index != std::numeric_limits<unsigned>::max());
 
       logger::on_debug_level([&]() {
@@ -623,7 +625,7 @@ void print_log_data(LogData const &log_data, Window const &window,
                                 permutation_log_data.permutation + 1,
                                 solution.valid_eigengap_index,
                                 permutation_log_data.eigengap_index,
-                                solution.extended_search_eigengaps);
+                                solution.extended_search_eigengaps + 1);
 
                           } else {
                             static_assert(false, "non-exhaustive visitor");

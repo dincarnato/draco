@@ -87,12 +87,12 @@ static constexpr auto opts = args::Opts(
             .parameter_name("minPermutations")
             .description("Minimum number of permutations performed to build "
                          "the null model")
-            .DEFAULT_VALUE(8),
+            .DEFAULT_VALUE(10),
         ARG(unsigned, max_permutations)
             .parameter_name("maxPermutations")
             .description("Maximum number of permutations performed to build "
                          "the null model")
-            .DEFAULT_VALUE(400),
+            .DEFAULT_VALUE(100),
         ARG(double, min_eigengap_threshold)
             .parameter_name("eigengapCumRelThresh")
             .description("Minimum relative difference between the eigengap and "
@@ -141,7 +141,7 @@ static constexpr auto opts = args::Opts(
             .parameter_name("lookaheadEigengaps")
             .description("Number of eigengaps to look ahead after a "
                          "non-informative eigengap is encountered")
-            .DEFAULT_VALUE(3),
+            .DEFAULT_VALUE(1),
         ARG(bool, create_eigengaps_plots)
             .parameter_name("saveEigengapData")
             .description("Saves eigengap data for plotting")
@@ -159,7 +159,7 @@ static constexpr auto opts = args::Opts(
                          "cluster/conformation "
                          "[Note: if this threshold is not met, the number of "
                          "clusters is automatically decreased]")
-            .DEFAULT_VALUE(0.05),
+            .DEFAULT_VALUE(0.005),
         ARG(std::uint16_t, soft_clustering_initializations)
             .parameter_name("softClusteringInits")
             .description(
@@ -171,7 +171,7 @@ static constexpr auto opts = args::Opts(
             .parameter_name("softClusteringIters")
             .description("Number of iterations performed on graph-cut "
                          "[Note: The cut with the lowest score is picked]")
-            .DEFAULT_VALUE(20),
+            .DEFAULT_VALUE(50),
         ARG(float, soft_clustering_weight_module)
             .parameter_name("softClusteringWeightModule")
             .description("The module of the weight that is used to change the "

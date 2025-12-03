@@ -1,5 +1,6 @@
 #include "clusters_replicates.hpp"
 #include "fmt/base.h"
+#include "logger.hpp"
 #include "results/transcript.hpp"
 #include "weighted_clusters.hpp"
 
@@ -71,9 +72,21 @@ void reorder_best_permutation(
     return;
   }
 
+  logger::trace("Searching the best permutation of clusters across replicates "
+                "for transcript {} on window with index {}",
+                transcript.name, window_index);
+
   PermutationsDistances permutation_distances(replicates_clusters);
   ReplicatesClustersPermutations replicates_clusters_permutations(
       permutation_distances.replicates(), permutation_distances.clusters());
+
+  auto normalize_distance = [&](double distance) {
+    auto n_bases = replicates_clusters[0].getElementsSize();
+    return distance / (static_cast<double>(n_bases) *
+                       static_cast<double>(
+                           permutation_distances.replicates_combinationns()) *
+                       static_cast<double>(permutation_distances.clusters()));
+  };
 
   double best_clusters_distance = std::numeric_limits<double>::infinity();
   auto best_replicates_clusters_permutations = replicates_clusters_permutations;
@@ -101,6 +114,17 @@ void reorder_best_permutation(
     }
 
     if (total_clusters_distance < best_clusters_distance) {
+      logger::on_trace_level([&] {
+        logger::trace("New best permutation for transcript {} on window with "
+                      "index {}; old distance was {} (normalized {}), new one "
+                      "is {} (normalized {}), permutation indices are {}",
+                      transcript.name, window_index, best_clusters_distance,
+                      normalize_distance(best_clusters_distance),
+                      total_clusters_distance,
+                      normalize_distance(total_clusters_distance),
+                      PermutationsFormatter{&replicates_clusters_permutations});
+      });
+
       best_clusters_distance = total_clusters_distance;
       std::ranges::copy(
           replicates_clusters_permutations.indices(),
@@ -124,6 +148,15 @@ void reorder_best_permutation(
     }
   }
 finished:
+
+  logger::on_debug_level([&] {
+    logger::debug(
+        "Best permutation for transcript {} on window with "
+        "index {} has distance {} (normalized {}), permutations indices are {}",
+        transcript.name, window_index, best_clusters_distance,
+        normalize_distance(best_clusters_distance),
+        PermutationsFormatter{&best_replicates_clusters_permutations});
+  });
 
   assert(not std::isinf(best_clusters_distance));
   std::ranges::for_each(

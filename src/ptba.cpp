@@ -358,7 +358,8 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
 
       if (result == PValueResult::inf or
           result == PValueResult::nonsignificant) {
-        if (eigenGapIndex >
+        if (eigenGapIndex == 0 or
+            eigenGapIndex >
                 valid_eigengap_index + extended_search_eigengaps + 1 or
             permutation < maxPermutations - 1)
           break;

@@ -1,4 +1,5 @@
 #include "clusters_replicates.hpp"
+#include "fmt/base.h"
 #include "weighted_clusters.hpp"
 
 #include <algorithm>
@@ -9,11 +10,58 @@
 #include <iterator>
 #include <limits>
 #include <ranges>
+#include <span>
 #include <stdexcept>
 #include <vector>
 
 namespace clusters_replicates {
+struct PermutationsFormatter {
+  ReplicatesClustersPermutations const *replicates_clusters_permutations;
+};
+} // namespace clusters_replicates
 
+template <> struct fmt::formatter<clusters_replicates::PermutationsFormatter> {
+  fmt::format_context::iterator
+  format(const clusters_replicates::PermutationsFormatter &f,
+         fmt::format_context &ctx) const {
+    auto out_iter = ctx.out();
+
+    auto format_cluster_replicates = [&](auto &&cluster_replicates) {
+      auto first_replicate_iter = std::ranges::begin(cluster_replicates);
+      if (first_replicate_iter != std::ranges::end(cluster_replicates)) {
+        ctx.advance_to(fmt::format_to(out_iter, "{}", *first_replicate_iter));
+
+        for (auto &&cluster_replicate :
+             cluster_replicates | std::views::drop(1)) {
+          ctx.advance_to(fmt::format_to(out_iter, "-{}", cluster_replicate));
+        }
+      }
+    };
+
+    ctx.advance_to(fmt::format_to(out_iter, "["));
+    auto &&clusters_replicates = f.replicates_clusters_permutations->clusters();
+    if (not std::empty(clusters_replicates)) {
+      if (auto first_cluster_replicates_iter =
+              std::ranges::begin(clusters_replicates);
+          first_cluster_replicates_iter !=
+          std::ranges::end(clusters_replicates)) {
+        format_cluster_replicates(*first_cluster_replicates_iter);
+
+        for (auto &&cluster_replicates :
+             clusters_replicates | std::views::drop(1)) {
+          ctx.advance_to(fmt::format_to(out_iter, ", "));
+          format_cluster_replicates(cluster_replicates);
+        }
+      }
+    }
+
+    return fmt::format_to(out_iter, "]");
+  }
+
+  constexpr auto parse(fmt::format_parse_context &ctx) { return ctx.begin(); }
+};
+
+namespace clusters_replicates {
 void reorder_best_permutation(
     std::vector<WeightedClusters> &replicates_clusters) {
   std::size_t const n_replicates = std::size(replicates_clusters);

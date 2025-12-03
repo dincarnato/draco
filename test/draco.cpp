@@ -873,7 +873,8 @@ void test_handle_transcripts_clusters_confidences() {
         return std::optional(std::move(ptba_on_replicate));
       },
       [&](std::uint8_t n_clusters,
-          std::vector<arma::mat> const &replicates_covariance) {
+          std::vector<arma::mat> const &replicates_covariance,
+          results::Transcript const &transcript, unsigned window_index) {
         return WeightedClusters(replicates_covariance[0].n_rows, n_clusters);
       });
 

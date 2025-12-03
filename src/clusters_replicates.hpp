@@ -1,5 +1,6 @@
 #pragma once
 
+#include "results/transcript.hpp"
 #include "weighted_clusters.hpp"
 
 #include <algorithm>
@@ -15,7 +16,8 @@
 namespace clusters_replicates {
 
 void reorder_best_permutation(
-    std::vector<WeightedClusters> &replicates_clusters);
+    std::vector<WeightedClusters> &replicates_clusters,
+    results::Transcript const &transcript, unsigned window_index);
 
 constexpr std::size_t distances_size(std::uint8_t replicates,
                                      std::uint8_t clusters) noexcept {

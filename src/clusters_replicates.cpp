@@ -1,5 +1,6 @@
 #include "clusters_replicates.hpp"
 #include "fmt/base.h"
+#include "results/transcript.hpp"
 #include "weighted_clusters.hpp"
 
 #include <algorithm>
@@ -63,7 +64,8 @@ template <> struct fmt::formatter<clusters_replicates::PermutationsFormatter> {
 
 namespace clusters_replicates {
 void reorder_best_permutation(
-    std::vector<WeightedClusters> &replicates_clusters) {
+    std::vector<WeightedClusters> &replicates_clusters,
+    results::Transcript const &transcript, unsigned window_index) {
   std::size_t const n_replicates = std::size(replicates_clusters);
   if (n_replicates <= 1) {
     return;

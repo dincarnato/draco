@@ -974,10 +974,12 @@ void handle_transcripts(
             raw_n_clusters_stream_mutex, transcript_result);
       },
       [&](std::uint8_t n_clusters,
-          std::vector<arma::mat> const &replicates_covariance) {
+          std::vector<arma::mat> const &replicates_covariance,
+          results::Transcript const &transcript, unsigned window_index) {
         GraphCut graphCut(replicates_covariance);
         return graphCut.run(n_clusters,
-                            args.soft_clustering_kmeans_iterations());
+                            args.soft_clustering_kmeans_iterations(),
+                            transcript, window_index);
       });
 }
 

@@ -123,7 +123,7 @@ PermutationsDistances::PermutationsDistances(
         }
         return static_cast<std::uint8_t>(clusters);
       })()),
-      replicates_combinations(
+      replicates_combinations_(
           static_cast<std::uint16_t>(replicates_ * (replicates_ - 1) / 2)),
       distances_(distances_size(replicates_, clusters_)) {
   std::size_t distance_index = 0;

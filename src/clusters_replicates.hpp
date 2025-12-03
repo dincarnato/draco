@@ -72,13 +72,16 @@ struct PermutationsDistances {
     return distances_;
   }
   constexpr std::uint8_t replicates() const noexcept { return replicates_; }
+  constexpr std::uint16_t replicates_combinationns() const noexcept {
+    return replicates_combinations_;
+  }
   constexpr std::uint8_t clusters() const noexcept { return clusters_; }
 
   constexpr auto
   replicate_linear_index(std::uint8_t replicate_1_index,
                          std::uint8_t replicate_2_index) const noexcept {
     return static_cast<std::size_t>(
-        replicates_combinations -
+        replicates_combinations_ -
         (static_cast<std::uint16_t>(replicates_ - replicate_1_index) *
          static_cast<std::uint16_t>(replicates_ - replicate_1_index - 1) / 2) +
         static_cast<std::uint16_t>(replicate_2_index - replicate_1_index - 1));
@@ -106,7 +109,7 @@ struct PermutationsDistances {
 private:
   std::uint8_t replicates_;
   std::uint8_t clusters_;
-  std::uint16_t replicates_combinations;
+  std::uint16_t replicates_combinations_;
   std::vector<double> distances_;
 };
 

@@ -3,6 +3,7 @@
 #include "clusters_replicates.hpp"
 #include "graph_cut.hpp"
 #include "kmeans.hpp"
+#include "results/transcript.hpp"
 
 #include <algorithm>
 #include <armadillo>
@@ -29,7 +30,8 @@ template <typename Fun, typename Gen>
   }
 WeightedClusters GraphCut::partitionGraph(std::uint8_t nClusters,
                                           std::uint16_t kmeans_iterations,
-                                          Fun graphFun,
+                                          results::Transcript const &transcript,
+                                          unsigned window_index, Fun graphFun,
                                           Gen &&random_generator) const {
   auto const &firstAdjacency = adjacencies[0];
   assert(std::ranges::all_of(adjacencies | std::views::drop(1),
@@ -56,7 +58,8 @@ WeightedClusters GraphCut::partitionGraph(std::uint8_t nClusters,
         }) |
         std::views::as_rvalue | std::ranges::to<std::vector>();
 
-    clusters_replicates::reorder_best_permutation(all_weighted_clusters);
+    clusters_replicates::reorder_best_permutation(all_weighted_clusters,
+                                                  transcript, window_index);
     return merge_weighted_clusters(std::move(all_weighted_clusters));
   }
 }

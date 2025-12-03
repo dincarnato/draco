@@ -303,8 +303,9 @@ struct HandleTranscripts {
       InvocableR<PtbaOnReplicate, std::size_t, RingmapData const &,
                  results::Transcript &, WindowsInfo const &> auto
           &&ptba_on_replicate,
-      InvocableR<WeightedClusters, std::uint8_t,
-                 std::vector<arma::mat> const &> auto &&get_weighted_clusters) {
+      InvocableR<WeightedClusters, std::uint8_t, std::vector<arma::mat> const &,
+                 results::Transcript const &, unsigned> auto
+          &&get_weighted_clusters) {
     auto const &first_transcript = *transcripts[0];
     if (std::ranges::any_of(ringmaps_data, [](auto const &ringmap_data) {
           return ringmap_data->data().rows_size() == 0;
@@ -538,7 +539,8 @@ struct HandleTranscripts {
                   std::views::as_rvalue | std::ranges::to<std::vector>();
 
               auto graphCutResults =
-                  get_weighted_clusters(n_clusters, replicates_covariance);
+                  get_weighted_clusters(n_clusters, replicates_covariance,
+                                        transcript_result, window_index);
 
               std::ranges::for_each(
                   std::views::zip(replicates_filtered_data,

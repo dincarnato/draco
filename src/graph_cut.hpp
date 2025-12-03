@@ -22,8 +22,9 @@ public:
   GraphCut(std::vector<arma::mat> const &adjacencies,
            Graph type = Graph::symmetricLaplacian);
 
-  WeightedClusters run(std::uint8_t nClusters,
-                       std::uint16_t kmeans_iterations) const;
+  WeightedClusters run(std::uint8_t nClusters, std::uint16_t kmeans_iterations,
+                       results::Transcript const &transcript,
+                       unsigned window_index) const;
 
   double calculateClustersScore(
       const std::vector<std::vector<bool>> &rawClusters) const;
@@ -35,9 +36,10 @@ private:
     requires requires(Fun fun) {
       { fun(std::declval<arma::mat const &>()) } -> std::same_as<arma::mat>;
     }
-  WeightedClusters partitionGraph(std::uint8_t nClusters,
-                                  std::uint16_t kmeans_iterations, Fun graphFun,
-                                  Gen &&random_generator) const;
+  WeightedClusters
+  partitionGraph(std::uint8_t nClusters, std::uint16_t kmeans_iterations,
+                 results::Transcript const &transcript, unsigned window_index,
+                 Fun graphFun, Gen &&random_generator) const;
 
   arma::mat getGraphWithNoLoops(const arma::mat &matrix) const;
 

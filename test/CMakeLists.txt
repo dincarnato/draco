@@ -243,7 +243,7 @@ function(create_tests suffix)
     )
   endif()
   target_link_libraries(kmeans_${ARGV0} ${ARMADILLO_LIBRARIES})
-  target_link_libraries(clusters_replicates_${ARGV0} ${ARMADILLO_LIBRARIES})
+  target_link_libraries(clusters_replicates_${ARGV0} ${ARMADILLO_LIBRARIES} fmt::fmt)
 
 
   add_dependencies(ringmap_base_${ARGV0} run_args_generate)

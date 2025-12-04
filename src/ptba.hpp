@@ -45,7 +45,7 @@ struct NotEnoughReads {
 
 struct NewValidEigengap {
   unsigned permutation;
-  std::size_t previous_eigengap_index;
+  std::optional<std::size_t> previous_eigengap_index;
   std::size_t new_eigengap_index;
   bool distribution_is_evaluated;
   double eigengap_difference;
@@ -58,13 +58,13 @@ struct SignificantEigengapLowDifference {
   double eigengap_difference;
   double eigengap_diff_absolute_threshold;
   bool distribution_is_evaluated;
-  std::size_t valid_eigengap_index;
+  std::optional<std::size_t> valid_eigengap_index;
   std::size_t current_eigengap_index;
 };
 
 struct NotSignificantEigengap {
   unsigned permutation;
-  std::size_t valid_eigengap_index;
+  std::optional<std::size_t> valid_eigengap_index;
   std::size_t current_eigengap_index;
 };
 

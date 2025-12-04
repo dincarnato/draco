@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iterator>
+#include <optional>
 #include <ranges>
 #include <type_traits>
 #include <variant>
@@ -206,12 +207,13 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
 
   log_data::Permuting permutation_log;
   unsigned eigenGapIndex = 0u;
-  unsigned valid_eigengap_index = std::numeric_limits<unsigned>::max();
+  std::optional<unsigned> valid_eigengap_index;
   assert(initialData.size() != 0);
   for (unsigned permutation = 0;
        permutation < maxPermutations and eigenGapIndex < useful_eigengaps and
-       (valid_eigengap_index == std::numeric_limits<unsigned>::max() or
-        eigenGapIndex <= valid_eigengap_index + extended_search_eigengaps + 1);
+       (not valid_eigengap_index.has_value() or
+        eigenGapIndex <=
+            valid_eigengap_index.value() + extended_search_eigengaps + 1);
        ++permutation) {
     RingmapData perturbedData = initialData;
     perturbedData.perturb();
@@ -344,12 +346,14 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
     };
 
     eigenGapIndex = std::max(eigenGapIndex, 1u);
-    if (valid_eigengap_index == std::numeric_limits<unsigned>::max()) {
+    if (!valid_eigengap_index.has_value()) {
       valid_eigengap_index = 0u;
     }
-    for (;
-         eigenGapIndex < useful_eigengaps and
-         eigenGapIndex <= valid_eigengap_index + extended_search_eigengaps + 1;
+    for (; eigenGapIndex < useful_eigengaps and
+           (eigenGapIndex == 0 or
+            (valid_eigengap_index.has_value() and
+             eigenGapIndex <=
+                 valid_eigengap_index.value() + extended_search_eigengaps + 1));
          ++eigenGapIndex) {
       auto result_and_evaluated_distribution =
           isPValueSignificative(eigenGapIndex);
@@ -359,8 +363,9 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
       if (result == PValueResult::inf or
           result == PValueResult::nonsignificant) {
         if (eigenGapIndex == 0 or
-            eigenGapIndex >
-                valid_eigengap_index + extended_search_eigengaps + 1 or
+            (valid_eigengap_index.has_value() and
+             eigenGapIndex > valid_eigengap_index.value() +
+                                 extended_search_eigengaps + 1) or
             permutation < maxPermutations - 1)
           break;
       }
@@ -421,8 +426,9 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
     }
 
     if (eigenGapIndex == useful_eigengaps or
-        eigenGapIndex > valid_eigengap_index + extended_search_eigengaps + 1) {
-      assert(valid_eigengap_index != std::numeric_limits<unsigned>::max());
+        (valid_eigengap_index.has_value() and
+         eigenGapIndex >
+             valid_eigengap_index.value() + extended_search_eigengaps + 1)) {
 
       logger::on_debug_level([&]() {
         auto solution = ([&]() {
@@ -432,7 +438,7 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
           } else {
             return log_data::permuting::solution_found::Solution{
                 log_data::permuting::solution_found::OverExtendedSearch{
-                    .valid_eigengap_index = valid_eigengap_index,
+                    .valid_eigengap_index = valid_eigengap_index.value(),
                     .extended_search_eigengaps = extended_search_eigengaps,
                 }};
           }
@@ -446,15 +452,19 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
         });
       });
 
-      std::vector<unsigned> significantIndices(valid_eigengap_index + 1);
+      std::vector<unsigned> significantIndices(valid_eigengap_index.value() +
+                                               1);
       std::iota(std::begin(significantIndices), std::end(significantIndices),
                 0u);
 
-      return {
-          valid_eigengap_index + 1,      std::move(dataEigenVecs),
-          std::move(dataEigenGaps),      std::move(perturbed_eigengaps),
-          std::move(significantIndices), std::move(filteredToUnfilteredBases),
-          std::move(adjacency),          std::move(permutation_log)};
+      return {valid_eigengap_index.value() + 1,
+              std::move(dataEigenVecs),
+              std::move(dataEigenGaps),
+              std::move(perturbed_eigengaps),
+              std::move(significantIndices),
+              std::move(filteredToUnfilteredBases),
+              std::move(adjacency),
+              std::move(permutation_log)};
     }
   }
 
@@ -553,18 +563,26 @@ void print_log_data(LogData const &log_data, Window const &window,
                   } else if constexpr (std::is_same_v<variant,
                                                       log_data::permuting::
                                                           NewValidEigengap>) {
-                    std::format_to(
-                        std::back_inserter(message),
-                        " new valid eigengap found (index = {}, previous "
-                        "index = {}) on permutation {}, eigengap "
-                        "difference ({}) >= cumulative difference ({}) * "
-                        "min eigengap threshold ({})",
-                        permutation_log_data.new_eigengap_index,
-                        permutation_log_data.previous_eigengap_index,
-                        permutation_log_data.permutation + 1,
-                        permutation_log_data.eigengap_difference,
-                        permutation_log_data.cumulative_difference,
-                        permutation_log_data.min_eigengap_threshold);
+                    std::format_to(std::back_inserter(message),
+                                   " new valid eigengap found (index = {}, ",
+                                   permutation_log_data.new_eigengap_index);
+                    if (permutation_log_data.previous_eigengap_index
+                            .has_value()) {
+                      std::format_to(
+                          std::back_inserter(message), "previous index = {}",
+                          permutation_log_data.previous_eigengap_index.value());
+                    } else {
+                      std::format_to(std::back_inserter(message),
+                                     "no previous one");
+                    }
+                    std::format_to(std::back_inserter(message),
+                                   ") on permutation {}, eigengap difference "
+                                   "({}) >= cumulative difference ({}) * min "
+                                   "eigengap threshold ({})",
+                                   permutation_log_data.permutation + 1,
+                                   permutation_log_data.eigengap_difference,
+                                   permutation_log_data.cumulative_difference,
+                                   permutation_log_data.min_eigengap_threshold);
                   } else if constexpr (
                       std::is_same_v<variant,
                                      log_data::permuting::
@@ -573,13 +591,25 @@ void print_log_data(LogData const &log_data, Window const &window,
                         std::back_inserter(message),
                         " eigengap with index {} is significant on permutation "
                         "{}, but the absolute eigengap difference ({}) is too "
-                        "low (threshold = {}) -- valid eigengap index = {}, "
-                        "distribution is {}evaluated",
+                        "low (threshold = {}) -- ",
                         permutation_log_data.current_eigengap_index,
                         permutation_log_data.permutation + 1,
                         permutation_log_data.eigengap_difference,
-                        permutation_log_data.eigengap_diff_absolute_threshold,
-                        permutation_log_data.valid_eigengap_index,
+                        permutation_log_data.eigengap_diff_absolute_threshold);
+                    if (permutation_log_data.valid_eigengap_index.has_value()) {
+                      std::format_to(
+                          std::back_inserter(message),
+                          "valid eigengap index = {}, ",
+                          permutation_log_data.valid_eigengap_index.value());
+
+                    } else if (permutation_log_data.current_eigengap_index !=
+                               0) {
+                      std::format_to(std::back_inserter(message),
+                                     "no valid eigengaps before, ");
+                    }
+                    std::format_to(
+                        std::back_inserter(message),
+                        "distribution is {}evaluated",
                         permutation_log_data.distribution_is_evaluated
                             ? ""
                             : "not ");
@@ -590,10 +620,20 @@ void print_log_data(LogData const &log_data, Window const &window,
                     std::format_to(
                         std::back_inserter(message),
                         " eigengap with index {} is not significant on "
-                        "permutation {} -- valid eigengap index = {}",
+                        "permutation {}",
                         permutation_log_data.current_eigengap_index,
-                        permutation_log_data.permutation + 1,
-                        permutation_log_data.valid_eigengap_index);
+                        permutation_log_data.permutation + 1);
+                    if (permutation_log_data.valid_eigengap_index.has_value()) {
+                      std::format_to(
+                          std::back_inserter(message),
+                          " -- valid eigengap index = {}",
+                          permutation_log_data.valid_eigengap_index.value());
+
+                    } else if (permutation_log_data.current_eigengap_index !=
+                               0) {
+                      std::format_to(std::back_inserter(message),
+                                     " -- no valid eigengaps before");
+                    }
                   } else if constexpr (std::is_same_v<variant,
                                                       log_data::permuting::
                                                           SolutionFound>) {

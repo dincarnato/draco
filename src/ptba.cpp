@@ -345,10 +345,6 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
                       0.);
     };
 
-    eigenGapIndex = std::max(eigenGapIndex, 1u);
-    if (!valid_eigengap_index.has_value()) {
-      valid_eigengap_index = 0u;
-    }
     for (; eigenGapIndex < useful_eigengaps and
            (eigenGapIndex == 0 or
             (valid_eigengap_index.has_value() and
@@ -412,6 +408,17 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
                     .current_eigengap_index = eigenGapIndex,
                 });
           });
+
+          if (eigenGapIndex == 0) {
+            return {0,
+                    std::move(dataEigenVecs),
+                    std::move(dataEigenGaps),
+                    std::move(perturbed_eigengaps),
+                    std::vector<unsigned>(),
+                    std::move(filteredToUnfilteredBases),
+                    std::move(adjacency),
+                    std::move(permutation_log)};
+          }
         }
       } else {
         logger::on_debug_level([&]() {
@@ -466,6 +473,26 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
               std::move(adjacency),
               std::move(permutation_log)};
     }
+  }
+
+  if (!valid_eigengap_index.has_value()) {
+    logger::on_debug_level([&]() {
+      permutation_log.data.push_back(
+          log_data::permuting::NotSignificantEigengap{
+              .permutation = maxPermutations,
+              .valid_eigengap_index = valid_eigengap_index,
+              .current_eigengap_index = eigenGapIndex,
+          });
+    });
+
+    return {0,
+            std::move(dataEigenVecs),
+            std::move(dataEigenGaps),
+            std::move(perturbed_eigengaps),
+            std::vector<unsigned>(),
+            std::move(filteredToUnfilteredBases),
+            std::move(adjacency),
+            std::move(permutation_log)};
   }
 
   constexpr std::string_view eigenVecsFilename = "/tmp/eigenvecs_thrown.txt";

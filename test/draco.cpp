@@ -912,6 +912,93 @@ void test_handle_transcripts_clusters_confidences() {
   assert(transcript.detected_clusters_with_confidence[3].n_clusters == 1);
 }
 
+static void test_handle_overlapping_regions_should_break() {
+  std::vector<Window> windows{Window{.start_base = 23,
+                                     .weights = WeightedClusters(100, 2),
+                                     .coverages = std::vector<unsigned>()}};
+  auto windows_iter = std::ranges::cbegin(windows);
+  std::vector<std::vector<unsigned>> windows_reads_indices(
+      2, std::vector<unsigned>{0, 1, 2});
+  std::span windows_reads_indices_span(windows_reads_indices);
+  auto windows_reads_indices_iter =
+      std::ranges::begin(windows_reads_indices_span);
+
+  std::optional<short unsigned> previous_overlapping_region_end;
+  auto result = handle_overlapping_regions(
+      previous_overlapping_region_end, windows_iter, std::ranges::cend(windows),
+      windows_reads_indices_iter, 2, 5);
+  assert(result == HandleOverlappingRegionsResult::Break);
+  assert(not previous_overlapping_region_end.has_value());
+  assert(windows_iter == std::ranges::cbegin(windows));
+  assert(windows_reads_indices_iter ==
+         std::ranges::begin(windows_reads_indices_span));
+
+  previous_overlapping_region_end = 15;
+  result = handle_overlapping_regions(previous_overlapping_region_end,
+                                      windows_iter, std::ranges::cend(windows),
+                                      windows_reads_indices_iter, 2, 5);
+  assert(result == HandleOverlappingRegionsResult::Break);
+  assert(*previous_overlapping_region_end == 15);
+  assert(windows_iter == std::ranges::cbegin(windows));
+  assert(windows_reads_indices_iter ==
+         std::ranges::begin(windows_reads_indices_span));
+}
+
+static void test_handle_overlapping_regions_advance_iters_and_region_end() {
+  std::vector<Window> windows{
+      Window{.start_base = 23,
+             .weights = WeightedClusters(100, 2),
+             .coverages = std::vector<unsigned>()},
+      Window{.start_base = 25,
+             .weights = WeightedClusters(100, 2),
+             .coverages = std::vector<unsigned>()},
+      Window{.start_base = 27,
+             .weights = WeightedClusters(100, 1),
+             .coverages = std::vector<unsigned>()},
+      Window{.start_base = 29,
+             .weights = WeightedClusters(100, 1),
+             .coverages = std::vector<unsigned>()},
+      Window{.start_base = 31,
+             .weights = WeightedClusters(100, 2),
+             .coverages = std::vector<unsigned>()},
+  };
+
+  auto windows_iter = std::ranges::cbegin(windows);
+  std::vector<std::vector<unsigned>> windows_reads_indices(std::size(windows));
+  std::span windows_reads_indices_span(windows_reads_indices);
+  auto windows_reads_indices_iter =
+      std::ranges::begin(windows_reads_indices_span);
+
+  std::vector<std::optional<short unsigned>> previous_overlapping_region_ends{
+      31, 27};
+  auto result = handle_overlapping_regions(
+      previous_overlapping_region_ends[1], windows_iter,
+      std::ranges::cend(windows), windows_reads_indices_iter, 2, 5);
+  assert(result == HandleOverlappingRegionsResult::Continue);
+  assert(previous_overlapping_region_ends[1] == 120);
+  assert(windows_iter == std::ranges::next(std::ranges::cbegin(windows), 2));
+  assert(windows_reads_indices_iter ==
+         std::ranges::next(std::ranges::begin(windows_reads_indices_span), 2));
+
+  result = handle_overlapping_regions(previous_overlapping_region_ends[0],
+                                      windows_iter, std::ranges::cend(windows),
+                                      windows_reads_indices_iter, 1, 5);
+  assert(result == HandleOverlappingRegionsResult::Continue);
+  assert(previous_overlapping_region_ends[0] == 124);
+  assert(windows_iter == std::ranges::next(std::ranges::cbegin(windows), 4));
+  assert(windows_reads_indices_iter ==
+         std::ranges::next(std::ranges::begin(windows_reads_indices_span), 4));
+
+  result = handle_overlapping_regions(previous_overlapping_region_ends[1],
+                                      windows_iter, std::ranges::cend(windows),
+                                      windows_reads_indices_iter, 2, 5);
+  assert(result == HandleOverlappingRegionsResult::Continue);
+  assert(previous_overlapping_region_ends[1] == 126);
+  assert(windows_iter == std::ranges::cend(windows));
+  assert(windows_reads_indices_iter ==
+         std::ranges::end(windows_reads_indices_span));
+}
+
 int main() {
   test_merge_windows_and_add_window_results_not_merging();
   test_make_windows_and_reads_indices_range_same_clusters();
@@ -924,4 +1011,6 @@ int main() {
   test_window_info_get_start_base();
   test_add_detected_clusters_with_confidence();
   test_handle_transcripts_clusters_confidences();
+  test_handle_overlapping_regions_should_break();
+  test_handle_overlapping_regions_advance_iters_and_region_end();
 }

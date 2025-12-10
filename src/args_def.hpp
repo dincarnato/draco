@@ -95,8 +95,7 @@ static constexpr auto opts = args::Opts(
             .DEFAULT_VALUE(100),
         ARG(bool, ignore_first_eigengap)
             .parameter_name("ignoreFirstEigengap")
-            .description(
-                "First eigengap is ignored")
+            .description("First eigengap is ignored")
             .DEFAULT_VALUE(false),
         ARG(double, min_eigengap_threshold)
             .parameter_name("eigengapCumRelThresh")
@@ -256,12 +255,12 @@ static constexpr auto opts = args::Opts(
                 "when specified, if the best assignment score for a read is "
                 "equal for more than on cluster, the read is discarded")
             .DEFAULT_VALUE(false),
-        ARG(std::uint8_t, min_windows_overlap)
+        ARG(float, min_windows_overlap)
             .parameter_name("minWindowsOverlap")
             .description("the minimum overlap between two non-contiguous "
                          "windows with the same number of conformations in "
                          "order to merge them in the same region. The value is "
-                         "a percentage of the window size, specified with "
-                         "values between 0 and 100")
-            .DEFAULT_VALUE(100)));
+                         "a fraction of the window size, specified with values "
+                         "between 0 and 1")
+            .DEFAULT_VALUE(1.f)));
 } // namespace args

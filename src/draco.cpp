@@ -581,7 +581,7 @@ void merge_windows_and_add_window_results(
 
   auto min_windows_overlap = static_cast<std::uint32_t>(
       static_cast<double>(window_size) *
-      static_cast<double>(args.min_windows_overlap() / 100.));
+      static_cast<double>(args.min_windows_overlap()));
 
   auto windows_iter = std::cbegin(windows);
   auto windows_reads_indices_iter = std::cbegin(windows_reads_indices);

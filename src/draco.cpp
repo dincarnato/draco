@@ -579,6 +579,10 @@ void merge_windows_and_add_window_results(
 
   std::vector<std::optional<std::uint16_t>> previous_overlapping_region_ends;
 
+  auto min_windows_overlap = static_cast<std::uint32_t>(
+      static_cast<double>(window_size) *
+      static_cast<double>(args.min_windows_overlap() / 100.));
+
   auto windows_iter = std::cbegin(windows);
   auto windows_reads_indices_iter = std::cbegin(windows_reads_indices);
   while (windows_iter != std::cend(windows)) {
@@ -609,9 +613,6 @@ void merge_windows_and_add_window_results(
       }
     }
 
-    auto min_windows_overlap = static_cast<std::uint32_t>(
-        static_cast<double>(window_size) *
-        static_cast<double>(args.min_windows_overlap() / 100.));
     auto windows_and_reads_indices_range = make_windows_and_reads_indices_range(
         std::ranges::cbegin(windows), windows_iter, std::ranges::cend(windows),
         windows_reads_indices_iter, std::ranges::cend(windows_reads_indices),

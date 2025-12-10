@@ -819,10 +819,41 @@ inline HandleOverlappingRegionsResult handle_overlapping_regions(
     windows_reads_indices_iter += iter_offset;
     windows_iter = next_useful_window;
 
+    logger::on_trace_level([&] {
+      if (next_useful_window == windows_iter_end) {
+        logger::trace("handle_overlapping_regions found no more useful windows "
+                      "with clusters != {} or window.start_base >= {}, "
+                      "advances the iterators by {}, updates the region end to "
+                      "{} and returns continue",
+                      n_clusters, *previous_overlapping_region_end, iter_offset,
+                      new_region_end);
+      } else {
+        logger::trace(
+            "handle_overlapping_regions found a useful windows with {} "
+            "clusters (needed != {}) and window.start_base {} (needed >= {}), "
+            "advances the iterators by {}, updates the region end to {} and "
+            "returns continue",
+            next_useful_window->weights.getClustersSize(), n_clusters,
+            next_useful_window->start_base, *previous_overlapping_region_end,
+            iter_offset, new_region_end);
+      }
+    });
 
     previous_overlapping_region_end = new_region_end;
     return HandleOverlappingRegionsResult::Continue;
   } else {
+    logger::on_trace_level([&] {
+      if (previous_overlapping_region_end.has_value()) {
+        logger::trace(
+            "handle_overlapping_regions sees the windows start base ({}) is "
+            "less than the previous overlapping region end ({}), returns break",
+            window.start_base, *previous_overlapping_region_end);
+      } else {
+        logger::trace("handle_overlapping_regions sees no previous overlapping "
+                      "region end, returns break");
+      }
+    });
+
     return HandleOverlappingRegionsResult::Break;
   }
 }

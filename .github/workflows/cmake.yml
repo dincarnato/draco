@@ -14,8 +14,8 @@ jobs:
     strategy:
       matrix:
         compiler:
-          - { distro: ubuntu-24.04, c: gcc-14, cxx: g++-14, flags: , deps: }
-          - { distro: ubuntu-24.04, c: clang-16, cxx: clang++-16, flags: -DUSE_LIBCXX=ON, deps: libomp-16-dev libc++-16-dev libc++abi-16-dev }
+          - { distro: ubuntu-25.04, c: gcc-15, cxx: g++-15, flags: , deps: }
+          - { distro: ubuntu-25.04, c: clang-19, cxx: clang++-19, flags: -DUSE_LIBCXX=ON, deps: libomp-19-dev libc++-19-dev libc++abi-19-dev }
         build_type: [Debug, RelWithDebInfo]
 
     runs-on: ${{ matrix.compiler.distro }}
@@ -47,7 +47,7 @@ jobs:
           --verbose
 
   test:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-25.04
 
     steps:
     - uses: actions/checkout@v4

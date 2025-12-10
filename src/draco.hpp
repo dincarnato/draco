@@ -786,3 +786,34 @@ struct HandleTranscripts {
     analysis_result.addTranscript(std::move(transcript_result));
   }
 };
+
+enum class HandleOverlappingRegionsResult {
+  Continue,
+  Break,
+};
+
+inline HandleOverlappingRegionsResult handle_overlapping_regions(
+    std::optional<unsigned short> &previous_overlapping_region_end,
+    std::vector<Window>::const_iterator &windows_iter,
+    std::vector<Window>::const_iterator const &windows_iter_end,
+    std::span<std::vector<unsigned>>::iterator &windows_reads_indices_iter,
+    unsigned n_clusters) {
+  auto &&window = *windows_iter;
+
+  if (previous_overlapping_region_end.has_value() and
+      window.start_base < *previous_overlapping_region_end) {
+
+    auto next_useful_window = std::ranges::find_if(
+        windows_iter, windows_iter_end, [&](auto const &window) {
+          return window.weights.getClustersSize() != n_clusters or
+                 window.start_base >= *previous_overlapping_region_end;
+        });
+    windows_reads_indices_iter +=
+        std::ranges::distance(windows_iter, next_useful_window);
+    windows_iter = next_useful_window;
+
+    return HandleOverlappingRegionsResult::Continue;
+  } else {
+    return HandleOverlappingRegionsResult::Break;
+  }
+}

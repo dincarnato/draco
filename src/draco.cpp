@@ -595,20 +595,13 @@ void merge_windows_and_add_window_results(
       previous_overlapping_region_ends.resize(n_clusters);
     }
     if (n_clusters > 0) {
-      auto const &previous_overlapping_region_end =
+      auto &previous_overlapping_region_end =
           previous_overlapping_region_ends[n_clusters - 1];
-      if (previous_overlapping_region_end.has_value() and
-          window.start_base < *previous_overlapping_region_end) {
+      auto result = handle_overlapping_regions(
+          previous_overlapping_region_end, windows_iter, std::cend(windows),
+          windows_reads_indices_iter, n_clusters);
 
-        auto next_useful_window = std::ranges::find_if(
-            windows_iter, std::cend(windows), [&](auto const &window) {
-              return window.weights.getClustersSize() != n_clusters or
-                     window.start_base >= *previous_overlapping_region_end;
-            });
-        windows_reads_indices_iter +=
-            std::ranges::distance(windows_iter, next_useful_window);
-        windows_iter = next_useful_window;
-
+      if (result == HandleOverlappingRegionsResult::Continue) {
         continue;
       }
     }

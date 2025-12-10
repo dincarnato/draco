@@ -797,9 +797,8 @@ inline HandleOverlappingRegionsResult handle_overlapping_regions(
     std::vector<Window>::const_iterator &windows_iter,
     std::vector<Window>::const_iterator const &windows_iter_end,
     std::span<std::vector<unsigned>>::iterator &windows_reads_indices_iter,
-    unsigned n_clusters) {
+    unsigned n_clusters, unsigned min_windows_overlap) {
   auto &&window = *windows_iter;
-
   if (previous_overlapping_region_end.has_value() and
       window.start_base < *previous_overlapping_region_end) {
 
@@ -808,10 +807,20 @@ inline HandleOverlappingRegionsResult handle_overlapping_regions(
           return window.weights.getClustersSize() != n_clusters or
                  window.start_base >= *previous_overlapping_region_end;
         });
-    windows_reads_indices_iter +=
-        std::ranges::distance(windows_iter, next_useful_window);
+
+    auto last_window_same_clusters = *std::ranges::prev(next_useful_window);
+    assert(last_window_same_clusters.weights.getClustersSize() == n_clusters);
+
+    auto window_size = window.weights.getElementsSize();
+    auto new_region_end = last_window_same_clusters.start_base + window_size -
+                          min_windows_overlap;
+
+    auto iter_offset = std::ranges::distance(windows_iter, next_useful_window);
+    windows_reads_indices_iter += iter_offset;
     windows_iter = next_useful_window;
 
+
+    previous_overlapping_region_end = new_region_end;
     return HandleOverlappingRegionsResult::Continue;
   } else {
     return HandleOverlappingRegionsResult::Break;

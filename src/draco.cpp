@@ -599,7 +599,7 @@ void merge_windows_and_add_window_results(
           previous_overlapping_region_ends[n_clusters - 1];
       auto result = handle_overlapping_regions(
           previous_overlapping_region_end, windows_iter, std::cend(windows),
-          windows_reads_indices_iter, n_clusters);
+          windows_reads_indices_iter, n_clusters, min_windows_overlap);
 
       if (result == HandleOverlappingRegionsResult::Continue) {
         continue;

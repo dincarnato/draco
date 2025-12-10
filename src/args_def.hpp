@@ -93,6 +93,11 @@ static constexpr auto opts = args::Opts(
             .description("Maximum number of permutations performed to build "
                          "the null model")
             .DEFAULT_VALUE(100),
+        ARG(bool, ignore_first_eigengap)
+            .parameter_name("ignoreFirstEigengap")
+            .description(
+                "First eigengap is ignored")
+            .DEFAULT_VALUE(false),
         ARG(double, min_eigengap_threshold)
             .parameter_name("eigengapCumRelThresh")
             .description("Minimum relative difference between the eigengap and "

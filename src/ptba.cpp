@@ -11,6 +11,7 @@
 #include <iterator>
 #include <optional>
 #include <ranges>
+#include <tuple>
 #include <type_traits>
 #include <variant>
 
@@ -35,7 +36,8 @@ Ptba::Ptba(const RingmapData &data, Args const &args)
       alternative_check_permutations(args.alternative_check_permutations()),
       min_null_stddev(args.min_null_stddev()),
       minBasesSize(args.min_bases_size()),
-      extended_search_eigengaps(args.extended_search_eigengaps()) {}
+      extended_search_eigengaps(args.extended_search_eigengaps()),
+      ignore_first_eigengap(args.ignore_first_eigengap()) {}
 
 std::tuple<arma::mat, arma::vec, arma::vec, arma::mat>
 Ptba::calculateEigenGaps(const RingmapData &data) {
@@ -206,9 +208,15 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
   std::vector<std::uint8_t> null_dist_is_valid(dataEigenGaps.size(), 0);
 
   log_data::Permuting permutation_log;
-  unsigned eigenGapIndex = 0u;
-  std::optional<unsigned> valid_eigengap_index;
+  auto &&[eigenGapIndex, valid_eigengap_index] = ([&] {
+    if (ignore_first_eigengap) {
+      return std::make_tuple(1u, std::optional<unsigned>(0u));
+    } else {
+      return std::make_tuple(0u, std::optional<unsigned>());
+    }
+  })();
   assert(initialData.size() != 0);
+
   for (unsigned permutation = 0;
        permutation < maxPermutations and eigenGapIndex < useful_eigengaps and
        (not valid_eigengap_index.has_value() or

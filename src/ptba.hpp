@@ -188,6 +188,7 @@ private:
   double min_null_stddev = 0.025;
   unsigned minBasesSize = 10;
   unsigned char extended_search_eigengaps;
+  bool ignore_first_eigengap;
 };
 
 void print_log_data(LogData const &log_data, Window const &window,

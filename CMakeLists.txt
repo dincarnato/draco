@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(draco VERSION 1.0.0)
+project(draco VERSION 1.3.0)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 subdirs(src test)

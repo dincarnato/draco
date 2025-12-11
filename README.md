@@ -44,7 +44,7 @@ There are two ways you can compile and use DRACO.
 
 ### Using Docker (recommended)
 
-You can use [docker](https://www.docker.com/) in order to build an image with all the necessary to compile DRACO and then run it.
+You can use [docker](https://www.docker.com/) to build an image with all the necessary pre-requisites to compile and run DRACO.
 
 #### Building the image
 
@@ -55,23 +55,23 @@ docker build --tag draco .
 
 #### Running DRACO
 
-In order to run DRACO using the docker image just built, it is necessary to expose the input and output directories to the docker container that is being spawned.
+To run DRACO using the docker image, it is necessary to expose the input and output directories to the docker container that is being spawned.
 
-For instance, if you have you `.mm` files inside the `/my/mm/files` folder, you need to do this:
+For instance, if your `.mm` files are located in the `/my/mm/files` folder, docker needs to be invoked as it follows:
 
 ```shell
-docker run --init --rm -u $(id -u ${USER}):$(id -g ${USER}) -v /my/mm/files:/data draco --mm rna.mm <other draco params>...
+docker run --init --rm -u $(id -u ${USER}):$(id -g ${USER}) -v /my/mm/files:/data draco --mm rna.mm <other draco parameters>...
 ```
 
-Let's analyse the command line:
+where:
 
-- `--init` is necessary to forward the signals to the process (i.e stopping using CTRL+C);
-- `--rm` is to clean up the container after its usage;
-- `-u $(id -u ${USER}):$(id -g ${USER})` is to run DRACO with the user and group id;
-- `-v /my/mm/files:/data` is to mount the directory `/my/mm/files` (given as example) to `/data` inside the container. DRACO runs inside this directory, therefore all the paths should be relative and within the directory `/my/mm/files`. See the next argument for more information.
-- `--mm rna.mm` is part of the arguments to pass to DRACO. In example, `rna.mm` is inside the `/my/mm/files` directory, but the file in the command line is given as relative path to directory. This is because the `/my/mm/files` is mounted in the `/data` directory of the container (because of the `-v` parameter), and DRACO runs inside the `/data` inside the container by default.
+- `--init` forwards the signals to the process (i.e., stopping using CTRL+C)
+- `--rm` cleans up the container after its use
+- `-u $(id -u ${USER}):$(id -g ${USER})` runs DRACO with the specified user and group id
+- `-v /my/mm/files:/data` is to mount the directory `/my/mm/files` to `/data` inside the container. DRACO runs inside this directory, therefore all the paths should be relative and within the directory `/my/mm/files` (see the next parameter)
+- `--mm rna.mm` is the MM file to be analyzed, which must be located inside the `/my/mm/files` directory
 
-Because of all this, the output files will be placed inside the `/my/mm/files`.
+DRACO's output files will be placed inside the `/my/mm/files` directory.
 
 ### Compiling and running DRACO without Docker
 
@@ -131,7 +131,7 @@ export OMP_NUM_THREADS=1
 ## Testing your installation
 
 Under `examples/` it is possible to find three sample MM files, each one containing simulated data for a single transcript, forming one, two, or three coexisting conformations.<br/>
-To analyze these samples, simply run:
+To analyze these samples, if DRACO is compiled within Docker simply run:
 
 ```bash
 docker run --init --rm -u $(id -u ${USER}):$(id -g ${USER}) -v examples:/data draco --mm 1conf.mm        # 1 conformation
@@ -139,7 +139,7 @@ docker run --init --rm -u $(id -u ${USER}):$(id -g ${USER}) -v examples:/data dr
 docker run --init --rm -u $(id -u ${USER}):$(id -g ${USER}) -v examples:/data draco --mm 3confs.mm       # 3 conformations
 ```
 
-in case DRACO is compiled within Docker. Otherwise:
+If DRACO is compiled as a stand-alone executable, run:
 
 ```bash
 ./build/src/draco --mm examples/1conf.mm        # 1 conformation
@@ -149,16 +149,17 @@ in case DRACO is compiled within Docker. Otherwise:
 
 ## Known issues
 
-### Clang >= 19 and dlib
+### Clang &ge; 19 and dlib
 
-In Ubuntu 25.04, when Clang is used to compile DRACO and the LibC++ is used (with `-DUSE_LIBCXX=ON`), a compilation error is triggered and it seems to be caused by dlib.
+On Ubuntu 25.04, if Clang is used to compile DRACO and LibC++ is used (with `-DUSE_LIBCXX=ON`), a compilation error is triggered, which appears to be caused by dlib.
 
-The error message contains something like the following:
+The error message looks like the following:
 ```
 /usr/include/dlib/matrix/../serialize.h:1963:14: note: in instantiation of member function 'std::basic_string<unsigned int>::resize' requested here
  1963 |         item.resize(size);
       |              ^
 ```
-There exists [a closed issue](https://github.com/davisking/dlib/issues/3045), the problem should be fixed in version 19.24.7.
 
-Unfortunately, to date, Ubuntu 25.04 ships an older version of the library. We suggest to use GCC or, if possible, to manually update dlib.
+This has been reported in [a closed dlib issue](https://github.com/davisking/dlib/issues/3045), and the problem should be fixed in version 19.24.7.
+
+Unfortunately, to date, as Ubuntu 25.04 ships with an older version of the library, we suggest to use GCC or, if possible, to manually update dlib.

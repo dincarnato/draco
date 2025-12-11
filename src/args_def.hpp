@@ -6,13 +6,15 @@
 namespace args {
 
 static constexpr auto opts = args::Opts(
-    "\n DRACO (v1.2)\n",
+    "\n DRACO (v1.3)\n",
     args::Group(
         "",
         ARG(std::string, mm_filenames)
             .parameter_name("mm")
             .multiplicity<multiplicity::Many>()
-            .description("Input mutation map (MM) file"),
+            .description("Input mutation map (MM) file [Note: to pass "
+                         "multiple replicates, simply call the parameter "
+                         "multiple times (e.g., --mm rep1.mm --mm rep2.mm)]"),
         ARG(std::string, output_filename)
             .parameter_name("output")
             .description("Output JSON file")
@@ -20,12 +22,7 @@ static constexpr auto opts = args::Opts(
         ARG(unsigned, n_processors)
             .parameter_name("processors")
             .description("Number of processors to use [Note: when set to 0, "
-                         "all available processors will be used. Only the "
-                         "analysis of multiple "
-                         "transcripts can be parallelized; if analyzing a "
-                         "single transcript, "
-                         "setting this parameter to a value > 1 will not speed "
-                         "up the execution]")
+                         "all available processors will be used]")
             .DEFAULT_VALUE(0),
         ARG(std::string, whitelist)
             .optional()
@@ -34,23 +31,19 @@ static constexpr auto opts = args::Opts(
                 "A whitelist file, containing the IDs of the transcripts "
                 "to be analyzed, one per row"),
         ARG(bool, shape)
-            .description("Enables spectral analysis on all four bases (default "
-                         "is only A/C bases) "
-                         "[Note: this feature is highly experimental]")
+            .description("Enables spectral analysis on all four bases (Default: "
+                         "only A/C bases) [Note: this feature is highly experimental]")
             .DEFAULT_VALUE(false),
         ARG(std::string, output_raw_n_clusters)
             .optional()
             .parameter_name("outputRawNClusters")
-            .description("Outputs a file containing, for each sequence, the "
-                         "number of clusters detected for each window. The "
-                         "file is tab-separated and has the following format: "
-                         "sequence_name <tab> window start offset <tab> window "
-                         "end offset <tab> n clusters."),
+            .description("Outputs a BED-like file containing, for each transcript, the "
+                         "raw number of clusters detected for each window"),
         ARG(std::string, log_level)
             .optional()
             .parameter_name("log-level")
-            .description("Specify the log level. Allowed values are: trace, "
-                         "debug, info, warn, error")),
+            .description("Specifies the log level (allowed values: trace, "
+                         "debug, info, warn, error)")),
 
     args::Group("Mutation filtering",
                 ARG(unsigned, minimum_base_coverage)
@@ -68,7 +61,7 @@ static constexpr auto opts = args::Opts(
                     .DEFAULT_VALUE(0.005f),
                 ARG(unsigned, minimum_modifications_per_read)
                     .parameter_name("minReadMutations")
-                    .description("Reads with less than these mutations will be "
+                    .description("Reads with fewer than this number of mutations will be "
                                  "discarded as non-informative")
                     .DEFAULT_VALUE(2u)),
 
@@ -82,7 +75,7 @@ static constexpr auto opts = args::Opts(
             .parameter_name("minFilteredReads")
             .description("Minimum number of reads (post-filtering) to perform "
                          "spectral analysis")
-            .DEFAULT_VALUE(5),
+            .DEFAULT_VALUE(100),
         ARG(unsigned, min_permutations)
             .parameter_name("minPermutations")
             .description("Minimum number of permutations performed to build "
@@ -95,7 +88,7 @@ static constexpr auto opts = args::Opts(
             .DEFAULT_VALUE(100),
         ARG(bool, ignore_first_eigengap)
             .parameter_name("ignoreFirstEigengap")
-            .description("First eigengap is ignored")
+            .description("The first eigengap is ignored")
             .DEFAULT_VALUE(false),
         ARG(double, min_eigengap_threshold)
             .parameter_name("eigengapCumRelThresh")
@@ -103,13 +96,12 @@ static constexpr auto opts = args::Opts(
                          "the null model, "
                          "as a fraction of the cumulative difference between "
                          "the previous eigengaps "
-                         "and their respective null models [Note: this does "
-                         "not apply to the first eigengap]")
+                         "and their respective null models")
             .DEFAULT_VALUE(0.10),
         ARG(double, eigengap_diff_absolute_threshold)
             .parameter_name("eigengapAbsThresh")
             .description("Minimum absolute difference between the eigengap and "
-                         "the null model")
+                         "its null model")
             .DEFAULT_VALUE(0.03),
         ARG(double, alpha_value)
             .parameter_name("alpha")
@@ -120,8 +112,7 @@ static constexpr auto opts = args::Opts(
             .parameter_name("beta")
             .description(
                 "Above this p-value, the alternative hypothesis is rejected "
-                "and the eigengap is marked as non-informative "
-                "[Note: this threshold does not apply to the first eigengap]")
+                "and the eigengap is marked as non-informative")
             .DEFAULT_VALUE(0.2),
         ARG(double, min_null_stddev)
             .parameter_name("minNullStdev")
@@ -145,7 +136,7 @@ static constexpr auto opts = args::Opts(
             .parameter_name("lookaheadEigengaps")
             .description("Number of eigengaps to look ahead after a "
                          "non-informative eigengap is encountered")
-            .DEFAULT_VALUE(1),
+            .DEFAULT_VALUE(0),
         ARG(bool, create_eigengaps_plots)
             .parameter_name("saveEigengapData")
             .description("Saves eigengap data for plotting")
@@ -187,23 +178,23 @@ static constexpr auto opts = args::Opts(
         ARG(double, window_size)
             .parameter_name("winLen")
             .description(
-                "Length of the window. If this value is between 0 and 1, it "
-                "represents a fraction of the median read length. Otherwise it "
-                "represents the absolute length of the window. [Note: this "
-                "parameter and \"--winLenFracRnaLen\"  are mutually exclusive")
+                "Length of the window. If this value is comprised between 0 and 1, it "
+                "is interpreted as a fraction of the median read length. If this value "
+                "is > 1, it is interpreted as the absolute length of the window. [Note: this "
+                "parameter and \"--winLenFracRnaLen\"  are mutually exclusive]")
             .DEFAULT_VALUE(100),
         ARG(double, window_size_fraction_transcript_size)
             .parameter_name("winLenFracRnaLen")
             .description("Length of the window as fraction of length of the "
                          "RNA [Note: this parameter and \"--winLen\" are "
-                         "mutually exclusive")
+                         "mutually exclusive]")
             .DEFAULT_VALUE(0),
         ARG(double, window_shift)
             .parameter_name("winOffset")
             .description(
-                "Slide offset of the window. is between 0 and 1, it represents "
-                "a fraction of the size of the window. Otherwise it represents "
-                "the absolute length of the window.")
+                "Window sliding offset. If this value is comprised between 0 and 1, it is "
+                "interpreted as a fraction of the window's length. If this value is >= 1, "
+                "it is interpreted as the number of bases to slide the window by.")
             .DEFAULT_VALUE(0.01),
         ARG(unsigned, max_collapsing_windows)
             .parameter_name("maxIgnoreWins")
@@ -214,8 +205,7 @@ static constexpr auto opts = args::Opts(
         ARG(unsigned, min_surrounding_windows_size)
             .parameter_name("minExtWins")
             .description("Minimum number of external windows, having the same "
-                         "number of clusters, "
-                         "needed to trigger merging")
+                         "number of clusters, needed to trigger merging")
             .DEFAULT_VALUE(6),
         ARG(bool, set_uninformative_clusters_to_surrounding)
             .parameter_name("nonInformativeToSurround")
@@ -226,32 +216,31 @@ static constexpr auto opts = args::Opts(
         ARG(bool, set_all_uninformative_to_one)
             .parameter_name("allNonInformativeToOne")
             .description("If all windows in the transcript are non-informative "
-                         "(0 clusters), the number of clusters is "
-                         "forced to 1")
+                         "(0 clusters), the number of clusters is forced to 1")
             .DEFAULT_VALUE(false),
         ARG(bool, report_uninformative)
             .parameter_name("reportNonInformative")
             .description(
-                "Reports also non-informative windows in the output JSON file")
+                "Reports also non-informative windows (0 clusters) in the output JSON file")
             .DEFAULT_VALUE(false),
         ARG(std::string, assignments_dump_directory)
             .optional()
             .parameter_name("assignmentsDumpDir")
-            .description("when specified, an MM file is generated for each set "
-                         "of merged windows, and the parameter indicated the "
-                         "directory where to write the MM files"),
+            .description("When specified, a folder is generated containing an MM file for "
+                         "each set of merged windows, containing a dump of the reads assigned "
+                         "to each conformation"),
         ARG(bool, skip_ambiguous_assignments)
             .parameter_name("skipAmbiguousAssignments")
             .description(
-                "when specified, if the best assignment score for a read is "
-                "equal for more than on cluster, the read is discarded")
+                "When specified, if the best assignment score for a read is "
+                "equal across multiple clusters, the read is discarded")
             .DEFAULT_VALUE(false),
         ARG(float, min_windows_overlap)
             .parameter_name("minWindowsOverlap")
-            .description("the minimum overlap between two non-contiguous "
+            .description("Minimum overlap between two non-contiguous "
                          "windows with the same number of conformations in "
-                         "order to merge them in the same region. The value is "
-                         "a fraction of the window size, specified with values "
-                         "between 0 and 1")
+                         "order to merge them in the same region. The value must be "
+                         "comprised between 0 and 1, and it is interpreted as a fraction "
+                         "of the window size")
             .DEFAULT_VALUE(1.f)));
 } // namespace args

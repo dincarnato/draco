@@ -1,5 +1,6 @@
 #include "draco.hpp"
 #include "args.hpp"
+#include "fmt/base.h"
 #include "fmt/ostream.h"
 #include "graph_cut.hpp"
 #include "logger.hpp"
@@ -757,30 +758,33 @@ ptba_on_replicate(std::size_t replicate_index, RingmapData const &ringmap_data,
 
   std::size_t transcript_size = ringmap_data.data().cols_size();
   const auto window_size = [&] {
-    auto &&window_size = args.window_size();
-    if (window_size <= 0) {
-      auto window_size_fraction_transcript_size =
-          args.window_size_fraction_transcript_size();
-      if (window_size_fraction_transcript_size <= 0.) {
-        window_size =
-            static_cast<unsigned>(static_cast<double>(median_read_size) *
-                                  args.window_size_fraction());
-      } else {
-        window_size = static_cast<unsigned>(
-            std::min(window_size_fraction_transcript_size, 1.) *
-            static_cast<double>(transcript_size));
-      }
+    auto window_size_fraction_transcript_size =
+        args.window_size_fraction_transcript_size();
+    auto window_size_maybe_fraction = args.window_size();
+    unsigned window_size_absolute;
+
+    if (window_size_fraction_transcript_size > 0.) {
+      window_size_absolute = static_cast<unsigned>(
+          std::min(window_size_fraction_transcript_size, 1.) *
+          static_cast<double>(transcript_size));
+    } else if (window_size_maybe_fraction <= 1.) {
+      window_size_absolute = static_cast<unsigned>(
+          static_cast<double>(median_read_size) * window_size_maybe_fraction);
+    } else {
+      window_size_absolute =
+          static_cast<unsigned>(std::round(window_size_maybe_fraction));
     }
 
-    return std::min(window_size, static_cast<unsigned>(transcript_size));
+    return std::min(window_size_absolute,
+                    static_cast<unsigned>(transcript_size));
   }();
   const auto window_offset = [&] {
-    auto &&window_shift = args.window_shift();
-    if (window_shift > 0) {
-      return window_shift;
-    } else {
+    auto &&window_shift_maybe_fraction = args.window_shift();
+    if (window_shift_maybe_fraction < 1.) {
       return static_cast<unsigned>(static_cast<double>(window_size) *
-                                   args.window_shift_fraction());
+                                   window_shift_maybe_fraction);
+    } else {
+      return static_cast<unsigned>(std::round(window_shift_maybe_fraction));
     }
   }();
 

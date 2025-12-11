@@ -184,36 +184,27 @@ static constexpr auto opts = args::Opts(
 
     args::Group(
         "Windowed analysis",
-        ARG(double, window_size_fraction)
-            .parameter_name("winLenFraction")
-            .description("Length of the window as fraction of the median read "
-                         "length [Note: this parameter, \"--winLenFracRnaLen\" "
-                         "and \"--absWinSize\" are mutually exclusive")
-            .DEFAULT_VALUE(0.9),
+        ARG(double, window_size)
+            .parameter_name("winLen")
+            .description(
+                "Length of the window. If this value is between 0 and 1, it "
+                "represents a fraction of the median read length. Otherwise it "
+                "represents the absolute length of the window. [Note: this "
+                "parameter and \"--winLenFracRnaLen\"  are mutually exclusive")
+            .DEFAULT_VALUE(100),
         ARG(double, window_size_fraction_transcript_size)
             .parameter_name("winLenFracRnaLen")
             .description("Length of the window as fraction of length of the "
-                         "RNA [Note: this parameter, \"--winLenFraction\" and "
-                         "\"--absWinSize\" are mutually exclusive")
-            .DEFAULT_VALUE(0),
-        ARG(unsigned, window_size)
-            .parameter_name("absWinLen")
-            .description("Absolute length of the window [Note: this parameter "
-                         "\"--winSizeFraction\" and \"--winLenFracRnaLen\" are "
+                         "RNA [Note: this parameter and \"--winLen\" are "
                          "mutually exclusive")
-            .DEFAULT_VALUE(0u),
-        ARG(double, window_shift_fraction)
-            .parameter_name("winOffsetFraction")
-            .description("Slide offset as fraction of the size of the window "
-                         "[Note: this parameter and \"--absWinOffset\" "
-                         "are mutually exclusive")
-            .DEFAULT_VALUE(0.05),
-        ARG(unsigned, window_shift)
-            .parameter_name("absWinOffset")
-            .description("Absolute slide offset [Note: this parameter and "
-                         "\"--winOffsetFraction\" "
-                         "are mutually exclusive")
-            .DEFAULT_VALUE(0u),
+            .DEFAULT_VALUE(0),
+        ARG(double, window_shift)
+            .parameter_name("winOffset")
+            .description(
+                "Slide offset of the window. is between 0 and 1, it represents "
+                "a fraction of the size of the window. Otherwise it represents "
+                "the absolute length of the window.")
+            .DEFAULT_VALUE(0.01),
         ARG(unsigned, max_collapsing_windows)
             .parameter_name("maxIgnoreWins")
             .description(

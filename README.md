@@ -146,3 +146,19 @@ in case DRACO is compiled within Docker. Otherwise:
 ./build/src/draco --mm examples/2confs.mm       # 2 conformations
 ./build/src/draco --mm examples/3confs.mm       # 3 conformations
 ```
+
+## Known issues
+
+### Clang >= 19 and dlib
+
+In Ubuntu 25.04, when Clang is used to compile DRACO and the LibC++ is used (with `-DUSE_LIBCXX=ON`), a compilation error is triggered and it seems to be caused by dlib.
+
+The error message contains something like the following:
+```
+/usr/include/dlib/matrix/../serialize.h:1963:14: note: in instantiation of member function 'std::basic_string<unsigned int>::resize' requested here
+ 1963 |         item.resize(size);
+      |              ^
+```
+There exists [a closed issue](https://github.com/davisking/dlib/issues/3045), the problem should be fixed in version 19.24.7.
+
+Unfortunately, to date, Ubuntu 25.04 ships an older version of the library. We suggest to use GCC or, if possible, to manually update dlib.

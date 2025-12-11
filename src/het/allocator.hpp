@@ -2,6 +2,7 @@
 
 #include "../nostd/utility.hpp"
 
+#include <new>
 #include <tuple>
 
 namespace het {

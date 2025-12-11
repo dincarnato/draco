@@ -39,6 +39,13 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  if (auto window_size = args.window_size();
+      window_size > 1 and window_size < args.min_bases_size()) {
+    logger::error("Invalid parameters: --winLen ({}) < --minWindowBases ({})",
+                  window_size, args.min_bases_size());
+    return EXIT_FAILURE;
+  }
+
   if (not args.assignments_dump_directory().empty()) {
     logger::debug("Creating directory {}", args.assignments_dump_directory());
     std::filesystem::create_directories(args.assignments_dump_directory());

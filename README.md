@@ -79,12 +79,12 @@ DRACO's output files will be placed inside the `/my/mm/files` directory.
 
 - Linux system
 - GCC v15 or higher (<https://gcc.gnu.org/gcc-15/>), or
-  <br/>Clang v19 or greater (<https://releases.llvm.org/download.html>)
+  <br/>Clang v19 or higher (<https://releases.llvm.org/download.html>)
 - CMake v3.8 or higher (<https://cmake.org/download/>)
 - OpenBLAS (<https://www.openblas.net>)
-- Armadillo v9.850.1 or greater (<http://arma.sourceforge.net>)
-- Boost v1.66 or greater (<https://www.boost.org>)
-- dlib v19.4.0 or greater (<http://dlib.net>)
+- Armadillo v9.850.1 or higher (<http://arma.sourceforge.net>)
+- Boost v1.66 or higher (<https://www.boost.org>)
+- dlib v19.4.0 or higher (<http://dlib.net>)
 - Intel oneAPI Thread Building Blocks (<https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onetbb.html>)
 
 #### Compilation

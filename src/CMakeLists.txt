@@ -1,5 +1,10 @@
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DARMA_NO_DEBUG")
 
+configure_file(
+    config.hpp.in
+    config.hpp
+)
+
 add_executable(
     draco
     main.cpp
@@ -25,6 +30,12 @@ add_executable(
 add_executable(
     args_generate
     args_generate.cpp
+)
+
+target_include_directories(
+    args_generate
+    PRIVATE
+        ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 target_link_libraries(

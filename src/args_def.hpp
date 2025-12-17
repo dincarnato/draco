@@ -31,39 +31,43 @@ static constexpr auto opts = args::Opts(
                 "A whitelist file, containing the IDs of the transcripts "
                 "to be analyzed, one per row"),
         ARG(bool, shape)
-            .description("Enables spectral analysis on all four bases (Default: "
-                         "only A/C bases) [Note: this feature is highly experimental]")
+            .description(
+                "Enables spectral analysis on all four bases (Default: "
+                "only A/C bases) [Note: this feature is highly experimental]")
             .DEFAULT_VALUE(false),
         ARG(std::string, output_raw_n_clusters)
             .optional()
             .parameter_name("outputRawNClusters")
-            .description("Outputs a BED-like file containing, for each transcript, the "
-                         "raw number of clusters detected for each window"),
+            .description(
+                "Outputs a BED-like file containing, for each transcript, the "
+                "raw number of clusters detected for each window"),
         ARG(std::string, log_level)
             .optional()
             .parameter_name("log-level")
             .description("Specifies the log level (allowed values: trace, "
                          "debug, info, warn, error)")),
 
-    args::Group("Mutation filtering",
-                ARG(unsigned, minimum_base_coverage)
-                    .parameter_name("minBaseCoverage")
-                    .description("Minimum coverage per base")
-                    .DEFAULT_VALUE(100u),
-                ARG(unsigned, minimum_modifications_per_base)
-                    .parameter_name("minBaseMutations")
-                    .description("Minimum mutations per base")
-                    .DEFAULT_VALUE(2u),
-                ARG(float, minimum_modifications_per_base_fraction)
-                    .parameter_name("minMutationFreq")
-                    .description("Bases below this mutation frequency will be "
-                                 "discarded as noise")
-                    .DEFAULT_VALUE(0.005f),
-                ARG(unsigned, minimum_modifications_per_read)
-                    .parameter_name("minReadMutations")
-                    .description("Reads with fewer than this number of mutations will be "
-                                 "discarded as non-informative")
-                    .DEFAULT_VALUE(2u)),
+    args::Group(
+        "Mutation filtering",
+        ARG(unsigned, minimum_base_coverage)
+            .parameter_name("minBaseCoverage")
+            .description("Minimum coverage per base")
+            .DEFAULT_VALUE(100u),
+        ARG(unsigned, minimum_modifications_per_base)
+            .parameter_name("minBaseMutations")
+            .description("Minimum mutations per base")
+            .DEFAULT_VALUE(2u),
+        ARG(float, minimum_modifications_per_base_fraction)
+            .parameter_name("minMutationFreq")
+            .description("Bases below this mutation frequency will be "
+                         "discarded as noise")
+            .DEFAULT_VALUE(0.005f),
+        ARG(unsigned, minimum_modifications_per_read)
+            .parameter_name("minReadMutations")
+            .description(
+                "Reads with fewer than this number of mutations will be "
+                "discarded as non-informative")
+            .DEFAULT_VALUE(2u)),
 
     args::Group(
         "Spectral deconvolution",
@@ -178,9 +182,12 @@ static constexpr auto opts = args::Opts(
         ARG(double, window_size)
             .parameter_name("winLen")
             .description(
-                "Length of the window. If this value is comprised between 0 and 1, it "
-                "is interpreted as a fraction of the median read length. If this value "
-                "is > 1, it is interpreted as the absolute length of the window. [Note: this "
+                "Length of the window. If this value is comprised between 0 "
+                "and 1, it "
+                "is interpreted as a fraction of the median read length. If "
+                "this value "
+                "is > 1, it is interpreted as the absolute length of the "
+                "window. [Note: this "
                 "parameter and \"--winLenFracRnaLen\"  are mutually exclusive]")
             .DEFAULT_VALUE(100),
         ARG(double, window_size_fraction_transcript_size)
@@ -191,10 +198,12 @@ static constexpr auto opts = args::Opts(
             .DEFAULT_VALUE(0),
         ARG(double, window_shift)
             .parameter_name("winOffset")
-            .description(
-                "Window sliding offset. If this value is comprised between 0 and 1, it is "
-                "interpreted as a fraction of the window's length. If this value is >= 1, "
-                "it is interpreted as the number of bases to slide the window by.")
+            .description("Window sliding offset. If this value is comprised "
+                         "between 0 and 1, it is "
+                         "interpreted as a fraction of the window's length. If "
+                         "this value is >= 1, "
+                         "it is interpreted as the number of bases to slide "
+                         "the window by.")
             .DEFAULT_VALUE(0.01),
         ARG(unsigned, max_collapsing_windows)
             .parameter_name("maxIgnoreWins")
@@ -220,14 +229,16 @@ static constexpr auto opts = args::Opts(
             .DEFAULT_VALUE(false),
         ARG(bool, report_uninformative)
             .parameter_name("reportNonInformative")
-            .description(
-                "Reports also non-informative windows (0 clusters) in the output JSON file")
+            .description("Reports also non-informative windows (0 clusters) in "
+                         "the output JSON file")
             .DEFAULT_VALUE(false),
         ARG(std::string, assignments_dump_directory)
             .optional()
             .parameter_name("assignmentsDumpDir")
-            .description("When specified, a folder is generated containing an MM file for "
-                         "each set of merged windows, containing a dump of the reads assigned "
+            .description("When specified, a folder is generated containing an "
+                         "MM file for "
+                         "each set of merged windows, containing a dump of the "
+                         "reads assigned "
                          "to each conformation"),
         ARG(bool, skip_ambiguous_assignments)
             .parameter_name("skipAmbiguousAssignments")
@@ -237,10 +248,12 @@ static constexpr auto opts = args::Opts(
             .DEFAULT_VALUE(false),
         ARG(float, min_windows_overlap)
             .parameter_name("minWindowsOverlap")
-            .description("Minimum overlap between two non-contiguous "
-                         "windows with the same number of conformations in "
-                         "order to merge them in the same region. The value must be "
-                         "comprised between 0 and 1, and it is interpreted as a fraction "
-                         "of the window size")
+            .description(
+                "Minimum overlap between two non-contiguous "
+                "windows with the same number of conformations in "
+                "order to merge them in the same region. The value must be "
+                "comprised between 0 and 1, and it is interpreted as a "
+                "fraction "
+                "of the window size")
             .DEFAULT_VALUE(1.f)));
 } // namespace args

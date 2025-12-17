@@ -781,10 +781,9 @@ ptba_on_replicate(std::size_t replicate_index, RingmapData const &ringmap_data,
   const auto window_offset = [&] {
     auto &&window_shift_maybe_fraction = args.window_shift();
     if (window_shift_maybe_fraction < 1.) {
-      return std::max(
-          1u,
-          static_cast<unsigned>(static_cast<double>(window_size) *
-                                window_shift_maybe_fraction));
+      return std::max(1u,
+                      static_cast<unsigned>(static_cast<double>(window_size) *
+                                            window_shift_maybe_fraction));
     } else {
       return static_cast<unsigned>(std::round(window_shift_maybe_fraction));
     }

@@ -127,6 +127,8 @@ void Args::parse_options(int argc, char *argv[]) noexcept {
   cxxopts::Options arg_opts(argv[0],
                             "\n " PROJECT_NAME " (" PROJECT_VERSION ")\n");
 
+  arg_opts.add_options()("version", "Prints the program's version and exits.",
+                         cxxopts::value<bool>());
   add_groups_to_opts(arg_opts);
 
   auto const args_result = [&] {
@@ -140,6 +142,11 @@ void Args::parse_options(int argc, char *argv[]) noexcept {
 
   if (args_result.count("help")) {
     print_help(arg_opts);
+    std::exit(0);
+  }
+
+  if (args_result.count("version")) {
+    std::cout << PROJECT_NAME " v" PROJECT_VERSION "\n";
     std::exit(0);
   }
 

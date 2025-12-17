@@ -1,12 +1,12 @@
 #pragma once
 
 #include "args_impl.hpp"
+
 #include <string>
 
 namespace args {
 
 static constexpr auto opts = args::Opts(
-    "\n DRACO (v1.3)\n",
     args::Group(
         "",
         ARG(std::string, mm_filenames)

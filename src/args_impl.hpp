@@ -242,33 +242,18 @@ struct is_group<Group<DescriptionSize, Args...>> : std::true_type {};
 
 template <typename T> constexpr bool is_group_v = is_group<T>::value;
 
-template <std::size_t DescriptionSize, typename... Groups> struct Opts {
+template <typename... Groups> struct Opts {
   static_assert(std::conjunction_v<is_group<Groups>...>);
-  static constexpr std::size_t description_size = DescriptionSize;
   using groups_type = std::tuple<Groups...>;
 
   template <typename... _Groups>
-  constexpr Opts(cte::string<DescriptionSize> description,
-                 _Groups &&...groups) noexcept
-      : description(std::move(description)),
-        groups(std::forward<_Groups>(groups)...) {}
+  constexpr Opts(_Groups &&...groups) noexcept
+      : groups(std::forward<_Groups>(groups)...) {}
 
-  template <typename... _Groups>
-  constexpr Opts(char const (&description)[DescriptionSize + 1],
-                 _Groups &&...groups) noexcept
-      : description(description), groups(std::forward<_Groups>(groups)...) {}
-
-  cte::string<DescriptionSize> description;
   groups_type groups;
 };
 
-template <std::size_t DescriptionSize, typename... Groups>
-Opts(cte::string<DescriptionSize> description, Groups &&...groups)
-    -> Opts<DescriptionSize, Groups...>;
-
-template <std::size_t DescriptionSize, typename... Groups>
-Opts(char const (&description)[DescriptionSize], Groups &&...groups)
-    -> Opts<DescriptionSize - 1, Groups...>;
+template <typename... Groups> Opts(Groups &&...groups) -> Opts<Groups...>;
 
 } // namespace args
 

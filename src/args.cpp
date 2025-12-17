@@ -1,4 +1,5 @@
 #include "args.hpp"
+#include "config.hpp"
 
 #include <iostream>
 
@@ -123,7 +124,8 @@ void check_arguments(cxxopts::ParseResult const &results) {
 }
 
 void Args::parse_options(int argc, char *argv[]) noexcept {
-  cxxopts::Options arg_opts(argv[0], args::opts.description.c_str());
+  cxxopts::Options arg_opts(argv[0],
+                            "\n " PROJECT_NAME " (" PROJECT_VERSION ")\n");
 
   add_groups_to_opts(arg_opts);
 

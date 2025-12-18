@@ -32,6 +32,7 @@ WeightedClusters GraphCut::partitionGraph(std::uint8_t nClusters,
                                           std::uint16_t kmeans_iterations,
                                           results::Transcript const &transcript,
                                           unsigned window_index, Fun graphFun,
+                                          double distance_warning_threshold,
                                           Gen &&random_generator) const {
   auto const &firstAdjacency = adjacencies[0];
   assert(std::ranges::all_of(adjacencies | std::views::drop(1),
@@ -59,7 +60,8 @@ WeightedClusters GraphCut::partitionGraph(std::uint8_t nClusters,
         std::views::as_rvalue | std::ranges::to<std::vector>();
 
     clusters_replicates::reorder_best_permutation(all_weighted_clusters,
-                                                  transcript, window_index);
+                                                  transcript, window_index,
+                                                  distance_warning_threshold);
     return merge_weighted_clusters(std::move(all_weighted_clusters));
   }
 }

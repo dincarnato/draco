@@ -1,4 +1,5 @@
 #include "graph_cut.hpp"
+#include "logger.hpp"
 #include "results/transcript.hpp"
 #include "weighted_clusters.hpp"
 

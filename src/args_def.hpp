@@ -168,7 +168,13 @@ static constexpr auto opts = args::Opts(
             .parameter_name("softClusteringKmeansIters")
             .description("Number of iterations of kmeans performed on "
                          "graph-cut when more than 2 clusters are found")
-            .DEFAULT_VALUE(20)),
+            .DEFAULT_VALUE(20),
+        ARG(double, distance_warning_threshold)
+            .parameter_name("distanceWarningThreshold")
+            .description(
+                "The normalized distance value between all the clusters across "
+                "the replicates over which a warning is emitted")
+            .DEFAULT_VALUE(0.75)),
 
     args::Group(
         "Windowed analysis",

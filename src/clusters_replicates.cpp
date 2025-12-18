@@ -66,7 +66,8 @@ template <> struct fmt::formatter<clusters_replicates::PermutationsFormatter> {
 namespace clusters_replicates {
 void reorder_best_permutation(
     std::vector<WeightedClusters> &replicates_clusters,
-    results::Transcript const &transcript, unsigned window_index, double) {
+    results::Transcript const &transcript, unsigned window_index,
+    double distance_warning_threshold) {
   std::size_t const n_replicates = std::size(replicates_clusters);
   if (n_replicates <= 1) {
     return;
@@ -159,6 +160,20 @@ finished:
   });
 
   assert(not std::isinf(best_clusters_distance));
+  logger::on_warn_level([&] {
+    auto normalized_distance = normalize_distance(best_clusters_distance);
+    if (normalized_distance >= distance_warning_threshold) {
+      logger::warn(
+          "Best permutation for transcript {} on window with "
+          "index {} has normalized distance {} (non-normalized {}) that is "
+          "greater or equal than the warning threshold level ({}), "
+          "permutations indices are {}",
+          transcript.name, window_index, normalized_distance,
+          best_clusters_distance, distance_warning_threshold,
+          PermutationsFormatter{&best_replicates_clusters_permutations});
+    }
+  });
+
   std::ranges::for_each(
       std::views::zip(best_replicates_clusters_permutations,
                       replicates_clusters) |

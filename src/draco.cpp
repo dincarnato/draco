@@ -916,6 +916,29 @@ std::vector<PreCollapsingClusters> get_best_pre_collapsing_clusters(
 
            std::ranges::sort(window_pre_collapsing_clusters);
            unsigned n_clusters = window_pre_collapsing_clusters[median_index];
+
+           logger::on_warn_level([&] {
+             if (std::ranges::any_of(window_pre_collapsing_clusters,
+                                     [&](auto replicate_n_clusters) {
+                                       return replicate_n_clusters !=
+                                              n_clusters;
+                                     })) {
+               std::string all_n_clusters =
+                   std::format("[{}", window_pre_collapsing_clusters[0]);
+               for (auto n_clusters :
+                    window_pre_collapsing_clusters | std::views::drop(1)) {
+                 std::format_to(std::back_inserter(all_n_clusters), ", {}",
+                                n_clusters);
+               }
+               std::format_to(std::back_inserter(all_n_clusters), "]");
+               logger::warn(
+                   "On transcript {} window {} the number of "
+                   "detected clusters are not the same across replicates ({}). "
+                   "The number of clusters that is going to be used is {}.",
+                   transcript_name, window_index, all_n_clusters, n_clusters);
+             }
+           });
+
            float confidence =
                static_cast<float>(std::ranges::count(
                    window_pre_collapsing_clusters, n_clusters)) /

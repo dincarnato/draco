@@ -88,15 +88,16 @@ arma::mat GraphCut::getGraphWithNoLoops(const arma::mat &matrix) const {
 }
 
 auto GraphCut::run(std::uint8_t nClusters, std::uint16_t kmeans_iterations,
-                   results::Transcript const &transcript,
-                   unsigned window_index) const -> WeightedClusters {
+                   results::Transcript const &transcript, unsigned window_index,
+                   double distance_warning_threshold) const
+    -> WeightedClusters {
   if (nClusters < 2)
     throw std::logic_error("nClusters must be at least 2");
 
   return partitionGraph(
       nClusters, kmeans_iterations, transcript, window_index,
       [this](const auto &matrix) { return getGraphWithNoLoops(matrix); },
-      std::mt19937(std::random_device{}()));
+      distance_warning_threshold, std::mt19937(std::random_device{}()));
 }
 
 arma::mat pairwise_distances(arma::mat const &a, arma::subview<double> b) {

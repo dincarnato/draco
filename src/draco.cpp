@@ -890,7 +890,8 @@ ptba_on_replicate(std::size_t replicate_index, RingmapData const &ringmap_data,
 }
 
 std::vector<PreCollapsingClusters> get_best_pre_collapsing_clusters(
-    std::span<std::optional<PtbaOnReplicate>> ptba_on_replicate_results) {
+    std::span<std::optional<PtbaOnReplicate>> ptba_on_replicate_results,
+    std::string_view transcript_name) {
   auto const windows_size = std::size(ptba_on_replicate_results[0]->windows);
   std::vector<unsigned> window_pre_collapsing_clusters(
       std::size(ptba_on_replicate_results));

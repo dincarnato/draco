@@ -181,7 +181,8 @@ struct PreCollapsingClusters {
 };
 
 std::vector<PreCollapsingClusters> get_best_pre_collapsing_clusters(
-    std::span<std::optional<PtbaOnReplicate>> ptba_on_replicate_results);
+    std::span<std::optional<PtbaOnReplicate>> ptba_on_replicate_results,
+    std::string_view transcript_name);
 
 void set_uninformative_clusters_to_surrounding(
     std::vector<unsigned> &windows_n_clusters,
@@ -336,8 +337,8 @@ struct HandleTranscripts {
     auto const window_offset = ptba_on_replicate_results[0]->window_offset;
     auto const windows_size = std::size(ptba_on_replicate_results[0]->windows);
 
-    auto const pre_collapsing_clusters =
-        get_best_pre_collapsing_clusters(ptba_on_replicate_results);
+    auto const pre_collapsing_clusters = get_best_pre_collapsing_clusters(
+        ptba_on_replicate_results, first_transcript.getId());
 
     std::vector<unsigned> windows_n_clusters;
     std::vector<std::optional<unsigned>> windows_max_clusters_constraints(

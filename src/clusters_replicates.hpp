@@ -17,7 +17,8 @@ namespace clusters_replicates {
 
 void reorder_best_permutation(
     std::vector<WeightedClusters> &replicates_clusters,
-    results::Transcript const &transcript, unsigned window_index);
+    results::Transcript const &transcript, unsigned window_index,
+    double distance_warning_threshold);
 
 constexpr std::size_t distances_size(std::uint8_t replicates,
                                      std::uint8_t clusters) noexcept {

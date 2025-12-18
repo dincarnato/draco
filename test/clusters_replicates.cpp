@@ -310,7 +310,7 @@ static void test_reorder_best_permutation_more_iterations() {
   };
 
   results::Transcript transcript(5);
-  reorder_best_permutation(replicates_weighted_clusters, transcript, 0);
+  reorder_best_permutation(replicates_weighted_clusters, transcript, 0, 1.);
   assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(0),
                             replicate_1[0]));
   assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(1),
@@ -392,7 +392,7 @@ static void test_reorder_best_permutation() {
   };
 
   results::Transcript transcript(3);
-  reorder_best_permutation(replicates_weighted_clusters, transcript, 3);
+  reorder_best_permutation(replicates_weighted_clusters, transcript, 3, 1.);
   assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(0),
                             replicate_1[0]));
   assert(std::ranges::equal(replicates_weighted_clusters[0].cluster(1),

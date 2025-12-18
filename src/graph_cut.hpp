@@ -24,7 +24,8 @@ public:
 
   WeightedClusters run(std::uint8_t nClusters, std::uint16_t kmeans_iterations,
                        results::Transcript const &transcript,
-                       unsigned window_index) const;
+                       unsigned window_index,
+                       double distance_warning_threshold) const;
 
   double calculateClustersScore(
       const std::vector<std::vector<bool>> &rawClusters) const;
@@ -39,7 +40,8 @@ private:
   WeightedClusters
   partitionGraph(std::uint8_t nClusters, std::uint16_t kmeans_iterations,
                  results::Transcript const &transcript, unsigned window_index,
-                 Fun graphFun, Gen &&random_generator) const;
+                 Fun graphFun, double distance_warning_threshold,
+                 Gen &&random_generator) const;
 
   arma::mat getGraphWithNoLoops(const arma::mat &matrix) const;
 

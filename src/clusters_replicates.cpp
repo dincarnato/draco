@@ -66,7 +66,8 @@ template <> struct fmt::formatter<clusters_replicates::PermutationsFormatter> {
 namespace clusters_replicates {
 void reorder_best_permutation(
     std::vector<WeightedClusters> &replicates_clusters,
-    results::Transcript const &transcript, unsigned window_index) {
+    results::Transcript const &transcript, unsigned window_index,
+    double distance_warning_threshold) {
   std::size_t const n_replicates = std::size(replicates_clusters);
   if (n_replicates <= 1) {
     return;

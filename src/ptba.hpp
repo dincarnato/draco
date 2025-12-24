@@ -20,19 +20,16 @@ namespace log_data {
 
 struct NotEnoughReads {
   std::size_t reads;
-  std::size_t min_filtered_reads;
 };
 
 struct NotEnoughBases {
   std::size_t bases;
-  std::size_t min_bases;
 };
 
 struct AllZeroEigenGaps {};
 
 struct NoUsefulEigenGaps {
   std::size_t eigengaps;
-  std::size_t max_clusters;
 };
 
 namespace permuting {
@@ -40,7 +37,6 @@ namespace permuting {
 struct NotEnoughReads {
   unsigned permutation;
   std::size_t filtered_reads;
-  std::size_t min_filtered_reads;
 };
 
 struct NewValidEigengap {
@@ -50,13 +46,11 @@ struct NewValidEigengap {
   bool distribution_is_evaluated;
   double eigengap_difference;
   double cumulative_difference;
-  double min_eigengap_threshold;
 };
 
 struct SignificantEigengapLowDifference {
   unsigned permutation;
   double eigengap_difference;
-  double eigengap_diff_absolute_threshold;
   bool distribution_is_evaluated;
   std::optional<std::size_t> valid_eigengap_index;
   std::size_t current_eigengap_index;
@@ -74,7 +68,6 @@ struct UsefulEigengapIndex {};
 
 struct OverExtendedSearch {
   std::size_t valid_eigengap_index;
-  std::size_t extended_search_eigengaps;
 };
 
 using Solution = std::variant<solution_found::UsefulEigengapIndex,
@@ -189,9 +182,9 @@ private:
   bool ignore_first_eigengap;
 };
 
-void print_log_data(LogData const &log_data, Window const &window,
-                    size_t window_index, unsigned window_size,
-                    results::Transcript const &transcript,
+void print_log_data(LogData const &log_data, Args const &args,
+                    Window const &window, size_t window_index,
+                    unsigned window_size, results::Transcript const &transcript,
                     std::size_t replicate_index) noexcept;
 
 #include "ptba_impl.hpp"

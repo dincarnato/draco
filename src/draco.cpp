@@ -831,7 +831,7 @@ ptba_on_replicate(std::size_t replicate_index, RingmapData const &ringmap_data,
       Ptba ptba(window_ringmap_data, args);
 
       auto const result = ptba.run();
-      logger::on_debug_level(print_log_data, result.log_data, window,
+      logger::on_debug_level(print_log_data, result.log_data, args, window,
                              static_cast<std::size_t>(std::distance(
                                  std::cbegin(windows), windows_iter)),
                              window_size, transcript_result, replicate_index);

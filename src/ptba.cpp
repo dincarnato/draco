@@ -509,20 +509,21 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
       "/tmp/perturbed_eigengaps_thrown.txt";
   try {
     dumpEigenVecs(dataEigenVecs, eigenVecsFilename);
-  } catch (const std::exception &) {
-    std::cerr << "WARNING: eigenvecs data cannot be written\n";
+  } catch (const std::exception &exception) {
+    logger::warn("Eigenvecs data cannot be written: {}", exception.what());
   }
 
   try {
     dumpEigenGaps(dataEigenGaps, eigenGapsFilename);
-  } catch (const std::exception &) {
-    std::cerr << "WARNING: eigengaps data cannot be written\n";
+  } catch (const std::exception &exception) {
+    logger::warn("Eigengaps data cannot be written: {}", exception.what());
   }
 
   try {
     dumpPerturbedEigenGaps(perturbed_eigengaps, perturbedEigenGapsFilename);
-  } catch (const std::exception &) {
-    std::cerr << "WARNING: perturbed eigengaps data cannot be written\n";
+  } catch (const std::exception &exception) {
+    logger::warn("Perturbed eigengaps data cannot be written: {}",
+                 exception.what());
   }
 
   throw exception(std::string("cannot find the number of clusters. eigenvecs, "

@@ -119,7 +119,7 @@ inline auto on_log_level(Level level, Fn &&fn, Args &&...args)
     log(Level::LEVEL, std::move(format_string), std::forward<Args>(args)...);  \
   }                                                                            \
   template <typename... Args, std::invocable<Args...> Fn>                      \
-  inline auto on_##LEVEL##_level(Fn &&fn, Args &&...args)->decltype(auto) {    \
+  inline auto on_##LEVEL##_level(Fn &&fn, Args &&...args) -> decltype(auto) {  \
     on_log_level(Level::LEVEL, std::forward<Fn>(fn),                           \
                  std::forward<Args>(args)...);                                 \
   }

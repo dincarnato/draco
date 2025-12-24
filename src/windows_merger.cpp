@@ -1,4 +1,5 @@
 #include "windows_merger.hpp"
+#include "logger.hpp"
 
 #include <exception>
 #include <numeric>
@@ -682,7 +683,7 @@ void WindowsMerger::update_indices_for_post_collapsing(
       ++available_indices;
   }
 
-  std::cerr << "invalid indices\n";
+  logger::error("Invalid indices, terminating");
   std::terminate();
 }
 

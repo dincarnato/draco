@@ -835,7 +835,7 @@ void test_handle_transcripts_clusters_confidences() {
                     .args = args,
                     .raw_n_clusters_stream = raw_n_clusters_stream,
                     .raw_n_clusters_stream_mutex = raw_n_clusters_stream_mutex,
-                    .use_stdout = false,
+                    .use_logger = false,
                     .allow_empty_patterns = true}(
       [&](auto replicate_index, auto const &, auto &) {
         std::vector<unsigned> pre_collapsing_clusters(n_windows, 1);

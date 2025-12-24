@@ -268,7 +268,7 @@ struct HandleTranscripts {
   Args const &args;
   std::optional<std::ofstream> &raw_n_clusters_stream;
   std::mutex &raw_n_clusters_stream_mutex;
-  bool use_stdout;
+  bool use_logger;
   bool allow_empty_patterns;
 
   void operator()(
@@ -282,15 +282,14 @@ struct HandleTranscripts {
     if (std::ranges::any_of(ringmaps_data, [](auto const &ringmap_data) {
           return ringmap_data->data().rows_size() == 0;
         })) {
-      if (use_stdout) {
-        std::cout << "\x1b[2K\r[+] Skipping transcript "
-                  << first_transcript.getId() << " (no reads)" << std::endl;
+      if (use_logger) {
+        logger::info("Skipping transcript {} (no reads)",
+                     first_transcript.getId());
       }
       return;
     }
-    if (use_stdout) {
-      std::cout << "\x1b[2K\r[+] Analyzing transcript "
-                << first_transcript.getId() << std::flush;
+    if (use_logger) {
+      logger::info("Analyzing transcript {}", first_transcript.getId());
     }
 
     results::Transcript transcript_result(std::size(transcripts));
@@ -569,8 +568,8 @@ struct HandleTranscripts {
                                     window.has_value() !=
                                     transcript_result.windows[0].has_value());
                               })) {
-        std::cerr << "\nInconsistency detected between merged windows"
-                  << std::endl;
+        logger::error(
+            "Inconsistency detected between merged windows, exiting.");
         std::exit(EXIT_FAILURE);
       }
 
@@ -603,10 +602,8 @@ struct HandleTranscripts {
                            first_replicate_result_windows[window_index]
                                .weighted_clusters.getClustersSize();
                   })) {
-            std::cerr
-                << "\nInconsistency between weighted clusters sizes across "
-                   "replicates"
-                << std::endl;
+            logger::error("Inconsistency between weighted clusters sizes "
+                          "across replicates, exiting.");
             std::exit(EXIT_FAILURE);
           }
 

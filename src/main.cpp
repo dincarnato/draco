@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     std::filesystem::create_directories(args.assignments_dump_directory());
   }
 
-  std::cout << "\n[+] Starting DRACO analysis. This might take a while...\n";
+  logger::info("Starting DRACO analysis. This might take a while.");
 
   // Disabling OMP, we parallelize a higher level
   omp_set_num_threads(1);
@@ -154,9 +154,9 @@ int main(int argc, char *argv[]) {
                                              transcript->getSequence() !=
                                                  first_transcript.getSequence();
                                     })) {
-              std::cerr << "\nExpected ordered transcripts between files, "
-                           "discrepancies found on transcript "
-                        << first_transcript.getId() << std::endl;
+              logger::error("Expected ordered transcripts between files, "
+                            "discrepancies found on transcript {}, exiting.",
+                            first_transcript.getId());
               std::exit(EXIT_FAILURE);
             }
 
@@ -168,5 +168,6 @@ int main(int argc, char *argv[]) {
   for (auto &reader : readers) {
     reader.join();
   }
-  std::cout << "\n[+] All done.\n\n";
+
+  logger::info("All done.");
 }

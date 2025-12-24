@@ -4,12 +4,14 @@
 
 #include <algorithm>
 #include <cassert>
+#include <exception>
 #include <functional>
 #include <iomanip>
 #include <iostream>
 #include <oneapi/tbb/blocked_range.h>
 #include <oneapi/tbb/parallel_reduce.h>
 #include <optional>
+#include <sstream>
 #include <stdexcept>
 #include <thread>
 #include <tuple>
@@ -19,19 +21,27 @@ GraphCut::GraphCut(std::vector<arma::mat> const &adjacencies, Graph type)
   for (const auto &adjacency : adjacencies) {
     for (std::size_t row = 0; row < adjacency.n_rows; ++row) {
       if (arma::all(arma::abs(adjacency.row(row)) < 1e-6)) {
-        std::cerr << std::setprecision(2);
-        adjacency.print(std::cerr);
-        throw std::runtime_error(
-            "adjacency cannot have rows with all zero values");
+        std::stringstream repr;
+        repr << std::setprecision(2);
+        adjacency.print(repr);
+
+        logger::error("Adjacency cannot have rows with all zero values, "
+                      "terminating. Matrix:\n{}",
+                      repr.str());
+        std::terminate();
       }
     }
 
     for (std::size_t col = 0; col < adjacency.n_cols; ++col) {
       if (arma::all(arma::abs(adjacency.col(col)) < 1e-6)) {
-        std::cerr << std::setprecision(2);
-        adjacency.print(std::cerr);
-        throw std::runtime_error(
-            "adjacency cannot have cols with all zero values");
+        std::stringstream repr;
+        repr << std::setprecision(2);
+        adjacency.print(repr);
+
+        logger::error("Adjacency cannot have cols with all zero values, "
+                      "terminating. Matrix:\n{}",
+                      repr.str());
+        std::terminate();
       }
     }
   }

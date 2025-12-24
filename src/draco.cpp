@@ -964,7 +964,7 @@ void handle_transcripts(
       .args = args,
       .raw_n_clusters_stream = raw_n_clusters_stream,
       .raw_n_clusters_stream_mutex = raw_n_clusters_stream_mutex,
-      .use_stdout = true,
+      .use_logger = true,
       .allow_empty_patterns = false,
   }(
       [&](auto replicate_index, auto const &ringmap_data,

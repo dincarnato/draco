@@ -132,10 +132,6 @@ private:
   unsigned startIndex, endIndex;
   unsigned nSetReads = 0;
   unsigned modificationsFilter = 0;
-  unsigned minimumCoverage = 100;
-  unsigned minimumModificationsPerBase = 2;
-  unsigned minimumModificationsPerRead = 2;
-  float minimumModificationsPerBaseFraction = 0.005f;
   std::string sequence;
   std::vector<unsigned> readsMap;
   std::vector<unsigned> baseCoverages;
@@ -143,7 +139,7 @@ private:
   std::map<unsigned, unsigned> oldColsToNew;
   data_type m_data;
   arma::Col<std::uint8_t> basesMask;
-  bool shape = false;
+  Args const *args;
 
 public:
   const decltype(oldColsToNew) &getNonFilteredToFilteredMap() const;

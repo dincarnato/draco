@@ -135,14 +135,8 @@ Ptba::getNumberOfClustersAndSignificantIndicesAndDumpData(
   return {result.nClusters, std::move(result.significantIndices)};
 }
 
-void Ptba::setMaxClusters(unsigned value) { maxClusters = value; }
-
 std::vector<unsigned> Ptba::getAllSignificantEigenGapIndices() const {
   return run().significantIndices;
-}
-
-void Ptba::setMinEigenGapThreshold(double value) {
-  minEigenGapThreshold = value;
 }
 
 auto Ptba::run() const noexcept(false) -> PtbaResult {

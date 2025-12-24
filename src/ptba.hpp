@@ -152,9 +152,7 @@ public:
   getNumberOfClustersAndSignificantIndicesAndDumpData(
       std::string_view eigenValsFilename,
       std::string_view perturbedEigenValsFilename) const;
-  void setMaxClusters(unsigned value);
   std::vector<unsigned> getAllSignificantEigenGapIndices() const;
-  void setMinEigenGapThreshold(double value);
 
   PtbaResult run() const noexcept(false);
 

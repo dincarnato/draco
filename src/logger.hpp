@@ -89,7 +89,7 @@ inline void log(Level level, fmt::format_string<Args...> format_string,
       fmt::format("[{}]: ", fmt::styled(level_str, std::move(text_style)));
   fmt::format_to(std::back_inserter(s), format_string,
                  std::forward<Args>(args)...);
-  fmt::println(stderr, "{}", s);
+  fmt::println("{}", s);
 }
 
 template <typename... Args, std::invocable<Args...> Fn>

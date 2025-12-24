@@ -2,6 +2,7 @@
 
 #include "clusters_traits.hpp"
 #include "graph_cut.hpp"
+#include "logger.hpp"
 
 #include <algorithm>
 #include <armadillo>
@@ -13,6 +14,7 @@
 #include <numeric>
 #include <random>
 #include <ranges>
+#include <sstream>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -235,19 +237,24 @@ GraphCut::partitionGraph(std::uint8_t nClusters, float weightModule,
         0., std::plus{});
 
     if (std::isnan(bestScore)) {
-      std::cerr << "Invalid bestScore\nGraphs content:\n";
-      std::ranges::for_each(
+      std::stringstream graphs_content;
+
+      auto graphs_to_dump =
           graphs | std::views::transform([&](auto const &graph) {
             auto score = calculateCutScore(graph, weights);
-            return std::pair(graph, score);
-          }) | std::views::filter([](auto const &pair) {
-            return std::isnan(std::get<1>(pair));
-          }),
-          [](auto const &pair) {
-            auto const &graph = std::get<0>(pair);
-            graph.print(std::cerr);
-            std::cerr << "\n\n";
-          });
+            return std::pair(&graph, score);
+          }) |
+          std::views::filter(
+              [](auto const &pair) { return std::isnan(std::get<1>(pair)); }) |
+          std::views::transform([](auto &&pair) { return std::get<0>(pair); });
+      (*std::ranges::begin(graphs_to_dump))->print(graphs_content);
+      for (auto graph_to_dump : graphs_to_dump | std::views::drop(1)) {
+        graphs_content << "\n\n";
+        graph_to_dump->print(graphs_content);
+      }
+
+      logger::error("Invalid bestScore. Graphs content:\n{}",
+                    graphs_content.str());
       std::abort();
     }
 
@@ -390,19 +397,24 @@ HardClusters GraphCut::partitionGraphHard(std::uint8_t nClusters,
         }),
         0., std::plus{});
     if (std::isnan(bestScore)) {
-      std::cerr << "Invalid bestScore\nGraphs content:\n";
-      std::ranges::for_each(
+      std::stringstream graphs_content;
+
+      auto graphs_to_dump =
           graphs | std::views::transform([&](auto const &graph) {
             auto score = calculateCutScore(graph, hardClusters);
-            return std::pair(graph, score);
-          }) | std::views::filter([](auto const &pair) {
-            return std::isnan(std::get<1>(pair));
-          }),
-          [](auto const &pair) {
-            auto const &graph = std::get<0>(pair);
-            graph.print(std::cerr);
-            std::cerr << "\n\n";
-          });
+            return std::pair(&graph, score);
+          }) |
+          std::views::filter(
+              [](auto const &pair) { return std::isnan(std::get<1>(pair)); }) |
+          std::views::transform([](auto &&pair) { return std::get<0>(pair); });
+      (*std::ranges::begin(graphs_to_dump))->print(graphs_content);
+      for (auto graph_to_dump : graphs_to_dump | std::views::drop(1)) {
+        graphs_content << "\n\n";
+        graph_to_dump->print(graphs_content);
+      }
+
+      logger::error("Invalid bestScore. Graphs content:\n{}",
+                    graphs_content.str());
       std::abort();
     }
 

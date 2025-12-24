@@ -46,6 +46,11 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  if (args.max_clusters() < 1) {
+    logger::error("--maxClusters must be at least 1");
+    return EXIT_FAILURE;
+  }
+
   if (not args.assignments_dump_directory().empty()) {
     logger::debug("Creating directory {}", args.assignments_dump_directory());
     std::filesystem::create_directories(args.assignments_dump_directory());

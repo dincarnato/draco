@@ -1,4 +1,5 @@
 #include "ptba.hpp"
+#include "args.hpp"
 #include "draco.hpp"
 #include "logger.hpp"
 #include "results/transcript.hpp"
@@ -26,18 +27,7 @@ namespace fs = std::experimental::filesystem;
 #endif
 
 Ptba::Ptba(const RingmapData &data, Args const &args)
-    : ringmapData(&data), minFilteredReads(args.min_filtered_reads()),
-      maxPermutations(args.max_permutations()),
-      minPermutations(args.min_permutations()),
-      minEigenGapThreshold(args.min_eigengap_threshold()),
-      eigenGapDiffAbsoluteThreshold(args.eigengap_diff_absolute_threshold()),
-      alphaValue(args.alpha_value()), betaValue(args.beta_value()),
-      maxClusters(args.max_clusters()),
-      alternative_check_permutations(args.alternative_check_permutations()),
-      min_null_stddev(args.min_null_stddev()),
-      minBasesSize(args.min_bases_size()),
-      extended_search_eigengaps(args.extended_search_eigengaps()),
-      ignore_first_eigengap(args.ignore_first_eigengap()) {}
+    : ringmapData(&data), args(&args) {}
 
 std::tuple<arma::mat, arma::vec, arma::vec, arma::mat>
 Ptba::calculateEigenGaps(const RingmapData &data) {
@@ -160,11 +150,9 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
       filteredToUnfilteredBases[filteredIndex] = unfilteredIndex;
     }
 
-    if (filteredData.size() < minFilteredReads) {
-      return {LogData{log_data::NotEnoughReads{
-          .reads = filteredData.size(),
-      }}};
-    } else if (filteredData.data().cols_size() < minBasesSize) {
+    if (filteredData.size() < args->min_filtered_reads()) {
+      return {LogData{log_data::NotEnoughReads{.reads = filteredData.size()}}};
+    } else if (filteredData.data().cols_size() < args->min_bases_size()) {
       return {LogData{log_data::NotEnoughBases{
           .bases = filteredData.data().cols_size(),
       }}};
@@ -179,9 +167,8 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
   }
 
   assert(dataEigenGaps.size() > 1);
-  assert(maxClusters > 0);
-  const auto useful_eigengaps =
-      std::min(static_cast<unsigned>(dataEigenGaps.size() / 2), maxClusters);
+  const auto useful_eigengaps = std::min(
+      static_cast<unsigned>(dataEigenGaps.size() / 2), args->max_clusters());
 
   if (useful_eigengaps == 0)
     return {LogData{
@@ -203,7 +190,7 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
 
   log_data::Permuting permutation_log;
   auto &&[eigenGapIndex, valid_eigengap_index] = ([&] {
-    if (ignore_first_eigengap) {
+    if (args->ignore_first_eigengap()) {
       return std::make_tuple(1u, std::optional<unsigned>(0u));
     } else {
       return std::make_tuple(0u, std::optional<unsigned>());
@@ -212,17 +199,18 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
   assert(initialData.size() != 0);
 
   for (unsigned permutation = 0;
-       permutation < maxPermutations and eigenGapIndex < useful_eigengaps and
+       permutation < args->max_permutations() and
+       eigenGapIndex < useful_eigengaps and
        (not valid_eigengap_index.has_value() or
-        eigenGapIndex <=
-            valid_eigengap_index.value() + extended_search_eigengaps + 1);
+        eigenGapIndex <= valid_eigengap_index.value() +
+                             args->extended_search_eigengaps() + 1);
        ++permutation) {
     RingmapData perturbedData = initialData;
     perturbedData.perturb();
     perturbedData.filterBases();
     perturbedData.filterReads();
 
-    if (perturbedData.size() < minFilteredReads) {
+    if (perturbedData.size() < args->min_filtered_reads()) {
       logger::on_debug_level([&]() {
         permutation_log.data.push_back(log_data::permuting::NotEnoughReads{
             .permutation = permutation,
@@ -246,7 +234,7 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
       }
     }
 
-    if (permutation < minPermutations)
+    if (permutation < args->min_permutations())
       continue;
 
     assert(std::all_of(
@@ -273,7 +261,7 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
               return acc + std::pow(x - null_mean, 2.) / n;
             }));
 
-        if (null_stddev < min_null_stddev) {
+        if (null_stddev < args->min_null_stddev()) {
           bool const away_from_null_model = [&] {
             if (eigengap_value < null_mean)
               return eigengap_value < null_mean - null_stddev * 3.;
@@ -288,7 +276,7 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
             return std::pair(PValueResult::alternative, false);
           else
             return std::pair(PValueResult::nonsignificant, false);
-        } else if (permutation >= alternative_check_permutations)
+        } else if (permutation >= args->alternative_check_permutations())
           return std::pair(PValueResult::significant, false);
       }
 
@@ -311,9 +299,9 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
           boost::math::cdf(distribution, dataEigenGaps[eigenGapIndex]);
       double pValue = 2 * std::min(cdfValue, 1 - cdfValue);
 
-      if (pValue < alphaValue)
+      if (pValue < args->alpha_value())
         return std::pair(PValueResult::significant, true);
-      else if (pValue < betaValue)
+      else if (pValue < args->beta_value())
         return std::pair(PValueResult::nonsignificant, true);
       else
         return std::pair(PValueResult::alternative, true);
@@ -350,8 +338,8 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
     for (; eigenGapIndex < useful_eigengaps and
            (eigenGapIndex == 0 or
             (valid_eigengap_index.has_value() and
-             eigenGapIndex <=
-                 valid_eigengap_index.value() + extended_search_eigengaps + 1));
+             eigenGapIndex <= valid_eigengap_index.value() +
+                                  args->extended_search_eigengaps() + 1));
          ++eigenGapIndex) {
       auto result_and_evaluated_distribution =
           isPValueSignificative(eigenGapIndex);
@@ -363,15 +351,15 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
         if (eigenGapIndex == 0 or
             (valid_eigengap_index.has_value() and
              eigenGapIndex > valid_eigengap_index.value() +
-                                 extended_search_eigengaps + 1) or
-            permutation < maxPermutations - 1)
+                                 args->extended_search_eigengaps() + 1) or
+            permutation < args->max_permutations() - 1)
           break;
       }
 
       if (result == PValueResult::significant) {
         const double diff =
             calc_eigengap_null_distance(eigenGapIndex, evaluated_distribution);
-        if (diff >= eigenGapDiffAbsoluteThreshold) {
+        if (diff >= args->eigengap_diff_absolute_threshold()) {
           double cum_diff = 0.;
           for (unsigned eigengap_index = 0; eigengap_index < eigenGapIndex;
                ++eigengap_index) {
@@ -380,7 +368,7 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
             cum_diff += calc_eigengap_null_distance(eigengap_index, false);
           }
 
-          if (diff >= cum_diff * minEigenGapThreshold) {
+          if (diff >= cum_diff * args->min_eigengap_threshold()) {
             logger::on_debug_level([&]() {
               permutation_log.data.push_back(
                   log_data::permuting::NewValidEigengap{
@@ -433,8 +421,8 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
 
     if (eigenGapIndex == useful_eigengaps or
         (valid_eigengap_index.has_value() and
-         eigenGapIndex >
-             valid_eigengap_index.value() + extended_search_eigengaps + 1)) {
+         eigenGapIndex > valid_eigengap_index.value() +
+                             args->extended_search_eigengaps() + 1)) {
 
       logger::on_debug_level([&]() {
         auto solution = ([&]() {
@@ -477,7 +465,7 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
     logger::on_debug_level([&]() {
       permutation_log.data.push_back(
           log_data::permuting::NotSignificantEigengap{
-              .permutation = maxPermutations,
+              .permutation = args->max_permutations(),
               .valid_eigengap_index = valid_eigengap_index,
               .current_eigengap_index = eigenGapIndex,
           });

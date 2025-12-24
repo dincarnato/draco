@@ -101,7 +101,8 @@ function(create_tests suffix)
 
   add_executable(windows_merger_${ARGV0} EXCLUDE_FROM_ALL
       windows_merger.cpp
-      ${PROJECT_SOURCE_DIR}/src/windows_merger.cpp)
+      ${PROJECT_SOURCE_DIR}/src/windows_merger.cpp
+      ${PROJECT_SOURCE_DIR}/src/logger.cpp)
   target_compile_options(windows_merger_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(windows_merger_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
   target_link_libraries(windows_merger_${ARGV0} ${ARGN})
@@ -199,7 +200,7 @@ function(create_tests suffix)
   set_tests_properties(mutation_map_writer_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   set_tests_properties(draco_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   
-  target_link_libraries(windows_merger_${ARGV0} ${TBB_LIBRARIES})
+  target_link_libraries(windows_merger_${ARGV0} ${TBB_LIBRARIES} fmt::fmt)
   target_link_libraries(ringmap_base_${ARGV0} ${ARMADILLO_LIBRARIES})
   target_link_libraries(ringmap_data_${ARGV0} ${ARMADILLO_LIBRARIES})
   target_link_libraries(graph_cut_${ARGV0} ${ARMADILLO_LIBRARIES} ${TBB_LIBRARIES} fmt::fmt)

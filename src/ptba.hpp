@@ -167,19 +167,7 @@ private:
                   PerturbedEigengap const &perturbed_data) noexcept(false);
 
   const RingmapData *ringmapData;
-  unsigned minFilteredReads = 5;
-  unsigned maxPermutations = 400;
-  unsigned minPermutations = 8;
-  double minEigenGapThreshold = 0.10;
-  double eigenGapDiffAbsoluteThreshold = 0.03;
-  double alphaValue = 0.01;
-  double betaValue = 0.2;
-  unsigned maxClusters = std::numeric_limits<unsigned>::max();
-  unsigned alternative_check_permutations = 50;
-  double min_null_stddev = 0.025;
-  unsigned minBasesSize = 10;
-  unsigned char extended_search_eigengaps;
-  bool ignore_first_eigengap;
+  Args const *args;
 };
 
 void print_log_data(LogData const &log_data, Args const &args,

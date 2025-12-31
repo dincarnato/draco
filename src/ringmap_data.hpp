@@ -59,7 +59,7 @@ public:
   void resize(unsigned size);
   const data_type &data() const;
   static void removeHighValuesOnAdjacency(arma::mat &adjacency,
-                                          double maxFraction = 0.35);
+                                          double maxFraction);
   void shed(unsigned begin,
             unsigned end = std::numeric_limits<unsigned>::max());
   void remove(unsigned begin,

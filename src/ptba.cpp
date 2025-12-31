@@ -35,7 +35,8 @@ Ptba::calculateEigenGaps(const RingmapData &data) {
   arma::mat adjacency = data.data().covariance(data.getBaseWeights());
   {
     // data.fixBadNeighboursOnAdjacency(adjacency);
-    RingmapData::removeHighValuesOnAdjacency(adjacency);
+    RingmapData::removeHighValuesOnAdjacency(
+        adjacency, data.args().maximum_modifications_per_base_fraction());
 
     adjacency.diag() = arma::zeros(adjacency.n_cols);
     arma::vec degree = arma::sum(adjacency, 1);

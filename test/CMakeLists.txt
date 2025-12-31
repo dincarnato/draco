@@ -127,6 +127,7 @@ function(create_tests suffix)
       ${PROJECT_SOURCE_DIR}/src/mutation_map_transcript.cpp
       ${PROJECT_SOURCE_DIR}/src/paired_rna_secondary_structure.cpp
       ${PROJECT_SOURCE_DIR}/src/logger.cpp
+      ${PROJECT_SOURCE_DIR}/src/args.cpp
   )
   target_compile_options(ringmap_window_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(ringmap_window_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)

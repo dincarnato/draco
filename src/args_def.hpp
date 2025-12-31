@@ -62,6 +62,11 @@ static constexpr auto opts = args::Opts(
             .description("Bases below this mutation frequency will be "
                          "discarded as noise")
             .DEFAULT_VALUE(0.005f),
+        ARG(float, maximum_modifications_per_base_fraction)
+            .parameter_name("maxMutationFreq")
+            .description("Bases above or equal this mutation frequency will be "
+                         "discarded as noise")
+            .DEFAULT_VALUE(0.35f),
         ARG(unsigned, minimum_modifications_per_read)
             .parameter_name("minReadMutations")
             .description(

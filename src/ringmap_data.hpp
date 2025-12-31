@@ -113,6 +113,8 @@ public:
              std::random_access_iterator<std::ranges::iterator_t<R>>
   static void filter_bases_on_replicates_for_assignments(R &ringmap_data_range);
 
+  constexpr Args const &args() const noexcept { return *args_; }
+
 private:
   RingmapData(std::string_view sequence, data_type &&dataMatrix,
               unsigned startIndex, unsigned endIndex);
@@ -132,10 +134,6 @@ private:
   unsigned startIndex, endIndex;
   unsigned nSetReads = 0;
   unsigned modificationsFilter = 0;
-  unsigned minimumCoverage = 100;
-  unsigned minimumModificationsPerBase = 2;
-  unsigned minimumModificationsPerRead = 2;
-  float minimumModificationsPerBaseFraction = 0.005f;
   std::string sequence;
   std::vector<unsigned> readsMap;
   std::vector<unsigned> baseCoverages;
@@ -143,7 +141,7 @@ private:
   std::map<unsigned, unsigned> oldColsToNew;
   data_type m_data;
   arma::Col<std::uint8_t> basesMask;
-  bool shape = false;
+  Args const *args_;
 
 public:
   const decltype(oldColsToNew) &getNonFilteredToFilteredMap() const;

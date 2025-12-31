@@ -5,6 +5,8 @@
 #include "../ringmap_data.hpp"
 #include "../ringmap_matrix.hpp"
 
+struct Args;
+
 namespace test {
 
 struct RingmapData {
@@ -50,37 +52,13 @@ struct RingmapData {
     return ringmap_data.nSetReads;
   }
 
-  static unsigned &minimumCoverage(::RingmapData &ringmap_data) noexcept {
-    return ringmap_data.minimumCoverage;
-  }
-
-  static unsigned minimumCoverage(::RingmapData const &ringmap_data) noexcept {
-    return ringmap_data.minimumCoverage;
-  }
-
-  static unsigned &
-  minimumModificationsPerBase(::RingmapData &ringmap_data) noexcept {
-    return ringmap_data.minimumModificationsPerBase;
-  }
-
-  static unsigned
-  minimumModificationsPerBase(::RingmapData const &ringmap_data) noexcept {
-    return ringmap_data.minimumModificationsPerBase;
-  }
-
-  static float minimumModificationsPerBaseFraction(
-      ::RingmapData const &ringmap_data) noexcept {
-    return ringmap_data.minimumModificationsPerBaseFraction;
-  }
-
-  static unsigned
-  minimumModificationsPerRead(::RingmapData const &ringmap_data) noexcept {
-    return ringmap_data.minimumModificationsPerRead;
-  }
-
   static std::vector<unsigned> const &
   baseCoverages(::RingmapData const &ringmap_data) noexcept {
     return ringmap_data.baseCoverages;
+  }
+
+  static Args const *&args_(::RingmapData &ringmap_data) noexcept {
+    return ringmap_data.args_;
   }
 };
 

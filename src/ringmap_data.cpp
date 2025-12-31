@@ -26,12 +26,7 @@
 
 RingmapData::RingmapData(const std::string &filename, std::string_view sequence,
                          Args const &args, bool keepFragments)
-    : minimumCoverage(args.minimum_base_coverage()),
-      minimumModificationsPerBase(args.minimum_modifications_per_base()),
-      minimumModificationsPerRead(args.minimum_modifications_per_read()),
-      minimumModificationsPerBaseFraction(
-          args.minimum_modifications_per_base_fraction()),
-      sequence(sequence), shape(args.shape()) {
+    : sequence(sequence), args_(&args) {
   startIndex = std::numeric_limits<unsigned>::max();
   endIndex = std::numeric_limits<unsigned>::lowest();
 
@@ -99,14 +94,9 @@ RingmapData::RingmapData(std::string_view sequence, data_type &&dataMatrix,
                          unsigned startIndex, unsigned endIndex,
                          Args const &args)
     : startIndex(startIndex), endIndex(endIndex),
-      nSetReads(dataMatrix.storedReads()),
-      minimumCoverage(args.minimum_base_coverage()),
-      minimumModificationsPerBase(args.minimum_modifications_per_base()),
-      minimumModificationsPerRead(args.minimum_modifications_per_read()),
-      minimumModificationsPerBaseFraction(
-          args.minimum_modifications_per_base_fraction()),
-      sequence(sequence), baseCoverages(sequence.size(), nSetReads),
-      m_data(std::move(dataMatrix)), shape(args.shape()) {}
+      nSetReads(dataMatrix.storedReads()), sequence(sequence),
+      baseCoverages(sequence.size(), nSetReads), m_data(std::move(dataMatrix)),
+      args_(&args) {}
 
 RingmapData::RingmapData(std::string_view sequence, data_type &&dataMatrix,
                          unsigned startIndex, unsigned endIndex)
@@ -119,14 +109,8 @@ RingmapData::RingmapData(const MutationMapTranscript &transcript,
                          Args const &args)
     : startIndex(0),
       endIndex(static_cast<unsigned>(transcript.getSequence().size())),
-      nSetReads(transcript.getReadsSize()),
-      minimumCoverage(args.minimum_base_coverage()),
-      minimumModificationsPerBase(args.minimum_modifications_per_base()),
-      minimumModificationsPerRead(args.minimum_modifications_per_read()),
-      minimumModificationsPerBaseFraction(
-          args.minimum_modifications_per_base_fraction()),
-      sequence(transcript.getSequence()), baseCoverages(endIndex),
-      m_data(nSetReads, endIndex), shape(args.shape()) {
+      nSetReads(transcript.getReadsSize()), sequence(transcript.getSequence()),
+      baseCoverages(endIndex), m_data(nSetReads, endIndex), args_(&args) {
   addReads(std::ranges::begin(transcript), std::ranges::end(transcript));
 }
 
@@ -139,17 +123,11 @@ RingmapData::RingmapData(const RingmapData &other,
       basesFiltered(other.basesFiltered), startIndex(other.startIndex),
       endIndex(other.endIndex),
       nSetReads(static_cast<unsigned>(subsetIndices.size())),
-      modificationsFilter(other.modificationsFilter),
-      minimumCoverage(other.minimumCoverage),
-      minimumModificationsPerBase(other.minimumModificationsPerBase),
-      minimumModificationsPerRead(other.minimumModificationsPerRead),
-      minimumModificationsPerBaseFraction(
-          other.minimumModificationsPerBaseFraction),
-      sequence(other.sequence), baseCoverages(other.baseCoverages),
-      oldColsToNew(other.oldColsToNew),
+      modificationsFilter(other.modificationsFilter), sequence(other.sequence),
+      baseCoverages(other.baseCoverages), oldColsToNew(other.oldColsToNew),
       m_data(static_cast<unsigned>(subsetIndices.size()),
              other.m_data.cols_size()),
-      shape(other.shape) {
+      args_(other.args_) {
   m_data.resize(static_cast<unsigned>(subsetIndices.size()));
   unsigned row = 0;
   for (unsigned index : subsetIndices)
@@ -212,9 +190,9 @@ void RingmapData::filterBases() {
 
       char base = static_cast<char>(
           std::toupper(static_cast<int>(sequence[baseIndex])));
-      assert(not basesFiltered or shape or base == 'C' or base == 'A');
+      assert(not basesFiltered or args_->shape() or base == 'C' or base == 'A');
 
-      if (shape or base == 'C' or base == 'A') {
+      if (args_->shape() or base == 'C' or base == 'A') {
         auto takeCol = [&] {
           usedCols.emplace_back(colIndex);
           newOldColsToNew.emplace(baseIndex, new_n_cols);
@@ -225,13 +203,13 @@ void RingmapData::filterBases() {
         auto const modificationsOnCol = static_cast<double>(
             m_data.col(static_cast<unsigned>(colIndex)).sum());
         if (not basesFiltered) {
-          if (baseCoverages[colIndex] >= minimumCoverage and
+          if (baseCoverages[colIndex] >= args_->minimum_base_coverage() and
               modificationsOnCol / baseCoverages[colIndex] >
-                  minimumModificationsPerBaseFraction and
-              modificationsOnCol > minimumModificationsPerBase)
+                  args_->minimum_modifications_per_base_fraction() and
+              modificationsOnCol > args_->minimum_modifications_per_base())
             takeCol();
         } else {
-          if (modificationsOnCol > minimumModificationsPerBase)
+          if (modificationsOnCol > args_->minimum_modifications_per_base())
             takeCol();
         }
       }
@@ -271,7 +249,7 @@ void RingmapData::filterBases() {
 }
 
 void RingmapData::filterReads() {
-  if (modificationsFilter >= minimumModificationsPerRead)
+  if (modificationsFilter >= args_->minimum_modifications_per_read())
     return;
 
   if (readsMap.empty()) {
@@ -286,7 +264,7 @@ void RingmapData::filterReads() {
   unsigned new_n_rows = 0;
 
   for (unsigned row = 0; row < m_data.rows_size(); ++row) {
-    if (m_data.row(row).sum() >= minimumModificationsPerRead) {
+    if (m_data.row(row).sum() >= args_->minimum_modifications_per_read()) {
       newReadsMap.emplace_back(readsMap[row]);
       filtered.row(new_n_rows++) = m_data.row(row);
     }
@@ -297,7 +275,7 @@ void RingmapData::filterReads() {
   readsMap = std::move(newReadsMap);
   nSetReads = new_n_rows;
 
-  modificationsFilter = minimumModificationsPerRead;
+  modificationsFilter = args_->minimum_modifications_per_read();
 }
 
 void RingmapData::filter() {
@@ -489,17 +467,12 @@ bool RingmapData::operator==(const RingmapData &other) const {
          sequence == other.sequence and basesFiltered == other.basesFiltered and
          modificationsFilter == other.modificationsFilter and
          nSetReads == other.nSetReads and
-         minimumCoverage == other.minimumCoverage and
 #ifndef NDEBUG
          allowedMismatches == other.allowedMismatches and
 #endif
          m_data == other.m_data and oldColsToNew == other.oldColsToNew and
          readsMap == other.readsMap and baseCoverages == other.baseCoverages and
-         minimumModificationsPerBase == other.minimumModificationsPerBase and
-         minimumModificationsPerRead == other.minimumModificationsPerRead and
-         minimumModificationsPerBaseFraction ==
-             other.minimumModificationsPerBaseFraction and
-         basesMask == other.basesMask and shape == other.shape;
+         basesMask == other.basesMask and args_ == other.args_;
 }
 
 const std::string &RingmapData::getSequence() const { return sequence; }
@@ -927,15 +900,10 @@ RingmapData RingmapData::get_new_range(
   new_ringmap.startIndex = begin;
   new_ringmap.endIndex = end;
   new_ringmap.modificationsFilter = modificationsFilter;
-  new_ringmap.minimumCoverage = minimumCoverage;
-  new_ringmap.minimumModificationsPerBase = minimumModificationsPerBase;
-  new_ringmap.minimumModificationsPerRead = minimumModificationsPerRead;
-  new_ringmap.minimumModificationsPerBaseFraction =
-      minimumModificationsPerBaseFraction;
   new_ringmap.sequence = sequence.substr(begin - startIndex, end - begin);
   new_ringmap.baseCoverages.resize(end - begin, 0);
   new_ringmap.m_data = RingmapMatrix(end - begin);
-  new_ringmap.shape = shape;
+  new_ringmap.args_ = args_;
 
   auto &&rows = m_data.rows();
   auto rows_iter = std::ranges::begin(rows);
@@ -1009,16 +977,11 @@ std::vector<RingmapData> RingmapData::split_into_windows(
       ringmap.startIndex = window.begin_index;
       ringmap.endIndex = window.end_index;
       ringmap.modificationsFilter = modificationsFilter;
-      ringmap.minimumCoverage = minimumCoverage;
-      ringmap.minimumModificationsPerBase = minimumModificationsPerBase;
-      ringmap.minimumModificationsPerRead = minimumModificationsPerRead;
-      ringmap.minimumModificationsPerBaseFraction =
-          minimumModificationsPerBaseFraction;
       ringmap.sequence =
           sequence.substr(window.begin_index - startIndex, window_size);
       ringmap.baseCoverages.resize(window_size, 0);
       ringmap.m_data = RingmapMatrix(window_size);
-      ringmap.shape = shape;
+      ringmap.args_ = args_;
     }
   }
 
@@ -1040,7 +1003,7 @@ std::vector<RingmapData> RingmapData::split_into_windows(
   for (auto &&[window, ringmap] : std::views::zip(windows, splitted_ringmaps)) {
     for (auto const row : rows) {
       if (calc_modifications_intersection(row, window) <
-          minimumModificationsPerRead) {
+          args_->minimum_modifications_per_read()) {
         continue;
       }
 

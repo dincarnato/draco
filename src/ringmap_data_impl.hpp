@@ -11,13 +11,8 @@ template <typename Iter>
 RingmapData::RingmapData(std::string_view sequence, unsigned nReads,
                          Iter readsBegin, Iter readsEnd, Args const &args)
     : startIndex(0), endIndex(static_cast<unsigned>(sequence.size())),
-      nSetReads(nReads), minimumCoverage(args.minimum_base_coverage()),
-      minimumModificationsPerBase(args.minimum_modifications_per_base()),
-      minimumModificationsPerRead(args.minimum_modifications_per_read()),
-      minimumModificationsPerBaseFraction(
-          args.minimum_modifications_per_base_fraction()),
-      sequence(sequence), baseCoverages(endIndex, 0), m_data(nReads, endIndex),
-      shape(args.shape()) {
+      nSetReads(nReads), sequence(sequence), baseCoverages(endIndex, 0),
+      m_data(nReads, endIndex), args_(&args) {
   addReads(std::move(readsBegin), std::move(readsEnd));
 }
 
@@ -55,16 +50,11 @@ RingmapData::from(T &&other) {
                       data_type(std::forward<T>(other).m_data),
                       other.startIndex, other.endIndex};
   ringmap.baseCoverages = std::forward<T>(other).baseCoverages;
-  ringmap.minimumCoverage = other.minimumCoverage;
-  ringmap.minimumModificationsPerBase = other.minimumModificationsPerBase;
-  ringmap.minimumModificationsPerRead = other.minimumModificationsPerRead;
-  ringmap.minimumModificationsPerBaseFraction =
-      other.minimumModificationsPerBaseFraction;
 
 #ifndef NDEBUG
   ringmap.allowedMismatches = other.allowedMismatches;
 #endif
-  ringmap.shape = other.shape;
+  ringmap.args_ = other.args_;
 
   return ringmap;
 }
@@ -77,12 +67,8 @@ void RingmapData::filter_bases_on_replicates(R &ringmap_data_range) {
   filter_bases_on_replicates_inner(
       ringmap_data_range,
       [&](auto &first_ringmap_data, auto original_base_index) {
-        auto const minimum_modifications_per_base_fraction =
-            first_ringmap_data.minimumModificationsPerBaseFraction;
-        auto const minimum_modifications_per_base =
-            first_ringmap_data.minimumModificationsPerBase;
+        auto const &args = *first_ringmap_data.args_;
         auto const bases_filtered = first_ringmap_data.basesFiltered;
-        auto const minimum_coverage = first_ringmap_data.minimumCoverage;
 
         return std::ranges::all_of(
             ringmap_data_range, [&](const auto &ringmap_data) {
@@ -91,13 +77,14 @@ void RingmapData::filter_bases_on_replicates(R &ringmap_data_range) {
                       .col(static_cast<unsigned>(original_base_index))
                       .sum());
 
-              return modifications_on_col >= minimum_modifications_per_base and
+              return modifications_on_col >=
+                         args.minimum_modifications_per_base() and
                      (bases_filtered or
                       (ringmap_data.baseCoverages[original_base_index] >=
-                           minimum_coverage and
+                           args.minimum_base_coverage() and
                        modifications_on_col /
                                ringmap_data.baseCoverages[original_base_index] >
-                           minimum_modifications_per_base_fraction));
+                           args.minimum_modifications_per_base_fraction()));
             });
       });
 }
@@ -129,13 +116,7 @@ void RingmapData::filter_bases_on_replicates_inner(R &ringmap_data_range,
                ringmap_data.basesFiltered ==
                    first_ringmap_data.basesFiltered and
                ringmap_data.sequence == first_ringmap_data.sequence and
-               ringmap_data.shape == first_ringmap_data.shape and
-               ringmap_data.minimumModificationsPerBase ==
-                   first_ringmap_data.minimumModificationsPerBase and
-               ringmap_data.minimumCoverage ==
-                   first_ringmap_data.minimumCoverage and
-               ringmap_data.minimumModificationsPerBaseFraction ==
-                   first_ringmap_data.minimumModificationsPerBaseFraction and
+               ringmap_data.args_ == first_ringmap_data.args_ and
                ringmap_data.oldColsToNew == first_ringmap_data.oldColsToNew;
       }));
 
@@ -186,7 +167,8 @@ void RingmapData::filter_bases_on_replicates_inner(R &ringmap_data_range,
         auto const base = static_cast<char>(std::toupper(
             static_cast<int>(first_ringmap_data.sequence[base_index])));
 
-        return (first_ringmap_data.shape or base == 'C' or base == 'A') and
+        return (first_ringmap_data.args_->shape() or base == 'C' or
+                base == 'A') and
                base_filter(first_ringmap_data, original_base_index);
       }) |
       std::ranges::to<std::vector>();

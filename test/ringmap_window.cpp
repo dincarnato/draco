@@ -1,3 +1,4 @@
+#include "args.hpp"
 #include "ringmap_data.hpp"
 #include "ringmap_matrix_row.hpp"
 
@@ -21,6 +22,7 @@ generate_random_ringmap() {
   thread_local std::uniform_real_distribution<double> norm_dist;
   thread_local std::uniform_int_distribution<std::size_t> valid_base_index_dist(
       std::size_t(0), std::size_t(3));
+  thread_local Args common_args;
 
   std::string sequence(sequence_length, 'N');
   std::generate(std::begin(sequence), std::end(sequence),
@@ -36,6 +38,7 @@ generate_random_ringmap() {
   test::RingmapData::startIndex(ringmap_data) = 0;
   test::RingmapData::endIndex(ringmap_data) = sequence_length;
   test::RingmapData::nSetReads(ringmap_data) = sequence_length;
+  test::RingmapData::args_(ringmap_data) = &common_args;
 
   std::vector<std::size_t> targetable_bases;
   targetable_bases.reserve(sequence_length);
@@ -129,12 +132,7 @@ static void test_filter_window() {
   for (std::size_t test_index = 0; test_index < n_tests; ++test_index) {
     auto &&[rows, ringmap_data] = generate_random_ringmap();
 
-    unsigned const minimumModificationsPerRead =
-        test::RingmapData::minimumModificationsPerRead(ringmap_data);
-    const auto minimumCoverage =
-        test::RingmapData::minimumCoverage(ringmap_data);
-    const auto minimumModificationsPerBaseFraction =
-        test::RingmapData::minimumModificationsPerBaseFraction(ringmap_data);
+    auto &args = ringmap_data.args();
     std::string const sequence = ringmap_data.getSequence();
 
     for (unsigned start_base = 0; start_base < sequence_length - window_size;
@@ -144,9 +142,6 @@ static void test_filter_window() {
           get_window(ringmap_data, rows, start_base);
 
       {
-        auto const minimumModificationsPerBase =
-            test::RingmapData::minimumModificationsPerBase(ringmap_window);
-
         std::vector<unsigned> bases_to_keep;
         for (unsigned base_index = 0; base_index < window_size; ++base_index) {
           if (sequence[base_index + start_base] != 'A' and
@@ -155,18 +150,17 @@ static void test_filter_window() {
 
           const auto baseCoverage =
               test::RingmapData::baseCoverages(ringmap_window)[base_index];
-          if (baseCoverage < minimumCoverage) {
+          if (baseCoverage < args.minimum_base_coverage()) {
             continue;
           }
 
-          if (filtered_rows.size() <
-              test::RingmapData::minimumCoverage(ringmap_window))
+          if (filtered_rows.size() < args.minimum_base_coverage())
             continue;
 
           auto const modificationsOnCol = static_cast<double>(
               test::RingmapData::m_data(ringmap_window).col(base_index).sum());
           if (modificationsOnCol / baseCoverage <=
-              minimumModificationsPerBaseFraction) {
+              args.minimum_modifications_per_base_fraction()) {
             continue;
           }
 
@@ -177,12 +171,12 @@ static void test_filter_window() {
                                   std::begin(row), std::end(row), base_index);
                             }));
 
-          if (base_modifications <= minimumModificationsPerBase)
+          if (base_modifications <= args.minimum_modifications_per_base())
             continue;
 
           if (static_cast<double>(base_modifications) /
                   static_cast<double>(filtered_rows.size()) >
-              minimumModificationsPerBaseFraction)
+              args.minimum_modifications_per_base_fraction())
             bases_to_keep.emplace_back(base_index);
         }
 
@@ -216,7 +210,7 @@ static void test_filter_window() {
                                                    std::end(bases_to_keep),
                                                    base_index);
                        });
-          if (new_row.size() >= minimumModificationsPerRead)
+          if (new_row.size() >= args.minimum_modifications_per_read())
             new_filtered_rows.emplace_back(std::move(new_row));
         }
 

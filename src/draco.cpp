@@ -31,6 +31,7 @@
 #include <optional>
 #include <ranges>
 #include <set>
+#include <span>
 #include <sstream>
 #include <string_view>
 
@@ -791,22 +792,16 @@ ptba_on_replicate(std::size_t replicate_index, RingmapData const &ringmap_data,
 
   assert(window_size <= transcript_size);
 
-  auto windows_info = WindowsInfo{
-      .transcript_size = transcript_size,
-      .window_size = window_size,
-      .window_offset = window_offset,
-  };
-  auto n_windows_and_precise_offset =
-      windows_info.get_n_windows_and_precise_offset();
+  auto windows_info = WindowsInfo::from_size_and_offset(
+      transcript_size, window_size, window_offset);
 
-  auto const n_windows = n_windows_and_precise_offset.n_windows;
+  auto const n_windows = windows_info.n_windows;
   assert(n_windows > 0);
   std::vector<Window> windows(n_windows);
   if (n_windows > 1) {
     for (std::size_t window_index = 0; window_index < n_windows;
          ++window_index) {
-      auto start_base = windows_info.get_start_base(
-          n_windows_and_precise_offset, window_index);
+      auto start_base = windows_info.get_start_base(window_index);
 
       windows[window_index].start_base =
           static_cast<unsigned short>(start_base);
@@ -1002,16 +997,12 @@ void add_detected_clusters_with_confidence(
           std::ranges::cbegin(pre_collapsing_clusters),
           static_cast<std::ptrdiff_t>(region_range.window_index_end)));
   if (not region_window_clusters.empty()) {
-    auto n_windows_and_precise_offset =
-        windows_info.get_n_windows_and_precise_offset();
-
     auto region_window_clusters_with_start_base =
         std::views::zip(region_window_clusters,
                         std::views::iota(region_range.window_index_begin,
                                          region_range.window_index_end) |
                             std::views::transform([&](auto window_index) {
-                              return windows_info.get_start_base(
-                                  n_windows_and_precise_offset, window_index);
+                              return windows_info.get_start_base(window_index);
                             }));
 
     auto region_end_base = ([&](std::size_t start_base) {
@@ -1019,12 +1010,10 @@ void add_detected_clusters_with_confidence(
           region_range.window_index_end > region_range.window_index_begin) {
         return std::min(
             start_base + windows_info.window_size,
-            windows_info.get_start_base(n_windows_and_precise_offset,
-                                        region_range.window_index_end - 1) +
+            windows_info.get_start_base(region_range.window_index_end - 1) +
                 windows_info.window_size);
       } else {
         return std::max(start_base, windows_info.get_start_base(
-                                        n_windows_and_precise_offset,
                                         region_range.window_index_begin));
       }
     });
@@ -1037,8 +1026,7 @@ void add_detected_clusters_with_confidence(
           .confidence = first_window_clusters.confidence,
           .start_base = std::max(
               start_base,
-              windows_info.get_start_base(n_windows_and_precise_offset,
-                                          region_range.window_index_begin)),
+              windows_info.get_start_base(region_range.window_index_begin)),
           .end_base = region_end_base(start_base),
       };
     })();

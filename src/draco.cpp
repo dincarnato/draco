@@ -24,7 +24,6 @@
 #include <iostream>
 #include <iterator>
 #include <limits>
-#include <memory>
 #include <mutex>
 #include <oneapi/tbb/info.h>
 #include <oneapi/tbb/parallel_for.h>
@@ -736,57 +735,15 @@ void merge_windows_and_add_window_results(
   }
 }
 
-inline static std::optional<PtbaOnReplicate>
-ptba_on_replicate(std::size_t replicate_index, RingmapData const &ringmap_data,
-                  Args const &args,
-                  std::optional<std::ofstream> &raw_n_clusters_stream,
-                  std::mutex &raw_n_clusters_stream_mutex,
-                  results::Transcript &transcript_result) {
-  auto const median_read_size = ([&] {
-    auto ringmap_data_ptr = std::addressof(ringmap_data);
-    return get_min_median_window_size(
-        std::span(std::addressof(ringmap_data_ptr), 1));
-  })();
-
-  std::size_t transcript_size = ringmap_data.data().cols_size();
-  const auto window_size = [&] {
-    auto window_size_fraction_transcript_size =
-        args.window_size_fraction_transcript_size();
-    auto window_size_maybe_fraction = args.window_size();
-    unsigned window_size_absolute;
-
-    if (window_size_fraction_transcript_size > 0.) {
-      window_size_absolute = static_cast<unsigned>(
-          std::min(window_size_fraction_transcript_size, 1.) *
-          static_cast<double>(transcript_size));
-    } else if (window_size_maybe_fraction <= 1.) {
-      window_size_absolute = static_cast<unsigned>(
-          static_cast<double>(median_read_size) * window_size_maybe_fraction);
-    } else {
-      window_size_absolute =
-          static_cast<unsigned>(std::round(window_size_maybe_fraction));
-    }
-
-    return std::min(window_size_absolute,
-                    static_cast<unsigned>(transcript_size));
-  }();
-  const auto window_offset = [&] {
-    auto &&window_shift_maybe_fraction = args.window_shift();
-    if (window_shift_maybe_fraction < 1.) {
-      return std::max(1u,
-                      static_cast<unsigned>(static_cast<double>(window_size) *
-                                            window_shift_maybe_fraction));
-    } else {
-      return static_cast<unsigned>(std::round(window_shift_maybe_fraction));
-    }
-  }();
-
-  assert(window_size <= transcript_size);
-
-  auto windows_info = WindowsInfo::from_size_and_offset(
-      transcript_size, window_size, window_offset);
-
+inline static std::optional<PtbaOnReplicate> ptba_on_replicate(
+    std::size_t replicate_index, RingmapData const &ringmap_data,
+    Args const &args, std::optional<std::ofstream> &raw_n_clusters_stream,
+    std::mutex &raw_n_clusters_stream_mutex,
+    results::Transcript &transcript_result, WindowsInfo const &windows_info) {
   auto const n_windows = windows_info.n_windows;
+  auto const window_size = windows_info.window_size;
+  auto const window_offset = windows_info.window_offset;
+
   assert(n_windows > 0);
   std::vector<Window> windows(n_windows);
   if (n_windows > 1) {
@@ -954,10 +911,10 @@ void handle_transcripts(
       .allow_empty_patterns = false,
   }(
       [&](auto replicate_index, auto const &ringmap_data,
-          auto &transcript_result) {
+          auto &transcript_result, auto const &windows_info) {
         return ptba_on_replicate(
             replicate_index, ringmap_data, args, raw_n_clusters_stream,
-            raw_n_clusters_stream_mutex, transcript_result);
+            raw_n_clusters_stream_mutex, transcript_result, windows_info);
       },
       [&](unsigned short start_base, unsigned short end_base,
           std::uint8_t n_clusters,
@@ -1097,9 +1054,9 @@ WindowsInfo get_windows_info(std::span<RingmapData const *const> ringmaps_data,
         static_cast<double>(transcript_size));
   } else if (auto const window_size_maybe_fraction = args.window_size();
              window_size_maybe_fraction <= 1.) {
-    auto median_read_size = get_median_window_size(ringmaps_data);
+    auto min_median_read_size = get_min_median_window_size(ringmaps_data);
     window_size_absolute = static_cast<unsigned>(
-        static_cast<double>(median_read_size) * window_size_maybe_fraction);
+        static_cast<double>(min_median_read_size) * window_size_maybe_fraction);
   } else {
     window_size_absolute =
         static_cast<unsigned>(std::round(window_size_maybe_fraction));

@@ -17,6 +17,7 @@
 #include <mutex>
 #include <oneapi/tbb/parallel_for.h>
 #include <ranges>
+#include <span>
 #include <vector>
 
 struct Window {
@@ -878,3 +879,6 @@ inline HandleOverlappingRegionsResult handle_overlapping_regions(
     return HandleOverlappingRegionsResult::Break;
   }
 }
+
+unsigned get_min_median_window_size(
+    std::span<RingmapData const *const> ringmaps_data) noexcept;

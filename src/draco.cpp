@@ -1047,3 +1047,47 @@ void add_detected_clusters_with_confidence(
     detected_clusters_with_confidence.push_back(last_window_clusters);
   }
 }
+
+unsigned get_min_median_window_size(
+    std::span<RingmapData const *const> ringmaps_data) noexcept {
+  std::map<unsigned, std::size_t> read_sizes;
+  std::optional<unsigned> min_median;
+
+  for (auto ringmap_data_ptr : ringmaps_data) {
+    auto const &ringmap_data = *ringmap_data_ptr;
+    read_sizes.clear();
+
+    for (auto &&rows = ringmap_data.data().rows(); auto const &row : rows) {
+      assert(row.end_index() >= row.begin_index());
+      auto read_size = row.end_index() - row.begin_index();
+
+      if (auto read_size_iter = read_sizes.find(read_size);
+          read_size_iter == std::ranges::end(read_sizes)) {
+        read_sizes.insert({read_size, 1uz});
+      } else {
+        ++read_size_iter->second;
+      }
+    }
+
+    auto ringmap_median = ([&] -> std::optional<unsigned> {
+      auto half_reads_size = ringmap_data.data().rows_size() / 2;
+      std::size_t acc_read_sizes = 0;
+      for (auto const &[read_size, count] : read_sizes) {
+        acc_read_sizes += count;
+        if (half_reads_size <= acc_read_sizes) {
+          return read_size;
+        }
+      }
+      return std::nullopt;
+    })();
+    if (ringmap_median.has_value()) {
+      if (min_median.has_value()) {
+        min_median = std::min(*min_median, *ringmap_median);
+      } else {
+        min_median = *ringmap_median;
+      }
+    }
+  }
+
+  return min_median.value_or(0u);
+}

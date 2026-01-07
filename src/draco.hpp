@@ -279,6 +279,9 @@ void add_detected_clusters_with_confidence(
     std::vector<PreCollapsingClusters> const &pre_collapsing_clusters,
     WindowsInfo const &window_info);
 
+WindowsInfo get_windows_info(std::span<RingmapData const *const> ringmaps_data,
+                             Args const &args) noexcept;
+
 struct HandleTranscripts {
   std::vector<MutationMapTranscript const *> const &transcripts;
   std::vector<RingmapData *> const &ringmaps_data;

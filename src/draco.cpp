@@ -1082,3 +1082,42 @@ unsigned get_min_median_window_size(
 
   return min_median.value_or(0u);
 }
+
+WindowsInfo get_windows_info(std::span<RingmapData const *const> ringmaps_data,
+                             Args const &args) noexcept {
+  auto const &first_ringmap_data = *ringmaps_data[0];
+  std::size_t const transcript_size = first_ringmap_data.data().cols_size();
+
+  unsigned window_size_absolute;
+  if (auto const window_size_fraction_transcript_size =
+          args.window_size_fraction_transcript_size();
+      args.window_size_fraction_transcript_size() > 0.) {
+    window_size_absolute = static_cast<unsigned>(
+        std::min(window_size_fraction_transcript_size, 1.) *
+        static_cast<double>(transcript_size));
+  } else if (auto const window_size_maybe_fraction = args.window_size();
+             window_size_maybe_fraction <= 1.) {
+    auto median_read_size = get_median_window_size(ringmaps_data);
+    window_size_absolute = static_cast<unsigned>(
+        static_cast<double>(median_read_size) * window_size_maybe_fraction);
+  } else {
+    window_size_absolute =
+        static_cast<unsigned>(std::round(window_size_maybe_fraction));
+  }
+
+  auto window_size =
+      std::min(window_size_absolute, static_cast<unsigned>(transcript_size));
+  const auto window_offset = [&] {
+    auto &&window_shift_maybe_fraction = args.window_shift();
+    if (window_shift_maybe_fraction < 1.) {
+      return std::max(1u,
+                      static_cast<unsigned>(static_cast<double>(window_size) *
+                                            window_shift_maybe_fraction));
+    } else {
+      return static_cast<unsigned>(std::round(window_shift_maybe_fraction));
+    }
+  }();
+
+  return WindowsInfo::from_size_and_offset(transcript_size, window_size,
+                                           window_offset);
+}

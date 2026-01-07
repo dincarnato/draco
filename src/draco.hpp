@@ -209,44 +209,61 @@ struct NWindowsAndPreciseOffset {
   double window_precise_offset;
 };
 
+constexpr NWindowsAndPreciseOffset
+get_n_windows_and_precise_offset(std::size_t transcript_size,
+                                 unsigned window_size,
+                                 unsigned window_offset) noexcept {
+  assert(window_size <= transcript_size);
+
+  std::size_t n_windows = (transcript_size - window_size) / window_offset + 1;
+  if (n_windows * window_offset + window_size < transcript_size)
+    ++n_windows;
+
+  double window_precise_offset;
+  if (n_windows > 1) {
+    window_precise_offset = static_cast<double>(transcript_size - window_size) /
+                            static_cast<double>(n_windows - 1);
+  } else {
+    window_precise_offset = 0.;
+  }
+
+  return NWindowsAndPreciseOffset{
+      .n_windows = n_windows,
+      .window_precise_offset = window_precise_offset,
+  };
+}
+
 struct WindowsInfo {
   std::size_t transcript_size;
   unsigned window_size;
   unsigned window_offset;
+  std::size_t n_windows;
+  double window_precise_offset;
 
-  constexpr NWindowsAndPreciseOffset
-  get_n_windows_and_precise_offset() const noexcept {
-    assert(window_size <= transcript_size);
+  static constexpr WindowsInfo
+  from_size_and_offset(std::size_t transcript_size, unsigned window_size,
+                       unsigned window_offset) noexcept {
+    auto n_windows_and_precise_offset = get_n_windows_and_precise_offset(
+        transcript_size, window_size, window_offset);
 
-    std::size_t n_windows = (transcript_size - window_size) / window_offset + 1;
-    if (n_windows * window_offset + window_size < transcript_size)
-      ++n_windows;
-
-    double window_precise_offset;
-    if (n_windows > 1) {
-      window_precise_offset =
-          static_cast<double>(transcript_size - window_size) /
-          static_cast<double>(n_windows - 1);
-    } else {
-      window_precise_offset = 0.;
-    }
-
-    return NWindowsAndPreciseOffset{
-        .n_windows = n_windows,
-        .window_precise_offset = window_precise_offset,
+    return WindowsInfo{
+        .transcript_size = transcript_size,
+        .window_size = window_size,
+        .window_offset = window_offset,
+        .n_windows = n_windows_and_precise_offset.n_windows,
+        .window_precise_offset =
+            n_windows_and_precise_offset.window_precise_offset,
     };
   }
 
   constexpr std::size_t
-  get_start_base(NWindowsAndPreciseOffset const &n_windows_and_precise_offset,
-                 std::size_t window_index) const noexcept {
-    if (n_windows_and_precise_offset.n_windows == 0) {
+  get_start_base(std::size_t window_index) const noexcept {
+    if (n_windows == 0) {
       return 0;
     }
 
     auto start_base = static_cast<std::size_t>(
-        std::round(static_cast<double>(window_index) *
-                   n_windows_and_precise_offset.window_precise_offset));
+        std::round(static_cast<double>(window_index) * window_precise_offset));
     if (start_base + window_size > transcript_size)
       start_base = transcript_size - window_size;
 
@@ -775,11 +792,9 @@ struct HandleTranscripts {
             if (transcripts.size() > 1) {
               auto &&region_range =
                   transcript_result.window_ranges[window_index];
-              WindowsInfo windows_info{
-                  .transcript_size = ringmaps_data[0]->data().cols_size(),
-                  .window_size = window_size,
-                  .window_offset = window_offset,
-              };
+              auto windows_info = WindowsInfo::from_size_and_offset(
+                  ringmaps_data[0]->data().cols_size(), window_size,
+                  window_offset);
               add_detected_clusters_with_confidence(
                   transcript_result.detected_clusters_with_confidence,
                   region_range, pre_collapsing_clusters, windows_info);

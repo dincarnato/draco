@@ -599,12 +599,7 @@ void test_get_best_pre_collapsing_clusters_one_window() {
 void test_window_info_get_n_windows_and_precise_offset() {
   {
     auto n_windows_and_precise_offset =
-        WindowsInfo{
-            .transcript_size = 29,
-            .window_size = 7,
-            .window_offset = 3,
-        }
-            .get_n_windows_and_precise_offset();
+        get_n_windows_and_precise_offset(29, 7, 3);
     assert(n_windows_and_precise_offset.n_windows == 8);
     assert(std::abs(n_windows_and_precise_offset.window_precise_offset -
                     3.142857143) < 0.0001);
@@ -612,48 +607,28 @@ void test_window_info_get_n_windows_and_precise_offset() {
 
   {
     auto n_windows_and_precise_offset =
-        WindowsInfo{
-            .transcript_size = 28,
-            .window_size = 7,
-            .window_offset = 3,
-        }
-            .get_n_windows_and_precise_offset();
+        get_n_windows_and_precise_offset(28, 7, 3);
     assert(n_windows_and_precise_offset.n_windows == 8);
     assert(n_windows_and_precise_offset.window_precise_offset == 3);
   }
 
   {
     auto n_windows_and_precise_offset =
-        WindowsInfo{
-            .transcript_size = 5,
-            .window_size = 4,
-            .window_offset = 3,
-        }
-            .get_n_windows_and_precise_offset();
+        get_n_windows_and_precise_offset(5, 4, 3);
     assert(n_windows_and_precise_offset.n_windows == 1);
     assert(n_windows_and_precise_offset.window_precise_offset == 0.);
   }
 
   {
     auto n_windows_and_precise_offset =
-        WindowsInfo{
-            .transcript_size = 5,
-            .window_size = 5,
-            .window_offset = 3,
-        }
-            .get_n_windows_and_precise_offset();
+        get_n_windows_and_precise_offset(5, 5, 3);
     assert(n_windows_and_precise_offset.n_windows == 1);
     assert(n_windows_and_precise_offset.window_precise_offset == 0.);
   }
 
   {
     auto n_windows_and_precise_offset =
-        WindowsInfo{
-            .transcript_size = 10,
-            .window_size = 9,
-            .window_offset = 1,
-        }
-            .get_n_windows_and_precise_offset();
+        get_n_windows_and_precise_offset(10, 9, 1);
     assert(n_windows_and_precise_offset.n_windows == 2);
     assert(n_windows_and_precise_offset.window_precise_offset == 1.);
   }
@@ -661,31 +636,19 @@ void test_window_info_get_n_windows_and_precise_offset() {
 
 void test_window_info_get_start_base() {
   {
-    WindowsInfo windows_info{
-        .transcript_size = 29,
-        .window_size = 7,
-        .window_offset = 3,
-    };
-    auto n_windows_and_precise_offset =
-        windows_info.get_n_windows_and_precise_offset();
-    assert(windows_info.get_start_base(n_windows_and_precise_offset, 0) == 0);
-    assert(windows_info.get_start_base(n_windows_and_precise_offset, 1) == 3);
-    assert(windows_info.get_start_base(n_windows_and_precise_offset, 4) == 13);
-    assert(windows_info.get_start_base(n_windows_and_precise_offset, 7) == 22);
+    auto windows_info = WindowsInfo::from_size_and_offset(29, 7, 3);
+    assert(windows_info.get_start_base(0) == 0);
+    assert(windows_info.get_start_base(1) == 3);
+    assert(windows_info.get_start_base(4) == 13);
+    assert(windows_info.get_start_base(7) == 22);
   }
 
   {
-    WindowsInfo windows_info{
-        .transcript_size = 28,
-        .window_size = 7,
-        .window_offset = 3,
-    };
-    auto n_windows_and_precise_offset =
-        windows_info.get_n_windows_and_precise_offset();
-    assert(windows_info.get_start_base(n_windows_and_precise_offset, 0) == 0);
-    assert(windows_info.get_start_base(n_windows_and_precise_offset, 1) == 3);
-    assert(windows_info.get_start_base(n_windows_and_precise_offset, 4) == 12);
-    assert(windows_info.get_start_base(n_windows_and_precise_offset, 7) == 21);
+    auto windows_info = WindowsInfo::from_size_and_offset(28, 7, 3);
+    assert(windows_info.get_start_base(0) == 0);
+    assert(windows_info.get_start_base(1) == 3);
+    assert(windows_info.get_start_base(4) == 12);
+    assert(windows_info.get_start_base(7) == 21);
   }
 }
 
@@ -728,13 +691,9 @@ void test_add_detected_clusters_with_confidence() {
   std::vector<WindowClustersWithConfidence> detected_clusters_with_confidence;
   std::size_t window_size = 17;
   std::size_t window_offset = 5;
-  WindowsInfo windows_info{
-      .transcript_size = 165,
-      .window_size = static_cast<unsigned>(window_size),
-      .window_offset = static_cast<unsigned>(window_offset),
-  };
-  auto n_windows_and_precise_offset =
-      windows_info.get_n_windows_and_precise_offset();
+  auto windows_info =
+      WindowsInfo::from_size_and_offset(165, static_cast<unsigned>(window_size),
+                                        static_cast<unsigned>(window_offset));
   add_detected_clusters_with_confidence(
       detected_clusters_with_confidence,
       results::WindowRange{.window_index_begin = 10, .window_index_end = 24},
@@ -745,34 +704,30 @@ void test_add_detected_clusters_with_confidence() {
   assert(detected_clusters_with_confidence[0].n_clusters == 1);
   assert(detected_clusters_with_confidence[0].confidence == 1.);
   assert(detected_clusters_with_confidence[0].start_base ==
-         windows_info.get_start_base(n_windows_and_precise_offset, 10));
+         windows_info.get_start_base(10));
   assert(detected_clusters_with_confidence[0].end_base ==
-         windows_info.get_start_base(n_windows_and_precise_offset, 14) +
-             window_size);
+         windows_info.get_start_base(14) + window_size);
 
   assert(detected_clusters_with_confidence[1].n_clusters == 1);
   assert(detected_clusters_with_confidence[1].confidence == 0.5);
   assert(detected_clusters_with_confidence[1].start_base ==
-         windows_info.get_start_base(n_windows_and_precise_offset, 15));
+         windows_info.get_start_base(15));
   assert(detected_clusters_with_confidence[1].end_base ==
-         windows_info.get_start_base(n_windows_and_precise_offset, 17) +
-             window_size);
+         windows_info.get_start_base(17) + window_size);
 
   assert(detected_clusters_with_confidence[2].n_clusters == 2);
   assert(detected_clusters_with_confidence[2].confidence == 0.5);
   assert(detected_clusters_with_confidence[2].start_base ==
-         windows_info.get_start_base(n_windows_and_precise_offset, 18));
+         windows_info.get_start_base(18));
   assert(detected_clusters_with_confidence[2].end_base ==
-         windows_info.get_start_base(n_windows_and_precise_offset, 21) +
-             window_size);
+         windows_info.get_start_base(21) + window_size);
 
   assert(detected_clusters_with_confidence[3].n_clusters == 2);
   assert(detected_clusters_with_confidence[3].confidence == 1.);
   assert(detected_clusters_with_confidence[3].start_base ==
-         windows_info.get_start_base(n_windows_and_precise_offset, 22));
+         windows_info.get_start_base(22));
   assert(detected_clusters_with_confidence[3].end_base ==
-         windows_info.get_start_base(n_windows_and_precise_offset, 23) +
-             window_size);
+         windows_info.get_start_base(23) + window_size);
 }
 
 void test_handle_transcripts_clusters_confidences() {

@@ -294,8 +294,8 @@ struct HandleTranscripts {
 
   void operator()(
       InvocableR<std::optional<PtbaOnReplicate>, std::size_t,
-                 RingmapData const &, results::Transcript &> auto
-          &&ptba_on_replicate,
+                 RingmapData const &, results::Transcript &,
+                 WindowsInfo const &> auto &&ptba_on_replicate,
       InvocableR<WeightedClusters, unsigned short, unsigned short, std::uint8_t,
                  std::vector<arma::mat> const &,
                  results::Transcript const &> auto &&get_weighted_clusters) {
@@ -313,6 +313,8 @@ struct HandleTranscripts {
       logger::info("Analyzing transcript {}", first_transcript.getId());
     }
 
+    auto windows_info = get_windows_info(ringmaps_data, args);
+
     results::Transcript transcript_result(std::size(transcripts));
     transcript_result.name = first_transcript.getId();
     std::ranges::copy(transcripts |
@@ -329,7 +331,7 @@ struct HandleTranscripts {
         0uz, std::size(transcripts), [&](std::size_t replicate_index) {
           auto const &ringmap_data = *ringmaps_data[replicate_index];
           ptba_on_replicate_results[replicate_index] = ptba_on_replicate(
-              replicate_index, ringmap_data, transcript_result);
+              replicate_index, ringmap_data, transcript_result, windows_info);
         });
 
     if (not std::ranges::all_of(ptba_on_replicate_results,
@@ -352,10 +354,8 @@ struct HandleTranscripts {
                       first_transcript.getId()));
     };
 
-    // auto &windows = ptba_on_replicate_result->windows;
-    auto const window_size = ptba_on_replicate_results[0]->window_size;
-    auto const window_offset = ptba_on_replicate_results[0]->window_offset;
-    auto const n_windows = std::size(ptba_on_replicate_results[0]->windows);
+    auto const window_size = windows_info.window_size;
+    auto const n_windows = windows_info.n_windows;
 
     auto const pre_collapsing_clusters = get_best_pre_collapsing_clusters(
         ptba_on_replicate_results, first_transcript.getId());
@@ -795,9 +795,6 @@ struct HandleTranscripts {
             if (transcripts.size() > 1) {
               auto &&region_range =
                   transcript_result.window_ranges[window_index];
-              auto windows_info = WindowsInfo::from_size_and_offset(
-                  ringmaps_data[0]->data().cols_size(), window_size,
-                  window_offset);
               add_detected_clusters_with_confidence(
                   transcript_result.detected_clusters_with_confidence,
                   region_range, pre_collapsing_clusters, windows_info);

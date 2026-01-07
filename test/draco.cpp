@@ -799,7 +799,10 @@ void test_handle_transcripts_clusters_confidences() {
                     .raw_n_clusters_stream_mutex = raw_n_clusters_stream_mutex,
                     .use_logger = false,
                     .allow_empty_patterns = true}(
-      [&](auto replicate_index, auto const &, auto &) {
+      [&](auto replicate_index, auto const &, auto &,
+          auto const &windows_info) {
+        assert(windows_info.window_size == window_size);
+
         std::vector<unsigned> pre_collapsing_clusters(n_windows, 1);
         switch (replicate_index) {
         case 0:

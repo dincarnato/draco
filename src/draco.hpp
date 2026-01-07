@@ -552,7 +552,7 @@ struct HandleTranscripts {
                     ringmap_data_ptr] = std::move(tuple);
             auto const &ringmap_data = *ringmap_data_ptr;
             auto const &windows = ptba_on_replicate_result->windows;
-            auto const &replicate_windows_reads_indices =
+            auto const replicate_windows_reads_indices =
                 replicates_windows_reads_indices_replicate(replicate_index);
 
             assert(std::size(windows) ==

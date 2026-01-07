@@ -24,6 +24,7 @@
 #include <iostream>
 #include <iterator>
 #include <limits>
+#include <memory>
 #include <mutex>
 #include <oneapi/tbb/info.h>
 #include <oneapi/tbb/parallel_for.h>
@@ -741,21 +742,11 @@ ptba_on_replicate(std::size_t replicate_index, RingmapData const &ringmap_data,
                   std::optional<std::ofstream> &raw_n_clusters_stream,
                   std::mutex &raw_n_clusters_stream_mutex,
                   results::Transcript &transcript_result) {
-  auto const median_read_size = [&] {
-    auto reads_sizes = ringmap_data.data().rows() |
-                       std::views::transform([](auto &&row) {
-                         assert(row.end_index() >= row.begin_index());
-                         return static_cast<std::uint64_t>(row.end_index() -
-                                                           row.begin_index());
-                       }) |
-                       more_ranges::to_vector();
-
-    auto median_iter =
-        ranges::next(ranges::begin(reads_sizes),
-                     static_cast<std::ptrdiff_t>(reads_sizes.size() / 2));
-    ranges::nth_element(reads_sizes, median_iter);
-    return *median_iter;
-  }();
+  auto const median_read_size = ([&] {
+    auto ringmap_data_ptr = std::addressof(ringmap_data);
+    return get_min_median_window_size(
+        std::span(std::addressof(ringmap_data_ptr), 1));
+  })();
 
   std::size_t transcript_size = ringmap_data.data().cols_size();
   const auto window_size = [&] {

@@ -355,14 +355,14 @@ struct HandleTranscripts {
     // auto &windows = ptba_on_replicate_result->windows;
     auto const window_size = ptba_on_replicate_results[0]->window_size;
     auto const window_offset = ptba_on_replicate_results[0]->window_offset;
-    auto const windows_size = std::size(ptba_on_replicate_results[0]->windows);
+    auto const n_windows = std::size(ptba_on_replicate_results[0]->windows);
 
     auto const pre_collapsing_clusters = get_best_pre_collapsing_clusters(
         ptba_on_replicate_results, first_transcript.getId());
 
     std::vector<unsigned> windows_n_clusters;
     std::vector<std::optional<unsigned>> windows_max_clusters_constraints(
-        windows_size, std::nullopt);
+        n_windows, std::nullopt);
 
     for (bool stop = false; not stop;) {
       stop = true;
@@ -424,7 +424,7 @@ struct HandleTranscripts {
 
       auto const &first_result_windows = ptba_on_replicate_results[0]->windows;
       if (not std::ranges::all_of(
-              std::views::iota(0uz, windows_size), [&](auto window_index) {
+              std::views::iota(0uz, n_windows), [&](auto window_index) {
                 auto const &first_result_window =
                     first_result_windows[window_index];
                 return std::ranges::all_of(
@@ -444,12 +444,12 @@ struct HandleTranscripts {
       };
 
       std::vector<std::vector<unsigned>> replicates_windows_reads_indices_vec(
-          windows_size * std::size(ringmaps_data));
+          n_windows * std::size(ringmaps_data));
       auto replicates_windows_reads_indices =
           [&](std::size_t replicate_index,
               std::size_t window_index) -> std::vector<unsigned> & {
         return replicates_windows_reads_indices_vec[replicate_index *
-                                                        windows_size +
+                                                        n_windows +
                                                     window_index];
       };
       auto replicates_windows_reads_indices_replicate =
@@ -457,15 +457,14 @@ struct HandleTranscripts {
             return std::span(
                 std::ranges::next(
                     std::ranges::begin(replicates_windows_reads_indices_vec),
-                    static_cast<std::ptrdiff_t>(replicate_index *
-                                                windows_size)),
-                windows_size);
+                    static_cast<std::ptrdiff_t>(replicate_index * n_windows)),
+                n_windows);
           };
 
       {
         auto windows_n_clusters_iter = std::cbegin(windows_n_clusters);
 
-        for (auto window_index = 0uz; window_index < windows_size;
+        for (auto window_index = 0uz; window_index < n_windows;
              ++window_index, ++windows_n_clusters_iter) {
 
           assert(*windows_n_clusters_iter <=

@@ -881,3 +881,6 @@ inline HandleOverlappingRegionsResult handle_overlapping_regions(
 
 unsigned get_min_median_window_size(
     std::span<RingmapData const *const> ringmaps_data) noexcept;
+
+unsigned get_min_max_read_size(
+    std::span<RingmapData const *const> ringmaps_data) noexcept;

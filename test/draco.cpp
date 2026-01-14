@@ -739,7 +739,9 @@ void test_handle_transcripts_clusters_confidences() {
   constexpr unsigned window_size = 10;
   constexpr unsigned window_offset = 3;
   constexpr unsigned n_windows =
-      (std::size(sequence) - window_size) / window_offset;
+      get_n_windows_and_precise_offset(std::size(sequence), window_size,
+                                       window_offset)
+          .n_windows;
   assert((std::size(sequence) - window_size) % window_offset == 0);
 
   std::vector<MutationMapTranscript> owned_transcripts{
@@ -758,7 +760,9 @@ void test_handle_transcripts_clusters_confidences() {
                          [](auto const &transcript) { return &transcript; }) |
                      std::ranges::to<std::vector>();
 
-  Args args;
+  test::Args args;
+  args.window_size() = window_size;
+  args.window_shift() = window_offset;
 
   std::vector<RingmapData> owned_ringmap_data{
       RingmapData(sequence, RingmapMatrix(n_reads, std::size(sequence)), 0,

@@ -2,6 +2,7 @@
 #include "args.hpp"
 #include "mutation_map.hpp"
 #include "mutation_map_transcript.hpp"
+#include "mutation_map_transcript_read.hpp"
 #include "results/analysis.hpp"
 #include "results/transcript.hpp"
 #include "ringmap_matrix.hpp"
@@ -11,6 +12,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <iterator>
@@ -956,6 +958,85 @@ static void test_handle_overlapping_regions_advance_iters_and_region_end() {
          std::ranges::end(windows_reads_indices_span));
 }
 
+static void test_get_min_median_window_size() {
+  constexpr std::string_view sequence = "ACACCCAAACACAAACAAACCCACAAACACAACACAC";
+  constexpr std::size_t n_bases = std::size(sequence);
+
+  struct ReadsCollection {
+    unsigned n;
+    unsigned begin;
+    unsigned length;
+  };
+  const std::array replicates_reads_collections{
+      std::vector{
+          ReadsCollection{
+              .n = 8,
+              .begin = 0,
+              .length = 8,
+          },
+          ReadsCollection{
+              .n = 5,
+              .begin = 4,
+              .length = 4,
+          },
+          ReadsCollection{
+              .n = 3,
+              .begin = 5,
+              .length = 15,
+          },
+      },
+      std::vector{
+          ReadsCollection{
+              .n = 6,
+              .begin = 5,
+              .length = 11,
+          },
+          ReadsCollection{
+              .n = 17,
+              .begin = 2,
+              .length = 9,
+          },
+      },
+      std::vector{
+          ReadsCollection{
+              .n = 17,
+              .begin = 0,
+              .length = 13,
+          },
+      },
+  };
+
+  Args args;
+  std::vector<RingmapData> ringmaps_data;
+  std::vector<unsigned> windows_sizes;
+  for (auto const &reads_collections : replicates_reads_collections) {
+    RingmapMatrix data_matrix(n_bases);
+    for (auto const &reads_collection : reads_collections) {
+      for (unsigned index = 0; index < reads_collection.n; ++index) {
+        windows_sizes.push_back(reads_collection.length);
+        data_matrix.addRead(MutationMapTranscriptRead{
+            .begin = reads_collection.begin,
+            .end = reads_collection.begin + reads_collection.length,
+            .indices = {}});
+      }
+    }
+    ringmaps_data.emplace_back(sequence, std::move(data_matrix), 0,
+                               std::size(sequence), args);
+  }
+
+  auto min_median_window_size = get_min_median_window_size(
+      ringmaps_data | std::views::transform([](auto const &ringmap_data) {
+        return &ringmap_data;
+      }) |
+      std::ranges::to<std::vector>());
+  assert(min_median_window_size == 8);
+}
+
+static void test_get_min_median_window_size_empty() {
+  auto min_median_window_size = get_min_median_window_size({});
+  assert(min_median_window_size == 0);
+}
+
 int main() {
   test_merge_windows_and_add_window_results_not_merging();
   test_make_windows_and_reads_indices_range_same_clusters();
@@ -970,4 +1051,6 @@ int main() {
   test_handle_transcripts_clusters_confidences();
   test_handle_overlapping_regions_should_break();
   test_handle_overlapping_regions_advance_iters_and_region_end();
+  test_get_min_median_window_size();
+  test_get_min_median_window_size_empty();
 }

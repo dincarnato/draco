@@ -1045,25 +1045,32 @@ WindowsInfo get_windows_info(std::span<RingmapData const *const> ringmaps_data,
   auto const &first_ringmap_data = *ringmaps_data[0];
   std::size_t const transcript_size = first_ringmap_data.data().cols_size();
 
-  unsigned window_size_absolute;
+  unsigned window_size;
+  unsigned max_window_size;
   if (auto const window_size_fraction_transcript_size =
           args.window_size_fraction_transcript_size();
       args.window_size_fraction_transcript_size() > 0.) {
-    window_size_absolute = static_cast<unsigned>(
+    window_size = static_cast<unsigned>(
         std::min(window_size_fraction_transcript_size, 1.) *
         static_cast<double>(transcript_size));
+    max_window_size = get_min_max_read_size(ringmaps_data);
   } else if (auto const window_size_maybe_fraction = args.window_size();
              window_size_maybe_fraction <= 1.) {
     auto min_median_read_size = get_min_median_window_size(ringmaps_data);
-    window_size_absolute = static_cast<unsigned>(
+    window_size = static_cast<unsigned>(
         static_cast<double>(min_median_read_size) * window_size_maybe_fraction);
+    max_window_size = transcript_size;
   } else {
-    window_size_absolute =
-        static_cast<unsigned>(std::round(window_size_maybe_fraction));
+    window_size = static_cast<unsigned>(std::round(window_size_maybe_fraction));
+    max_window_size = get_min_max_read_size(ringmaps_data);
   }
 
-  auto window_size =
-      std::min(window_size_absolute, static_cast<unsigned>(transcript_size));
+  if (window_size > max_window_size) {
+    logger::warn("Window size reduced from {} to {}, which is the lowest of "
+                 "the maximum read length across replicates",
+                 window_size, max_window_size);
+    window_size = max_window_size;
+  }
   const auto window_offset = [&] {
     auto &&window_shift_maybe_fraction = args.window_shift();
     if (window_shift_maybe_fraction < 1.) {

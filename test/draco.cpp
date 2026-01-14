@@ -1229,6 +1229,84 @@ static void test_get_windows_info_trascript_fraction_too_high() {
   assert(windows_info.window_offset == 2);
 }
 
+static void test_get_min_max_read_size() {
+  constexpr std::string_view sequence = "ACACCCAAACACAAACAAACCCACAAACACAACACAC";
+  constexpr std::size_t n_bases = std::size(sequence);
+
+  struct ReadsCollection {
+    unsigned begin;
+    unsigned length;
+  };
+  const std::array replicates_reads_collections{
+      std::vector{
+          ReadsCollection{
+              .begin = 0,
+              .length = 8,
+          },
+          ReadsCollection{
+              .begin = 4,
+              .length = 4,
+          },
+          ReadsCollection{
+              .begin = 5,
+              .length = 15,
+          },
+      },
+      std::vector{
+          ReadsCollection{
+              .begin = 2,
+              .length = 9,
+          },
+          ReadsCollection{
+              .begin = 0,
+              .length = 17,
+          },
+          ReadsCollection{
+              .begin = 3,
+              .length = 9,
+          },
+      },
+      std::vector{
+          ReadsCollection{
+              .begin = 5,
+              .length = 11,
+          },
+          ReadsCollection{
+              .begin = 4,
+              .length = 4,
+          },
+      },
+  };
+
+  Args args;
+  std::vector<RingmapData> ringmaps_data;
+  std::vector<unsigned> windows_sizes;
+  for (auto const &reads_collections : replicates_reads_collections) {
+    RingmapMatrix data_matrix(n_bases);
+    for (auto const &reads_collection : reads_collections) {
+      windows_sizes.push_back(reads_collection.length);
+      data_matrix.addRead(MutationMapTranscriptRead{
+          .begin = reads_collection.begin,
+          .end = reads_collection.begin + reads_collection.length,
+          .indices = {}});
+    }
+    ringmaps_data.emplace_back(sequence, std::move(data_matrix), 0,
+                               std::size(sequence), args);
+  }
+
+  auto min_max_read_size = get_min_max_read_size(
+      ringmaps_data | std::views::transform([](auto const &ringmap_data) {
+        return &ringmap_data;
+      }) |
+      std::ranges::to<std::vector>());
+  assert(min_max_read_size == 11);
+}
+
+static void test_get_min_max_read_size_empty() {
+  auto max_read_size = get_min_max_read_size({});
+  assert(max_read_size == 0);
+}
+
 int main() {
   test_merge_windows_and_add_window_results_not_merging();
   test_make_windows_and_reads_indices_range_same_clusters();
@@ -1253,4 +1331,6 @@ int main() {
   test_get_windows_info_window_size_fraction();
   test_get_windows_info_trascript_fraction();
   test_get_windows_info_trascript_fraction_too_high();
+  test_get_min_max_read_size();
+  test_get_min_max_read_size_empty();
 }

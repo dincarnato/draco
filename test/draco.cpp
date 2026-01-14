@@ -6,6 +6,7 @@
 #include "results/analysis.hpp"
 #include "results/transcript.hpp"
 #include "ringmap_matrix.hpp"
+#include "test/args.hpp"
 #include "weighted_clusters.hpp"
 #include "window_clusters_with_confidence.hpp"
 
@@ -1037,6 +1038,190 @@ static void test_get_min_median_window_size_empty() {
   assert(min_median_window_size == 0);
 }
 
+static void test_get_windows_info_default_args() {
+  constexpr std::string_view sequence =
+      "ACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAACAC"
+      "ACACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAAC"
+      "ACACACACCCAAACACAAACAAACCCACAAACACAACACAC";
+  constexpr std::size_t n_bases = std::size(sequence);
+
+  RingmapMatrix data_matrix(n_bases);
+  data_matrix.addRead(
+      MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
+
+  test::Args args;
+  RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
+                           std::size(sequence), args);
+
+  std::array ringmaps_data{&ringmap_data};
+  auto windows_info = get_windows_info(ringmaps_data, args);
+  assert(windows_info.transcript_size == std::size(sequence));
+  assert(windows_info.window_size == 100);
+  assert(windows_info.window_offset == 1);
+}
+
+static void test_get_windows_info_shorter_window_size() {
+  constexpr std::string_view sequence =
+      "ACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAACAC"
+      "ACACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAAC"
+      "ACACACACCCAAACACAAACAAACCCACAAACACAACACAC";
+  constexpr std::size_t n_bases = std::size(sequence);
+
+  RingmapMatrix data_matrix(n_bases);
+  data_matrix.addRead(
+      MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
+
+  test::Args args;
+  args.window_size() = 20;
+  RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
+                           std::size(sequence), args);
+
+  std::array ringmaps_data{&ringmap_data};
+  auto windows_info = get_windows_info(ringmaps_data, args);
+  assert(windows_info.transcript_size == std::size(sequence));
+  assert(windows_info.window_size == 20);
+  assert(windows_info.window_offset == 1);
+}
+
+static void test_get_windows_info_fractional_shift() {
+  constexpr std::string_view sequence =
+      "ACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAACAC"
+      "ACACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAAC"
+      "ACACACACCCAAACACAAACAAACCCACAAACACAACACAC";
+  constexpr std::size_t n_bases = std::size(sequence);
+
+  RingmapMatrix data_matrix(n_bases);
+  data_matrix.addRead(
+      MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
+
+  test::Args args;
+  args.window_shift() = 0.5;
+  RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
+                           std::size(sequence), args);
+
+  std::array ringmaps_data{&ringmap_data};
+  auto windows_info = get_windows_info(ringmaps_data, args);
+  assert(windows_info.transcript_size == std::size(sequence));
+  assert(windows_info.window_size == 100);
+  assert(windows_info.window_offset == 50);
+}
+
+static void test_get_windows_info_absolute_shift() {
+  constexpr std::string_view sequence =
+      "ACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAACAC"
+      "ACACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAAC"
+      "ACACACACCCAAACACAAACAAACCCACAAACACAACACAC";
+  constexpr std::size_t n_bases = std::size(sequence);
+
+  RingmapMatrix data_matrix(n_bases);
+  data_matrix.addRead(
+      MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
+
+  test::Args args;
+  args.window_shift() = 10;
+  RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
+                           std::size(sequence), args);
+
+  std::array ringmaps_data{&ringmap_data};
+  auto windows_info = get_windows_info(ringmaps_data, args);
+  assert(windows_info.transcript_size == std::size(sequence));
+  assert(windows_info.window_size == 100);
+  assert(windows_info.window_offset == 10);
+}
+
+static void test_get_windows_info_window_size_too_big() {
+  constexpr std::string_view sequence =
+      "ACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAACAC"
+      "ACACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAAC"
+      "ACACACACCCAAACACAAACAAACCCACAAACACAACACAC";
+  constexpr std::size_t n_bases = std::size(sequence);
+
+  RingmapMatrix data_matrix(n_bases);
+  data_matrix.addRead(
+      MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
+
+  test::Args args;
+  args.window_size() = 1000;
+  RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
+                           std::size(sequence), args);
+
+  std::array ringmaps_data{&ringmap_data};
+  auto windows_info = get_windows_info(ringmaps_data, args);
+  assert(windows_info.transcript_size == std::size(sequence));
+  assert(windows_info.window_size == std::size(sequence));
+  assert(windows_info.window_offset == std::size(sequence) / 100);
+}
+
+static void test_get_windows_info_window_size_fraction() {
+  constexpr std::string_view sequence =
+      "ACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAACAC"
+      "ACACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAAC"
+      "ACACACACCCAAACACAAACAAACCCACAAACACAACACAC";
+  constexpr std::size_t n_bases = std::size(sequence);
+
+  RingmapMatrix data_matrix(n_bases);
+  data_matrix.addRead(
+      MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
+
+  test::Args args;
+  args.window_size() = 0.5;
+  RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
+                           std::size(sequence), args);
+
+  std::array ringmaps_data{&ringmap_data};
+  auto windows_info = get_windows_info(ringmaps_data, args);
+  assert(windows_info.transcript_size == std::size(sequence));
+  assert(windows_info.window_size == 40);
+  assert(windows_info.window_offset == 1);
+}
+
+static void test_get_windows_info_trascript_fraction() {
+  constexpr std::string_view sequence =
+      "ACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAACAC"
+      "ACACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAAC"
+      "ACACACACCCAAACACAAACAAACCCACAAACACAACACAC";
+  constexpr std::size_t n_bases = std::size(sequence);
+
+  RingmapMatrix data_matrix(n_bases);
+  data_matrix.addRead(
+      MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
+
+  test::Args args;
+  args.window_size_fraction_transcript_size() = 0.5;
+  RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
+                           std::size(sequence), args);
+
+  std::array ringmaps_data{&ringmap_data};
+  auto windows_info = get_windows_info(ringmaps_data, args);
+  assert(windows_info.transcript_size == std::size(sequence));
+  assert(windows_info.window_size == std::size(sequence) / 2);
+  assert(windows_info.window_offset == 1);
+}
+
+static void test_get_windows_info_trascript_fraction_too_high() {
+  constexpr std::string_view sequence =
+      "ACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAACAC"
+      "ACACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAAC"
+      "ACACACCCAAACACAAACAAACCCACAAACACAACACACACACCCAAACACAAACAAACCCACAAACACAAC"
+      "ACACACACCCAAACACAAACAAACCCACAAACACAACACAC";
+  constexpr std::size_t n_bases = std::size(sequence);
+
+  RingmapMatrix data_matrix(n_bases);
+  data_matrix.addRead(
+      MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
+
+  test::Args args;
+  args.window_size_fraction_transcript_size() = 2.;
+  RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
+                           std::size(sequence), args);
+
+  std::array ringmaps_data{&ringmap_data};
+  auto windows_info = get_windows_info(ringmaps_data, args);
+  assert(windows_info.transcript_size == std::size(sequence));
+  assert(windows_info.window_size == std::size(sequence));
+  assert(windows_info.window_offset == 2);
+}
+
 int main() {
   test_merge_windows_and_add_window_results_not_merging();
   test_make_windows_and_reads_indices_range_same_clusters();
@@ -1053,4 +1238,12 @@ int main() {
   test_handle_overlapping_regions_advance_iters_and_region_end();
   test_get_min_median_window_size();
   test_get_min_median_window_size_empty();
+  test_get_windows_info_default_args();
+  test_get_windows_info_shorter_window_size();
+  test_get_windows_info_fractional_shift();
+  test_get_windows_info_absolute_shift();
+  test_get_windows_info_window_size_too_big();
+  test_get_windows_info_window_size_fraction();
+  test_get_windows_info_trascript_fraction();
+  test_get_windows_info_trascript_fraction_too_high();
 }

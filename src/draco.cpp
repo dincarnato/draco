@@ -1078,3 +1078,26 @@ WindowsInfo get_windows_info(std::span<RingmapData const *const> ringmaps_data,
   return WindowsInfo::from_size_and_offset(transcript_size, window_size,
                                            window_offset);
 }
+
+unsigned get_min_max_read_size(
+    std::span<RingmapData const *const> ringmaps_data) noexcept {
+  return std::ranges::fold_left(
+             ringmaps_data | std::views::transform([&](auto ringmap_data) {
+               return std::ranges::fold_left(
+                   ringmap_data->data().rows() |
+                       std::views::transform([](auto &&row) {
+                         return row.end_index() - row.begin_index();
+                       }),
+                   0u, [](unsigned a, unsigned b) { return std::max(a, b); });
+             }),
+             std::nullopt,
+             [](std::optional<unsigned> acc,
+                unsigned value) -> std::optional<unsigned> {
+               if (acc.has_value()) {
+                 return std::min(*acc, value);
+               } else {
+                 return value;
+               }
+             })
+      .value_or(0);
+}

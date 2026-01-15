@@ -54,7 +54,7 @@ struct Logger {
   }
 
 private:
-  std::atomic<Level> level{Level::warn};
+  std::atomic<Level> level{Level::info};
 };
 
 extern Logger instance;

@@ -26,6 +26,7 @@ add_executable(
     logger.cpp
     mutation_map_writer.cpp
     clusters_replicates.cpp
+    compact_ringmap.cpp
     )
 
 add_executable(

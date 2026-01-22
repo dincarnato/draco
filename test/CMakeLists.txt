@@ -36,6 +36,7 @@ function(create_tests suffix)
       ${PROJECT_SOURCE_DIR}/src/spectral_partitioner.cpp
       ${PROJECT_SOURCE_DIR}/src/windows_merger.cpp
       ${PROJECT_SOURCE_DIR}/src/clusters_replicates.cpp
+      ${PROJECT_SOURCE_DIR}/src/compact_ringmap.cpp
   )
   target_compile_options(draco_test_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(draco_test_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
@@ -70,6 +71,7 @@ function(create_tests suffix)
     draco
     kmeans
     clusters_replicates
+    compact_ringmap
   )
   set(ringmap_base_args ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
   set(ringmap_shuffle_args ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)

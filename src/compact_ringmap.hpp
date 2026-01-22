@@ -3,6 +3,7 @@
 #include <cassert>
 #include <compare>
 #include <cstdint>
+#include <iterator>
 #include <memory>
 #include <span>
 
@@ -32,6 +33,96 @@ protected:
   CompactRingmap const *compact_ringmap_;
   std::uint32_t row_;
 };
+
+struct CompactRingmapIterator {
+  using value_type = CompactRingmapRow;
+  using self = CompactRingmapIterator;
+
+  constexpr CompactRingmapIterator() noexcept = default;
+  constexpr CompactRingmapIterator(CompactRingmap const &compact_ringmap,
+                                   std::uint32_t row) noexcept
+      : compact_ringmap_(&compact_ringmap), row_(row) {}
+
+  constexpr std::partial_ordering
+  operator<=>(self const &other) const noexcept {
+    if (compact_ringmap_ != other.compact_ringmap_) {
+      return std::partial_ordering::unordered;
+    }
+
+    return row_ <=> other.row_;
+  }
+  constexpr bool operator==(self const &other) const noexcept = default;
+
+  constexpr value_type operator*() const noexcept {
+    return CompactRingmapRow(*compact_ringmap_, row_);
+  }
+
+  constexpr value_type operator[](std::int64_t offset) const noexcept {
+    return CompactRingmapRow(
+        *compact_ringmap_,
+        static_cast<std::uint32_t>(static_cast<std::int64_t>(row_) + offset));
+  }
+
+  constexpr self &operator++() noexcept {
+    ++row_;
+    return *this;
+  }
+
+  constexpr self operator++(int) noexcept {
+    auto other = *this;
+    ++row_;
+    return other;
+  }
+
+  constexpr self &operator--() noexcept {
+    --row_;
+    return *this;
+  }
+
+  constexpr self operator--(int) noexcept {
+    auto other = *this;
+    --row_;
+    return other;
+  }
+
+  constexpr self &operator+=(std::int64_t offset) noexcept {
+    row_ = static_cast<std::uint32_t>(static_cast<std::int64_t>(row_) + offset);
+    return *this;
+  }
+
+  constexpr self &operator-=(std::int64_t offset) noexcept {
+    row_ = static_cast<std::uint32_t>(static_cast<std::int64_t>(row_) - offset);
+    return *this;
+  }
+
+  constexpr self operator+(std::int64_t offset) const noexcept {
+    auto other = *this;
+    other += offset;
+    return other;
+  }
+
+  friend constexpr self operator+(std::int64_t offset,
+                                  self const &it) noexcept {
+    return it + offset;
+  }
+
+  constexpr self operator-(std::int64_t offset) const noexcept {
+    auto other = *this;
+    other -= offset;
+    return other;
+  }
+
+  constexpr std::int64_t operator-(self const &other) const noexcept {
+    return static_cast<std::int64_t>(row_) -
+           static_cast<std::int64_t>(other.row_);
+  }
+
+protected:
+  CompactRingmap const *compact_ringmap_{};
+  std::uint32_t row_{};
+};
+
+static_assert(std::random_access_iterator<CompactRingmapIterator>);
 
 /**
  * A compact version of the modifications matrix
@@ -69,6 +160,14 @@ struct CompactRingmap {
 
   constexpr CompactRingmapRow row(std::uint32_t row) const noexcept {
     return CompactRingmapRow(*this, row);
+  }
+
+  constexpr CompactRingmapIterator begin() const noexcept {
+    return CompactRingmapIterator(*this, 0);
+  }
+
+  constexpr CompactRingmapIterator end() const noexcept {
+    return CompactRingmapIterator(*this, n_rows_);
   }
 
 protected:

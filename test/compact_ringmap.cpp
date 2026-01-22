@@ -100,7 +100,26 @@ static void test_compact_ringmap_constructor() {
   }
 }
 
+static void test_compact_ringmap_iterator() {
+  constexpr std::string_view sequence = "AGCTAATTCCGCCGATTTATATGGACCATA";
+  RingmapMatrix matrix(static_cast<std::uint32_t>(std::size(reads)),
+                       std::size(sequence));
+  for (auto const &read : reads) {
+    matrix.addRead(read);
+  }
+
+  auto ringmap = CompactRingmap(matrix);
+  for (auto [row_index, row] : std::views::zip(
+           std::views::iota(static_cast<std::uint32_t>(0)), ringmap)) {
+    assert(row == ringmap.row(row_index));
+  }
+
+  assert(std::ranges::begin(ringmap)[4] == ringmap.row(4));
+  assert(*(std::ranges::end(ringmap) - 2) == ringmap.row(ringmap.n_rows() - 2));
+}
+
 int main() {
   test_ringmap_matrix_row_helper_spaceship_operator();
   test_compact_ringmap_constructor();
+  test_compact_ringmap_iterator();
 }

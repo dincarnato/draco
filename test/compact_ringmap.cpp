@@ -83,16 +83,20 @@ static void test_compact_ringmap_constructor() {
                            std::views::chunk(ringmap.row_size()),
                        expected_modifications,
                        std::views::iota(static_cast<std::uint32_t>(0)))) {
+    auto row = ringmap.row(row_index);
 
     auto expected_count = std::ranges::count_if(reads, [&](auto &read) {
       return std::ranges::equal(read.indices, *expected_indices);
     });
     assert(count_size_and_modifications[0] == expected_count);
+    assert(row.count() == expected_count);
     assert(count_size_and_modifications[1] == std::size(*expected_indices));
+    assert(row.size() == std::size(*expected_indices));
     assert(std::ranges::equal(
         count_size_and_modifications | std::views::drop(2) |
             std::views::take(count_size_and_modifications[1]),
         *expected_indices));
+    assert(std::ranges::equal(row.indices(), *expected_indices));
   }
 }
 

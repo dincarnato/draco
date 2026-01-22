@@ -10,6 +10,31 @@
 class RingmapMatrix;
 struct RingmapMatrixRow;
 
+struct CompactRingmap;
+
+struct CompactRingmapRow {
+  constexpr CompactRingmapRow(CompactRingmap const &compact_ringmap,
+                              std::uint32_t row) noexcept
+      : compact_ringmap_(&compact_ringmap), row_(row) {}
+
+  constexpr std::span<std::uint32_t const> raw() const noexcept;
+  constexpr std::span<std::uint32_t const> mapped_rows() const noexcept;
+
+  constexpr std::uint32_t count() const noexcept { return raw()[0]; }
+  constexpr std::uint32_t size() const noexcept { return raw()[1]; }
+  constexpr std::span<std::uint32_t const> indices() const noexcept {
+    return raw().subspan(2, size());
+  }
+
+  constexpr bool operator==(CompactRingmapRow const &other) const noexcept {
+    return compact_ringmap_ == other.compact_ringmap_ && row_ == other.row_;
+  }
+
+protected:
+  CompactRingmap const *compact_ringmap_;
+  std::uint32_t row_;
+};
+
 /**
  * A compact version of the modifications matrix
  *
@@ -53,6 +78,10 @@ struct CompactRingmap {
     return std::span(count_sizes_and_modifications_.get() + begin, row_size());
   }
 
+  constexpr CompactRingmapRow row(std::uint32_t row) const noexcept {
+    return CompactRingmapRow(*this, row);
+  }
+
 protected:
   std::unique_ptr<std::uint32_t[]> count_sizes_and_modifications_{};
   std::vector<std::vector<std::uint32_t>> mapping_;
@@ -69,3 +98,13 @@ struct RingmapMatrixRowHelper {
 
   RingmapMatrixRow const *inner;
 };
+
+constexpr std::span<std::uint32_t const>
+CompactRingmapRow::raw() const noexcept {
+  return compact_ringmap_->raw_row(row_);
+}
+
+constexpr std::span<std::uint32_t const>
+CompactRingmapRow::mapped_rows() const noexcept {
+  return compact_ringmap_->mapping()[row_];
+}

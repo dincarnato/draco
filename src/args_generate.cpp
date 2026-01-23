@@ -13,8 +13,8 @@ template <typename Arg> static void dump_arg(std::ostream &os, Arg const &arg) {
 
   os << "protected:\n"
      << type_name << " _" << variable_name << ";\npublic:\nauto "
-     << variable_name << "() const noexcept -> decltype(auto) { return _"
-     << variable_name << ";}\n";
+     << variable_name << "() const noexcept -> decltype(auto) { return (_"
+     << variable_name << ");}\n";
 }
 
 template <typename Group, std::size_t... Idx>

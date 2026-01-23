@@ -11,11 +11,15 @@
 #include <string_view>
 #include <thread>
 
+namespace args {
+struct Args;
+} // namespace args
+
 namespace results {
 
 struct Analysis final {
   Analysis() = default;
-  Analysis(std::string_view jsonFilename);
+  Analysis(std::string_view jsonFilename, Args const &args);
   ~Analysis() noexcept;
 
   void addTranscript(Transcript &&transcript);
@@ -26,6 +30,8 @@ struct Analysis final {
 private:
   void streamerLoop() noexcept;
   void initStream();
+
+  Args const *args{};
 
   bool started = false;
   bool writtenFirstTranscript = false;

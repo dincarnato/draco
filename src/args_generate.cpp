@@ -114,6 +114,60 @@ static void create_setter_function(std::ostream &os) {
   os << "\n}";
 }
 
+template <std::size_t GroupIndex, std::size_t ArgIndex, typename Arg>
+static void create_jsonify_impl_for_arg(std::ostream &os, Arg const &arg) {
+  auto const variable_name = arg.get_variable_name().c_str();
+  auto const parameter_name = arg.get_parameter_name().c_str();
+
+  if constexpr (ArgIndex > 0) {
+    os << "os << ',';\n";
+  }
+  os << "jsonify(os, \"" << parameter_name << "\", args." << variable_name
+     << "());\n";
+}
+
+template <std::size_t GroupIndex, typename Group, std::size_t... Idx>
+static void create_jsonify_impl_for_group(std::ostream &os, Group const &group,
+                                          std::index_sequence<Idx...>) {
+  (create_jsonify_impl_for_arg<GroupIndex, Idx>(os, std::get<Idx>(group.args)),
+   ...);
+}
+
+template <std::size_t GroupIndex, typename Group>
+static void create_jsonify_impl_for_group(std::ostream &os,
+                                          Group const &group) {
+  if constexpr (GroupIndex > 0) {
+    os << "os << ',';\n";
+  }
+  create_jsonify_impl_for_group<GroupIndex>(
+      os, group,
+      std::make_index_sequence<std::tuple_size_v<typename Group::args_type>>());
+}
+
+template <std::size_t... Idx>
+static void create_jsonify_impl_for_groups(std::ostream &os,
+                                           std::index_sequence<Idx...>) {
+  (create_jsonify_impl_for_group<Idx>(os, std::get<Idx>(args::opts.groups)),
+   ...);
+}
+
+static void create_jsonify_function(std::ostream &os) {
+  os << "namespace results {\n"
+        "template <typename CharT, typename Traits>\n"
+        "inline std::basic_ostream<CharT, Traits> &\n"
+        "jsonify(std::basic_ostream<CharT, Traits> &os,\n"
+        "ArgsGenerated const& args) {\n"
+        "os << '{';\n";
+
+  create_jsonify_impl_for_groups(
+      os, std::make_index_sequence<
+              std::tuple_size_v<typename decltype(args::opts)::groups_type>>());
+
+  os << "return os << '}';\n"
+        "}\n"
+        "} // namespace results";
+}
+
 template <typename Stream> static void generate_on_stream(Stream &stream) {
   stream << "#pragma once\n#include <string>\n#include <cstdint>\n";
   if constexpr (any_group_has_multiplicity_many(
@@ -126,7 +180,8 @@ template <typename Stream> static void generate_on_stream(Stream &stream) {
             "ArgsGenerated {\n";
   dump_opts(stream);
   create_setter_function(stream);
-  stream << "};";
+  stream << "};\n\n";
+  create_jsonify_function(stream);
 }
 
 int main() {

@@ -13,7 +13,13 @@ jsonify(std::basic_ostream<CharT, Traits> &os, T &&t) {
   namespace rng = std::ranges;
   using t_nocvref = std::remove_cv_t<std::remove_reference_t<T>>;
 
-  if constexpr (std::is_arithmetic_v<t_nocvref>) {
+  if constexpr (std::is_same_v<t_nocvref, bool>) {
+    if (t) {
+      return os << "true";
+    } else {
+      return os << "false";
+    }
+  } else if constexpr (std::is_arithmetic_v<t_nocvref>) {
     if constexpr (sizeof(t_nocvref) == sizeof(char)) {
       return os << static_cast<std::conditional_t<std::is_signed_v<t_nocvref>,
                                                   int, unsigned>>(t);

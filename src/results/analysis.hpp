@@ -19,7 +19,7 @@ namespace results {
 
 struct Analysis final {
   Analysis() = default;
-  Analysis(std::string_view jsonFilename, Args const &args);
+  Analysis(Args const &args);
   ~Analysis() noexcept;
 
   void addTranscript(Transcript &&transcript);

@@ -19,8 +19,8 @@ namespace fs = std::experimental::filesystem;
 
 namespace results {
 
-Analysis::Analysis(std::string_view jsonFilename, Args const &args)
-    : args(&args), jsonStream(fs::path(jsonFilename)),
+Analysis::Analysis(Args const &args)
+    : args(&args), jsonStream(fs::path(args.output_filename())),
       streamer([this] { streamerLoop(); }) {
   if (jsonStream.fail())
     throw std::ofstream::failure("output json file cannot be opened");
@@ -49,7 +49,9 @@ void Analysis::initStream() {
 
   jsonStream << '{';
   jsonify(jsonStream, "filenames", filenames) << ',';
-  jsonify(jsonStream, "params", *args) << ',';
+  if (args != nullptr) {
+    jsonify(jsonStream, "params", *args) << ',';
+  }
   jsonify(jsonStream, "transcripts") << ":[";
 }
 

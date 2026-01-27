@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
   for (auto const &mm_filename : args.mm_filenames()) {
     mutation_maps.emplace_back(mm_filename);
   }
-  results::Analysis analysisResult(args.output_filename(), args);
+  results::Analysis analysisResult(args);
 
   analysisResult.filenames = args.mm_filenames();
 

@@ -48,7 +48,6 @@ void Analysis::initStream() {
     return;
 
   jsonStream << '{';
-  jsonify(jsonStream, "filenames", filenames) << ',';
   if (args != nullptr) {
     jsonify(jsonStream, "params", *args) << ',';
   }

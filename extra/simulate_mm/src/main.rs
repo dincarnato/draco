@@ -61,6 +61,11 @@ struct Cli {
     /// [Note: the default value (0.01927) has been learnt empirically from Homan et al., 2014]
     #[clap(default_value_t, long)]
     probability: Probability,
+
+    /// Use the profile to weight the bases to make them have different probabilities of being
+    /// modificated.
+    #[clap(long = "profileWeights")]
+    profile_weights: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
@@ -184,7 +189,7 @@ fn main() {
             };
 
             let mutations_generator = entry
-                .random_read_generator(fractions, probability)
+                .random_read_generator(fractions, probability, cli.profile_weights)
                 .map(|(profile_index, mutations_indices)| {
                     let begin = if range_max == 0 {
                         0

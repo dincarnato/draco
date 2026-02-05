@@ -103,7 +103,8 @@ impl Entry {
         &self,
         fractions: Vec<f32>,
         probability: f64,
-    ) -> RandomReadGenerator {
-        RandomReadGenerator::new(self, fractions, probability)
+        profile_weights: bool,
+    ) -> RandomReadGenerator<'_> {
+        RandomReadGenerator::new(self, fractions, probability, profile_weights)
     }
 }

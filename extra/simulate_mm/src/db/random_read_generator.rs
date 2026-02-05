@@ -1,16 +1,25 @@
+use std::convert::TryFrom;
+
 use super::Entry;
-use rand::rngs::ThreadRng;
+use rand::{rngs::ThreadRng, seq::SliceRandom, Rng};
 
 #[derive(Debug)]
-pub struct RandomReadGenerator {
+pub struct RandomReadGenerator<'a> {
     modificable_indices: Vec<Vec<u32>>,
     modifications_cdf: Vec<f64>,
     cum_fractions: Vec<f32>,
+    sample_fn: fn(&mut Self, usize, usize) -> Vec<u32>,
+    db_entry: &'a Entry,
     rng: ThreadRng,
 }
 
-impl RandomReadGenerator {
-    pub fn new(db_entry: &Entry, mut fractions: Vec<f32>, probability: f64) -> Self {
+impl<'a> RandomReadGenerator<'a> {
+    pub fn new(
+        db_entry: &'a Entry,
+        mut fractions: Vec<f32>,
+        probability: f64,
+        profile_weights: bool,
+    ) -> Self {
         use crate::modifications_distribution::ModificationDistribution;
         use rand::thread_rng;
 
@@ -50,28 +59,55 @@ impl RandomReadGenerator {
         assert_ne!(modificable_indices.len(), 0);
         assert_eq!(modificable_indices.len() - 1, fractions.len());
 
+        let sample_fn = if profile_weights {
+            Self::sample_indices_weighted
+        } else {
+            Self::sample_indices_equally
+        };
+
         Self {
             modificable_indices,
             modifications_cdf,
             cum_fractions: fractions,
+            sample_fn,
+            db_entry,
             rng: thread_rng(),
         }
     }
+
+    fn sample_indices_equally(&mut self, profile_index: usize, n_modifications: usize) -> Vec<u32> {
+        self.modificable_indices[profile_index]
+            .choose_multiple(&mut self.rng, n_modifications)
+            .cloned()
+            .collect()
+    }
+
+    fn sample_indices_weighted(
+        &mut self,
+        profile_index: usize,
+        n_modifications: usize,
+    ) -> Vec<u32> {
+        let profile = &self.db_entry.profiles[profile_index];
+        self.modificable_indices[profile_index]
+            .choose_multiple_weighted(&mut self.rng, n_modifications, |&index| {
+                profile.0[usize::try_from(index).unwrap()]
+            })
+            .expect("unable to choose multiple indices using profile as weights")
+            .cloned()
+            .collect()
+    }
 }
 
-impl Iterator for RandomReadGenerator {
+impl Iterator for RandomReadGenerator<'_> {
     type Item = (usize, Vec<u32>);
 
     fn next(&mut self) -> Option<Self::Item> {
-        use rand::{seq::SliceRandom, Rng};
-
         let random_fraction = self.rng.gen();
         let profile_index = self
             .cum_fractions
             .iter()
             .position(|&fraction| fraction >= random_fraction)
             .unwrap_or(self.modificable_indices.len() - 1);
-        let modificable_indices = &self.modificable_indices[profile_index];
 
         let p: f64 = self.rng.gen();
         let n_modifications = self
@@ -80,10 +116,7 @@ impl Iterator for RandomReadGenerator {
             .position(|&cdf| cdf > p)
             .unwrap_or(self.modifications_cdf.len());
 
-        let mut sampled: Vec<_> = modificable_indices
-            .choose_multiple(&mut self.rng, n_modifications)
-            .cloned()
-            .collect();
+        let mut sampled = (self.sample_fn)(self, profile_index, n_modifications);
         sampled.sort_unstable();
         Some((profile_index, sampled))
     }

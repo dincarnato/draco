@@ -48,7 +48,7 @@ impl Db {
                     .0
                     .iter()
                     .zip(modificability_profile.0)
-                    .all(|(&count, modificable)| (count != 0) == modificable));
+                    .all(|(&count, modificable)| count == 0 || modificable));
 
                 profiles.push(profile);
                 line = lines.next().unwrap()?;

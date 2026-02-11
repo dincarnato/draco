@@ -89,26 +89,44 @@ get_float_decimal_part_size(std::size_t initial_decimal_part_size) noexcept {
   auto const exp = raw_value.exponent_unbiased();
   if (exp < static_cast<typename raw_value_type::signed_repr_type>(
                 raw_value_type::mantissa_bits)) {
-    auto mantissa =
-        raw_value.mantissa() &
-        ((typename raw_value_type::repr_type(1)
-          << (raw_value_type::mantissa_bits - static_cast<std::size_t>(exp))) -
-         1);
-    for (std::size_t mantissa_bit_index = 0;
-         mantissa_bit_index < raw_value_type::mantissa_bits;
-         ++mantissa_bit_index) {
-      if ((mantissa & typename raw_value_type::repr_type(1)) == 1) {
-        decimal_part_size = std::min(
-            raw_value_type::mantissa_bits - mantissa_bit_index -
-                static_cast<std::size_t>(exp) + initial_decimal_part_size,
-            decimal_part_max_size);
-        break;
-      }
-      mantissa >>= 1;
+    auto mantissa = raw_value.mantissa();
+    if (exp >= 0) {
+      mantissa &= ((typename raw_value_type::repr_type(1)
+                    << (raw_value_type::mantissa_bits -
+                        static_cast<std::size_t>(exp))) -
+                   1);
     }
 
-    if (decimal_part_size != 0)
-      ++decimal_part_size;
+    bool has_fractional_bits = (mantissa != 0);
+    if (has_fractional_bits) {
+      for (std::uint8_t mantissa_bit_index = 0;
+           mantissa_bit_index < raw_value_type::mantissa_bits;
+           ++mantissa_bit_index) {
+        if ((mantissa & typename raw_value_type::repr_type(1)) == 1) {
+          auto bits_after_decimal = static_cast<std::size_t>(
+              static_cast<raw_value_type::signed_repr_type>(
+                  raw_value_type::mantissa_bits) -
+              static_cast<raw_value_type::signed_repr_type>(
+                  mantissa_bit_index) -
+              static_cast<raw_value_type::signed_repr_type>(exp));
+          decimal_part_size =
+              std::min(bits_after_decimal + initial_decimal_part_size,
+                       decimal_part_max_size);
+          break;
+        }
+        mantissa >>= 1;
+      }
+    } else if (exp < 0) {
+      std::size_t bits_after_decimal = static_cast<std::size_t>(-exp);
+      decimal_part_size =
+          std::min(bits_after_decimal + initial_decimal_part_size,
+                   decimal_part_max_size);
+    }
+
+    if (exp < 0 || has_fractional_bits) {
+      if (decimal_part_size != 0)
+        ++decimal_part_size;
+    }
   }
 
   return decimal_part_size;

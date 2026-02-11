@@ -536,8 +536,20 @@ static_assert(
     8);
 static_assert(
     cte::detail::string_representation_size<
+        cte::Float(1.78125f).representation(), cte::StringArgType::Float>() ==
+    7);
+static_assert(
+    cte::detail::string_representation_size<
+        cte::Float(0.78125f).representation(), cte::StringArgType::Float>() ==
+    7);
+static_assert(
+    cte::detail::string_representation_size<
         cte::Float(-12.78125f).representation(), cte::StringArgType::Float>() ==
     9);
+static_assert(
+    cte::detail::string_representation_size<
+        cte::Float(-0.78125f).representation(), cte::StringArgType::Float>() ==
+    8);
 
 static_assert(cte::Double(0.1).representation() == 0x3fb999999999999a);
 static_assert(cte::Double(0.001).representation() == 0x3f50624dd2f1a9fc);
@@ -616,6 +628,12 @@ static_assert(cte::into_string<cte::Double(0.5).representation(),
 static_assert(cte::into_string<cte::Double(-0.5).representation(),
                                cte::StringArgType::Double>() ==
               cte::string("-0.5"));
+static_assert(
+    cte::detail::string_representation_size<cte::Double(0.5).representation(),
+                                            cte::StringArgType::Double>() == 3);
+static_assert(cte::into_string<cte::Double(1e-6).representation(),
+                               cte::StringArgType::Double>() ==
+              cte::string("0.000001"));
 
 static_assert(CTE_INTO_STRING(1) == cte::string("1"));
 static_assert(CTE_INTO_STRING(1.f) == cte::string("1"));

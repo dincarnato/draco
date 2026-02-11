@@ -521,6 +521,10 @@ static_assert(
         cte::Float(-12.78125f).representation(), cte::StringArgType::Float>() ==
     9);
 
+static_assert(cte::Double(0.1).representation() == 0x3fb999999999999a);
+static_assert(cte::Double(0.001).representation() == 0x3f50624dd2f1a9fc);
+static_assert(cte::Double(0.000001).representation() == 0x3eb0c6f7a0b5ed8d);
+
 static_assert(
     cte::detail::string_representation_size<cte::Float(-12.1f).representation(),
                                             cte::StringArgType::Float>() == 10);

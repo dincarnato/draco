@@ -525,6 +525,20 @@ static_assert(cte::Double(0.1).representation() == 0x3fb999999999999a);
 static_assert(cte::Double(0.001).representation() == 0x3f50624dd2f1a9fc);
 static_assert(cte::Double(0.000001).representation() == 0x3eb0c6f7a0b5ed8d);
 
+static_assert(cte::Double::from_representation(0x3fb999999999999a).exponent() ==
+              1019);
+static_assert(cte::Double::from_representation(0x3fb999999999999a)
+                  .exponent_unbiased() == -4);
+static_assert(cte::Double::from_representation(0x3fb999999999999a).mantissa() ==
+              2702159776422298);
+
+static_assert(cte::Double::from_representation(0x3eb0c6f7a0b5ed8d).exponent() ==
+              1003);
+static_assert(cte::Double::from_representation(0x3eb0c6f7a0b5ed8d)
+                  .exponent_unbiased() == -20);
+static_assert(cte::Double::from_representation(0x3eb0c6f7a0b5ed8d).mantissa() ==
+              218766855499149);
+
 static_assert(
     cte::detail::string_representation_size<cte::Float(-12.1f).representation(),
                                             cte::StringArgType::Float>() == 10);

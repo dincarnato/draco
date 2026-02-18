@@ -527,16 +527,15 @@ void test_get_best_pre_collapsing_clusters_one_window() {
   };
 
   std::vector ptba_on_replicate_results{
-      std::optional(
-          PtbaOnReplicate{.pre_collapsing_clusters = std::vector{3u, 5u},
-                          .windows =
-                              std::vector{
-                                  make_window(3, 0),
-                                  make_window(5, 5),
-                              },
-                          .window_size = window_size,
-                          .window_offset = window_offset}),
-      std::optional(PtbaOnReplicate{
+      PtbaOnReplicate{.pre_collapsing_clusters = std::vector{3u, 5u},
+                      .windows =
+                          std::vector{
+                              make_window(3, 0),
+                              make_window(5, 5),
+                          },
+                      .window_size = window_size,
+                      .window_offset = window_offset},
+      PtbaOnReplicate{
           .pre_collapsing_clusters = std::vector{1u, 1u},
           .windows =
               std::vector{
@@ -545,8 +544,8 @@ void test_get_best_pre_collapsing_clusters_one_window() {
               },
           .window_size = window_size,
           .window_offset = window_offset,
-      }),
-      std::optional(PtbaOnReplicate{
+      },
+      PtbaOnReplicate{
           .pre_collapsing_clusters = std::vector{4u, 2u},
           .windows =
               std::vector{
@@ -555,8 +554,8 @@ void test_get_best_pre_collapsing_clusters_one_window() {
               },
           .window_size = window_size,
           .window_offset = window_offset,
-      }),
-      std::optional(PtbaOnReplicate{
+      },
+      PtbaOnReplicate{
           .pre_collapsing_clusters = std::vector{2u, 1u},
           .windows =
               std::vector{
@@ -565,7 +564,7 @@ void test_get_best_pre_collapsing_clusters_one_window() {
               },
           .window_size = window_size,
           .window_offset = window_offset,
-      }),
+      },
   };
 
   {
@@ -839,13 +838,12 @@ void test_handle_transcripts_clusters_confidences() {
                        }) |
                        std::ranges::to<std::vector>();
 
-        PtbaOnReplicate ptba_on_replicate{
+        return PtbaOnReplicate{
             .pre_collapsing_clusters = pre_collapsing_clusters,
             .windows = windows,
             .window_size = window_size,
             .window_offset = window_offset,
         };
-        return std::optional(std::move(ptba_on_replicate));
       },
       [&](unsigned short start_base, unsigned short end_base,
           std::uint8_t n_clusters, std::vector<arma::mat> const &,

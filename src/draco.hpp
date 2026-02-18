@@ -182,7 +182,7 @@ struct PreCollapsingClusters {
 };
 
 std::vector<PreCollapsingClusters> get_best_pre_collapsing_clusters(
-    std::span<std::optional<PtbaOnReplicate>> ptba_on_replicate_results,
+    std::span<PtbaOnReplicate> ptba_on_replicate_results,
     std::string_view transcript_name);
 
 void set_uninformative_clusters_to_surrounding(
@@ -282,6 +282,13 @@ void add_detected_clusters_with_confidence(
 WindowsInfo get_windows_info(std::span<RingmapData const *const> ringmaps_data,
                              Args const &args) noexcept;
 
+void output_raw_n_clusters(std::ofstream &raw_n_clusters_stream,
+                           std::mutex &raw_n_clusters_stream_mutex,
+                           unsigned int window_size,
+                           std::vector<Window> const &windows,
+                           std::vector<unsigned int> const &windows_n_clusters,
+                           results::Transcript &transcript_result);
+
 struct HandleTranscripts {
   std::vector<MutationMapTranscript const *> const &transcripts;
   std::vector<RingmapData *> const &ringmaps_data;
@@ -293,9 +300,9 @@ struct HandleTranscripts {
   bool allow_empty_patterns;
 
   void operator()(
-      InvocableR<std::optional<PtbaOnReplicate>, std::size_t,
-                 RingmapData const &, results::Transcript &,
-                 WindowsInfo const &> auto &&ptba_on_replicate,
+      InvocableR<PtbaOnReplicate, std::size_t, RingmapData const &,
+                 results::Transcript &, WindowsInfo const &> auto
+          &&ptba_on_replicate,
       InvocableR<WeightedClusters, unsigned short, unsigned short, std::uint8_t,
                  std::vector<arma::mat> const &,
                  results::Transcript const &> auto &&get_weighted_clusters) {
@@ -326,7 +333,7 @@ struct HandleTranscripts {
     assert(not transcript_result.name.empty());
 
     auto ptba_on_replicate_results =
-        std::vector<std::optional<PtbaOnReplicate>>(std::size(transcripts));
+        std::vector<PtbaOnReplicate>(std::size(transcripts));
     tbb::parallel_for(
         0uz, std::size(transcripts), [&](std::size_t replicate_index) {
           auto const &ringmap_data = *ringmaps_data[replicate_index];
@@ -334,20 +341,24 @@ struct HandleTranscripts {
               replicate_index, ringmap_data, transcript_result, windows_info);
         });
 
-    if (not std::ranges::all_of(ptba_on_replicate_results,
-                                [](const auto &ptba_on_replicate_result) {
-                                  return ptba_on_replicate_result.has_value();
-                                })) {
+    if (raw_n_clusters_stream) {
+      auto const &first_ptba_on_replicate_result = ptba_on_replicate_results[0];
+      output_raw_n_clusters(
+          *raw_n_clusters_stream, raw_n_clusters_stream_mutex,
+          first_ptba_on_replicate_result.window_size,
+          first_ptba_on_replicate_result.windows,
+          first_ptba_on_replicate_result.pre_collapsing_clusters,
+          transcript_result);
       return;
     }
 
     if (std::ranges::any_of(
             ptba_on_replicate_results | std::views::drop(1),
             [&](auto &ptba_on_replicate_result) {
-              return std::size(ptba_on_replicate_result->windows) !=
-                         std::size(ptba_on_replicate_results[0]->windows) or
-                     ptba_on_replicate_result->window_size !=
-                         ptba_on_replicate_results[0]->window_size;
+              return std::size(ptba_on_replicate_result.windows) !=
+                         std::size(ptba_on_replicate_results[0].windows) or
+                     ptba_on_replicate_result.window_size !=
+                         ptba_on_replicate_results[0].window_size;
             })) {
       throw std::runtime_error(
           std::format("the number of windows for transcript {} is incoherent",
@@ -422,7 +433,7 @@ struct HandleTranscripts {
         }
       }
 
-      auto const &first_result_windows = ptba_on_replicate_results[0]->windows;
+      auto const &first_result_windows = ptba_on_replicate_results[0].windows;
       if (not std::ranges::all_of(
               std::views::iota(0uz, n_windows), [&](auto window_index) {
                 auto const &first_result_window =
@@ -431,7 +442,7 @@ struct HandleTranscripts {
                     ptba_on_replicate_results | std::views::drop(1),
                     [&](auto const &ptba_on_replicate_result) {
                       auto const &window =
-                          ptba_on_replicate_result->windows[window_index];
+                          ptba_on_replicate_result.windows[window_index];
                       return window.start_base ==
                                  first_result_window.start_base &&
                              window.weights.getClustersSize() ==
@@ -477,7 +488,7 @@ struct HandleTranscripts {
               std::views::transform([&](auto &&tuple) {
                 auto &&[ringmap_data, ptba_on_replicate_result,
                         replicate_index] = std::move(tuple);
-                auto &window = ptba_on_replicate_result->windows[window_index];
+                auto &window = ptba_on_replicate_result.windows[window_index];
                 std::vector<unsigned> window_reads_indices;
                 auto window_ringmap_data = ringmap_data->get_new_range(
                     window.start_base, window.start_base + window_size,
@@ -548,14 +559,14 @@ struct HandleTranscripts {
                         filtered_data.getUnfilteredWeights(graphCutResults);
 
                     assert(clusters.getElementsSize() == window_size);
-                    ptba_on_replicate_result->windows[window_index].weights =
+                    ptba_on_replicate_result.windows[window_index].weights =
                         std::move(clusters);
                   });
 
               break;
             } else {
               for (auto &ptba_on_replicate_result : ptba_on_replicate_results) {
-                ptba_on_replicate_result->windows[window_index].weights =
+                ptba_on_replicate_result.windows[window_index].weights =
                     WeightedClusters(window_size, n_clusters);
               }
               break;
@@ -571,7 +582,7 @@ struct HandleTranscripts {
             auto &&[replicate_index, ptba_on_replicate_result,
                     ringmap_data_ptr] = std::move(tuple);
             auto const &ringmap_data = *ringmap_data_ptr;
-            auto const &windows = ptba_on_replicate_result->windows;
+            auto const &windows = ptba_on_replicate_result.windows;
             auto const replicate_windows_reads_indices =
                 replicates_windows_reads_indices_replicate(replicate_index);
 
@@ -686,11 +697,12 @@ struct HandleTranscripts {
                             return std::ranges::all_of(
                                 pattern, [](auto value) { return value == 0; });
                           })) {
-                    throw std::runtime_error(std::format(
-                        "A pattern for window {}-{} of transcript {} contains "
-                        "only zeros. This should never happen.",
-                        window.begin_index, window.end_index,
-                        transcript_result.name));
+                    throw std::runtime_error(
+                        std::format("A pattern for window {}-{} of "
+                                    "transcript {} contains "
+                                    "only zeros. This should never happen.",
+                                    window.begin_index, window.end_index,
+                                    transcript_result.name));
                   }
 
                   auto patterns_iter = std::cbegin(*window.patterns);
@@ -747,7 +759,7 @@ struct HandleTranscripts {
 
                   for (auto &replicate_result : ptba_on_replicate_results) {
                     for (auto &&[window, window_constraint] :
-                         std::views::zip(replicate_result->windows,
+                         std::views::zip(replicate_result.windows,
                                          windows_max_clusters_constraints)) {
                       if (window.start_base >= result_window_begin and
                           window.start_base + window_size <=

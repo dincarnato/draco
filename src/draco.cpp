@@ -735,11 +735,10 @@ void merge_windows_and_add_window_results(
   }
 }
 
-inline static std::optional<PtbaOnReplicate> ptba_on_replicate(
-    std::size_t replicate_index, RingmapData const &ringmap_data,
-    Args const &args, std::optional<std::ofstream> &raw_n_clusters_stream,
-    std::mutex &raw_n_clusters_stream_mutex,
-    results::Transcript &transcript_result, WindowsInfo const &windows_info) {
+inline static PtbaOnReplicate
+ptba_on_replicate(std::size_t replicate_index, RingmapData const &ringmap_data,
+                  Args const &args, results::Transcript &transcript_result,
+                  WindowsInfo const &windows_info) {
   auto const n_windows = windows_info.n_windows;
   auto const window_size = windows_info.window_size;
   auto const window_offset = windows_info.window_offset;
@@ -816,13 +815,6 @@ inline static std::optional<PtbaOnReplicate> ptba_on_replicate(
     }
   }
 
-  if (raw_n_clusters_stream) {
-    output_raw_n_clusters(*raw_n_clusters_stream, raw_n_clusters_stream_mutex,
-                          window_size, windows, windows_n_clusters,
-                          transcript_result);
-    return std::nullopt;
-  }
-
   assert(std::size(windows_n_clusters) == std::size(windows));
   return PtbaOnReplicate{
       .pre_collapsing_clusters = std::move(windows_n_clusters),
@@ -833,9 +825,9 @@ inline static std::optional<PtbaOnReplicate> ptba_on_replicate(
 }
 
 std::vector<PreCollapsingClusters> get_best_pre_collapsing_clusters(
-    std::span<std::optional<PtbaOnReplicate>> ptba_on_replicate_results,
+    std::span<PtbaOnReplicate> ptba_on_replicate_results,
     std::string_view transcript_name) {
-  auto const windows_size = std::size(ptba_on_replicate_results[0]->windows);
+  auto const windows_size = std::size(ptba_on_replicate_results[0].windows);
   std::vector<unsigned> window_pre_collapsing_clusters(
       std::size(ptba_on_replicate_results));
   // Take the median number of clusters, in case of even number of
@@ -848,12 +840,11 @@ std::vector<PreCollapsingClusters> get_best_pre_collapsing_clusters(
                ptba_on_replicate_results |
                    std::views::transform(
                        [&](const auto &ptba_on_replicate_result) {
-                         assert(ptba_on_replicate_result.has_value());
                          assert(std::size(ptba_on_replicate_result
-                                              ->pre_collapsing_clusters) >
+                                              .pre_collapsing_clusters) >
                                 window_index);
                          return ptba_on_replicate_result
-                             ->pre_collapsing_clusters[window_index];
+                             .pre_collapsing_clusters[window_index];
                        }),
                std::ranges::begin(window_pre_collapsing_clusters));
 
@@ -912,9 +903,8 @@ void handle_transcripts(
   }(
       [&](auto replicate_index, auto const &ringmap_data,
           auto &transcript_result, auto const &windows_info) {
-        return ptba_on_replicate(
-            replicate_index, ringmap_data, args, raw_n_clusters_stream,
-            raw_n_clusters_stream_mutex, transcript_result, windows_info);
+        return ptba_on_replicate(replicate_index, ringmap_data, args,
+                                 transcript_result, windows_info);
       },
       [&](unsigned short start_base, unsigned short end_base,
           std::uint8_t n_clusters,

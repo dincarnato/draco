@@ -1,5 +1,6 @@
 #include "draco.hpp"
 #include "args.hpp"
+#include "logger.hpp"
 #include "mutation_map.hpp"
 #include "mutation_map_transcript.hpp"
 #include "mutation_map_transcript_read.hpp"
@@ -1317,6 +1318,8 @@ static void test_get_min_max_read_size_empty() {
 }
 
 int main() {
+  logger::instance.set_level(logger::Level::error);
+
   test_merge_windows_and_add_window_results_not_merging();
   test_make_windows_and_reads_indices_range_same_clusters();
   test_make_windows_and_reads_indices_range_separated_clusters();

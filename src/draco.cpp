@@ -1043,7 +1043,7 @@ unsigned get_min_median_window_size(
 WindowsInfo get_windows_info(std::span<RingmapData const *const> ringmaps_data,
                              Args const &args) noexcept {
   auto const &first_ringmap_data = *ringmaps_data[0];
-  std::size_t const transcript_size = first_ringmap_data.data().cols_size();
+  auto const transcript_size = first_ringmap_data.data().cols_size();
 
   unsigned window_size;
   unsigned max_window_size;

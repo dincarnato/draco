@@ -764,13 +764,22 @@ void test_handle_transcripts_clusters_confidences() {
   args.window_size() = window_size;
   args.window_shift() = window_offset;
 
+  auto make_ringmap_matrix = [&] {
+    RingmapMatrix data_matrix(std::size(sequence));
+    for (std::size_t read_index = 0; read_index < n_reads; ++read_index) {
+      data_matrix.addRead(MutationMapTranscriptRead{
+          .begin = 0, .end = std::size(sequence), .indices = {}});
+    }
+    return data_matrix;
+  };
+
   std::vector<RingmapData> owned_ringmap_data{
-      RingmapData(sequence, RingmapMatrix(n_reads, std::size(sequence)), 0,
-                  std::size(sequence), args),
-      RingmapData(sequence, RingmapMatrix(n_reads, std::size(sequence)), 0,
-                  std::size(sequence), args),
-      RingmapData(sequence, RingmapMatrix(n_reads, std::size(sequence)), 0,
-                  std::size(sequence), args),
+      RingmapData(sequence, make_ringmap_matrix(), 0, std::size(sequence),
+                  args),
+      RingmapData(sequence, make_ringmap_matrix(), 0, std::size(sequence),
+                  args),
+      RingmapData(sequence, make_ringmap_matrix(), 0, std::size(sequence),
+                  args),
   };
   auto ringmap_data =
       owned_ringmap_data |
@@ -1054,7 +1063,7 @@ static void test_get_windows_info_default_args() {
 
   RingmapMatrix data_matrix(n_bases);
   data_matrix.addRead(
-      MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
+      MutationMapTranscriptRead{.begin = 0, .end = 120, .indices = {}});
 
   test::Args args;
   RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
@@ -1076,7 +1085,7 @@ static void test_get_windows_info_shorter_window_size() {
 
   RingmapMatrix data_matrix(n_bases);
   data_matrix.addRead(
-      MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
+      MutationMapTranscriptRead{.begin = 0, .end = 120, .indices = {}});
 
   test::Args args;
   args.window_size() = 20;
@@ -1099,7 +1108,7 @@ static void test_get_windows_info_fractional_shift() {
 
   RingmapMatrix data_matrix(n_bases);
   data_matrix.addRead(
-      MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
+      MutationMapTranscriptRead{.begin = 0, .end = 120, .indices = {}});
 
   test::Args args;
   args.window_shift() = 0.5;
@@ -1122,7 +1131,7 @@ static void test_get_windows_info_absolute_shift() {
 
   RingmapMatrix data_matrix(n_bases);
   data_matrix.addRead(
-      MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
+      MutationMapTranscriptRead{.begin = 0, .end = 120, .indices = {}});
 
   test::Args args;
   args.window_shift() = 10;
@@ -1144,8 +1153,8 @@ static void test_get_windows_info_window_size_too_big() {
   constexpr std::size_t n_bases = std::size(sequence);
 
   RingmapMatrix data_matrix(n_bases);
-  data_matrix.addRead(
-      MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
+  data_matrix.addRead(MutationMapTranscriptRead{
+      .begin = 0, .end = std::size(sequence), .indices = {}});
 
   test::Args args;
   args.window_size() = 1000;
@@ -1191,7 +1200,7 @@ static void test_get_windows_info_trascript_fraction() {
 
   RingmapMatrix data_matrix(n_bases);
   data_matrix.addRead(
-      MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
+      MutationMapTranscriptRead{.begin = 0, .end = 120, .indices = {}});
 
   test::Args args;
   args.window_size_fraction_transcript_size() = 0.5;
@@ -1214,8 +1223,8 @@ static void test_get_windows_info_trascript_fraction_too_high() {
   constexpr std::size_t n_bases = std::size(sequence);
 
   RingmapMatrix data_matrix(n_bases);
-  data_matrix.addRead(
-      MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
+  data_matrix.addRead(MutationMapTranscriptRead{
+      .begin = 0, .end = std::size(sequence), .indices = {}});
 
   test::Args args;
   args.window_size_fraction_transcript_size() = 2.;

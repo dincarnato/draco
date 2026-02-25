@@ -3,6 +3,7 @@
 #include "concepts.hpp"
 #include "logger.hpp"
 #include "mutation_map_transcript.hpp"
+#include "reassignment.hpp"
 #include "results/analysis.hpp"
 #include "results/transcript.hpp"
 #include "weighted_clusters.hpp"
@@ -635,6 +636,17 @@ struct HandleTranscripts {
             continue;
           }
 
+          std::ranges::copy(
+              replicates_splitted_ringmaps |
+                  std::views::transform(
+                      [&](auto const &replicate_splitted_ringmaps)
+                          -> decltype(auto) {
+                        return replicate_splitted_ringmaps[window_index];
+                      }),
+              std::ranges::begin(filtered_ringmaps));
+          RingmapData::filter_bases_on_replicates_for_assignments(
+              filtered_ringmaps);
+
           for (auto &&[splitted_ringmaps, windows] : std::views::zip(
                    replicates_splitted_ringmaps, transcript_result.windows)) {
             auto &window = (*windows)[window_index];
@@ -643,6 +655,20 @@ struct HandleTranscripts {
             std::ranges::fill(window.assignments, std::int8_t(-1));
           }
 
+          Reassignment{
+              .replicates_splitted_ringmaps = replicates_splitted_ringmaps,
+              .filtered_ringmaps = filtered_ringmaps,
+              .ptba_on_replicate_results = ptba_on_replicate_results,
+              .windows_max_clusters_constraints =
+                  windows_max_clusters_constraints,
+              .transcript_result = &transcript_result,
+              .stop = &stop,
+              .args = &args,
+              .window_index = window_index,
+              .window_size = window_size,
+              .allow_empty_patterns = allow_empty_patterns,
+          }
+              .reassign_reads_with_weights();
           std::ranges::copy(
               replicates_splitted_ringmaps |
                   std::views::transform(

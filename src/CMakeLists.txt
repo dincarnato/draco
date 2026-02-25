@@ -28,6 +28,7 @@ add_executable(
     clusters_replicates.cpp
     compact_ringmap.cpp
     expectation_maximization.cpp
+    reassignment.cpp
     )
 
 add_executable(

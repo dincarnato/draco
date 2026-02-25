@@ -16,158 +16,115 @@ option(
 )
 
 function(create_tests suffix)
-  add_executable(ringmap_base_${ARGV0} EXCLUDE_FROM_ALL
-      ringmap_base.cpp
-      ${PROJECT_SOURCE_DIR}/src/ringmap_data.cpp
+  add_library(
+      draco_test_${ARGV0} STATIC EXCLUDE_FROM_ALL
       ${PROJECT_SOURCE_DIR}/src/args.cpp
-      ${PROJECT_SOURCE_DIR}/src/ringmap_matrix.cpp
-      ${PROJECT_SOURCE_DIR}/src/mutation_map_transcript.cpp
+      ${PROJECT_SOURCE_DIR}/src/draco.cpp
+      ${PROJECT_SOURCE_DIR}/src/graph_cut.cpp
+      ${PROJECT_SOURCE_DIR}/src/kolmogorov_smirnov.cpp
+      ${PROJECT_SOURCE_DIR}/src/logger.cpp
       ${PROJECT_SOURCE_DIR}/src/mutation_map.cpp
+      ${PROJECT_SOURCE_DIR}/src/mutation_map_transcript.cpp
+      ${PROJECT_SOURCE_DIR}/src/mutation_map_writer.cpp
       ${PROJECT_SOURCE_DIR}/src/paired_rna_secondary_structure.cpp
-      ${PROJECT_SOURCE_DIR}/src/spectral_partitioner.cpp
+      ${PROJECT_SOURCE_DIR}/src/ptba.cpp
+      ${PROJECT_SOURCE_DIR}/src/ptba.cpp
+      ${PROJECT_SOURCE_DIR}/src/results/analysis.cpp
+      ${PROJECT_SOURCE_DIR}/src/ringmap_data.cpp
+      ${PROJECT_SOURCE_DIR}/src/ringmap_matrix.cpp
       ${PROJECT_SOURCE_DIR}/src/rna_secondary_structure.cpp
-      ${PROJECT_SOURCE_DIR}/src/logger.cpp)
+      ${PROJECT_SOURCE_DIR}/src/spectral_partitioner.cpp
+      ${PROJECT_SOURCE_DIR}/src/windows_merger.cpp
+  )
+  target_compile_options(draco_test_${ARGV0} PRIVATE ${ARGN})
+  target_include_directories(draco_test_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
+  target_link_libraries(draco_test_${ARGV0} ${ARGN} ${ARMADILLO_LIBRARIES} ${TBB_LIBRARIES} ${Boost_LIBRARIES} fmt::fmt)
+  if (NOT dlib_USES_PKGCONFIG)
+    target_link_libraries(
+      draco_test_${ARGV0}
+      dlib::dlib
+    )
+  else()
+    target_link_libraries(
+      draco_test_${ARGV0}
+      ${dlib_LIBRARIES}
+    )
+  endif()
+
+  add_executable(ringmap_base_${ARGV0} EXCLUDE_FROM_ALL ringmap_base.cpp)
   target_compile_options(ringmap_base_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(ringmap_base_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_base_${ARGV0} ${ARGN} fmt::fmt ${TBB_LIBRARIES})
+  target_link_libraries(ringmap_base_${ARGV0} ${ARGN} draco_test_${ARGV0})
   
-  add_executable(ringmap_shuffle_${ARGV0} EXCLUDE_FROM_ALL
-      ringmap_shuffle.cpp
-      ${PROJECT_SOURCE_DIR}/src/ringmap_data.cpp
-      ${PROJECT_SOURCE_DIR}/src/args.cpp
-      ${PROJECT_SOURCE_DIR}/src/ringmap_matrix.cpp
-      ${PROJECT_SOURCE_DIR}/src/mutation_map_transcript.cpp
-      ${PROJECT_SOURCE_DIR}/src/mutation_map.cpp
-      ${PROJECT_SOURCE_DIR}/src/paired_rna_secondary_structure.cpp
-      ${PROJECT_SOURCE_DIR}/src/spectral_partitioner.cpp
-      ${PROJECT_SOURCE_DIR}/src/rna_secondary_structure.cpp
-      ${PROJECT_SOURCE_DIR}/src/logger.cpp)
+  add_executable(ringmap_shuffle_${ARGV0} EXCLUDE_FROM_ALL ringmap_shuffle.cpp)
   target_compile_options(ringmap_shuffle_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(ringmap_shuffle_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_shuffle_${ARGV0} ${ARGN} fmt::fmt ${TBB_LIBRARIES})
+  target_link_libraries(ringmap_shuffle_${ARGV0} ${ARGN} draco_test_${ARGV0})
   
-  add_executable(ringmap_concat_${ARGV0} EXCLUDE_FROM_ALL
-      ringmap_concat.cpp
-      ${PROJECT_SOURCE_DIR}/src/ringmap_data.cpp
-      ${PROJECT_SOURCE_DIR}/src/args.cpp
-      ${PROJECT_SOURCE_DIR}/src/ringmap_matrix.cpp
-      ${PROJECT_SOURCE_DIR}/src/mutation_map_transcript.cpp
-      ${PROJECT_SOURCE_DIR}/src/mutation_map.cpp
-      ${PROJECT_SOURCE_DIR}/src/paired_rna_secondary_structure.cpp
-      ${PROJECT_SOURCE_DIR}/src/spectral_partitioner.cpp
-      ${PROJECT_SOURCE_DIR}/src/rna_secondary_structure.cpp
-      ${PROJECT_SOURCE_DIR}/src/logger.cpp)
+  add_executable(ringmap_concat_${ARGV0} EXCLUDE_FROM_ALL ringmap_concat.cpp)
   target_compile_options(ringmap_concat_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(ringmap_concat_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_concat_${ARGV0} ${ARGN} fmt::fmt ${TBB_LIBRARIES})
+  target_link_libraries(ringmap_concat_${ARGV0} ${ARGN} draco_test_${ARGV0})
 
-  add_executable(ringmap_data_${ARGV0} EXCLUDE_FROM_ALL
-      ringmap_data.cpp
-      ${PROJECT_SOURCE_DIR}/src/ringmap_data.cpp
-      ${PROJECT_SOURCE_DIR}/src/args.cpp
-      ${PROJECT_SOURCE_DIR}/src/ringmap_matrix.cpp
-      ${PROJECT_SOURCE_DIR}/src/mutation_map_transcript.cpp
-      ${PROJECT_SOURCE_DIR}/src/mutation_map.cpp
-      ${PROJECT_SOURCE_DIR}/src/logger.cpp)
+  add_executable(ringmap_data_${ARGV0} EXCLUDE_FROM_ALL ringmap_data.cpp)
   target_compile_options(ringmap_data_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(ringmap_data_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_data_${ARGV0} ${ARGN} fmt::fmt ${TBB_LIBRARIES})
+  target_link_libraries(ringmap_data_${ARGV0} ${ARGN} draco_test_${ARGV0})
   
-  add_executable(graph_cut_${ARGV0} EXCLUDE_FROM_ALL
-      graph_cut.cpp
-      ${PROJECT_SOURCE_DIR}/src/graph_cut.cpp
-      ${PROJECT_SOURCE_DIR}/src/logger.cpp)
+  add_executable(graph_cut_${ARGV0} EXCLUDE_FROM_ALL graph_cut.cpp)
   target_compile_options(graph_cut_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(graph_cut_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(graph_cut_${ARGV0} ${ARGN} ${TBB_LIBRARIES} fmt::fmt)
+  target_link_libraries(graph_cut_${ARGV0} ${ARGN} ${TBB_LIBRARIES} draco_test_${ARGV0})
   
-  add_executable(matching_indices_${ARGV0} EXCLUDE_FROM_ALL
-      matching_indices.cpp)
+  add_executable(matching_indices_${ARGV0} EXCLUDE_FROM_ALL matching_indices.cpp)
   target_compile_options(matching_indices_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(matching_indices_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(matching_indices_${ARGV0} ${ARGN})
+  target_link_libraries(matching_indices_${ARGV0} ${ARGN} draco_test_${ARGV0})
   
-  add_executable(weighted_clusters_${ARGV0} EXCLUDE_FROM_ALL
-      weighted_clusters.cpp)
+  add_executable(weighted_clusters_${ARGV0} EXCLUDE_FROM_ALL weighted_clusters.cpp)
   target_compile_options(weighted_clusters_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(weighted_clusters_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(weighted_clusters_${ARGV0} ${ARGN})
+  target_link_libraries(weighted_clusters_${ARGV0} ${ARGN} draco_test_${ARGV0})
   
-  add_executable(blocking_queue_${ARGV0} EXCLUDE_FROM_ALL
-      blocking_queue.cpp)
+  add_executable(blocking_queue_${ARGV0} EXCLUDE_FROM_ALL blocking_queue.cpp)
   target_compile_options(blocking_queue_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(blocking_queue_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(blocking_queue_${ARGV0} ${ARGN})
+  target_link_libraries(blocking_queue_${ARGV0} ${ARGN} draco_test_${ARGV0})
 
-  add_executable(windows_merger_${ARGV0} EXCLUDE_FROM_ALL
-      windows_merger.cpp
-      ${PROJECT_SOURCE_DIR}/src/windows_merger.cpp
-      ${PROJECT_SOURCE_DIR}/src/logger.cpp)
+  add_executable(windows_merger_${ARGV0} EXCLUDE_FROM_ALL windows_merger.cpp)
   target_compile_options(windows_merger_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(windows_merger_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(windows_merger_${ARGV0} ${ARGN})
+  target_link_libraries(windows_merger_${ARGV0} ${ARGN} draco_test_${ARGV0})
 
-  add_executable(windows_merger_windows_${ARGV0} EXCLUDE_FROM_ALL
-      windows_merger_windows.cpp)
+  add_executable(windows_merger_windows_${ARGV0} EXCLUDE_FROM_ALL windows_merger_windows.cpp)
   target_compile_options(windows_merger_windows_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(windows_merger_windows_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(windows_merger_windows_${ARGV0} ${ARGN})
+  target_link_libraries(windows_merger_windows_${ARGV0} ${ARGN} draco_test_${ARGV0})
 
-  add_executable(windows_merger_cache_indices_${ARGV0} EXCLUDE_FROM_ALL
-      windows_merger_cache_indices.cpp)
+  add_executable(windows_merger_cache_indices_${ARGV0} EXCLUDE_FROM_ALL windows_merger_cache_indices.cpp)
   target_compile_options(windows_merger_cache_indices_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(windows_merger_cache_indices_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(windows_merger_cache_indices_${ARGV0} ${ARGN})
+  target_link_libraries(windows_merger_cache_indices_${ARGV0} ${ARGN} draco_test_${ARGV0})
 
-  add_executable(ringmap_window_${ARGV0} EXCLUDE_FROM_ALL
-      ringmap_window.cpp
-      ${PROJECT_SOURCE_DIR}/src/ringmap_data.cpp
-      ${PROJECT_SOURCE_DIR}/src/ringmap_matrix.cpp
-      ${PROJECT_SOURCE_DIR}/src/mutation_map.cpp
-      ${PROJECT_SOURCE_DIR}/src/mutation_map_transcript.cpp
-      ${PROJECT_SOURCE_DIR}/src/paired_rna_secondary_structure.cpp
-      ${PROJECT_SOURCE_DIR}/src/logger.cpp
-      ${PROJECT_SOURCE_DIR}/src/args.cpp
-  )
+  add_executable(ringmap_window_${ARGV0} EXCLUDE_FROM_ALL ringmap_window.cpp)
   target_compile_options(ringmap_window_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(ringmap_window_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_window_${ARGV0} ${ARGN} fmt::fmt ${TBB_LIBRARIES})
+  target_link_libraries(ringmap_window_${ARGV0} ${ARGN} draco_test_${ARGV0})
 
-  add_executable(weibull_fitter_${ARGV0} EXCLUDE_FROM_ALL
-      weibull_fitter.cpp)
+  add_executable(weibull_fitter_${ARGV0} EXCLUDE_FROM_ALL weibull_fitter.cpp)
   target_compile_options(weibull_fitter_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(weibull_fitter_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(weibull_fitter_${ARGV0} ${ARGN})
+  target_link_libraries(weibull_fitter_${ARGV0} ${ARGN} draco_test_${ARGV0})
 
-  add_executable(mutation_map_writer_${ARGV0} EXCLUDE_FROM_ALL
-      mutation_map_writer.cpp
-      ${PROJECT_SOURCE_DIR}/src/mutation_map_writer.cpp
-      ${PROJECT_SOURCE_DIR}/src/mutation_map.cpp
-      ${PROJECT_SOURCE_DIR}/src/mutation_map_transcript.cpp
-  )
+  add_executable(mutation_map_writer_${ARGV0} EXCLUDE_FROM_ALL mutation_map_writer.cpp)
   target_compile_options(mutation_map_writer_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(mutation_map_writer_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(mutation_map_writer_${ARGV0} ${ARGN})
+  target_link_libraries(mutation_map_writer_${ARGV0} ${ARGN} draco_test_${ARGV0})
 
-  add_executable(draco_${ARGV0} EXCLUDE_FROM_ALL
-      draco.cpp
-      ${PROJECT_SOURCE_DIR}/src/draco.cpp
-      ${PROJECT_SOURCE_DIR}/src/args.cpp
-      ${PROJECT_SOURCE_DIR}/src/ringmap_data.cpp
-      ${PROJECT_SOURCE_DIR}/src/ringmap_matrix.cpp
-      ${PROJECT_SOURCE_DIR}/src/graph_cut.cpp
-      ${PROJECT_SOURCE_DIR}/src/windows_merger.cpp
-      ${PROJECT_SOURCE_DIR}/src/mutation_map.cpp
-      ${PROJECT_SOURCE_DIR}/src/mutation_map_transcript.cpp
-      ${PROJECT_SOURCE_DIR}/src/mutation_map_writer.cpp
-      ${PROJECT_SOURCE_DIR}/src/ptba.cpp
-      ${PROJECT_SOURCE_DIR}/src/kolmogorov_smirnov.cpp
-      ${PROJECT_SOURCE_DIR}/src/results/analysis.cpp
-      ${PROJECT_SOURCE_DIR}/src/logger.cpp
-  )
+  add_executable(draco_${ARGV0} EXCLUDE_FROM_ALL draco.cpp)
   target_compile_options(draco_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(draco_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(draco_${ARGV0} ${ARGN})
+  target_link_libraries(draco_${ARGV0} ${ARGN} draco_test_${ARGV0})
 
   add_test(ringmap_base_${ARGV0} ringmap_base_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
   add_test(ringmap_shuffle_${ARGV0} ringmap_shuffle_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
@@ -201,28 +158,6 @@ function(create_tests suffix)
   set_tests_properties(mutation_map_writer_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   set_tests_properties(draco_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
   
-  target_link_libraries(windows_merger_${ARGV0} ${TBB_LIBRARIES} fmt::fmt)
-  target_link_libraries(ringmap_base_${ARGV0} ${ARMADILLO_LIBRARIES})
-  target_link_libraries(ringmap_data_${ARGV0} ${ARMADILLO_LIBRARIES})
-  target_link_libraries(graph_cut_${ARGV0} ${ARMADILLO_LIBRARIES} ${TBB_LIBRARIES} fmt::fmt)
-  target_link_libraries(ringmap_shuffle_${ARGV0} ${ARMADILLO_LIBRARIES})
-  target_link_libraries(ringmap_concat_${ARGV0} ${ARMADILLO_LIBRARIES})
-  target_link_libraries(ringmap_window_${ARGV0} ${ARMADILLO_LIBRARIES})
-  target_link_libraries(weibull_fitter_${ARGV0} dlib::dlib)
-  target_link_libraries(draco_${ARGV0} ${ARMADILLO_LIBRARIES} ${TBB_LIBRARIES} ${Boost_LIBRARIES} fmt::fmt)
-  if (NOT dlib_USES_PKGCONFIG)
-    target_link_libraries(
-      draco_${ARGV0}
-      dlib::dlib
-    )
-  else()
-    target_link_libraries(
-      draco_${ARGV0}
-      ${dlib_LIBRARIES}
-    )
-  endif()
-
-
   add_dependencies(ringmap_base_${ARGV0} run_args_generate)
   add_dependencies(ringmap_shuffle_${ARGV0} run_args_generate)
   add_dependencies(ringmap_concat_${ARGV0} run_args_generate)

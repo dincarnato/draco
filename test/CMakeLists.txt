@@ -51,146 +51,41 @@ function(create_tests suffix)
     )
   endif()
 
-  add_executable(ringmap_base_${ARGV0} EXCLUDE_FROM_ALL ringmap_base.cpp)
-  target_compile_options(ringmap_base_${ARGV0} PRIVATE ${ARGN})
-  target_include_directories(ringmap_base_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_base_${ARGV0} ${ARGN} draco_test_${ARGV0})
-  
-  add_executable(ringmap_shuffle_${ARGV0} EXCLUDE_FROM_ALL ringmap_shuffle.cpp)
-  target_compile_options(ringmap_shuffle_${ARGV0} PRIVATE ${ARGN})
-  target_include_directories(ringmap_shuffle_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_shuffle_${ARGV0} ${ARGN} draco_test_${ARGV0})
-  
-  add_executable(ringmap_concat_${ARGV0} EXCLUDE_FROM_ALL ringmap_concat.cpp)
-  target_compile_options(ringmap_concat_${ARGV0} PRIVATE ${ARGN})
-  target_include_directories(ringmap_concat_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_concat_${ARGV0} ${ARGN} draco_test_${ARGV0})
-
-  add_executable(ringmap_data_${ARGV0} EXCLUDE_FROM_ALL ringmap_data.cpp)
-  target_compile_options(ringmap_data_${ARGV0} PRIVATE ${ARGN})
-  target_include_directories(ringmap_data_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_data_${ARGV0} ${ARGN} draco_test_${ARGV0})
-  
-  add_executable(graph_cut_${ARGV0} EXCLUDE_FROM_ALL graph_cut.cpp)
-  target_compile_options(graph_cut_${ARGV0} PRIVATE ${ARGN})
-  target_include_directories(graph_cut_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(graph_cut_${ARGV0} ${ARGN} ${TBB_LIBRARIES} draco_test_${ARGV0})
-  
-  add_executable(matching_indices_${ARGV0} EXCLUDE_FROM_ALL matching_indices.cpp)
-  target_compile_options(matching_indices_${ARGV0} PRIVATE ${ARGN})
-  target_include_directories(matching_indices_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(matching_indices_${ARGV0} ${ARGN} draco_test_${ARGV0})
-  
-  add_executable(weighted_clusters_${ARGV0} EXCLUDE_FROM_ALL weighted_clusters.cpp)
-  target_compile_options(weighted_clusters_${ARGV0} PRIVATE ${ARGN})
-  target_include_directories(weighted_clusters_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(weighted_clusters_${ARGV0} ${ARGN} draco_test_${ARGV0})
-  
-  add_executable(blocking_queue_${ARGV0} EXCLUDE_FROM_ALL blocking_queue.cpp)
-  target_compile_options(blocking_queue_${ARGV0} PRIVATE ${ARGN})
-  target_include_directories(blocking_queue_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(blocking_queue_${ARGV0} ${ARGN} draco_test_${ARGV0})
-
-  add_executable(windows_merger_${ARGV0} EXCLUDE_FROM_ALL windows_merger.cpp)
-  target_compile_options(windows_merger_${ARGV0} PRIVATE ${ARGN})
-  target_include_directories(windows_merger_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(windows_merger_${ARGV0} ${ARGN} draco_test_${ARGV0})
-
-  add_executable(windows_merger_windows_${ARGV0} EXCLUDE_FROM_ALL windows_merger_windows.cpp)
-  target_compile_options(windows_merger_windows_${ARGV0} PRIVATE ${ARGN})
-  target_include_directories(windows_merger_windows_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(windows_merger_windows_${ARGV0} ${ARGN} draco_test_${ARGV0})
-
-  add_executable(windows_merger_cache_indices_${ARGV0} EXCLUDE_FROM_ALL windows_merger_cache_indices.cpp)
-  target_compile_options(windows_merger_cache_indices_${ARGV0} PRIVATE ${ARGN})
-  target_include_directories(windows_merger_cache_indices_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(windows_merger_cache_indices_${ARGV0} ${ARGN} draco_test_${ARGV0})
-
-  add_executable(ringmap_window_${ARGV0} EXCLUDE_FROM_ALL ringmap_window.cpp)
-  target_compile_options(ringmap_window_${ARGV0} PRIVATE ${ARGN})
-  target_include_directories(ringmap_window_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(ringmap_window_${ARGV0} ${ARGN} draco_test_${ARGV0})
-
-  add_executable(weibull_fitter_${ARGV0} EXCLUDE_FROM_ALL weibull_fitter.cpp)
-  target_compile_options(weibull_fitter_${ARGV0} PRIVATE ${ARGN})
-  target_include_directories(weibull_fitter_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(weibull_fitter_${ARGV0} ${ARGN} draco_test_${ARGV0})
-
-  add_executable(mutation_map_writer_${ARGV0} EXCLUDE_FROM_ALL mutation_map_writer.cpp)
-  target_compile_options(mutation_map_writer_${ARGV0} PRIVATE ${ARGN})
-  target_include_directories(mutation_map_writer_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(mutation_map_writer_${ARGV0} ${ARGN} draco_test_${ARGV0})
-
-  add_executable(draco_${ARGV0} EXCLUDE_FROM_ALL draco.cpp)
-  target_compile_options(draco_${ARGV0} PRIVATE ${ARGN})
-  target_include_directories(draco_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
-  target_link_libraries(draco_${ARGV0} ${ARGN} draco_test_${ARGV0})
-
-  add_test(ringmap_base_${ARGV0} ringmap_base_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
-  add_test(ringmap_shuffle_${ARGV0} ringmap_shuffle_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
-  add_test(ringmap_concat_${ARGV0} ringmap_concat_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
-  add_test(ringmap_data_${ARGV0} ringmap_data_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
-  add_test(graph_cut_${ARGV0} graph_cut_${ARGV0})
-  add_test(matching_indices_${ARGV0} matching_indices_${ARGV0})
-  add_test(weighted_clusters_${ARGV0} weighted_clusters_${ARGV0})
-  add_test(blocking_queue_${ARGV0} blocking_queue_${ARGV0})
-  add_test(windows_merger_${ARGV0} windows_merger_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/windows_merger_serialized_data.txt)
-  add_test(windows_merger_windows_${ARGV0} windows_merger_windows_${ARGV0})
-  add_test(windows_merger_cache_indices_${ARGV0} windows_merger_cache_indices_${ARGV0})
-  add_test(ringmap_window_${ARGV0} ringmap_window_${ARGV0})
-  add_test(weibull_fitter_${ARGV0} weibull_fitter_${ARGV0})
-  add_test(mutation_map_writer_${ARGV0} mutation_map_writer_${ARGV0} ${CMAKE_CURRENT_SOURCE_DIR}/test.mm)
-  add_test(draco_${ARGV0} draco_${ARGV0})
-
-  set_tests_properties(ringmap_base_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
-  set_tests_properties(ringmap_shuffle_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
-  set_tests_properties(ringmap_concat_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
-  set_tests_properties(ringmap_data_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
-  set_tests_properties(graph_cut_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
-  set_tests_properties(matching_indices_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
-  set_tests_properties(weighted_clusters_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
-  set_tests_properties(blocking_queue_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
-  set_tests_properties(windows_merger_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
-  set_tests_properties(windows_merger_windows_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
-  set_tests_properties(windows_merger_cache_indices_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
-  set_tests_properties(ringmap_window_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
-  set_tests_properties(weibull_fitter_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
-  set_tests_properties(mutation_map_writer_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
-  set_tests_properties(draco_${ARGV0} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
-  
-  add_dependencies(ringmap_base_${ARGV0} run_args_generate)
-  add_dependencies(ringmap_shuffle_${ARGV0} run_args_generate)
-  add_dependencies(ringmap_concat_${ARGV0} run_args_generate)
-  add_dependencies(ringmap_data_${ARGV0} run_args_generate)
-  add_dependencies(graph_cut_${ARGV0} run_args_generate)
-  add_dependencies(matching_indices_${ARGV0} run_args_generate)
-  add_dependencies(weighted_clusters_${ARGV0} run_args_generate)
-  add_dependencies(blocking_queue_${ARGV0} run_args_generate)
-  add_dependencies(windows_merger_${ARGV0} run_args_generate)
-  add_dependencies(windows_merger_windows_${ARGV0} run_args_generate)
-  add_dependencies(windows_merger_cache_indices_${ARGV0} run_args_generate)
-  add_dependencies(ringmap_window_${ARGV0} run_args_generate)
-  add_dependencies(weibull_fitter_${ARGV0} run_args_generate)
-  add_dependencies(mutation_map_writer_${ARGV0} run_args_generate)
-  add_dependencies(draco_${ARGV0} run_args_generate)
-  
-  add_dependencies(check
-    ringmap_base_${ARGV0}
-    ringmap_shuffle_${ARGV0}
-    ringmap_concat_${ARGV0}
-    ringmap_data_${ARGV0}
-    graph_cut_${ARGV0}
-    matching_indices_${ARGV0}
-    weighted_clusters_${ARGV0}
-    blocking_queue_${ARGV0}
-    windows_merger_${ARGV0}
-    windows_merger_windows_${ARGV0}
-    windows_merger_cache_indices_${ARGV0}
-    ringmap_window_${ARGV0}
-    weibull_fitter_${ARGV0}
-    mutation_map_writer_${ARGV0}
-    draco_${ARGV0}
+  set(test_names
+    ringmap_base
+    ringmap_shuffle
+    ringmap_concat
+    ringmap_data
+    graph_cut
+    weighted_clusters
+    matching_indices
+    blocking_queue
+    windows_merger
+    windows_merger_windows
+    windows_merger_cache_indices
+    ringmap_window
+    weibull_fitter
+    mutation_map_writer
+    draco
   )
+  set(ringmap_base_args ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
+  set(ringmap_shuffle_args ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
+  set(ringmap_concat_args ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
+  set(ringmap_data_args ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
+  set(windows_merger_args ${CMAKE_CURRENT_SOURCE_DIR}/windows_merger_serialized_data.txt)
+  set(mutation_map_writer_args ${CMAKE_CURRENT_SOURCE_DIR}/test.mm)
+
+  foreach(test_name IN LISTS test_names)
+    set(test_full_name test_${test_name}_${ARGV0})
+    add_executable(${test_full_name} EXCLUDE_FROM_ALL ${test_name}.cpp)
+    target_compile_options(${test_full_name} PRIVATE ${ARGN})
+    target_include_directories(${test_full_name} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)
+    target_link_libraries(${test_full_name} ${ARGN} draco_test_${ARGV0})
+    add_test(${test_full_name} ${test_full_name} ${${test_name}_args})
+    set_tests_properties(${test_full_name} PROPERTIES ENVIRONMENT TSAN_OPTIONS=halt_on_error=1)
+    add_dependencies(${test_full_name} run_args_generate)
+    add_dependencies(check ${test_full_name})
+  endforeach()
 endfunction()
 
 if (TEST_WITH_TSAN)

@@ -8,6 +8,7 @@
 #include "weighted_clusters.hpp"
 #include "window_clusters_with_confidence.hpp"
 
+#include <algorithm>
 #include <armadillo>
 #include <concepts>
 #include <cstddef>
@@ -350,6 +351,30 @@ struct HandleTranscripts {
           first_ptba_on_replicate_result.pre_collapsing_clusters,
           transcript_result);
       return;
+    }
+
+    if (args.all_windows_to_max_n_clusters()) {
+      auto max_clusters = std::ranges::fold_left(
+          ptba_on_replicate_results |
+              std::views::transform([](auto const &ptba_on_replicate_result) {
+                return std::ranges::fold_left(
+                    ptba_on_replicate_result.pre_collapsing_clusters, 0u,
+                    [](auto a, auto b) { return std::max(a, b); });
+              }),
+          0u, [](auto a, auto b) { return std::max(a, b); });
+
+      if (max_clusters > 1) {
+        logger::trace(
+            "Forcing all windows to have {} clusters on transcript {}",
+            max_clusters, transcript_result.name);
+        for (auto &ptba_on_replicate_result : ptba_on_replicate_results) {
+          std::ranges::fill(ptba_on_replicate_result.pre_collapsing_clusters |
+                                std::views::filter([](auto n_clusters) {
+                                  return n_clusters != 0;
+                                }),
+                            max_clusters);
+        }
+      }
     }
 
     if (std::ranges::any_of(

@@ -254,5 +254,12 @@ static constexpr auto opts = args::Opts(
                 "comprised between 0 and 1, and it is interpreted as a "
                 "fraction "
                 "of the window size")
-            .DEFAULT_VALUE(1.f)));
+            .DEFAULT_VALUE(1.f),
+        ARG(bool, all_windows_to_max_n_clusters)
+            .parameter_name("allWinsToMaxNClusters")
+            .description("Forces the number of detected clusters to be the "
+                         "highest value found in the transcript, except for "
+                         "the windows that have a detected number of clusters "
+                         "equal to 0 (not enough information available).")
+            .DEFAULT_VALUE(false)));
 } // namespace args

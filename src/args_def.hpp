@@ -1,8 +1,7 @@
 #pragma once
 
 #include "args_impl.hpp"
-
-#include <string>
+#include "priors_initialization.hpp"
 
 namespace args {
 
@@ -175,6 +174,35 @@ static constexpr auto opts = args::Opts(
                 "The normalized distance value between all the clusters across "
                 "the replicates over which a warning is emitted")
             .DEFAULT_VALUE(0.75)),
+
+    args::Group(
+        "Expectation-Maximization",
+        ARG(bool, expectation_maximization)
+            .parameter_name("expectationMaximization")
+            .description(
+                "Enables the use of an Expectation-Maximization algorithm to "
+                "refine the weights after the Graph-Cut and assign the reads")
+            .DEFAULT_VALUE(false),
+        ARG(std::uint16_t, expectation_maximization_max_iterations)
+            .parameter_name("expectationMaximizationMaxIterations")
+            .description("The maximum number of EM iterations")
+            .DEFAULT_VALUE(100),
+        ARG(double, expectation_maximization_tolerance)
+            .parameter_name("expectationMaximizationTolerance")
+            .description(
+                "The convergence tolerance below which the algorithm can stop")
+            .DEFAULT_VALUE(1e-6),
+        ARG(::args::PriorsInitialization,
+            expectation_maximization_priors_initialization)
+            .parameter_name("expectationMaximizationPriorsInitialization")
+            .description(
+                "The algorithm to use to initialize EM clusters priors. "
+                "Possible values are \"uniform\", \"weights\" and \"random\". "
+                "\"uniform\" initializes the priors with the same value for "
+                "all the clusters. \"weights\" uses the weights obtained in "
+                "the graph cut to estimate the abundancies for each cluster. "
+                "\"random\" randomly initializes the priors.")
+            .DEFAULT_VALUE(::args::PriorsInitialization::Weights)),
 
     args::Group(
         "Windowed analysis",

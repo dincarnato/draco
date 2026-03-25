@@ -27,6 +27,7 @@ add_executable(
     mutation_map_writer.cpp
     clusters_replicates.cpp
     compact_ringmap.cpp
+    expectation_maximization.cpp
     )
 
 add_executable(

@@ -38,6 +38,9 @@ function(create_tests suffix)
       ${PROJECT_SOURCE_DIR}/src/clusters_replicates.cpp
       ${PROJECT_SOURCE_DIR}/src/compact_ringmap.cpp
       ${PROJECT_SOURCE_DIR}/src/expectation_maximization.cpp
+      ${PROJECT_SOURCE_DIR}/src/compact_ringmap.cpp
+      ${PROJECT_SOURCE_DIR}/src/ringmap_matrix.cpp
+      ${PROJECT_SOURCE_DIR}/src/args.cpp
   )
   target_compile_options(draco_test_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(draco_test_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)

@@ -10,6 +10,10 @@ struct Args : ::Args {
   auto window_size_fraction_transcript_size() noexcept -> decltype(auto) {
     return (_window_size_fraction_transcript_size);
   }
+  auto expectation_maximization_priors_initialization() noexcept
+      -> decltype(auto) {
+    return (_expectation_maximization_priors_initialization);
+  }
 };
 
 } // namespace test

@@ -79,6 +79,7 @@ function(create_tests suffix)
     clusters_replicates
     compact_ringmap
     expectation_maximization
+    reassignment
   )
   set(ringmap_base_args ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)
   set(ringmap_shuffle_args ${CMAKE_CURRENT_SOURCE_DIR}/ringmap1.txt)

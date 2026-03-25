@@ -655,7 +655,7 @@ struct HandleTranscripts {
             std::ranges::fill(window.assignments, std::int8_t(-1));
           }
 
-          Reassignment{
+          auto reassignment = Reassignment{
               .replicates_splitted_ringmaps = replicates_splitted_ringmaps,
               .filtered_ringmaps = filtered_ringmaps,
               .ptba_on_replicate_results = ptba_on_replicate_results,
@@ -667,8 +667,12 @@ struct HandleTranscripts {
               .window_index = window_index,
               .window_size = window_size,
               .allow_empty_patterns = allow_empty_patterns,
+          };
+          if (args.expectation_maximization()) {
+            reassignment.reweight_and_reassign_with_expectation_maximization();
+          } else {
+            reassignment.reassign_reads_with_weights();
           }
-              .reassign_reads_with_weights();
           std::ranges::copy(
               replicates_splitted_ringmaps |
                   std::views::transform(

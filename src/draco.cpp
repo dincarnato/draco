@@ -464,7 +464,15 @@ void assign_reads_to_clusters(
 
   auto &&original_data = ringmap.data();
 
-  auto &&original_indices_map = filteredRingmap.getReadsMap();
+  auto original_indices_map =
+      ([&] -> std::optional<std::vector<unsigned> const *> {
+        auto modifications_filter = filteredRingmap.getModificationsFilter();
+        if (modifications_filter > 0) {
+          return std::optional(&filteredRingmap.getReadsMap());
+        } else {
+          return std::nullopt;
+        }
+      })();
   for (auto &&clusters_assignment_pair : clusters_assignment) {
     auto &&read_clusters_assignments = std::get<1>(clusters_assignment_pair);
 
@@ -479,7 +487,13 @@ void assign_reads_to_clusters(
       auto &&cluster_assignments = clusters_assignments[cluster_index];
 
       for (auto filtered_read_index : cluster_assignments) {
-        auto original_read_index = original_indices_map[filtered_read_index];
+        auto original_read_index =
+            original_indices_map
+                .transform([&](auto original_indices_map) {
+                  return (*original_indices_map)[filtered_read_index];
+                })
+                .value_or(filtered_read_index);
+        ;
         window.assignments[original_read_index] =
             static_cast<std::int8_t>(cluster_index);
 

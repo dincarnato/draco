@@ -7,8 +7,11 @@
 #include "weighted_clusters_span.hpp"
 
 #include <initializer_list>
+#include <optional>
 #include <span>
 #include <vector>
+
+struct RingmapData;
 
 class WeightedClusters {
   template <typename, bool> friend class WeightedClustersIterator;
@@ -70,6 +73,17 @@ public:
   raw() const noexcept {
     return weights;
   }
+
+  std::optional<WeightedClusters>
+  create_reduced(RingmapData const &filtered_ringmap) const;
+
+  WeightedClusters
+  create_extended(RingmapData const &partially_filtered_ringmap,
+                  RingmapData const &filtered_ringmap);
+
+  void copy_from_extended(WeightedClusters const &extended_weights,
+                          RingmapData const &partially_filtered_ringmap,
+                          RingmapData const &filtered_ringmap) noexcept;
 
 private:
   std::size_t elements = 0;

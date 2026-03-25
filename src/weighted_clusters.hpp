@@ -7,6 +7,7 @@
 #include "weighted_clusters_span.hpp"
 
 #include <initializer_list>
+#include <span>
 #include <vector>
 
 class WeightedClusters {
@@ -64,6 +65,11 @@ public:
 
   void swap_clusters(std::size_t cluster_1_index,
                      std::size_t cluster_2_index) noexcept;
+
+  constexpr std::span<const weighted_clusters_weight_type>
+  raw() const noexcept {
+    return weights;
+  }
 
 private:
   std::size_t elements = 0;

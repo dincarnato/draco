@@ -115,6 +115,13 @@ public:
 
   constexpr Args const &args() const noexcept { return *args_; }
 
+  constexpr bool bases_filtered() const noexcept { return basesFiltered; }
+
+  constexpr std::map<unsigned, unsigned> const &
+  old_cols_to_new() const noexcept {
+    return oldColsToNew;
+  }
+
 private:
   RingmapData(std::string_view sequence, data_type &&dataMatrix,
               unsigned startIndex, unsigned endIndex);

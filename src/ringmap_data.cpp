@@ -9,6 +9,7 @@
 #include "rna_secondary_structure.hpp"
 #include "spectral_partitioner.hpp"
 #include "tokenizer_iterator.hpp"
+#include "weighted_clusters.hpp"
 
 #include <algorithm>
 #include <array>
@@ -501,25 +502,11 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
     -> std::tuple<clusters_fraction_type, clusters_pattern_type,
                   clusters_assignment_type> {
   assert(weights.getElementsSize() == sequence.size());
-  WeightedClusters reducedWeights;
+  auto reducedWeights = weights.create_reduced(*this);
   clusters_assignment_type clustersAssignment;
   const auto &usableWeights = [&, this]() -> decltype(auto) {
-    if (basesFiltered) {
-      reducedWeights = WeightedClusters(m_data.cols_size(),
-                                        weights.getClustersSize(), false);
-      for (const auto &oldAndNewCol : oldColsToNew) {
-        assert(oldAndNewCol.first < weights.getElementsSize());
-        assert(oldAndNewCol.second < reducedWeights.getElementsSize());
-
-        auto &&weight = weights[oldAndNewCol.first];
-        auto &&reducedWeight = reducedWeights[oldAndNewCol.second];
-        assert(weight.span_size() == reducedWeight.span_size());
-
-        std::ranges::copy(weight, std::ranges::begin(reducedWeight));
-      }
-
-      return const_cast<std::add_const_t<decltype(reducedWeights)> &>(
-          reducedWeights);
+    if (reducedWeights.has_value()) {
+      return const_cast<WeightedClusters const &>(*reducedWeights);
     } else
       return (weights);
   }();

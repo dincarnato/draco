@@ -42,6 +42,7 @@ function(create_tests suffix)
       ${PROJECT_SOURCE_DIR}/src/ringmap_matrix.cpp
       ${PROJECT_SOURCE_DIR}/src/args.cpp
       ${PROJECT_SOURCE_DIR}/src/reassignment.cpp
+      ${PROJECT_SOURCE_DIR}/src/weighted_clusters.cpp
   )
   target_compile_options(draco_test_${ARGV0} PRIVATE ${ARGN})
   target_include_directories(draco_test_${ARGV0} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/../src)

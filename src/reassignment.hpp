@@ -32,9 +32,8 @@ struct Reassignment {
   Args const *args;
   std::size_t window_index;
   unsigned window_size;
-  bool allow_empty_patterns;
 
-  void reassign_reads_with_weights() const;
+  void reassign_reads_with_weights(bool allow_empty_patterns) const;
   void reweight_and_reassign_with_expectation_maximization() const;
 
 protected:

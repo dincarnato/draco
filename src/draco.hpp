@@ -666,12 +666,11 @@ struct HandleTranscripts {
               .args = &args,
               .window_index = window_index,
               .window_size = window_size,
-              .allow_empty_patterns = allow_empty_patterns,
           };
           if (args.expectation_maximization()) {
             reassignment.reweight_and_reassign_with_expectation_maximization();
           } else {
-            reassignment.reassign_reads_with_weights();
+            reassignment.reassign_reads_with_weights(allow_empty_patterns);
           }
           std::ranges::copy(
               replicates_splitted_ringmaps |

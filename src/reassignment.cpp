@@ -19,7 +19,8 @@
 #include <utility>
 #include <variant>
 
-void Reassignment::reassign_reads_with_weights() const {
+void Reassignment::reassign_reads_with_weights(
+    bool allow_empty_patterns) const {
   for (auto &filtered_ringmap : filtered_ringmaps) {
     filtered_ringmap.filterReads();
   }
@@ -112,7 +113,7 @@ void Reassignment::reweight_and_reassign_with_expectation_maximization() const {
             .windows_max_clusters_constraints =
                 windows_max_clusters_constraints,
             .fractions_result = std::move(fractions_result),
-            .allow_empty_patterns = allow_empty_patterns,
+            .allow_empty_patterns = true,
         }();
       });
 }

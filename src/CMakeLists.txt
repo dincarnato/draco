@@ -29,6 +29,7 @@ add_executable(
     compact_ringmap.cpp
     expectation_maximization.cpp
     reassignment.cpp
+    weighted_clusters.cpp
     )
 
 add_executable(

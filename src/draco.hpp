@@ -522,47 +522,43 @@ struct HandleTranscripts {
           RingmapData::filter_bases_on_replicates(replicates_filtered_data);
 
           typename RingmapData::clusters_pattern_type patterns;
-          for (;;) {
-            if (n_clusters > 1 and
-                std::ranges::any_of(
-                    replicates_filtered_data, [](auto const &filtered_data) {
-                      return filtered_data.data().rows_size() > 0;
-                    })) {
-              auto replicates_covariance =
-                  replicates_filtered_data |
-                  std::views::filter([](const auto &filtered_data) {
-                    return filtered_data.data().rows_size() > 0;
-                  }) |
-                  std::views::transform([](const auto &filtered_data) {
-                    return filtered_data.data().covariance(
-                        filtered_data.getBaseWeights());
-                  }) |
-                  std::views::as_rvalue | std::ranges::to<std::vector>();
+          if (n_clusters > 1 and
+              std::ranges::any_of(replicates_filtered_data,
+                                  [](auto const &filtered_data) {
+                                    return filtered_data.data().rows_size() > 0;
+                                  })) {
+            auto replicates_covariance =
+                replicates_filtered_data |
+                std::views::filter([](const auto &filtered_data) {
+                  return filtered_data.data().rows_size() > 0;
+                }) |
+                std::views::transform([](const auto &filtered_data) {
+                  return filtered_data.data().covariance(
+                      filtered_data.getBaseWeights());
+                }) |
+                std::views::as_rvalue | std::ranges::to<std::vector>();
 
-              auto graphCutResults =
-                  get_weighted_clusters(n_clusters, replicates_covariance,
-                                        transcript_result, window_index);
+            auto graphCutResults =
+                get_weighted_clusters(n_clusters, replicates_covariance,
+                                      transcript_result, window_index);
 
-              std::ranges::for_each(
-                  std::views::zip(replicates_filtered_data,
-                                  ptba_on_replicate_results),
-                  [&](auto pair) {
-                    auto &&[filtered_data, ptba_on_replicate_result] = pair;
-                    auto clusters =
-                        filtered_data.getUnfilteredWeights(graphCutResults);
+            std::ranges::for_each(
+                std::views::zip(replicates_filtered_data,
+                                ptba_on_replicate_results),
+                [&](auto pair) {
+                  auto &&[filtered_data, ptba_on_replicate_result] = pair;
+                  auto clusters =
+                      filtered_data.getUnfilteredWeights(graphCutResults);
 
-                    assert(clusters.getElementsSize() == window_size);
-                    ptba_on_replicate_result.windows[window_index].weights =
-                        std::move(clusters);
-                  });
+                  assert(clusters.getElementsSize() == window_size);
+                  ptba_on_replicate_result.windows[window_index].weights =
+                      std::move(clusters);
+                });
 
-              break;
-            } else {
-              for (auto &ptba_on_replicate_result : ptba_on_replicate_results) {
-                ptba_on_replicate_result.windows[window_index].weights =
-                    WeightedClusters(window_size, n_clusters);
-              }
-              break;
+          } else {
+            for (auto &ptba_on_replicate_result : ptba_on_replicate_results) {
+              ptba_on_replicate_result.windows[window_index].weights =
+                  WeightedClusters(window_size, n_clusters);
             }
           }
         }

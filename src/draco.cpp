@@ -874,7 +874,8 @@ std::vector<PreCollapsingClusters> get_best_pre_collapsing_clusters(
                    "On transcript {} window {} the number of "
                    "detected clusters are not the same across replicates ({}). "
                    "The number of clusters that is going to be used is {}.",
-                   transcript_name, window_index, all_n_clusters, n_clusters);
+                   transcript_name, window_index + 1, all_n_clusters,
+                   n_clusters);
              }
            });
 

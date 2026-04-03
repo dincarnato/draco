@@ -830,6 +830,7 @@ std::vector<PreCollapsingClusters> get_best_pre_collapsing_clusters(
   auto const windows_size = std::size(ptba_on_replicate_results[0].windows);
   std::vector<unsigned> window_pre_collapsing_clusters(
       std::size(ptba_on_replicate_results));
+  auto sorted_window_pre_collapsing_clusters = window_pre_collapsing_clusters;
   // Take the median number of clusters, in case of even number of
   // replicates take the lowest value of the two median values.
   auto median_index = (std::size(ptba_on_replicate_results) - 1) / 2;
@@ -848,8 +849,12 @@ std::vector<PreCollapsingClusters> get_best_pre_collapsing_clusters(
                        }),
                std::ranges::begin(window_pre_collapsing_clusters));
 
-           std::ranges::sort(window_pre_collapsing_clusters);
-           unsigned n_clusters = window_pre_collapsing_clusters[median_index];
+           std::ranges::copy(
+               window_pre_collapsing_clusters,
+               std::ranges::begin(sorted_window_pre_collapsing_clusters));
+           std::ranges::sort(sorted_window_pre_collapsing_clusters);
+           unsigned n_clusters =
+               sorted_window_pre_collapsing_clusters[median_index];
 
            logger::on_warn_level([&] {
              if (std::ranges::any_of(window_pre_collapsing_clusters,

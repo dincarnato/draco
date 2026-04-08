@@ -6,6 +6,7 @@
 
 namespace args {
 enum class PriorsInitialization;
+enum class WeightsInitialization;
 } // namespace args
 
 namespace results {
@@ -14,6 +15,11 @@ template <typename CharT, typename Traits>
 std::basic_ostream<CharT, Traits> &
 jsonify(std::basic_ostream<CharT, Traits> &os,
         ::args::PriorsInitialization const &priors_initialization);
+
+template <typename CharT, typename Traits>
+std::basic_ostream<CharT, Traits> &
+jsonify(std::basic_ostream<CharT, Traits> &os,
+        ::args::WeightsInitialization const &weights_initialization);
 
 template <typename CharT, typename Traits, typename T>
 std::enable_if_t<detail::is_jsonificable_v<std::decay_t<T>>,

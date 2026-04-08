@@ -57,32 +57,20 @@ arma::mat eigenvectors_to_weighted_clusters(arma::mat const &eigenvectors,
                                             std::uint8_t n_clusters,
                                             std::uint16_t kmeans_iterations,
                                             Gen &&random_generator) {
-  auto const n_bases = eigenvectors.n_rows;
-
-  if (n_clusters == 2) {
-    auto fiedler = eigenvectors.col(1);
-    auto min = fiedler.min();
-    auto max = fiedler.max();
-
-    auto denominator = max - min;
-    arma::mat weighted_clusters(n_clusters, n_bases);
-    if (denominator < 1e-6) {
-      weighted_clusters.fill(0.5);
-    } else {
-      weighted_clusters.row(0) = (fiedler.t() - min) * (1. / denominator);
-      weighted_clusters.row(1) = 1. - weighted_clusters.row(0);
-    }
-
-    return weighted_clusters;
-  }
-
   auto useful_eigenvecs =
       eigenvectors.submat(arma::span::all, arma::span(1, n_clusters - 1));
-  useful_eigenvecs = arma::normalise(useful_eigenvecs, 2, 1);
+  auto centroids = ([&] {
+    if (n_clusters == 2) {
+      return arma::mat(arma::vec{-1, 1});
+    } else {
+      useful_eigenvecs = arma::normalise(useful_eigenvecs, 2, 1);
 
-  auto centroids = std::move(kmeans::run(useful_eigenvecs, n_clusters,
-                                         kmeans_iterations, random_generator)
-                                 .centroids);
+      return std::move(kmeans::run(useful_eigenvecs, n_clusters,
+                                   kmeans_iterations, random_generator)
+                           .centroids);
+    }
+  })();
+
   auto weights = pairwise_distances(centroids, useful_eigenvecs);
   weights = arma::exp(-weights);
   weights.clean(0.);

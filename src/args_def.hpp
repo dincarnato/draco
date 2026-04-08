@@ -2,6 +2,7 @@
 
 #include "args_impl.hpp"
 #include "priors_initialization.hpp"
+#include "weights_initialization.hpp"
 
 namespace args {
 
@@ -202,7 +203,18 @@ static constexpr auto opts = args::Opts(
                 "all the clusters. \"weights\" uses the weights obtained in "
                 "the graph cut to estimate the abundancies for each cluster. "
                 "\"random\" randomly initializes the priors.")
-            .DEFAULT_VALUE(::args::PriorsInitialization::Weights)),
+            .DEFAULT_VALUE(::args::PriorsInitialization::Weights),
+        ARG(::args::WeightsInitialization,
+            expectation_maximization_weights_initialization)
+            .parameter_name("expectationMaximizationWeightsInitialization")
+            .description(
+                "How to initialize the weights for the EM. Possible values are "
+                "\"kmeans\", \"uniform\" and \"random\". \"kmeans\" simply "
+                "uses the weights obtained by the k-means. \"uniform\" "
+                "initializes the weights with the same value for the bases and "
+                "all the clusters. \"random\" randomly initializes the "
+                "weights.")
+            .DEFAULT_VALUE(::args::WeightsInitialization::Kmeans)),
 
     args::Group(
         "Windowed analysis",

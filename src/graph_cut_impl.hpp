@@ -28,12 +28,10 @@ template <typename Fun, typename Gen>
   requires requires(Fun fun) {
     { fun(std::declval<arma::mat const &>()) } -> std::same_as<arma::mat>;
   }
-WeightedClusters GraphCut::partitionGraph(std::uint8_t nClusters,
-                                          std::uint16_t kmeans_iterations,
-                                          results::Transcript const &transcript,
-                                          unsigned window_index, Fun graphFun,
-                                          double distance_warning_threshold,
-                                          Gen &&random_generator) const {
+std::vector<WeightedClusters>
+GraphCut::partitionGraph(std::uint8_t nClusters,
+                         std::uint16_t kmeans_iterations, Fun graphFun,
+                         Gen &&random_generator) const {
   auto const &firstAdjacency = adjacencies[0];
   assert(std::ranges::all_of(adjacencies | std::views::drop(1),
                              [&](auto const &adjacency) {
@@ -43,27 +41,15 @@ WeightedClusters GraphCut::partitionGraph(std::uint8_t nClusters,
   checkGraphFunCallable<std::decay_t<Fun>>();
 
   if (nClusters < 2) {
-    return WeightedClusters(firstAdjacency.n_rows, 1);
+    return std::vector{WeightedClusters(firstAdjacency.n_rows, 1)};
   }
 
-  if (std::size(adjacencies) == 1) {
-    return weighted_clusters_from_adjacency(nClusters, kmeans_iterations,
-                                            graphFun, random_generator,
-                                            adjacencies[0]);
-  } else {
-    auto all_weighted_clusters =
-        adjacencies | std::views::transform([&](auto const &adjacency) {
-          return weighted_clusters_from_adjacency(nClusters, kmeans_iterations,
-                                                  graphFun, random_generator,
-                                                  adjacency);
-        }) |
-        std::views::as_rvalue | std::ranges::to<std::vector>();
-
-    clusters_replicates::reorder_best_permutation(all_weighted_clusters,
-                                                  transcript, window_index,
-                                                  distance_warning_threshold);
-    return merge_weighted_clusters(std::move(all_weighted_clusters));
-  }
+  return adjacencies | std::views::transform([&](auto const &adjacency) {
+           return weighted_clusters_from_adjacency(nClusters, kmeans_iterations,
+                                                   graphFun, random_generator,
+                                                   adjacency);
+         }) |
+         std::views::as_rvalue | std::ranges::to<std::vector>();
 }
 
 template <typename Gen>

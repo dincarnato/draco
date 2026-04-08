@@ -1,6 +1,10 @@
 #pragma once
 
+#include "clusters_replicates.hpp"
+#include "compact_ringmap.hpp"
 #include "concepts.hpp"
+#include "expectation_maximization.hpp"
+#include "graph_cut.hpp"
 #include "logger.hpp"
 #include "mutation_map_transcript.hpp"
 #include "reassignment.hpp"
@@ -18,6 +22,8 @@
 #include <iterator>
 #include <mutex>
 #include <oneapi/tbb/parallel_for.h>
+#include <optional>
+#include <random>
 #include <ranges>
 #include <span>
 #include <vector>
@@ -305,9 +311,9 @@ struct HandleTranscripts {
       InvocableR<PtbaOnReplicate, std::size_t, RingmapData const &,
                  results::Transcript &, WindowsInfo const &> auto
           &&ptba_on_replicate,
-      InvocableR<WeightedClusters, std::uint8_t, std::vector<arma::mat> const &,
-                 results::Transcript const &, unsigned> auto
-          &&get_weighted_clusters) {
+      InvocableR<std::vector<WeightedClusters>, std::uint8_t,
+                 std::vector<arma::mat> const &> auto &&get_weighted_clusters) {
+    std::mt19937 rng(std::random_device{}());
     auto const &first_transcript = *transcripts[0];
     if (std::ranges::any_of(ringmaps_data, [](auto const &ringmap_data) {
           return ringmap_data->data().rows_size() == 0;
@@ -508,7 +514,7 @@ struct HandleTranscripts {
                  std::numeric_limits<std::uint8_t>::max());
           auto n_clusters = static_cast<std::uint8_t>(*windows_n_clusters_iter);
 
-          auto replicates_filtered_data =
+          auto replicates_filtered_data_by_bases =
               std::views::zip(ringmaps_data, ptba_on_replicate_results,
                               std::views::iota(0uz)) |
               std::views::transform([&](auto &&tuple) {
@@ -540,7 +546,18 @@ struct HandleTranscripts {
               }) |
               std::views::as_rvalue | std::ranges::to<std::vector>();
 
-          RingmapData::filter_bases_on_replicates(replicates_filtered_data);
+          RingmapData::filter_bases_on_replicates(
+              replicates_filtered_data_by_bases);
+          std::vector<RingmapData> replicates_filtered_data_owned;
+          auto &replicates_filtered_data = ([&] -> decltype(auto) {
+            if (args.expectation_maximization()) {
+              replicates_filtered_data_owned =
+                  replicates_filtered_data_by_bases;
+              return (replicates_filtered_data_owned);
+            } else {
+              return (replicates_filtered_data_by_bases);
+            }
+          })();
           for (auto &filtered_data : replicates_filtered_data) {
             filtered_data.filterReads();
           }
@@ -563,9 +580,96 @@ struct HandleTranscripts {
                 }) |
                 std::views::as_rvalue | std::ranges::to<std::vector>();
 
-            auto graphCutResults =
-                get_weighted_clusters(n_clusters, replicates_covariance,
-                                      transcript_result, window_index);
+            auto replicates_graph_cut_results =
+                get_weighted_clusters(n_clusters, replicates_covariance);
+
+            if (args.expectation_maximization()) {
+              for (auto &&[replicate_index, replicate_graph_cut_result,
+                           ptba_on_replicate_result,
+                           replicate_filtered_data_by_bases,
+                           replicate_filtered_data] :
+                   std::views::zip(std::views::iota(0uz),
+                                   replicates_graph_cut_results,
+                                   ptba_on_replicate_results,
+                                   replicates_filtered_data_by_bases,
+                                   replicates_filtered_data)) {
+
+                std::optional<WeightedClusters> extended_weights;
+                auto &usable_weights = ([&] -> decltype(auto) {
+                  auto weights_n_bases =
+                      replicate_filtered_data_by_bases.data().cols_size();
+                  if (weights_n_bases !=
+                      replicate_graph_cut_result.getElementsSize()) {
+                    extended_weights =
+                        replicate_graph_cut_result.create_extended(
+                            replicate_filtered_data_by_bases,
+                            replicate_filtered_data);
+                    return (*extended_weights);
+                  } else {
+                    return (replicate_graph_cut_result);
+                  }
+                })();
+
+                CompactRingmap compact_ringmap(
+                    replicate_filtered_data_by_bases.data());
+                ExpectationMaximization expectation_maximization(
+                    compact_ringmap, usable_weights, args, rng);
+                auto em_result = expectation_maximization.run();
+                auto &window = ptba_on_replicate_result.windows[window_index];
+                std::visit(
+                    [&](auto &&convergence) {
+                      using T = std::remove_cvref_t<decltype(convergence)>;
+                      if constexpr (std::is_same_v<
+                                        T,
+                                        expectation_maximization::Converged>) {
+                        logger::debug(
+                            "Expectation-maximization on transcript {}, "
+                            "replicate {}, window {} (bases {}-{}) converged "
+                            "to log-likelihood of {} after {} iterations",
+                            transcript_result.name, replicate_index + 1,
+                            window_index + 1, window.start_base + 1,
+                            window.start_base + window_size,
+                            em_result.log_likelihood,
+                            convergence.after_iterations);
+                      } else if constexpr (std::is_same_v<
+                                               T, expectation_maximization::
+                                                      MaxIterations>) {
+                        logger::warn(
+                            "Expectation-maximization on transcript {}, "
+                            "replicate {}, window {} (bases {}-{}) reached max "
+                            "iterations without converging (log-likelihood = "
+                            "{})",
+                            transcript_result.name, replicate_index + 1,
+                            window_index + 1, window.start_base + 1,
+                            window.start_base + window_size,
+                            em_result.log_likelihood);
+                      } else {
+                        static_assert(false, "unreachable");
+                      }
+                    },
+                    em_result.convergence);
+
+                if (extended_weights.has_value()) {
+                  replicate_graph_cut_result.copy_from_extended(
+                      *extended_weights, replicate_filtered_data_by_bases,
+                      replicate_filtered_data);
+                }
+              }
+            }
+
+            auto graphCutResults = ([&] {
+              if (std::size(replicates_graph_cut_results) == 1) {
+                WeightedClusters weights(
+                    std::move(replicates_graph_cut_results[0]));
+                return weights;
+              } else {
+                clusters_replicates::reorder_best_permutation(
+                    replicates_graph_cut_results, transcript_result,
+                    window_index, args.distance_warning_threshold());
+                return merge_weighted_clusters(
+                    std::move(replicates_graph_cut_results));
+              }
+            })();
 
             std::ranges::for_each(
                 std::views::zip(replicates_filtered_data,

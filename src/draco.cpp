@@ -13,12 +13,15 @@
 #include "results/window.hpp"
 #include "ringmap_data.hpp"
 #include "to_vector.hpp"
+#include "weighted_clusters.hpp"
+#include "weights_initialization.hpp"
 #include "windows_merger.hpp"
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <exception>
 #include <filesystem>
 #include <format>
 #include <iostream>
@@ -29,6 +32,7 @@
 #include <oneapi/tbb/parallel_for.h>
 #include <oneapi/tbb/parallel_pipeline.h>
 #include <optional>
+#include <random>
 #include <ranges>
 #include <set>
 #include <span>
@@ -464,7 +468,15 @@ void assign_reads_to_clusters(
 
   auto &&original_data = ringmap.data();
 
-  auto &&original_indices_map = filteredRingmap.getReadsMap();
+  auto original_indices_map =
+      ([&] -> std::optional<std::vector<unsigned> const *> {
+        auto modifications_filter = filteredRingmap.getModificationsFilter();
+        if (modifications_filter > 0) {
+          return std::optional(&filteredRingmap.getReadsMap());
+        } else {
+          return std::nullopt;
+        }
+      })();
   for (auto &&clusters_assignment_pair : clusters_assignment) {
     auto &&read_clusters_assignments = std::get<1>(clusters_assignment_pair);
 
@@ -479,7 +491,13 @@ void assign_reads_to_clusters(
       auto &&cluster_assignments = clusters_assignments[cluster_index];
 
       for (auto filtered_read_index : cluster_assignments) {
-        auto original_read_index = original_indices_map[filtered_read_index];
+        auto original_read_index =
+            original_indices_map
+                .transform([&](auto original_indices_map) {
+                  return (*original_indices_map)[filtered_read_index];
+                })
+                .value_or(filtered_read_index);
+        ;
         window.assignments[original_read_index] =
             static_cast<std::int8_t>(cluster_index);
 
@@ -907,12 +925,60 @@ void handle_transcripts(
                                  transcript_result, windows_info);
       },
       [&](std::uint8_t n_clusters,
-          std::vector<arma::mat> const &replicates_covariance,
-          results::Transcript const &transcript, unsigned window_index) {
-        GraphCut graphCut(replicates_covariance);
-        return graphCut.run(
-            n_clusters, args.soft_clustering_kmeans_iterations(), transcript,
-            window_index, args.distance_warning_threshold());
+          std::vector<arma::mat> const &replicates_covariance) {
+        if (not args.expectation_maximization() or
+            args.expectation_maximization_weights_initialization() ==
+                args::WeightsInitialization::Kmeans) {
+          GraphCut graphCut(replicates_covariance);
+          return graphCut.run(n_clusters,
+                              args.soft_clustering_kmeans_iterations());
+        } else {
+          auto const &first_replicate_covariance = replicates_covariance[0];
+          auto n_elements = first_replicate_covariance.n_rows;
+
+          if (args.expectation_maximization_weights_initialization() ==
+              args::WeightsInitialization::Uniform) {
+            return std::views::iota(0uz, std::size(replicates_covariance)) |
+                   std::views::transform([&](auto) {
+                     WeightedClusters weights(n_elements, n_clusters, false);
+                     auto weight = 1.f / static_cast<float>(n_clusters);
+                     for (auto &&weights_base : weights) {
+                       std::ranges::fill(weights_base, weight);
+                     }
+
+                     return weights;
+                   }) |
+                   std::ranges::to<std::vector>();
+          } else if (args.expectation_maximization_weights_initialization() ==
+                     args::WeightsInitialization::Random) {
+
+            std::mt19937 rng(std::random_device{}());
+            std::uniform_real_distribution<float> random_weight_generator(1e-6f,
+                                                                          1.f);
+            return std::views::iota(0uz, std::size(replicates_covariance)) |
+                   std::views::transform([&](auto) {
+                     WeightedClusters weights(n_elements, n_clusters, false);
+                     for (auto &&weights_base : weights) {
+                       float weights_sum = 0.;
+                       std::ranges::generate(weights_base, [&] {
+                         auto weight = random_weight_generator(rng);
+                         weights_sum += weight;
+                         return weight;
+                       });
+
+                       for (auto &weight : weights_base) {
+                         weight /= weights_sum;
+                       }
+                     }
+
+                     return weights;
+                   }) |
+                   std::ranges::to<std::vector>();
+          } else {
+            std::cerr << "Unreachable\n";
+            std::terminate();
+          }
+        }
       });
 }
 

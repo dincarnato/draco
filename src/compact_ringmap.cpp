@@ -38,32 +38,38 @@ CompactRingmap::CompactRingmap(RingmapMatrix const &ringmap_matrix)
 
   auto n_rows =
       static_cast<std::uint32_t>(std::size(unique_modifications_sets));
-  auto row_size = max_modifications + 2;
+  auto row_size = max_modifications + 4;
   auto storage_size = n_rows * row_size;
-  std::unique_ptr<std::uint32_t[]> sizes_and_modifications(
+  std::unique_ptr<std::uint32_t[]> start_end_count_sizes_and_modifications(
       new std::uint32_t[storage_size]);
   std::vector<std::vector<std::uint32_t>> mapping;
   mapping.reserve(n_rows);
   std::ranges::for_each(
       std::views::zip(unique_modifications_sets,
-                      std::span(sizes_and_modifications.get(), storage_size) |
+                      std::span(start_end_count_sizes_and_modifications.get(),
+                                storage_size) |
                           std::views::chunk(row_size)),
       [&](auto &&tuple) {
-        auto [row_with_count_and_indices, size_and_modifications] = tuple;
+        auto [row_with_count_and_indices,
+              start_end_count_size_and_modifications] = tuple;
         auto [row, count_and_indices] = row_with_count_and_indices;
         auto [count, indices] = count_and_indices;
 
-        size_and_modifications[0] = count;
-        size_and_modifications[1] =
+        start_end_count_size_and_modifications[0] = row.inner->begin_index();
+        start_end_count_size_and_modifications[1] = row.inner->end_index();
+        start_end_count_size_and_modifications[2] = count;
+        start_end_count_size_and_modifications[3] =
             static_cast<std::uint32_t>(std::size(*row.inner));
         std::ranges::copy(
             *row.inner | std::views::transform(
                              [&](auto base_index) { return base_index; }),
-            std::next(std::ranges::begin(size_and_modifications), 2));
+            std::next(
+                std::ranges::begin(start_end_count_size_and_modifications), 4));
         mapping.push_back(std::move(indices));
       });
 
-  count_sizes_and_modifications_ = std::move(sizes_and_modifications);
+  start_end_count_sizes_and_modifications_ =
+      std::move(start_end_count_sizes_and_modifications);
   n_rows_ = n_rows;
   max_modifications_ = max_modifications;
   mapping_ = std::move(mapping);
@@ -75,9 +81,19 @@ RingmapMatrixRowHelper::RingmapMatrixRowHelper(
 
 std::weak_ordering RingmapMatrixRowHelper::operator<=>(
     RingmapMatrixRowHelper const &other) const noexcept {
-  auto size_ordering = std::size(*inner) <=> std::size(*other.inner);
-  if (size_ordering != std::weak_ordering::equivalent) {
-    return size_ordering;
+  auto ordering = inner->begin_index() <=> other.inner->begin_index();
+  if (ordering != std::weak_ordering::equivalent) {
+    return ordering;
+  }
+
+  ordering = inner->end_index() <=> other.inner->end_index();
+  if (ordering != std::weak_ordering::equivalent) {
+    return ordering;
+  }
+
+  ordering = std::size(*inner) <=> std::size(*other.inner);
+  if (ordering != std::weak_ordering::equivalent) {
+    return ordering;
   }
 
   for (auto [a, b] : std::views::zip(*inner, *other.inner)) {

@@ -47,7 +47,9 @@ static CalcResponsibilitiesResult calc_responsibilities(
     auto new_responsibility = std::log(std::max(prior, 1e-10));
     auto indices_iter = std::ranges::begin(row.indices());
     for (auto &&[base_index, base_weight] :
-         std::views::zip(std::views::iota(0uz), cluster_weights)) {
+         std::views::zip(std::views::iota(0uz), cluster_weights) |
+             std::views::drop(row.begin_index()) |
+             std::views::take(row.read_size())) {
       if (indices_iter != std::ranges::end(row.indices()) and
           base_index == *indices_iter) {
         ++indices_iter;

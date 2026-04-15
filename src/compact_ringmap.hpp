@@ -21,10 +21,15 @@ struct CompactRingmapRow {
   constexpr std::span<std::uint32_t const> raw() const noexcept;
   constexpr std::span<std::uint32_t const> mapped_rows() const noexcept;
 
-  constexpr std::uint32_t count() const noexcept { return raw()[0]; }
-  constexpr std::uint32_t size() const noexcept { return raw()[1]; }
+  constexpr std::uint32_t begin_index() const noexcept { return raw()[0]; }
+  constexpr std::uint32_t end_index() const noexcept { return raw()[1]; }
+  constexpr std::uint32_t read_size() const noexcept {
+    return end_index() - begin_index();
+  }
+  constexpr std::uint32_t count() const noexcept { return raw()[2]; }
+  constexpr std::uint32_t size() const noexcept { return raw()[3]; }
   constexpr std::span<std::uint32_t const> indices() const noexcept {
-    return raw().subspan(2, size());
+    return raw().subspan(4, size());
   }
 
   constexpr bool operator==(CompactRingmapRow const &other) const noexcept {
@@ -138,7 +143,7 @@ struct CompactRingmap {
   explicit CompactRingmap(RingmapMatrix const &ringmap_matrix);
 
   constexpr std::uint32_t row_size() const noexcept {
-    return max_modifications_ + 2;
+    return max_modifications_ + 4;
   }
 
   constexpr std::uint32_t n_rows() const noexcept { return n_rows_; }
@@ -157,8 +162,8 @@ struct CompactRingmap {
   }
 
   constexpr std::span<std::uint32_t const>
-  raw_count_sizes_and_modifications() const noexcept {
-    return std::span(count_sizes_and_modifications_.get(),
+  raw_start_end_count_sizes_and_modifications() const noexcept {
+    return std::span(start_end_count_sizes_and_modifications_.get(),
                      row_size() * n_rows_);
   }
 
@@ -166,7 +171,8 @@ struct CompactRingmap {
   raw_row(std::uint32_t row) const noexcept {
     assert(row < n_rows_);
     auto begin = row * row_size();
-    return std::span(count_sizes_and_modifications_.get() + begin, row_size());
+    return std::span(start_end_count_sizes_and_modifications_.get() + begin,
+                     row_size());
   }
 
   constexpr CompactRingmapRow row(std::uint32_t row) const noexcept {
@@ -182,7 +188,7 @@ struct CompactRingmap {
   }
 
 protected:
-  std::unique_ptr<std::uint32_t[]> count_sizes_and_modifications_{};
+  std::unique_ptr<std::uint32_t[]> start_end_count_sizes_and_modifications_{};
   std::vector<std::vector<std::uint32_t>> mapping_;
   std::uint32_t n_rows_{};
   std::uint32_t max_modifications_{};

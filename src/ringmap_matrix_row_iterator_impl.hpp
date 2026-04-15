@@ -120,12 +120,13 @@ bool RingmapMatrixRowIterator<Matrix>::operator>(
 }
 
 template <typename Matrix>
-auto RingmapMatrixRowIterator<Matrix>::operator*() const noexcept -> reference {
+auto RingmapMatrixRowIterator<Matrix>::operator*() const noexcept
+    -> value_type {
   return {*matrix, row};
 }
 
 template <typename Matrix>
 auto RingmapMatrixRowIterator<Matrix>::operator[](
-    difference_type offset) const noexcept -> reference {
+    difference_type offset) const noexcept -> value_type {
   return {*matrix, row + offset};
 }

@@ -2,7 +2,6 @@
 
 #include "../expectation_maximization.hpp"
 #include "args.hpp"
-#include "compact_ringmap.hpp"
 #include "weighted_clusters.hpp"
 
 #include <random>
@@ -14,7 +13,7 @@ namespace expectation_maximization {
 struct ExpectationMaximization : ::ExpectationMaximization {
   template <typename G>
     requires std::uniform_random_bit_generator<std::remove_cvref_t<G>>
-  ExpectationMaximization(CompactRingmap const &ringmap,
+  ExpectationMaximization(RingmapMatrix const &ringmap,
                           WeightedClusters &weights, Args const &args, G &&rng)
       : ::ExpectationMaximization(ringmap, weights, args,
                                   std::forward<G>(rng)) {}

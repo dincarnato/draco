@@ -18,8 +18,7 @@ template <typename Matrix> class RingmapMatrixRowIterator {
 
 public:
   using pointer = std::remove_reference_t<Matrix> *;
-  using value_type = std::vector<bool>;
-  using reference = RingmapMatrixRowAccessor<Matrix>;
+  using value_type = RingmapMatrixRowAccessor<Matrix>;
   using row_type = std::conditional_t<std::is_const<Matrix>::value,
                                       const ringmap_matrix::row_type,
                                       typename ringmap_matrix::row_type>;
@@ -53,11 +52,11 @@ public:
   bool operator>=(const self &other) const noexcept;
   bool operator>(const self &other) const noexcept;
 
-  reference operator*() const noexcept;
-  reference operator[](difference_type offset) const noexcept;
+  value_type operator*() const noexcept;
+  value_type operator[](difference_type offset) const noexcept;
 
 private:
-  pointer matrix = nullptr;
+  std::remove_reference_t<Matrix> *matrix = nullptr;
   row_type *row = nullptr;
 };
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "expectation_maximization/responsibilities.hpp"
+#include "ringmap_matrix_row_accessor.hpp"
 #include "weighted_clusters.hpp"
 
 #include <random>
@@ -10,6 +11,7 @@
 
 struct CompactRingmap;
 struct CompactRingmapRow;
+class RingmapMatrix;
 struct Args;
 
 namespace expectation_maximization {
@@ -30,7 +32,7 @@ struct Result {
 struct ExpectationMaximization {
   template <typename G>
     requires std::uniform_random_bit_generator<std::remove_cvref_t<G>>
-  ExpectationMaximization(CompactRingmap const &ringmap,
+  ExpectationMaximization(RingmapMatrix const &ringmap,
                           WeightedClusters &weights, Args const &args, G &&rng);
 
   Result run() noexcept;
@@ -45,7 +47,8 @@ struct ExpectationMaximization {
    * `buffer` is just a temporary buffer for calculations. Its length must be
    * equal to the number of clusters.
    */
-  void read_assignment(CompactRingmapRow const &ringmap_row,
+  template <typename R>
+  void read_assignment(RingmapMatrixRowAccessor<R> ringmap_row,
                        std::span<std::uint32_t> assignments,
                        std::span<double> buffer, std::mt19937 &rng) const;
 
@@ -55,7 +58,7 @@ protected:
   double expectation() noexcept;
   void maximization() noexcept;
 
-  CompactRingmap const *ringmap_;
+  RingmapMatrix const *ringmap_;
   WeightedClusters *weights_;
   Args const *args_;
   std::vector<double> priors_;
@@ -64,7 +67,7 @@ protected:
 };
 
 void weighted_priors_initialization(std::span<double> priors,
-                                    CompactRingmap const &ringmap,
+                                    RingmapMatrix const &ringmap,
                                     WeightedClusters &weights) noexcept;
 
 } // namespace expectation_maximization
@@ -73,8 +76,8 @@ using ExpectationMaximization =
     expectation_maximization::ExpectationMaximization;
 
 #include "args.hpp"
-#include "compact_ringmap.hpp"
 #include "logger.hpp"
+#include "ringmap_matrix.hpp"
 #include "span_formatter.hpp"
 
 #include <algorithm>
@@ -85,12 +88,12 @@ namespace expectation_maximization {
 
 template <typename G>
   requires std::uniform_random_bit_generator<std::remove_cvref_t<G>>
-ExpectationMaximization::ExpectationMaximization(CompactRingmap const &ringmap,
+ExpectationMaximization::ExpectationMaximization(RingmapMatrix const &ringmap,
                                                  WeightedClusters &weights,
                                                  Args const &args, G &&rng)
     : ringmap_(&ringmap), weights_(&weights), args_(&args),
       priors_(weights.getClustersSize()),
-      responsibilities_(ringmap.n_rows(),
+      responsibilities_(ringmap.rows_size(),
                         static_cast<std::uint8_t>(weights.getClustersSize())),
       weights_buffer_(static_cast<std::uint32_t>(weights.getElementsSize()),
                       static_cast<std::uint8_t>(weights.getClustersSize())) {
@@ -124,6 +127,59 @@ ExpectationMaximization::ExpectationMaximization(CompactRingmap const &ringmap,
                   SpanFormatter(priors_));
     break;
   }
+}
+
+template <typename R>
+void ExpectationMaximization::read_assignment(
+    RingmapMatrixRowAccessor<R> ringmap_row,
+    std::span<std::uint32_t> assignments, std::span<double> buffer,
+    std::mt19937 &rng) const {
+  assert(std::size(assignments) == weights_->getClustersSize());
+
+  double probability_sum = 0.;
+  for (auto &&[probability, cluster_weights, cluster_prior] :
+       std::views::zip(buffer, weights_->clusters(), priors_)) {
+    probability =
+        std::ranges::fold_left(ringmap_row.modifiedIndices() |
+                                   std::views::transform([&](auto base_index) {
+                                     return cluster_weights[base_index];
+                                   }),
+                               cluster_prior, std::multiplies{});
+    probability_sum += probability;
+  }
+
+  for (auto &&[assignment, probability] :
+       std::views::zip(assignments, buffer)) {
+    assignment = static_cast<std::uint32_t>(std::round(
+        static_cast<double>(std::size(ringmap_row.modifiedIndices())) *
+        probability / probability_sum));
+  }
+
+  auto total_assignments = std::ranges::fold_left(
+      assignments, static_cast<std::uint32_t>(0), std::plus{});
+  auto assignments_difference = static_cast<std::int32_t>(
+      static_cast<std::int64_t>(std::size(ringmap_row.modifiedIndices())) -
+      static_cast<std::int64_t>(total_assignments));
+  if (assignments_difference != 0) {
+    std::uniform_int_distribution<std::uint8_t> chooser(
+        static_cast<std::uint8_t>(0),
+        static_cast<std::uint8_t>(weights_->getClustersSize() - 1));
+
+    for (;;) {
+      auto &assignment = assignments[chooser(rng)];
+      auto new_assignment =
+          static_cast<std::int32_t>(assignment) + assignments_difference;
+      if (new_assignment < 0) {
+        continue;
+      }
+      assignment = static_cast<std::uint32_t>(new_assignment);
+      break;
+    }
+  }
+
+  assert(std::ranges::fold_left(assignments, static_cast<std::uint32_t>(0),
+                                std::plus{}) ==
+         std::size(ringmap_row.modifiedIndices()));
 }
 
 } // namespace expectation_maximization

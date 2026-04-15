@@ -85,19 +85,22 @@ void Reassignment::reweight_and_reassign_with_expectation_maximization() const {
         auto const &ringmap = std::get<2>(tuple)[window_index];
         auto &window = std::get<3>(tuple);
 
-        auto fractions_result =
-            reweight_and_reassign_with_expectation_maximization_iteration(
-                reassignment::
-                    ReweightAndReassignWithExpectationMaximizationIteration{
-                        .filtered_ringmap = &filtered_ringmap,
-                        .window = &window,
-                        .rng = &rng,
-                        .assignments_per_cluster = &assignments_per_cluster,
-                        .buffer = &buffer,
-                        .mapped_rows = &mapped_rows,
-                        .clusters_reads_count = &clusters_reads_count,
-                        .replicate_index = replicate_index,
-                    });
+        reweight_with_expectation_maximization_iteration(
+            reassignment::
+                ReweightAndReassignWithExpectationMaximizationIteration{
+                    .filtered_ringmap = &filtered_ringmap,
+                    .window = &window,
+                    .rng = &rng,
+                    .assignments_per_cluster = &assignments_per_cluster,
+                    .buffer = &buffer,
+                    .mapped_rows = &mapped_rows,
+                    .clusters_reads_count = &clusters_reads_count,
+                    .replicate_index = replicate_index,
+                });
+
+        auto &&fractions_result = filtered_ringmap.fractionReadsByWeights(
+            window.weighted_clusters, window_size,
+            args->skip_ambiguous_assignments());
 
         reassignment::HandleFractionedReads{
             .window = &window,
@@ -118,8 +121,7 @@ void Reassignment::reweight_and_reassign_with_expectation_maximization() const {
       });
 }
 
-reassignment::FractionResult
-Reassignment::reweight_and_reassign_with_expectation_maximization_iteration(
+void Reassignment::reweight_with_expectation_maximization_iteration(
     reassignment::ReweightAndReassignWithExpectationMaximizationIteration args)
     const {
   auto reduced_weights =
@@ -131,9 +133,9 @@ Reassignment::reweight_and_reassign_with_expectation_maximization_iteration(
       return args.window->weighted_clusters;
     }
   })();
-  CompactRingmap compact_ringmap(args.filtered_ringmap->data());
-  ExpectationMaximization expectation_maximization(
-      compact_ringmap, usable_weights, *this->args, *args.rng);
+  auto const &ringmap = args.filtered_ringmap->data();
+  ExpectationMaximization expectation_maximization(ringmap, usable_weights,
+                                                   *this->args, *args.rng);
   auto em_result = expectation_maximization.run();
   std::visit(
       [&](auto &&convergence) {
@@ -164,104 +166,6 @@ Reassignment::reweight_and_reassign_with_expectation_maximization_iteration(
     args.window->weighted_clusters.copy_from_reduced(*reduced_weights,
                                                      *args.filtered_ringmap);
   }
-
-  RingmapData::clusters_assignment_type clusters_assignment;
-  RingmapData::clusters_pattern_type patterns(
-      usable_weights.getClustersSize(),
-      RingmapData::cluster_pattern_type(usable_weights.getElementsSize(), 0));
-  args.clusters_reads_count->resize(usable_weights.getClustersSize());
-  std::ranges::fill(*args.clusters_reads_count, static_cast<std::uint32_t>(0));
-
-  args.assignments_per_cluster->resize(usable_weights.getClustersSize());
-  args.buffer->resize(usable_weights.getClustersSize());
-
-#ifndef NDEBUG
-  std::uint32_t skipped_reads = 0;
-#endif
-
-  for (auto &&row : compact_ringmap) {
-    expectation_maximization.read_assignment(row, *args.assignments_per_cluster,
-                                             *args.buffer, *args.rng);
-    args.mapped_rows->resize(std::size(row.mapped_rows()));
-    std::ranges::copy(row.mapped_rows(), std::ranges::begin(*args.mapped_rows));
-    std::ranges::shuffle(*args.mapped_rows, *args.rng);
-
-    std::uint32_t used_rows = 0;
-    for (auto [cluster_index, assignments_count, cluster_patterns] :
-         std::views::zip(std::views::iota(static_cast<std::uint8_t>(0)),
-                         *args.assignments_per_cluster, patterns)) {
-      auto cluster_mapped_rows =
-          std::span(std::next(std::ranges::begin(*args.mapped_rows), used_rows),
-                    assignments_count);
-      std::ranges::sort(cluster_mapped_rows);
-
-      for (auto read_index : cluster_mapped_rows) {
-        auto read = args.filtered_ringmap->data().row(read_index);
-        if (read.end_index() - read.begin_index() < window_size) {
-#ifndef NDEBUG
-          ++skipped_reads;
-#endif
-          logger::trace("Skipping read {}-{}, shorter than a window size",
-                        read.begin_index() + 1, read.end_index());
-          continue;
-        }
-
-        auto cluster_assignment_iter = ([&] {
-          if (auto iter = clusters_assignment.find(read.modifiedIndices());
-              iter != std::ranges::end(clusters_assignment)) {
-            return iter;
-          } else {
-            return clusters_assignment
-                .emplace(
-                    read.modifiedIndices(),
-                    ReadClustersAssignments(usable_weights.getClustersSize()))
-                .first;
-          }
-        })();
-
-        cluster_assignment_iter->second.cluster(cluster_index)
-            .push_back(read_index);
-
-        for (auto modified_index : read.modifiedIndices()) {
-          cluster_patterns[modified_index] += 1;
-        }
-        (*args.clusters_reads_count)[cluster_index] += 1;
-      }
-
-      used_rows += assignments_count;
-    }
-  }
-  // Check if we mapped in clusters_assignments all the reads compacted
-  // in compact_ringmap
-  assert(std::ranges::fold_left(
-             clusters_assignment | std::views::transform([](auto &&tuple) {
-               auto const &read_clusters_assignments = std::get<1>(tuple);
-               return std::ranges::fold_left(
-                   read_clusters_assignments.clusters() |
-                       std::views::transform(
-                           [](auto &&cluster) { return std::size(cluster); }),
-                   static_cast<std::uint32_t>(0), std::plus{});
-             }),
-             static_cast<std::uint32_t>(0), std::plus{}) +
-             skipped_reads ==
-         std::ranges::fold_left(
-             compact_ringmap |
-                 std::views::transform([](auto &&row) { return row.count(); }),
-             static_cast<std::uint32_t>(0), std::plus{}));
-
-  RingmapData::clusters_fraction_type fractions(
-      usable_weights.getClustersSize());
-  auto total_reads_count = std::ranges::fold_left(
-      *args.clusters_reads_count, static_cast<std::uint32_t>(0), std::plus{});
-  std::ranges::transform(*args.clusters_reads_count,
-                         std::ranges::begin(fractions),
-                         [&](auto cluster_reads_count) {
-                           return static_cast<double>(cluster_reads_count) /
-                                  static_cast<double>(total_reads_count);
-                         });
-
-  return std::tuple{std::move(fractions), std::move(patterns),
-                    std::move(clusters_assignment)};
 }
 
 namespace reassignment {

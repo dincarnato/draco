@@ -37,8 +37,7 @@ struct Reassignment {
   void reweight_and_reassign_with_expectation_maximization() const;
 
 protected:
-  reassignment::FractionResult
-  reweight_and_reassign_with_expectation_maximization_iteration(
+  void reweight_with_expectation_maximization_iteration(
       reassignment::ReweightAndReassignWithExpectationMaximizationIteration
           args) const;
 };

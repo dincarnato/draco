@@ -292,15 +292,14 @@ void test_steps() {
 
 void test_read_assignment() {
   constexpr std::string_view sequence = "AGCTAATTCCGCCGATTTATATGGACCATA";
-  RingmapMatrix matrix(static_cast<std::uint32_t>(std::size(reads)),
-                       std::size(sequence));
+  RingmapMatrix ringmap(static_cast<std::uint32_t>(std::size(reads)),
+                        std::size(sequence));
   for (auto const &read : reads) {
     for (std::uint8_t index = 0; index < 20; ++index) {
       matrix.addRead(read);
     }
   }
 
-  auto ringmap = CompactRingmap(matrix);
   WeightedClusters weights({{
       {0.1f, 0.6f, 0.4f, 0.5f, 0.4f, 0.3f, 0.1f, 0.1f},
       {0.6f, 0.3f, 0.5f, 0.4f, 0.4f, 0.3f, 0.3f, 0.1f},
@@ -317,12 +316,12 @@ void test_read_assignment() {
   std::vector<double> buffer(3);
 
   auto row = ringmap.row(0);
-  assert(row.indices().empty());
+  assert(row.modifiedIndices().empty());
   expectation_maximization.read_assignment(row, assignments, buffer, rng);
   assert(std::ranges::equal(assignments, std::array{20u, 20u, 20u}));
 
   row = ringmap.row(2);
-  assert(row.count() == 40);
+  assert(row.end_index() - row.begin_index() == 40);
   expectation_maximization.read_assignment(row, assignments, buffer, rng);
   // We have a randomly assigned read
   assert(std::ranges::fold_left(

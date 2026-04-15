@@ -1,28 +1,28 @@
 #include "expectation_maximization.hpp"
 #include "args.hpp"
-#include "compact_ringmap.hpp"
 #include "weighted_clusters.hpp"
 #include <algorithm>
 #include <armadillo>
 #include <cmath>
 #include <functional>
 #include <limits>
-#include <random>
 #include <ranges>
 
 namespace expectation_maximization {
 
 void weighted_priors_initialization(std::span<double> priors,
-                                    CompactRingmap const &ringmap,
+                                    RingmapMatrix const &ringmap,
                                     WeightedClusters &weights) noexcept {
-  for (auto &&ringmap_row : ringmap) {
-    auto row_counts = static_cast<double>(ringmap_row.count());
+  for (auto ringmap_rows = ringmap.rows(); auto &&ringmap_row : ringmap_rows) {
+    auto row_counts =
+        static_cast<double>(std::size(ringmap_row.modifiedIndices()));
     for (auto &&[prior, weights_cluster] :
          std::views::zip(priors, weights.clusters())) {
       prior = std::ranges::fold_left(
-          ringmap_row.indices() | std::views::transform([&](auto base_index) {
-            return weights_cluster[base_index] * row_counts;
-          }),
+          ringmap_row.modifiedIndices() |
+              std::views::transform([&](auto base_index) {
+                return weights_cluster[base_index] * row_counts;
+              }),
           prior, std::plus<>{});
     }
   }
@@ -36,16 +36,18 @@ double ExpectationMaximization::expectation() noexcept {
   auto log_likelihood = 0.;
   auto max_log_likelihood = -std::numeric_limits<double>::infinity();
   for (auto &&[row, responsibilities_row, row_index] : std::views::zip(
-           *ringmap_, responsibilities_.rows(), std::views::iota(0))) {
+           ringmap_->rows(), responsibilities_.rows(), std::views::iota(0))) {
     for (auto &&[prior, cluster_weights, responsibility, cluster_index] :
          std::views::zip(priors_, weights_->clusters(), responsibilities_row,
                          std::views::iota(0))) {
-      auto indices_iter = std::ranges::begin(row.indices());
+      auto indices_iter = std::ranges::begin(row.modifiedIndices());
       responsibility = std::ranges::fold_left(
           std::views::zip(std::views::iota(0uz), cluster_weights) |
+              std::views::drop(row.begin_index()) |
+              std::views::take(row.end_index() - row.begin_index()) |
               std::views::transform([&](auto &&tuple) {
                 auto &&[base_index, base_weight] = tuple;
-                if (indices_iter != std::ranges::end(row.indices()) and
+                if (indices_iter != std::ranges::end(row.modifiedIndices()) and
                     base_index == *indices_iter) {
                   ++indices_iter;
                   return std::log(base_weight + 1e-10);
@@ -68,9 +70,7 @@ double ExpectationMaximization::expectation() noexcept {
       responsibility *= normalizer;
     }
 
-    log_likelihood +=
-        (max_log_likelihood + std::log(responsibilities_row_sum)) *
-        static_cast<double>(row.count());
+    log_likelihood += max_log_likelihood + std::log(responsibilities_row_sum);
   }
 
   return log_likelihood;
@@ -80,18 +80,17 @@ void ExpectationMaximization::maximization() noexcept {
   std::ranges::fill(priors_, 0.);
   std::ranges::fill(weights_buffer_.raw_data(), 0.);
   std::ranges::for_each(
-      std::views::zip(*ringmap_, responsibilities_.rows()), [&](auto &&tuple) {
+      std::views::zip(ringmap_->rows(), responsibilities_.rows()),
+      [&](auto &&tuple) {
         auto &&[ringmap_row, responsibilities_row] = tuple;
-        auto row_occurrences = static_cast<double>(ringmap_row.count());
 
         for (auto &&[prior, responsibility, weights_row] : std::views::zip(
                  priors_, responsibilities_row, weights_buffer_.clusters())) {
-          auto cumulative_responsibility = responsibility * row_occurrences;
-          prior += cumulative_responsibility;
+          prior += responsibility;
 
-          for (auto indices = ringmap_row.indices();
+          for (auto indices = ringmap_row.modifiedIndices();
                auto modification_index : indices) {
-            weights_row[modification_index] += cumulative_responsibility;
+            weights_row[modification_index] += responsibility;
           }
         }
       });
@@ -113,7 +112,7 @@ void ExpectationMaximization::maximization() noexcept {
     }
   }
 
-  auto n_rows = static_cast<double>(ringmap_->original_n_rows());
+  auto n_rows = static_cast<double>(ringmap_->rows_size());
   std::ranges::transform(priors_, std::ranges::begin(priors_),
                          [&](auto prior) { return prior / n_rows; });
 }
@@ -149,55 +148,6 @@ Result ExpectationMaximization::run() noexcept {
       .log_likelihood = previous_log_likelihood,
       .convergence = MaxIterations{},
   };
-}
-
-void ExpectationMaximization::read_assignment(
-    CompactRingmapRow const &ringmap_row, std::span<std::uint32_t> assignments,
-    std::span<double> buffer, std::mt19937 &rng) const {
-  assert(std::size(assignments) == weights_->getClustersSize());
-
-  double probability_sum = 0.;
-  for (auto &&[probability, cluster_weights, cluster_prior] :
-       std::views::zip(buffer, weights_->clusters(), priors_)) {
-    probability = std::ranges::fold_left(
-        ringmap_row.indices() | std::views::transform([&](auto base_index) {
-          return cluster_weights[base_index];
-        }),
-        cluster_prior, std::multiplies{});
-    probability_sum += probability;
-  }
-
-  for (auto &&[assignment, probability] :
-       std::views::zip(assignments, buffer)) {
-    assignment = static_cast<std::uint32_t>(
-        std::round(static_cast<double>(ringmap_row.count()) * probability /
-                   probability_sum));
-  }
-
-  auto total_assignments = std::ranges::fold_left(
-      assignments, static_cast<std::uint32_t>(0), std::plus{});
-  auto assignments_difference =
-      static_cast<std::int32_t>(static_cast<std::int64_t>(ringmap_row.count()) -
-                                static_cast<std::int64_t>(total_assignments));
-  if (assignments_difference != 0) {
-    std::uniform_int_distribution<std::uint8_t> chooser(
-        static_cast<std::uint8_t>(0),
-        static_cast<std::uint8_t>(weights_->getClustersSize() - 1));
-
-    for (;;) {
-      auto &assignment = assignments[chooser(rng)];
-      auto new_assignment =
-          static_cast<std::int32_t>(assignment) + assignments_difference;
-      if (new_assignment < 0) {
-        continue;
-      }
-      assignment = static_cast<std::uint32_t>(new_assignment);
-      break;
-    }
-  }
-
-  assert(std::ranges::fold_left(assignments, static_cast<std::uint32_t>(0),
-                                std::plus{}) == ringmap_row.count());
 }
 
 } // namespace expectation_maximization

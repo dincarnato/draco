@@ -97,7 +97,6 @@ static void test_single_cluster() {
               .args = &args,
               .window_index = 0uz,
               .window_size = window_size,
-              .allow_empty_patterns = false,
           })
           .reweight_and_reassign_with_expectation_maximization_iteration(
               reassignment::
@@ -175,7 +174,6 @@ static void test_fractions_sum_to_one_two_clusters() {
               .args = &args,
               .window_index = 0uz,
               .window_size = window_size,
-              .allow_empty_patterns = false,
           })
           .reweight_and_reassign_with_expectation_maximization_iteration(
               reassignment::
@@ -249,7 +247,6 @@ static void test_well_separated_clusters_converge_correctly() {
               .args = &args,
               .window_index = 0uz,
               .window_size = window_size,
-              .allow_empty_patterns = false,
           })
           .reweight_and_reassign_with_expectation_maximization_iteration(
               reassignment::
@@ -346,7 +343,6 @@ static void test_output_shapes_match_weighted_clusters() {
               .args = &args,
               .window_index = 0uz,
               .window_size = window_size,
-              .allow_empty_patterns = false,
           })
           .reweight_and_reassign_with_expectation_maximization_iteration(
               reassignment::
@@ -420,7 +416,6 @@ static void test_reads_shorter_than_window_are_skipped_gracefully() {
               .args = &args,
               .window_index = 0uz,
               .window_size = window_size,
-              .allow_empty_patterns = false,
           })
           .reweight_and_reassign_with_expectation_maximization_iteration(
               reassignment::
@@ -497,7 +492,6 @@ static void test_base_filtered_ringmap_create_reduced_path() {
               .args = &args,
               .window_index = 0uz,
               .window_size = window_size,
-              .allow_empty_patterns = false,
           })
           .reweight_and_reassign_with_expectation_maximization_iteration(
               reassignment::
@@ -593,7 +587,6 @@ static void test_buffer_reuse_across_successive_calls() {
       .args = &args,
       .window_index = 0uz,
       .window_size = window_size,
-      .allow_empty_patterns = false,
   });
 
   reassignment::ReweightAndReassignWithExpectationMaximizationIteration

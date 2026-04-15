@@ -32,44 +32,59 @@ void weighted_priors_initialization(std::span<double> priors,
   }
 }
 
+struct CalcResponsibilitiesResult {
+  double max_log_likelihood;
+  double responsibilities_sum;
+};
+
+static CalcResponsibilitiesResult calc_responsibilities(
+    const CompactRingmapRow &row, std::span<double> responsibilities_row,
+    WeightedClusters const &weights, std::span<const double> priors) noexcept {
+  auto max_log_likelihood = -std::numeric_limits<double>::infinity();
+  for (auto &&[prior, cluster_weights, responsibility, cluster_index] :
+       std::views::zip(priors, weights.clusters(), responsibilities_row,
+                       std::views::iota(0))) {
+    auto new_responsibility = std::log(std::max(prior, 1e-10));
+    auto indices_iter = std::ranges::begin(row.indices());
+    for (auto &&[base_index, base_weight] :
+         std::views::zip(std::views::iota(0uz), cluster_weights)) {
+      if (indices_iter != std::ranges::end(row.indices()) and
+          base_index == *indices_iter) {
+        ++indices_iter;
+        new_responsibility += std::log(base_weight + 1e-10);
+      } else {
+        new_responsibility += std::log((1. - base_weight) + 1e-10);
+      }
+    }
+    responsibility = new_responsibility;
+
+    max_log_likelihood = std::max(max_log_likelihood, new_responsibility);
+  }
+
+  double responsibilities_row_sum = 0.;
+  for (auto &responsibility : responsibilities_row) {
+    responsibility = std::exp(responsibility - max_log_likelihood);
+    responsibilities_row_sum += responsibility;
+  }
+  double normalizer = 1. / responsibilities_row_sum;
+  for (auto &responsibility : responsibilities_row) {
+    responsibility *= normalizer;
+  }
+
+  return CalcResponsibilitiesResult{
+      .max_log_likelihood = max_log_likelihood,
+      .responsibilities_sum = responsibilities_row_sum,
+  };
+}
+
 double ExpectationMaximization::expectation() noexcept {
   auto log_likelihood = 0.;
-  auto max_log_likelihood = -std::numeric_limits<double>::infinity();
   for (auto &&[row, responsibilities_row, row_index] : std::views::zip(
            *ringmap_, responsibilities_.rows(), std::views::iota(0))) {
-    for (auto &&[prior, cluster_weights, responsibility, cluster_index] :
-         std::views::zip(priors_, weights_->clusters(), responsibilities_row,
-                         std::views::iota(0))) {
-      auto indices_iter = std::ranges::begin(row.indices());
-      responsibility = std::ranges::fold_left(
-          std::views::zip(std::views::iota(0uz), cluster_weights) |
-              std::views::transform([&](auto &&tuple) {
-                auto &&[base_index, base_weight] = tuple;
-                if (indices_iter != std::ranges::end(row.indices()) and
-                    base_index == *indices_iter) {
-                  ++indices_iter;
-                  return std::log(base_weight + 1e-10);
-                } else {
-                  return std::log((1. - base_weight) + 1e-10);
-                }
-              }),
-          std::log(prior + 1e-10), std::plus{});
-
-      max_log_likelihood = std::max(max_log_likelihood, responsibility);
-    }
-
-    double responsibilities_row_sum = 0.;
-    for (auto &responsibility : responsibilities_row) {
-      responsibility = std::exp(responsibility - max_log_likelihood);
-      responsibilities_row_sum += responsibility;
-    }
-    double normalizer = 1. / responsibilities_row_sum;
-    for (auto &responsibility : responsibilities_row) {
-      responsibility *= normalizer;
-    }
-
+    auto result =
+        calc_responsibilities(row, responsibilities_row, *weights_, priors_);
     log_likelihood +=
-        (max_log_likelihood + std::log(responsibilities_row_sum)) *
+        (result.max_log_likelihood + std::log(result.responsibilities_sum)) *
         static_cast<double>(row.count());
   }
 
@@ -156,22 +171,12 @@ void ExpectationMaximization::read_assignment(
     std::span<double> buffer, std::mt19937 &rng) const {
   assert(std::size(assignments) == weights_->getClustersSize());
 
-  double probability_sum = 0.;
-  for (auto &&[probability, cluster_weights, cluster_prior] :
-       std::views::zip(buffer, weights_->clusters(), priors_)) {
-    probability = std::ranges::fold_left(
-        ringmap_row.indices() | std::views::transform([&](auto base_index) {
-          return cluster_weights[base_index];
-        }),
-        cluster_prior, std::multiplies{});
-    probability_sum += probability;
-  }
+  calc_responsibilities(ringmap_row, buffer, *weights_, priors_);
 
   for (auto &&[assignment, probability] :
        std::views::zip(assignments, buffer)) {
     assignment = static_cast<std::uint32_t>(
-        std::round(static_cast<double>(ringmap_row.count()) * probability /
-                   probability_sum));
+        std::round(static_cast<double>(ringmap_row.count()) * probability));
   }
 
   auto total_assignments = std::ranges::fold_left(

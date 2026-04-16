@@ -302,15 +302,15 @@ void test_read_assignment() {
 
   auto ringmap = CompactRingmap(matrix);
   WeightedClusters weights({{
-      {0.1f, 0.6f, 0.4f, 0.5f, 0.4f, 0.3f, 0.1f, 0.1f},
-      {0.6f, 0.3f, 0.5f, 0.4f, 0.4f, 0.3f, 0.3f, 0.1f},
+      {0.1f, 0.7f, 0.4f, 0.5f, 0.4f, 0.3f, 0.1f, 0.1f},
+      {0.6f, 0.2f, 0.5f, 0.4f, 0.4f, 0.3f, 0.3f, 0.1f},
       {0.3f, 0.1f, 0.1f, 0.1f, 0.2f, 0.4f, 0.6f, 0.8f},
   }});
 
   test::Args args;
   args.expectation_maximization_priors_initialization() =
       args::PriorsInitialization::Uniform;
-  std::mt19937 rng(std::random_device{}());
+  std::mt19937 rng(0);
   test::ExpectationMaximization expectation_maximization(ringmap, weights, args,
                                                          rng);
   std::vector<std::uint32_t> assignments(3);
@@ -319,29 +319,22 @@ void test_read_assignment() {
   auto row = ringmap.row(0);
   assert(row.indices().empty());
   expectation_maximization.read_assignment(row, assignments, buffer, rng);
-  assert(std::ranges::equal(assignments, std::array{20u, 20u, 20u}));
+  assert(std::ranges::equal(assignments, std::array{23u, 21u, 16u}));
 
   row = ringmap.row(2);
   assert(row.count() == 40);
   expectation_maximization.read_assignment(row, assignments, buffer, rng);
-  // We have a randomly assigned read
-  assert(std::ranges::fold_left(
-             std::views::zip(assignments, std::array{4u, 32u, 3u}) |
-                 std::views::transform([](auto &&tuple) {
-                   auto [count, expected] = tuple;
-                   return count - expected;
-                 }),
-             0u, std::plus{}) == 1);
+  assert(std::ranges::equal(assignments, std::array{2u, 37u, 1u}));
 
   row = ringmap.row(6);
   assert(row.count() == 40);
   expectation_maximization.read_assignment(row, assignments, buffer, rng);
-  assert(std::ranges::equal(assignments, std::array{1u, 2u, 37u}));
+  assert(std::ranges::equal(assignments, std::array{0u, 1u, 39u}));
 
   row = ringmap.row(7);
   assert(row.count() == 20);
   expectation_maximization.read_assignment(row, assignments, buffer, rng);
-  assert(std::ranges::equal(assignments, std::array{14u, 6u, 0u}));
+  assert(std::ranges::equal(assignments, std::array{19u, 1u, 0u}));
 }
 
 int main() {

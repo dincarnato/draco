@@ -61,6 +61,7 @@ protected:
   std::vector<double> priors_;
   Responsibilities responsibilities_;
   Responsibilities weights_buffer_;
+  Responsibilities coverages_buffer_;
 };
 
 void weighted_priors_initialization(std::span<double> priors,
@@ -93,7 +94,9 @@ ExpectationMaximization::ExpectationMaximization(CompactRingmap const &ringmap,
       responsibilities_(ringmap.n_rows(),
                         static_cast<std::uint8_t>(weights.getClustersSize())),
       weights_buffer_(static_cast<std::uint32_t>(weights.getElementsSize()),
-                      static_cast<std::uint8_t>(weights.getClustersSize())) {
+                      static_cast<std::uint8_t>(weights.getClustersSize())),
+      coverages_buffer_(static_cast<std::uint32_t>(weights.getElementsSize()),
+                        static_cast<std::uint8_t>(weights.getClustersSize())) {
   if (weights.getElementsSize() > std::numeric_limits<std::uint32_t>::max()) {
     throw std::runtime_error(
         "too many bases to initialize expectation-maximization");

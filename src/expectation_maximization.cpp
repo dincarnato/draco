@@ -1,6 +1,7 @@
 #include "expectation_maximization.hpp"
 #include "args.hpp"
 #include "compact_ringmap.hpp"
+#include "expectation_maximization/responsibilities.hpp"
 #include "weighted_clusters.hpp"
 #include <algorithm>
 #include <armadillo>
@@ -41,9 +42,8 @@ static CalcResponsibilitiesResult calc_responsibilities(
     const CompactRingmapRow &row, std::span<double> responsibilities_row,
     WeightedClusters const &weights, std::span<const double> priors) noexcept {
   auto max_log_likelihood = -std::numeric_limits<double>::infinity();
-  for (auto &&[prior, cluster_weights, responsibility, cluster_index] :
-       std::views::zip(priors, weights.clusters(), responsibilities_row,
-                       std::views::iota(0))) {
+  for (auto &&[prior, cluster_weights, responsibility] :
+       std::views::zip(priors, weights.clusters(), responsibilities_row)) {
     auto new_responsibility = std::log(std::max(prior, 1e-10));
     auto indices_iter = std::ranges::begin(row.indices());
     for (auto &&[base_index, base_weight] :
@@ -81,8 +81,8 @@ static CalcResponsibilitiesResult calc_responsibilities(
 
 double ExpectationMaximization::expectation() noexcept {
   auto log_likelihood = 0.;
-  for (auto &&[row, responsibilities_row, row_index] : std::views::zip(
-           *ringmap_, responsibilities_.rows(), std::views::iota(0))) {
+  for (auto &&[row, responsibilities_row] :
+       std::views::zip(*ringmap_, responsibilities_.rows())) {
     auto result =
         calc_responsibilities(row, responsibilities_row, *weights_, priors_);
     log_likelihood +=
@@ -96,15 +96,25 @@ double ExpectationMaximization::expectation() noexcept {
 void ExpectationMaximization::maximization() noexcept {
   std::ranges::fill(priors_, 0.);
   std::ranges::fill(weights_buffer_.raw_data(), 0.);
+  std::ranges::fill(coverages_buffer_.raw_data(), 0.);
+
   std::ranges::for_each(
       std::views::zip(*ringmap_, responsibilities_.rows()), [&](auto &&tuple) {
         auto &&[ringmap_row, responsibilities_row] = tuple;
         auto row_occurrences = static_cast<double>(ringmap_row.count());
 
-        for (auto &&[prior, responsibility, weights_row] : std::views::zip(
-                 priors_, responsibilities_row, weights_buffer_.clusters())) {
+        for (auto &&[prior, responsibility, weights_row, coverages_row] :
+             std::views::zip(priors_, responsibilities_row,
+                             weights_buffer_.clusters(),
+                             coverages_buffer_.clusters())) {
           auto cumulative_responsibility = responsibility * row_occurrences;
           prior += cumulative_responsibility;
+
+          for (auto &coverage :
+               *coverages_row | std::views::drop(ringmap_row.begin_index()) |
+                   std::views::take(ringmap_row.read_size())) {
+            coverage += cumulative_responsibility;
+          }
 
           for (auto indices = ringmap_row.indices();
                auto modification_index : indices) {
@@ -115,17 +125,19 @@ void ExpectationMaximization::maximization() noexcept {
 
   for (auto weights_buffer_clusters = weights_buffer_.clusters();
        auto &&[weights_buffer_cluster, weights_cluster,
-               cluster_responsibility_count] :
-       std::views::zip(weights_buffer_clusters, weights_->clusters(),
-                       priors_)) {
+               cluster_responsibility_count, coverages_cluster] :
+       std::views::zip(weights_buffer_clusters, weights_->clusters(), priors_,
+                       coverages_buffer_.clusters())) {
     if (cluster_responsibility_count < 1e-12) {
       std::ranges::fill(weights_cluster, 0.5f);
     } else {
-      auto denominator = cluster_responsibility_count + 2e-6;
-      for (auto &&[tmp_weight, weight] :
-           std::views::zip(*weights_buffer_cluster, weights_cluster)) {
-        auto new_weight = (tmp_weight + 1e-6) / denominator;
-        weight = std::clamp(static_cast<float>(new_weight), 1e-6f, 1.f - 1e-6f);
+      for (auto &&[tmp_weight, weight, coverage] : std::views::zip(
+               *weights_buffer_cluster, weights_cluster, *coverages_cluster)) {
+        if (coverage >= 1e-12) {
+          auto new_weight = (tmp_weight + 1e-6) / (coverage + 2e-6);
+          weight =
+              std::clamp(static_cast<float>(new_weight), 1e-6f, 1.f - 1e-6f);
+        }
       }
     }
   }

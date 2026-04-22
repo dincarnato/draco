@@ -305,15 +305,6 @@ constexpr bool RingmapMatrixRowAccessor<Matrix>::is_valid() const noexcept {
   return row->is_valid();
 }
 
-template <typename Matrix1>
-template <typename Matrix2>
-std::enable_if_t<std::is_same_v<std::decay_t<Matrix1>, std::decay_t<Matrix2>>,
-                 bool>
-RingmapMatrixRowAccessor<Matrix1>::has_same_indices(
-    RingmapMatrixRowAccessor<Matrix2> const &other) const noexcept {
-  return row->has_same_indices(*other.row);
-}
-
 template <typename ML, typename MR>
 bool operator<(RingmapMatrixRowAccessor<ML> const &lhs,
                RingmapMatrixRowAccessor<MR> const &rhs) noexcept {

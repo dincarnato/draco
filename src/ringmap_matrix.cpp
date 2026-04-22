@@ -3,6 +3,7 @@
 #include "ringmap_matrix_row_iterator.hpp"
 #include "utils.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <ranges>
@@ -221,7 +222,7 @@ bool RingmapMatrix::has_same_indices(
     auto &&other_row = *other_rows_iter;
     auto &&this_row = *this_rows_iter;
 
-    if (not other_row.has_same_indices(this_row)) {
+    if (not std::ranges::equal(this_row, other_row)) {
       return false;
     }
   }

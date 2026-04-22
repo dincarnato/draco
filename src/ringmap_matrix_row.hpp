@@ -191,14 +191,14 @@ RingmapMatrixRow::copy_window_begin_end_indices(auto const &window) noexcept {
     this->window_begin_index_ = window.begin_index;
     this->window_end_index_ = window.end_index;
   } else if constexpr (std::is_same_v<window_t, RingmapMatrixRow>) {
-    this->begin_index_ = window.begin_index_;
-    this->end_index_ = window.end_index_;
+    this->window_begin_index_ = window.window_begin_index_;
+    this->window_end_index_ = window.window_end_index_;
   } else if constexpr (std::is_same_v<
                            window_t, RingmapMatrixRowAccessor<RingmapMatrix>> ||
                        std::is_same_v<window_t, RingmapMatrixRowAccessor<
                                                     const RingmapMatrix>>) {
-    this->begin_index_ = window.original_begin_index();
-    this->end_index_ = window.original_end_index();
+    this->window_begin_index_ = window.window_begin_index();
+    this->window_end_index_ = window.window_end_index();
   } else {
     static_assert(false, "copy_window_begin_end_indices only accepts a "
                          "RingmapMatrixWindowIndices, a results::Window, a "

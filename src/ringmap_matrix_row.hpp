@@ -22,6 +22,23 @@ struct RingmapMatrixWindowIndices {
   ringmap_matrix::base_index_type end_index;
 };
 
+/**
+ * A row of modificated indices for the ringmap matrix
+ *
+ * We have the indices of the modificated bases, then begin/end indices of the
+ * read and the begin/end indices of the window.
+ *
+ * The indices are relative to the begin of the window, and both the indices
+ * of the read and the indices of the window are absolute.
+ *
+ * This means that if the window_begin=3 and we have a modification at index
+ * 0, the absolute index of the modification is 3.
+ *
+ * Another example:
+ * - begin_index_=3, end_index_=10
+ * - window_begin_index_=5, window_begin_end_=8
+ * - possible modified indices: from 0 to 2 included
+ */
 struct RingmapMatrixRow : std::vector<ringmap_matrix::base_index_type> {
   using base_index_type = ringmap_matrix::base_index_type;
   using base_type = std::vector<base_index_type>;

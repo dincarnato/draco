@@ -554,10 +554,17 @@ auto RingmapData::fractionReadsByWeights(const WeightedClusters &weights,
   for (std::size_t read_index = 0; read_index < reads_size; ++read_index) {
     assert(read_index < std::numeric_limits<unsigned>::max());
     auto &&read = m_data.row(static_cast<unsigned>(read_index));
-    assert(read.end_index() >= read.begin_index());
-    if (read.end_index() - read.begin_index() < window_size) {
+    assert(read.original_end_index() >= read.original_begin_index());
+    assert(read.window_end_index() >= read.window_begin_index());
+    assert(std::ranges::all_of(
+        read.modifiedIndices(),
+        [&, read_window_size = read.window_end_index() -
+                               read.window_begin_index()](auto index) {
+          return index < read_window_size;
+        }));
+    if (read.original_end_index() - read.original_begin_index() < window_size) {
       logger::trace("Skipping read {}-{}, shorter than a window size",
-                    read.begin_index() + 1, read.end_index());
+                    read.original_begin_index() + 1, read.original_end_index());
       continue;
     }
 

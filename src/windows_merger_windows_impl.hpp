@@ -170,23 +170,23 @@ inline bool WindowsMergerWindows::operator!=(
   return !operator==(other);
 }
 
-inline auto
-WindowsMergerWindows::clusters_size() const noexcept -> clusters_size_type {
+inline auto WindowsMergerWindows::clusters_size() const noexcept
+    -> clusters_size_type {
   return n_clusters;
 }
 
-inline auto
-WindowsMergerWindows::bases_capacity() const noexcept -> bases_size_type {
+inline auto WindowsMergerWindows::bases_capacity() const noexcept
+    -> bases_size_type {
   return n_bases_capacity;
 }
 
-inline auto
-WindowsMergerWindows::windows_size() const noexcept -> windows_size_type {
+inline auto WindowsMergerWindows::windows_size() const noexcept
+    -> windows_size_type {
   return n_windows;
 }
 
-inline auto
-WindowsMergerWindows::windows_capacity() const noexcept -> windows_size_type {
+inline auto WindowsMergerWindows::windows_capacity() const noexcept
+    -> windows_size_type {
   return n_windows_capacity;
 }
 
@@ -195,13 +195,15 @@ inline auto WindowsMergerWindows::operator[](windows_size_type index) & noexcept
   return window_accessor{*this, index};
 }
 
-inline auto WindowsMergerWindows::operator[](
-    windows_size_type index) const & noexcept -> const_window_accessor {
+inline auto
+WindowsMergerWindows::operator[](windows_size_type index) const & noexcept
+    -> const_window_accessor {
   return const_window_accessor{*this, index};
 }
 
-inline auto WindowsMergerWindows::operator[](
-    windows_size_type index) && noexcept -> move_window_accessor {
+inline auto
+WindowsMergerWindows::operator[](windows_size_type index) && noexcept
+    -> move_window_accessor {
   return move_window_accessor{*this, index};
 }
 
@@ -582,8 +584,8 @@ void WindowsMergerWindows::reshape(
   n_windows = new_windows_size;
 }
 
-inline auto
-WindowsMergerWindows::emplace_back() noexcept(false) -> window_accessor {
+inline auto WindowsMergerWindows::emplace_back() noexcept(false)
+    -> window_accessor {
   const auto new_window_index = n_windows;
   if (n_bases_capacity > 0)
     reshape(n_bases_capacity, resizer_type(n_windows + 1));
@@ -625,8 +627,8 @@ inline auto WindowsMergerWindows::front() noexcept -> window_accessor {
   return window_accessor(*this, 0);
 }
 
-inline auto
-WindowsMergerWindows::front() const noexcept -> const_window_accessor {
+inline auto WindowsMergerWindows::front() const noexcept
+    -> const_window_accessor {
   assert(n_windows > 0);
   return const_window_accessor(*this, 0);
 }
@@ -636,8 +638,8 @@ inline auto WindowsMergerWindows::back() noexcept -> window_accessor {
   return window_accessor(*this, n_windows - 1);
 }
 
-inline auto
-WindowsMergerWindows::back() const noexcept -> const_window_accessor {
+inline auto WindowsMergerWindows::back() const noexcept
+    -> const_window_accessor {
   assert(n_windows > 0);
   return const_window_accessor(*this, n_windows - 1);
 }
@@ -870,18 +872,18 @@ inline auto WindowsMergerWindows::rend() & noexcept -> reverse_iterator {
   return reverse_iterator(iterator(*this));
 }
 
-inline auto
-WindowsMergerWindows::rbegin() const & noexcept -> const_reverse_iterator {
+inline auto WindowsMergerWindows::rbegin() const & noexcept
+    -> const_reverse_iterator {
   return const_reverse_iterator(const_iterator(*this, n_windows));
 }
 
-inline auto
-WindowsMergerWindows::rend() const & noexcept -> const_reverse_iterator {
+inline auto WindowsMergerWindows::rend() const & noexcept
+    -> const_reverse_iterator {
   return const_reverse_iterator(const_iterator(*this));
 }
 
-inline auto
-WindowsMergerWindows::rbegin() && noexcept -> move_reverse_iterator {
+inline auto WindowsMergerWindows::rbegin() && noexcept
+    -> move_reverse_iterator {
   return move_reverse_iterator(move_iterator(*this, n_windows));
 }
 
@@ -890,11 +892,10 @@ inline auto WindowsMergerWindows::rend() && noexcept -> move_reverse_iterator {
 }
 
 template <typename T, typename U>
-auto operator==(T &&t, U &&u) noexcept
-    -> std::enable_if_t<
-        WindowsMergerTraits::template is_window_baselike_v<std::decay_t<T>> and
-            WindowsMergerTraits::template is_window_baselike_v<std::decay_t<U>>,
-        bool> {
+auto operator==(T &&t, U &&u) noexcept -> std::enable_if_t<
+    WindowsMergerTraits::template is_window_baselike_v<std::decay_t<T>> and
+        WindowsMergerTraits::template is_window_baselike_v<std::decay_t<U>>,
+    bool> {
 
   return t.coverage() == u.coverage() and
          t.clusters_size() == u.clusters_size() and
@@ -905,20 +906,18 @@ auto operator==(T &&t, U &&u) noexcept
 }
 
 template <typename T, typename U>
-auto operator!=(T &&t, U &&u) noexcept
-    -> std::enable_if_t<
-        WindowsMergerTraits::template is_window_baselike_v<std::decay_t<T>> and
-            WindowsMergerTraits::template is_window_baselike_v<std::decay_t<U>>,
-        bool> {
+auto operator!=(T &&t, U &&u) noexcept -> std::enable_if_t<
+    WindowsMergerTraits::template is_window_baselike_v<std::decay_t<T>> and
+        WindowsMergerTraits::template is_window_baselike_v<std::decay_t<U>>,
+    bool> {
   return not(t == u);
 }
 
 template <typename T, typename U>
-auto operator==(T &&t, U &&u) noexcept
-    -> std::enable_if_t<
-        WindowsMergerTraits::template is_windowlike_v<std::decay_t<T>> and
-            WindowsMergerTraits::template is_windowlike_v<std::decay_t<U>>,
-        bool> {
+auto operator==(T &&t, U &&u) noexcept -> std::enable_if_t<
+    WindowsMergerTraits::template is_windowlike_v<std::decay_t<T>> and
+        WindowsMergerTraits::template is_windowlike_v<std::decay_t<U>>,
+    bool> {
 
   return t.clusters_size() == u.clusters_size() and
          t.begin_index() == u.begin_index() and t.size() == u.size() and
@@ -926,11 +925,10 @@ auto operator==(T &&t, U &&u) noexcept
 }
 
 template <typename T, typename U>
-auto operator!=(T &&t, U &&u) noexcept
-    -> std::enable_if_t<
-        WindowsMergerTraits::template is_windowlike_v<std::decay_t<T>> and
-            WindowsMergerTraits::template is_windowlike_v<std::decay_t<U>>,
-        bool> {
+auto operator!=(T &&t, U &&u) noexcept -> std::enable_if_t<
+    WindowsMergerTraits::template is_windowlike_v<std::decay_t<T>> and
+        WindowsMergerTraits::template is_windowlike_v<std::decay_t<U>>,
+    bool> {
   return not(t == u);
 }
 

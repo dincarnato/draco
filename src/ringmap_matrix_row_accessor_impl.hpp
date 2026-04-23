@@ -23,8 +23,8 @@ RingmapMatrixRowAccessor<Matrix>::RingmapMatrixRowAccessor(
 
 template <typename Matrix>
 auto RingmapMatrixRowAccessor<Matrix>::operator=(
-    RingmapMatrixRowAccessor<RingmapMatrix> const &rhs) const
-    noexcept(false) -> RingmapMatrixRowAccessor const & {
+    RingmapMatrixRowAccessor<RingmapMatrix> const &rhs) const noexcept(false)
+    -> RingmapMatrixRowAccessor const & {
   assign_from_accessor(rhs);
   return *this;
 }
@@ -48,16 +48,16 @@ auto RingmapMatrixRowAccessor<Matrix>::operator=(
 
 template <typename Matrix>
 auto RingmapMatrixRowAccessor<Matrix>::operator=(
-    RingmapMatrixRowAccessor<RingmapMatrix> &&rhs) const
-    noexcept(false) -> RingmapMatrixRowAccessor const & {
+    RingmapMatrixRowAccessor<RingmapMatrix> &&rhs) const noexcept(false)
+    -> RingmapMatrixRowAccessor const & {
   assign_from_accessor(std::move(rhs));
   return *this;
 }
 
 template <typename Matrix>
 auto RingmapMatrixRowAccessor<Matrix>::operator=(
-    RingmapMatrixRowAccessor<const RingmapMatrix> &&rhs) const
-    noexcept(false) -> RingmapMatrixRowAccessor const & {
+    RingmapMatrixRowAccessor<const RingmapMatrix> &&rhs) const noexcept(false)
+    -> RingmapMatrixRowAccessor const & {
   assign_from_accessor(std::move(rhs));
   return *this;
 }
@@ -152,8 +152,9 @@ bool RingmapMatrixRowAccessor<Matrix>::operator==(
 }
 
 template <typename Matrix>
-constexpr auto RingmapMatrixRowAccessor<Matrix>::modifiedIndices()
-    const noexcept -> reference {
+constexpr auto
+RingmapMatrixRowAccessor<Matrix>::modifiedIndices() const noexcept
+    -> reference {
   assert(matrix);
   return *row;
 }

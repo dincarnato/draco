@@ -113,8 +113,8 @@ void WindowsMergerWindow::assign_from_accessor(Accessor &&accessor) noexcept(
                       std::back_inserter(_bases));
 }
 
-inline auto
-WindowsMergerWindow::begin_index() const noexcept -> bases_size_type {
+inline auto WindowsMergerWindow::begin_index() const noexcept
+    -> bases_size_type {
   return _begin_index;
 }
 
@@ -134,8 +134,8 @@ inline bool WindowsMergerWindow::empty() const noexcept {
   return _bases.empty();
 }
 
-inline auto
-WindowsMergerWindow::clusters_size() const noexcept -> clusters_size_type {
+inline auto WindowsMergerWindow::clusters_size() const noexcept
+    -> clusters_size_type {
   return n_clusters;
 }
 
@@ -143,13 +143,13 @@ inline auto WindowsMergerWindow::coverages() noexcept -> coverages_accessor {
   return coverages_accessor(*this);
 }
 
-inline auto
-WindowsMergerWindow::coverages() const noexcept -> const_coverages_accessor {
+inline auto WindowsMergerWindow::coverages() const noexcept
+    -> const_coverages_accessor {
   return const_coverages_accessor(*this);
 }
 
-inline auto
-WindowsMergerWindow::linear_weights() noexcept -> linear_weights_accessor {
+inline auto WindowsMergerWindow::linear_weights() noexcept
+    -> linear_weights_accessor {
   return linear_weights_accessor(*this);
 }
 
@@ -215,13 +215,13 @@ inline auto WindowsMergerWindow::rend() & noexcept -> reverse_iterator {
   return _bases.rend();
 }
 
-inline auto
-WindowsMergerWindow::rbegin() const & noexcept -> const_reverse_iterator {
+inline auto WindowsMergerWindow::rbegin() const & noexcept
+    -> const_reverse_iterator {
   return _bases.rbegin();
 }
 
-inline auto
-WindowsMergerWindow::rend() const & noexcept -> const_reverse_iterator {
+inline auto WindowsMergerWindow::rend() const & noexcept
+    -> const_reverse_iterator {
   return _bases.rend();
 }
 
@@ -233,14 +233,15 @@ inline auto WindowsMergerWindow::rend() && noexcept -> move_reverse_iterator {
   return std::move_iterator(_bases.rend());
 }
 
-inline auto WindowsMergerWindow::operator[](
-    bases_size_type index) const noexcept -> base_type const & {
+inline auto
+WindowsMergerWindow::operator[](bases_size_type index) const noexcept
+    -> base_type const & {
   assert(index < _bases.size());
   return _bases[index];
 }
 
-inline auto
-WindowsMergerWindow::operator[](bases_size_type index) noexcept -> base_type & {
+inline auto WindowsMergerWindow::operator[](bases_size_type index) noexcept
+    -> base_type & {
   assert(index < _bases.size());
   return _bases[index];
 }

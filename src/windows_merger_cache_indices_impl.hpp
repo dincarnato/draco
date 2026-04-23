@@ -206,9 +206,10 @@ inline auto WindowsMergerCacheIndices::get_indices_first_pointer(
           .get_indices_first_pointer<Index>(line_index));
 }
 
-inline auto WindowsMergerCacheIndices::index_emplace_back(
-    windows_size_type line_index,
-    windows_size_type index) noexcept -> windows_size_type & {
+inline auto
+WindowsMergerCacheIndices::index_emplace_back(windows_size_type line_index,
+                                              windows_size_type index) noexcept
+    -> windows_size_type & {
   assert(_lines_capacity > 0);
 
   assert(line_index < _lines_size);
@@ -231,23 +232,24 @@ inline auto WindowsMergerCacheIndices::index_emplace_back(
   return *new_index;
 }
 
-inline auto
-WindowsMergerCacheIndices::size() const noexcept -> windows_size_type {
+inline auto WindowsMergerCacheIndices::size() const noexcept
+    -> windows_size_type {
   return _lines_size;
 }
 
-inline auto
-WindowsMergerCacheIndices::capacity() const noexcept -> windows_size_type {
+inline auto WindowsMergerCacheIndices::capacity() const noexcept
+    -> windows_size_type {
   return _lines_capacity;
 }
 
-inline auto
-WindowsMergerCacheIndices::line_capacity() const noexcept -> windows_size_type {
+inline auto WindowsMergerCacheIndices::line_capacity() const noexcept
+    -> windows_size_type {
   return _line_capacity;
 }
 
-inline auto WindowsMergerCacheIndices::operator[](
-    windows_size_type line_index) noexcept -> indices_accessor {
+inline auto
+WindowsMergerCacheIndices::operator[](windows_size_type line_index) noexcept
+    -> indices_accessor {
   return indices_accessor(*this, line_index);
 }
 
@@ -272,8 +274,8 @@ inline auto WindowsMergerCacheIndices::rend() noexcept -> reverse_iterator {
   return reverse_iterator{iterator{*this}};
 }
 
-inline auto
-WindowsMergerCacheIndices::begin() const noexcept -> const_iterator {
+inline auto WindowsMergerCacheIndices::begin() const noexcept
+    -> const_iterator {
   return const_iterator{*this};
 }
 
@@ -281,13 +283,13 @@ inline auto WindowsMergerCacheIndices::end() const noexcept -> const_iterator {
   return const_iterator{*this, _lines_size};
 }
 
-inline auto
-WindowsMergerCacheIndices::rbegin() const noexcept -> const_reverse_iterator {
+inline auto WindowsMergerCacheIndices::rbegin() const noexcept
+    -> const_reverse_iterator {
   return const_reverse_iterator{const_iterator{*this, _lines_size}};
 }
 
-inline auto
-WindowsMergerCacheIndices::rend() const noexcept -> const_reverse_iterator {
+inline auto WindowsMergerCacheIndices::rend() const noexcept
+    -> const_reverse_iterator {
   return const_reverse_iterator{const_iterator{*this}};
 }
 

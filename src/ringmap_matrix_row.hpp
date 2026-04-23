@@ -111,8 +111,8 @@ inline bool operator>=(RingmapMatrixRow const &lhs,
   return not(lhs < rhs) and lhs == rhs;
 }
 
-inline constexpr auto
-RingmapMatrixRow::begin_index() const noexcept -> base_index_type {
+inline constexpr auto RingmapMatrixRow::begin_index() const noexcept
+    -> base_index_type {
   if (this->begin_index_ == std::numeric_limits<base_index_type>::max()) {
     return std::numeric_limits<base_index_type>::max();
   } else {
@@ -120,8 +120,8 @@ RingmapMatrixRow::begin_index() const noexcept -> base_index_type {
   }
 }
 
-inline constexpr auto
-RingmapMatrixRow::end_index() const noexcept -> base_index_type {
+inline constexpr auto RingmapMatrixRow::end_index() const noexcept
+    -> base_index_type {
   if (this->end_index_ == std::numeric_limits<base_index_type>::min()) {
     return std::numeric_limits<base_index_type>::min();
   } else {
@@ -129,23 +129,23 @@ RingmapMatrixRow::end_index() const noexcept -> base_index_type {
   }
 }
 
-inline constexpr auto
-RingmapMatrixRow::original_begin_index() const noexcept -> base_index_type {
+inline constexpr auto RingmapMatrixRow::original_begin_index() const noexcept
+    -> base_index_type {
   return this->begin_index_;
 }
 
-inline constexpr auto
-RingmapMatrixRow::original_end_index() const noexcept -> base_index_type {
+inline constexpr auto RingmapMatrixRow::original_end_index() const noexcept
+    -> base_index_type {
   return this->end_index_;
 }
 
-inline constexpr auto
-RingmapMatrixRow::window_begin_index() const noexcept -> base_index_type {
+inline constexpr auto RingmapMatrixRow::window_begin_index() const noexcept
+    -> base_index_type {
   return this->window_begin_index_;
 }
 
-inline constexpr auto
-RingmapMatrixRow::window_end_index() const noexcept -> base_index_type {
+inline constexpr auto RingmapMatrixRow::window_end_index() const noexcept
+    -> base_index_type {
   return this->window_end_index_;
 }
 

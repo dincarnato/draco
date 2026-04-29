@@ -137,35 +137,32 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
   arma::vec dataEigenVals;
   arma::vec dataEigenGaps;
   arma::mat adjacency;
-  auto initialData = *ringmapData;
+  auto filteredData = *ringmapData;
   std::vector<unsigned> filteredToUnfilteredBases(
-      initialData.getSequence().size());
-  initialData.filterBases();
+      filteredData.getSequence().size());
+  filteredData.filterBases();
+  filteredData.filterReads();
 
-  {
-    auto filteredData = initialData;
-    filteredData.filterReads();
-    for (auto [filteredIndex, unfilteredIndex] :
-         filteredData.getFilteredToNonFilteredMap()) {
-      assert(filteredIndex < filteredToUnfilteredBases.size());
-      filteredToUnfilteredBases[filteredIndex] = unfilteredIndex;
-    }
-
-    if (filteredData.size() < args->min_filtered_reads()) {
-      return {LogData{log_data::NotEnoughReads{.reads = filteredData.size()}}};
-    } else if (filteredData.data().cols_size() < args->min_bases_size()) {
-      return {LogData{log_data::NotEnoughBases{
-          .bases = filteredData.data().cols_size(),
-      }}};
-    }
-
-    std::tie(dataEigenVecs, dataEigenVals, dataEigenGaps, adjacency) =
-        calculateEigenGaps(filteredData);
-    assert(dataEigenGaps.size() > 1);
-
-    if (arma::all(dataEigenGaps == 0))
-      return {LogData{log_data::AllZeroEigenGaps{}}};
+  for (auto [filteredIndex, unfilteredIndex] :
+       filteredData.getFilteredToNonFilteredMap()) {
+    assert(filteredIndex < filteredToUnfilteredBases.size());
+    filteredToUnfilteredBases[filteredIndex] = unfilteredIndex;
   }
+
+  if (filteredData.size() < args->min_filtered_reads()) {
+    return {LogData{log_data::NotEnoughReads{.reads = filteredData.size()}}};
+  } else if (filteredData.data().cols_size() < args->min_bases_size()) {
+    return {LogData{log_data::NotEnoughBases{
+        .bases = filteredData.data().cols_size(),
+    }}};
+  }
+
+  std::tie(dataEigenVecs, dataEigenVals, dataEigenGaps, adjacency) =
+      calculateEigenGaps(filteredData);
+  assert(dataEigenGaps.size() > 1);
+
+  if (arma::all(dataEigenGaps == 0))
+    return {LogData{log_data::AllZeroEigenGaps{}}};
 
   assert(dataEigenGaps.size() > 1);
   const auto useful_eigengaps = std::min(
@@ -197,7 +194,7 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
       return std::make_tuple(0u, std::optional<unsigned>());
     }
   })();
-  assert(initialData.size() != 0);
+  assert(filteredData.size() != 0);
 
   for (unsigned permutation = 0;
        permutation < args->max_permutations() and
@@ -206,10 +203,8 @@ auto Ptba::run() const noexcept(false) -> PtbaResult {
         eigenGapIndex <= valid_eigengap_index.value() +
                              args->extended_search_eigengaps() + 1);
        ++permutation) {
-    RingmapData perturbedData = initialData;
+    RingmapData perturbedData = filteredData;
     perturbedData.perturb();
-    perturbedData.filterBases();
-    perturbedData.filterReads();
 
     if (perturbedData.size() < args->min_filtered_reads()) {
       logger::on_debug_level([&]() {

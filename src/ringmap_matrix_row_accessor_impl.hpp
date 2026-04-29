@@ -400,11 +400,3 @@ bool operator!=(ringmap_matrix::row_type const &lhs,
                 RingmapMatrixRowAccessor<M> const &rhs) noexcept {
   return lhs != *rhs.row;
 }
-
-template <typename Matrix>
-template <typename, typename>
-constexpr void RingmapMatrixRowAccessor<Matrix>::set_begin_end_indices(
-    ringmap_matrix::base_index_type begin_index,
-    ringmap_matrix::base_index_type end_index) noexcept {
-  row->set_begin_end_indices(begin_index, end_index);
-}

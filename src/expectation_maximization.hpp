@@ -3,17 +3,13 @@
 #include "expectation_maximization/responsibilities.hpp"
 #include "weighted_clusters.hpp"
 
-#include <concepts>
-#include <iterator>
 #include <random>
-#include <ranges>
 #include <type_traits>
 #include <variant>
 #include <vector>
 
 struct CompactRingmap;
 struct CompactRingmapRow;
-struct CompactRingmapIterator;
 struct Args;
 
 namespace expectation_maximization {
@@ -43,23 +39,13 @@ struct ExpectationMaximization {
    * Writes to `assignments` the number of reads assigned to each cluster based
    * on the weights and the priors.
    *
-   * `ringmap_rows` must be not empty and all the rows must have the same set of
-   * indices.
-   *
    * `assignments` represents the output for the assignments. Its length must
    * be equal to the number of clusters.
    *
    * `buffer` is just a temporary buffer for calculations. Its length must be
    * equal to the number of clusters.
    */
-  template <typename R>
-    requires std::ranges::range<std::remove_cvref_t<R>> and
-             std::same_as<std::ranges::range_value_t<std::remove_cvref_t<R>>,
-                          CompactRingmapRow>
-  void read_assignment(R &&ringmap_rows, std::span<std::uint32_t> assignments,
-                       std::span<double> buffer, std::mt19937 &rng) const;
-  void read_assignment(CompactRingmapIterator ringmap_rows_begin,
-                       CompactRingmapIterator ringmap_rows_end,
+  void read_assignment(CompactRingmapRow const &ringmap_row,
                        std::span<std::uint32_t> assignments,
                        std::span<double> buffer, std::mt19937 &rng) const;
 
@@ -141,18 +127,6 @@ ExpectationMaximization::ExpectationMaximization(CompactRingmap const &ringmap,
                   SpanFormatter(priors_));
     break;
   }
-}
-
-template <typename R>
-  requires std::ranges::range<std::remove_cvref_t<R>> and
-           std::same_as<std::ranges::range_value_t<std::remove_cvref_t<R>>,
-                        CompactRingmapRow>
-void ExpectationMaximization::read_assignment(
-    R &&ringmap_rows, std::span<std::uint32_t> assignments,
-    std::span<double> buffer, std::mt19937 &rng) const {
-  return read_assignment(std::ranges::begin(std::forward<R>(ringmap_rows)),
-                         std::ranges::end(std::forward<R>(ringmap_rows)),
-                         assignments, buffer, rng);
 }
 
 } // namespace expectation_maximization

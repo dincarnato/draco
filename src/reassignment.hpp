@@ -64,7 +64,7 @@ struct HandleFractionedReads {
 };
 
 struct ReweightAndReassignWithExpectationMaximizationIteration {
-  RingmapData const *ringmap;
+  RingmapData const *filtered_ringmap;
   results::Window *window;
   std::mt19937 *rng;
   std::vector<std::uint32_t> *assignments_per_cluster;

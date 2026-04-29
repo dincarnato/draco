@@ -1,7 +1,5 @@
 #include "compact_ringmap.hpp"
-#include "logger.hpp"
 #include "ringmap_matrix.hpp"
-#include "span_formatter.hpp"
 #include <algorithm>
 #include <compare>
 #include <iterator>
@@ -22,17 +20,6 @@ CompactRingmap::CompactRingmap(RingmapMatrix const &ringmap_matrix)
            std::views::zip(std::views::iota(static_cast<std::uint32_t>(0)),
                            ringmap_matrix.rows());
        auto &&[row_index, row] : rows) {
-    if (not row.is_valid()) {
-      logger::error("Invalid row. row_index={}, original_begin_index={}, "
-                    "original_end_index={}, "
-                    "window_begin_index={}, window_end_index={}, indices={}",
-                    row_index, row.original_begin_index(),
-                    row.original_end_index(), row.window_begin_index(),
-                    row.window_end_index(),
-                    SpanFormatter(row.modifiedIndices()));
-      std::terminate();
-    }
-    assert(row.is_valid());
     auto modified_indices = RingmapMatrixRowHelper(row.modifiedIndices());
     max_modifications = std::max(
         max_modifications,

@@ -199,7 +199,7 @@ void collapse_outlayer_clusters(std::vector<unsigned> &windows_n_clusters,
 void assign_reads_to_clusters(
     results::Window &window,
     RingmapData::clusters_assignment_type &&clusters_assignment,
-    RingmapData const &ringmap, RingmapData const *filteredRingmap);
+    RingmapData const &ringmap, RingmapData const &filteredRingmap);
 
 void dump_assignments(results::Transcript const &transcript,
                       results::Window &window, RingmapData const &ringmap,
@@ -796,7 +796,7 @@ struct HandleTranscripts {
 
                 assign_reads_to_clusters(
                     window, std::move(std::get<2>(fractions_result)), ringmap,
-                    &filtered_ringmap);
+                    filtered_ringmap);
 
                 if (not args.assignments_dump_directory().empty()) {
                   std::optional<std::size_t> usable_replicate_index;

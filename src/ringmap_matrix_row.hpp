@@ -4,7 +4,6 @@
 #include "ringmap_matrix_traits.hpp"
 
 #include <algorithm>
-#include <cassert>
 #include <concepts>
 #include <limits>
 #include <ranges>
@@ -69,11 +68,6 @@ struct RingmapMatrixRow : std::vector<ringmap_matrix::base_index_type> {
 
   constexpr void copy_begin_end_indices(auto const &other_row) noexcept;
   constexpr void copy_window_begin_end_indices(auto const &window) noexcept;
-  constexpr void set_begin_end_indices(base_index_type begin_index,
-                                       base_index_type end_index) noexcept;
-  constexpr void
-  set_window_begin_end_indices(base_index_type window_begin_index,
-                               base_index_type window_end_index) noexcept;
 
   constexpr bool is_valid() const noexcept;
 
@@ -244,18 +238,4 @@ inline constexpr bool RingmapMatrixRow::is_valid() const noexcept {
            return base_index + this->window_begin_index_ >= begin_index and
                   base_index + this->window_begin_index_ < min_end_index;
          });
-}
-
-inline constexpr void
-RingmapMatrixRow::set_begin_end_indices(base_index_type begin_index,
-                                        base_index_type end_index) noexcept {
-  begin_index_ = begin_index;
-  end_index_ = end_index;
-}
-
-inline constexpr void RingmapMatrixRow::set_window_begin_end_indices(
-    base_index_type window_begin_index,
-    base_index_type window_end_index) noexcept {
-  window_begin_index_ = window_begin_index;
-  window_end_index_ = window_end_index;
 }

@@ -181,36 +181,22 @@ Result ExpectationMaximization::run() noexcept {
 }
 
 void ExpectationMaximization::read_assignment(
-    CompactRingmapIterator ringmap_rows_begin,
-    CompactRingmapIterator ringmap_rows_end,
-    std::span<std::uint32_t> assignments, std::span<double> buffer,
-    std::mt19937 &rng) const {
+    CompactRingmapRow const &ringmap_row, std::span<std::uint32_t> assignments,
+    std::span<double> buffer, std::mt19937 &rng) const {
   assert(std::size(assignments) == weights_->getClustersSize());
-  assert(ringmap_rows_begin != ringmap_rows_end);
-  auto modified_indices = (*ringmap_rows_begin).indices();
-  auto ringmap_rows =
-      std::ranges::subrange(ringmap_rows_begin, ringmap_rows_end);
-  assert(
-      std::ranges::all_of(ringmap_rows | std::views::drop(1), [&](auto &&row) {
-        return std::ranges::equal(row.indices(), modified_indices);
-      }));
 
-  calc_responsibilities(ringmap_rows[0], buffer, *weights_, priors_);
-  auto total_count = std::ranges::fold_left(
-      ringmap_rows |
-          std::views::transform([](auto &&row) { return row.count(); }),
-      static_cast<std::uint32_t>(0), std::plus<>{});
+  calc_responsibilities(ringmap_row, buffer, *weights_, priors_);
 
   for (auto &&[assignment, probability] :
        std::views::zip(assignments, buffer)) {
     assignment = static_cast<std::uint32_t>(
-        std::round(static_cast<double>(total_count) * probability));
+        std::round(static_cast<double>(ringmap_row.count()) * probability));
   }
 
   auto total_assignments = std::ranges::fold_left(
       assignments, static_cast<std::uint32_t>(0), std::plus{});
   auto assignments_difference =
-      static_cast<std::int32_t>(static_cast<std::int64_t>(total_count) -
+      static_cast<std::int32_t>(static_cast<std::int64_t>(ringmap_row.count()) -
                                 static_cast<std::int64_t>(total_assignments));
   if (assignments_difference != 0) {
     std::uniform_int_distribution<std::uint8_t> chooser(
@@ -230,7 +216,7 @@ void ExpectationMaximization::read_assignment(
   }
 
   assert(std::ranges::fold_left(assignments, static_cast<std::uint32_t>(0),
-                                std::plus{}) == total_count);
+                                std::plus{}) == ringmap_row.count());
 }
 
 } // namespace expectation_maximization

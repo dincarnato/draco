@@ -129,7 +129,8 @@ void ExpectationMaximization::maximization() noexcept {
        std::views::zip(weights_buffer_clusters, weights_->clusters(), priors_,
                        coverages_buffer_.clusters())) {
     if (cluster_responsibility_count < 1e-12) {
-      std::ranges::fill(weights_cluster, 0.5f);
+      std::ranges::fill(weights_cluster,
+                        1.f / static_cast<float>(weights_->getClustersSize()));
     } else {
       for (auto &&[tmp_weight, weight, coverage] : std::views::zip(
                *weights_buffer_cluster, weights_cluster, *coverages_cluster)) {
@@ -137,6 +138,10 @@ void ExpectationMaximization::maximization() noexcept {
           auto new_weight = (tmp_weight + 1e-6) / (coverage + 2e-6);
           weight =
               std::clamp(static_cast<float>(new_weight), 1e-6f, 1.f - 1e-6f);
+        } else {
+          std::ranges::fill(
+              weights_cluster,
+              1.f / static_cast<float>(weights_->getClustersSize()));
         }
       }
     }

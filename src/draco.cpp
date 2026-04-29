@@ -457,7 +457,7 @@ void set_uninformative_clusters_to_surrounding(
 void assign_reads_to_clusters(
     results::Window &window,
     RingmapData::clusters_assignment_type &&clusters_assignment,
-    RingmapData const &ringmap, RingmapData const &filteredRingmap) {
+    RingmapData const &ringmap, RingmapData const *filteredRingmap) {
   if (not window.bases_coverages) {
     window.bases_coverages = std::vector<std::vector<unsigned>>{};
   }
@@ -470,9 +470,13 @@ void assign_reads_to_clusters(
 
   auto original_indices_map =
       ([&] -> std::optional<std::vector<unsigned> const *> {
-        auto modifications_filter = filteredRingmap.getModificationsFilter();
+        if (filteredRingmap == nullptr) {
+          return std::nullopt;
+        }
+
+        auto modifications_filter = filteredRingmap->getModificationsFilter();
         if (modifications_filter > 0) {
-          return std::optional(&filteredRingmap.getReadsMap());
+          return std::optional(&filteredRingmap->getReadsMap());
         } else {
           return std::nullopt;
         }

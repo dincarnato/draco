@@ -89,7 +89,7 @@ void Reassignment::reweight_and_reassign_with_expectation_maximization() const {
             reweight_and_reassign_with_expectation_maximization_iteration(
                 reassignment::
                     ReweightAndReassignWithExpectationMaximizationIteration{
-                        .filtered_ringmap = &filtered_ringmap,
+                        .ringmap = &ringmap,
                         .window = &window,
                         .rng = &rng,
                         .assignments_per_cluster = &assignments_per_cluster,
@@ -101,7 +101,7 @@ void Reassignment::reweight_and_reassign_with_expectation_maximization() const {
 
         reassignment::HandleFractionedReads{
             .window = &window,
-            .filtered_ringmap = &filtered_ringmap,
+            .filtered_ringmap = nullptr,
             .ringmap = &ringmap,
             .stop = stop,
             .transcript_result = transcript_result,
@@ -122,18 +122,10 @@ reassignment::FractionResult
 Reassignment::reweight_and_reassign_with_expectation_maximization_iteration(
     reassignment::ReweightAndReassignWithExpectationMaximizationIteration args)
     const {
-  auto reduced_weights =
-      args.window->weighted_clusters.create_reduced(*args.filtered_ringmap);
-  auto &usable_weights = ([&] -> WeightedClusters & {
-    if (reduced_weights.has_value()) {
-      return *reduced_weights;
-    } else {
-      return args.window->weighted_clusters;
-    }
-  })();
-  CompactRingmap compact_ringmap(args.filtered_ringmap->data());
+  auto &weighted_clusters = args.window->weighted_clusters;
+  CompactRingmap compact_ringmap(args.ringmap->data());
   ExpectationMaximization expectation_maximization(
-      compact_ringmap, usable_weights, *this->args, *args.rng);
+      compact_ringmap, weighted_clusters, *this->args, *args.rng);
   auto em_result = expectation_maximization.run();
   std::visit(
       [&](auto &&convergence) {
@@ -160,31 +152,47 @@ Reassignment::reweight_and_reassign_with_expectation_maximization_iteration(
       },
       em_result.convergence);
 
-  if (reduced_weights.has_value()) {
-    args.window->weighted_clusters.copy_from_reduced(*reduced_weights,
-                                                     *args.filtered_ringmap);
-  }
-
   RingmapData::clusters_assignment_type clusters_assignment;
   RingmapData::clusters_pattern_type patterns(
-      usable_weights.getClustersSize(),
-      RingmapData::cluster_pattern_type(usable_weights.getElementsSize(), 0));
-  args.clusters_reads_count->resize(usable_weights.getClustersSize());
+      weighted_clusters.getClustersSize(),
+      RingmapData::cluster_pattern_type(weighted_clusters.getElementsSize(),
+                                        0));
+  args.clusters_reads_count->resize(weighted_clusters.getClustersSize());
   std::ranges::fill(*args.clusters_reads_count, static_cast<std::uint32_t>(0));
 
-  args.assignments_per_cluster->resize(usable_weights.getClustersSize());
-  args.buffer->resize(usable_weights.getClustersSize());
+  args.assignments_per_cluster->resize(weighted_clusters.getClustersSize());
+  args.buffer->resize(weighted_clusters.getClustersSize());
 
 #ifndef NDEBUG
   std::uint32_t skipped_reads = 0;
 #endif
 
-  for (auto &&row : compact_ringmap) {
-    expectation_maximization.read_assignment(row, *args.assignments_per_cluster,
-                                             *args.buffer, *args.rng);
-    args.mapped_rows->resize(std::size(row.mapped_rows()));
-    std::ranges::copy(row.mapped_rows(), std::ranges::begin(*args.mapped_rows));
+  auto rows_iter = std::ranges::begin(compact_ringmap);
+  while (rows_iter != std::ranges::end(compact_ringmap)) {
+    auto rows_range_end = std::ranges::find_if(
+        std::ranges::next(rows_iter), std::ranges::end(compact_ringmap),
+        [&](auto &&row) {
+          return not std::ranges::equal(row.indices(), (*rows_iter).indices());
+        });
+
+    CompactRingmapRange rows(rows_iter, rows_range_end);
+    expectation_maximization.read_assignment(
+        rows, *args.assignments_per_cluster, *args.buffer, *args.rng);
+    auto mapped_rows_size =
+        std::ranges::fold_left(rows | std::views::transform([](auto &&row) {
+                                 return std::size(row.mapped_rows());
+                               }),
+                               0uz, std::plus{});
+
+    args.mapped_rows->resize(mapped_rows_size);
+
+    auto args_mapped_rows_iter = std::ranges::begin(*args.mapped_rows);
+    for (auto &&row : rows) {
+      args_mapped_rows_iter =
+          std::ranges::copy(row.mapped_rows(), args_mapped_rows_iter).out;
+    }
     std::ranges::shuffle(*args.mapped_rows, *args.rng);
+    rows_iter = rows_range_end;
 
     std::uint32_t used_rows = 0;
     for (auto [cluster_index, assignments_count, cluster_patterns] :
@@ -196,13 +204,15 @@ Reassignment::reweight_and_reassign_with_expectation_maximization_iteration(
       std::ranges::sort(cluster_mapped_rows);
 
       for (auto read_index : cluster_mapped_rows) {
-        auto read = args.filtered_ringmap->data().row(read_index);
-        if (read.end_index() - read.begin_index() < window_size) {
+        auto read = args.ringmap->data().row(read_index);
+        if (read.original_end_index() - read.original_begin_index() <
+            window_size) {
 #ifndef NDEBUG
           ++skipped_reads;
 #endif
-          logger::trace("Skipping read {}-{}, shorter than a window size",
-                        read.begin_index() + 1, read.end_index());
+          logger::trace("Skipping read {}-{}, shorter than a window size ",
+                        read.original_begin_index() + 1,
+                        read.original_end_index());
           continue;
         }
 
@@ -212,9 +222,9 @@ Reassignment::reweight_and_reassign_with_expectation_maximization_iteration(
             return iter;
           } else {
             return clusters_assignment
-                .emplace(
-                    read.modifiedIndices(),
-                    ReadClustersAssignments(usable_weights.getClustersSize()))
+                .emplace(read.modifiedIndices(),
+                         ReadClustersAssignments(
+                             weighted_clusters.getClustersSize()))
                 .first;
           }
         })();
@@ -250,7 +260,7 @@ Reassignment::reweight_and_reassign_with_expectation_maximization_iteration(
              static_cast<std::uint32_t>(0), std::plus{}));
 
   RingmapData::clusters_fraction_type fractions(
-      usable_weights.getClustersSize());
+      weighted_clusters.getClustersSize());
   auto total_reads_count = std::ranges::fold_left(
       *args.clusters_reads_count, static_cast<std::uint32_t>(0), std::plus{});
   std::ranges::transform(*args.clusters_reads_count,
@@ -347,10 +357,12 @@ void HandleFractionedReads::operator()() {
   if (not *stop)
     return;
 
-  *window->patterns = filtered_ringmap->remapPatterns(*window->patterns);
+  if (filtered_ringmap != nullptr) {
+    *window->patterns = filtered_ringmap->remapPatterns(*window->patterns);
+  }
 
   assign_reads_to_clusters(*window, std::move(std::get<2>(fractions_result)),
-                           *ringmap, *filtered_ringmap);
+                           *ringmap, filtered_ringmap);
 
   if (not args->assignments_dump_directory().empty()) {
     std::optional<std::size_t> usable_replicate_index;

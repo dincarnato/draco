@@ -42,6 +42,8 @@ protected:
 };
 
 struct CompactRingmapIterator {
+  friend struct CompactRingmapRange;
+
   using value_type = CompactRingmapRow;
   using self = CompactRingmapIterator;
 
@@ -130,6 +132,30 @@ protected:
 };
 
 static_assert(std::random_access_iterator<CompactRingmapIterator>);
+
+struct CompactRingmapRange {
+  using iterator = CompactRingmapIterator;
+
+  constexpr CompactRingmapRange() noexcept = default;
+  constexpr CompactRingmapRange(iterator begin, iterator end) noexcept
+      : compact_ringmap_(begin.compact_ringmap_), begin_row_(begin.row_),
+        end_row_(end.row_) {
+    assert(begin.compact_ringmap_ == end.compact_ringmap_);
+  }
+
+  constexpr iterator begin() const noexcept {
+    return CompactRingmapIterator(*compact_ringmap_, begin_row_);
+  }
+
+  constexpr iterator end() const noexcept {
+    return CompactRingmapIterator(*compact_ringmap_, end_row_);
+  }
+
+protected:
+  CompactRingmap const *compact_ringmap_{};
+  std::uint32_t begin_row_{};
+  std::uint32_t end_row_{};
+};
 
 /**
  * A compact version of the modifications matrix

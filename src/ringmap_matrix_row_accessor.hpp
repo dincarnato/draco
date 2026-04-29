@@ -91,6 +91,12 @@ public:
             typename = std::enable_if_t<not std::is_const_v<M>>>
   void copy_window_begin_end_indices(auto const &other) const noexcept;
 
+  template <typename M = Matrix,
+            typename = std::enable_if_t<not std::is_const_v<M>>>
+  constexpr void set_begin_end_indices(
+      ringmap_matrix::base_index_type original_begin_index,
+      ringmap_matrix::base_index_type original_end_index) noexcept;
+
   iterator begin() const noexcept;
   iterator end() const noexcept;
 

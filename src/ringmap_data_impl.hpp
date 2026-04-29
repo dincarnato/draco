@@ -1,6 +1,8 @@
 #pragma once
 
+#include "logger.hpp"
 #include "ringmap_data.hpp"
+#include "span_formatter.hpp"
 #include <algorithm>
 #include <cassert>
 #include <iterator>
@@ -146,20 +148,25 @@ void RingmapData::filter_bases_on_replicates_inner(R &ringmap_data_range,
     }
   })();
 
+  auto get_old_base_index_from_new = [&](auto const base_index) {
+    if (first_ringmap_data.basesFiltered) {
+      auto const old_col_to_new_iter = std::ranges::find_if(
+          first_ringmap_data.oldColsToNew, [&](const auto old_and_new) {
+            return old_and_new.second == base_index;
+          });
+
+      assert(old_col_to_new_iter !=
+             std::ranges::end(first_ringmap_data.oldColsToNew));
+      return old_col_to_new_iter->first;
+    } else {
+      return base_index;
+    }
+  };
+
   auto filtered_bases =
       allowed_bases | std::views::transform([&](auto const base_index) {
-        if (first_ringmap_data.basesFiltered) {
-          auto const old_col_to_new_iter = std::ranges::find_if(
-              first_ringmap_data.oldColsToNew, [&](const auto old_and_new) {
-                return old_and_new.second == base_index;
-              });
-
-          assert(old_col_to_new_iter !=
-                 std::ranges::end(first_ringmap_data.oldColsToNew));
-          return std::make_pair(base_index, old_col_to_new_iter->first);
-        } else {
-          return std::make_pair(base_index, base_index);
-        }
+        return std::make_pair(base_index,
+                              get_old_base_index_from_new(base_index));
       }) |
       std::views::filter([&](auto const &pair) {
         auto const original_base_index = std::get<0>(pair);
@@ -200,8 +207,93 @@ void RingmapData::filter_bases_on_replicates_inner(R &ringmap_data_range,
 
       for (auto &&[filtered_row, data_row] :
            std::views::zip(filtered_data.rows(), ringmap_data.m_data.rows())) {
-        filtered_row.copy_begin_end_indices(data_row);
+
+        auto begin_index = data_row.begin_index();
+        auto window_begin_index = data_row.window_begin_index();
+        if (begin_index !=
+            std::numeric_limits<ringmap_matrix::base_index_type>::max()) {
+          assert(begin_index >= window_begin_index);
+
+          unsigned old_base_index =
+              get_old_base_index_from_new(begin_index - window_begin_index);
+          auto iter = std::ranges::partition_point(
+              old_cols_to_new,
+              [&](auto index) { return index < old_base_index; },
+              [&](auto &&pair) { return pair.first; });
+          if (iter == std::ranges::end(old_cols_to_new)) {
+            begin_index =
+                std::numeric_limits<ringmap_matrix::base_index_type>::max();
+          } else {
+            begin_index = iter->second + window_begin_index;
+          }
+        }
+
+        auto end_index = data_row.end_index();
+        if (end_index !=
+            std::numeric_limits<ringmap_matrix::base_index_type>::min()) {
+          assert(end_index >= window_begin_index);
+          end_index -= window_begin_index;
+
+          end_index =
+              window_begin_index + ([&] {
+                unsigned reverse_mapped;
+                if (ringmap_data.basesFiltered) {
+                  auto iter = std::ranges::partition_point(
+                      ringmap_data.oldColsToNew,
+                      [&](auto index) { return index < end_index; },
+                      [&](auto &&pair) { return pair.second; });
+                  if (iter == std::ranges::end(ringmap_data.oldColsToNew)) {
+                    return 0u;
+                  }
+
+                  // The partition point is at `end_index` or more, we want the
+                  // element before in order to know which base we have to
+                  // search in order to find the past-one index
+                  reverse_mapped = std::ranges::prev(iter)->first;
+                } else if (end_index > 0) {
+                  reverse_mapped = end_index - 1;
+                } else {
+                  return 0u;
+                }
+
+                auto iter = std::ranges::partition_point(
+                    old_cols_to_new,
+                    [&](auto index) { return index <= reverse_mapped; },
+                    [](auto &&pair) { return pair.first; });
+                if (iter == std::ranges::begin(old_cols_to_new)) {
+                  return 0u;
+                }
+
+                return std::ranges::prev(iter)->second + 1;
+              })();
+        }
+
         filtered_row.copy_window_begin_end_indices(data_row);
+        filtered_row.set_begin_end_indices(begin_index, end_index);
+
+        if (not filtered_row.is_valid() or
+            not(end_index > begin_index or
+                std::empty(filtered_row.modifiedIndices()))) {
+          logger::error(
+              "data_row: original_begin_index={}, original_end_index={}, "
+              "window_begin_index={}, "
+              "window_end_index={}, modified_indices={}",
+              data_row.original_begin_index(), data_row.original_end_index(),
+              data_row.window_begin_index(), data_row.window_end_index(),
+              SpanFormatter(data_row.modifiedIndices()));
+          logger::error(
+              "filtered_row: original_begin_index={}, original_end_index={}, "
+              "window_begin_index={}, "
+              "window_end_index={}, modified_indices={}",
+              filtered_row.original_begin_index(),
+              filtered_row.original_end_index(),
+              filtered_row.window_begin_index(),
+              filtered_row.window_end_index(),
+              SpanFormatter(filtered_row.modifiedIndices()));
+        }
+        assert(filtered_row.is_valid());
+        assert(end_index > begin_index or
+               std::empty(filtered_row.modifiedIndices()));
       }
 
       ringmap_data.m_data = std::move(filtered_data);
@@ -222,13 +314,13 @@ void RingmapData::filter_bases_on_replicates_inner(R &ringmap_data_range,
     auto const ringmap_data_size = std::ranges::size(ringmap_data_range);
     for (auto &ringmap_data :
          ringmap_data_range | std::views::take(ringmap_data_size - 1)) {
-      ringmap_data.oldColsToNew = old_cols_to_new;
       update_ringmap_data(ringmap_data);
+      ringmap_data.oldColsToNew = old_cols_to_new;
     }
 
     auto &last_ringmap_data =
         *std::ranges::prev(std::ranges::end(ringmap_data_range));
-    last_ringmap_data.oldColsToNew = std::move(old_cols_to_new);
     update_ringmap_data(last_ringmap_data);
+    last_ringmap_data.oldColsToNew = std::move(old_cols_to_new);
   }
 }

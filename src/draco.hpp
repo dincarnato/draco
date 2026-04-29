@@ -477,101 +477,94 @@ struct HandleTranscripts {
                 n_windows);
           };
 
-      {
-        auto windows_n_clusters_iter = std::cbegin(windows_n_clusters);
+      tbb::parallel_for(0uz, n_windows, [&](auto window_index) {
+        assert(windows_n_clusters[window_index] <=
+               std::numeric_limits<std::uint8_t>::max());
+        auto n_clusters =
+            static_cast<std::uint8_t>(windows_n_clusters[window_index]);
+        auto replicates_filtered_data =
+            std::views::zip(ringmaps_data, ptba_on_replicate_results,
+                            std::views::iota(0uz)) |
+            std::views::transform([&](auto &&tuple) {
+              auto &&[ringmap_data, ptba_on_replicate_result, replicate_index] =
+                  std::move(tuple);
+              auto &window = ptba_on_replicate_result.windows[window_index];
+              std::vector<unsigned> window_reads_indices;
+              auto window_ringmap_data = ringmap_data->get_new_range(
+                  window.start_base, window.start_base + window_size,
+                  &window_reads_indices);
 
-        for (auto window_index = 0uz; window_index < n_windows;
-             ++window_index, ++windows_n_clusters_iter) {
+              assert(window_reads_indices.size() ==
+                     window_ringmap_data.data().rows_size());
+              assert(std::is_sorted(std::begin(window_reads_indices),
+                                    std::end(window_reads_indices)));
+              assert(std::unique(std::begin(window_reads_indices),
+                                 std::end(window_reads_indices)) ==
+                     std::end(window_reads_indices));
+              window.coverages = window_ringmap_data.getBaseCoverages();
 
-          assert(*windows_n_clusters_iter <=
-                 std::numeric_limits<std::uint8_t>::max());
-          auto n_clusters = static_cast<std::uint8_t>(*windows_n_clusters_iter);
+              assert(window_reads_indices.size() ==
+                     window_ringmap_data.data().rows_size());
 
-          auto replicates_filtered_data =
-              std::views::zip(ringmaps_data, ptba_on_replicate_results,
-                              std::views::iota(0uz)) |
-              std::views::transform([&](auto &&tuple) {
-                auto &&[ringmap_data, ptba_on_replicate_result,
-                        replicate_index] = std::move(tuple);
-                auto &window = ptba_on_replicate_result.windows[window_index];
-                std::vector<unsigned> window_reads_indices;
-                auto window_ringmap_data = ringmap_data->get_new_range(
-                    window.start_base, window.start_base + window_size,
-                    &window_reads_indices);
+              replicates_windows_reads_indices(replicate_index, window_index) =
+                  std::move(window_reads_indices);
 
-                assert(window_reads_indices.size() ==
-                       window_ringmap_data.data().rows_size());
-                assert(std::is_sorted(std::begin(window_reads_indices),
-                                      std::end(window_reads_indices)));
-                assert(std::unique(std::begin(window_reads_indices),
-                                   std::end(window_reads_indices)) ==
-                       std::end(window_reads_indices));
-                window.coverages = window_ringmap_data.getBaseCoverages();
+              return window_ringmap_data;
+            }) |
+            std::views::as_rvalue | std::ranges::to<std::vector>();
 
-                assert(window_reads_indices.size() ==
-                       window_ringmap_data.data().rows_size());
+        RingmapData::filter_bases_on_replicates(replicates_filtered_data);
+        for (auto &filtered_data : replicates_filtered_data) {
+          filtered_data.filterReads();
+        }
+        RingmapData::filter_bases_on_replicates(replicates_filtered_data);
 
-                replicates_windows_reads_indices(replicate_index,
-                                                 window_index) =
-                    std::move(window_reads_indices);
+        typename RingmapData::clusters_pattern_type patterns;
+        for (;;) {
+          if (n_clusters > 1 and
+              std::ranges::any_of(replicates_filtered_data,
+                                  [](auto const &filtered_data) {
+                                    return filtered_data.data().rows_size() > 0;
+                                  })) {
+            auto replicates_covariance =
+                replicates_filtered_data |
+                std::views::filter([](const auto &filtered_data) {
+                  return filtered_data.data().rows_size() > 0;
+                }) |
+                std::views::transform([](const auto &filtered_data) {
+                  auto base_weights = filtered_data.getBaseWeights().lock();
+                  assert(base_weights);
+                  return filtered_data.data().covariance(*base_weights);
+                }) |
+                std::views::as_rvalue | std::ranges::to<std::vector>();
 
-                return window_ringmap_data;
-              }) |
-              std::views::as_rvalue | std::ranges::to<std::vector>();
+            auto graphCutResults =
+                get_weighted_clusters(n_clusters, replicates_covariance,
+                                      transcript_result, window_index);
 
-          RingmapData::filter_bases_on_replicates(replicates_filtered_data);
-          for (auto &filtered_data : replicates_filtered_data) {
-            filtered_data.filterReads();
-          }
-          RingmapData::filter_bases_on_replicates(replicates_filtered_data);
+            std::ranges::for_each(
+                std::views::zip(replicates_filtered_data,
+                                ptba_on_replicate_results),
+                [&](auto pair) {
+                  auto &&[filtered_data, ptba_on_replicate_result] = pair;
+                  auto clusters =
+                      filtered_data.getUnfilteredWeights(graphCutResults);
 
-          typename RingmapData::clusters_pattern_type patterns;
-          for (;;) {
-            if (n_clusters > 1 and
-                std::ranges::any_of(
-                    replicates_filtered_data, [](auto const &filtered_data) {
-                      return filtered_data.data().rows_size() > 0;
-                    })) {
-              auto replicates_covariance =
-                  replicates_filtered_data |
-                  std::views::filter([](const auto &filtered_data) {
-                    return filtered_data.data().rows_size() > 0;
-                  }) |
-                  std::views::transform([](const auto &filtered_data) {
-                    auto base_weights = filtered_data.getBaseWeights().lock();
-                    assert(base_weights);
-                    return filtered_data.data().covariance(*base_weights);
-                  }) |
-                  std::views::as_rvalue | std::ranges::to<std::vector>();
+                  assert(clusters.getElementsSize() == window_size);
+                  ptba_on_replicate_result.windows[window_index].weights =
+                      std::move(clusters);
+                });
 
-              auto graphCutResults =
-                  get_weighted_clusters(n_clusters, replicates_covariance,
-                                        transcript_result, window_index);
-
-              std::ranges::for_each(
-                  std::views::zip(replicates_filtered_data,
-                                  ptba_on_replicate_results),
-                  [&](auto pair) {
-                    auto &&[filtered_data, ptba_on_replicate_result] = pair;
-                    auto clusters =
-                        filtered_data.getUnfilteredWeights(graphCutResults);
-
-                    assert(clusters.getElementsSize() == window_size);
-                    ptba_on_replicate_result.windows[window_index].weights =
-                        std::move(clusters);
-                  });
-
-              break;
-            } else {
-              for (auto &ptba_on_replicate_result : ptba_on_replicate_results) {
-                ptba_on_replicate_result.windows[window_index].weights =
-                    WeightedClusters(window_size, n_clusters);
-              }
-              break;
+            break;
+          } else {
+            for (auto &ptba_on_replicate_result : ptba_on_replicate_results) {
+              ptba_on_replicate_result.windows[window_index].weights =
+                  WeightedClusters(window_size, n_clusters);
             }
+            break;
           }
         }
-      }
+      });
 
       std::ranges::for_each(
           std::views::zip(std::views::iota(0uz), ptba_on_replicate_results,

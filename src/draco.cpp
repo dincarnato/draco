@@ -758,62 +758,54 @@ ptba_on_replicate(std::size_t replicate_index, RingmapData const &ringmap_data,
   }
 
   std::vector<unsigned> windows_n_clusters(windows.size());
-  {
-    auto windows_iter = std::cbegin(windows);
-    auto const windows_end = std::cend(windows);
-    auto &&windows_n_clusters_iter = std::begin(windows_n_clusters);
+  tbb::parallel_for(0uz, windows.size(), [&](auto window_index) {
+    auto const &window = windows[window_index];
+    auto &window_n_clusters = windows_n_clusters[window_index];
 
-    for (; windows_iter < windows_end;
-         ++windows_iter, ++windows_n_clusters_iter) {
-      auto &&window = *windows_iter;
-      auto &&window_n_clusters = *windows_n_clusters_iter;
+    auto window_ringmap_data = ringmap_data.get_new_range(
+        window.start_base, window.start_base + window_size);
+    Ptba ptba(window_ringmap_data, args);
 
-      auto window_ringmap_data = ringmap_data.get_new_range(
-          window.start_base, window.start_base + window_size);
-      Ptba ptba(window_ringmap_data, args);
+    auto const result = ptba.run();
+    logger::on_debug_level(print_log_data, result.log_data, args, window,
+                           window_index, window_size, transcript_result,
+                           replicate_index);
 
-      auto const result = ptba.run();
-      logger::on_debug_level(print_log_data, result.log_data, args, window,
-                             static_cast<std::size_t>(std::distance(
-                                 std::cbegin(windows), windows_iter)),
-                             window_size, transcript_result, replicate_index);
+    assert(result.significantIndices.size() <=
+           std::numeric_limits<
+               std::remove_reference_t<decltype(window_n_clusters)>>::max());
+    window_n_clusters =
+        static_cast<std::remove_reference_t<decltype(window_n_clusters)>>(
+            result.significantIndices.size());
 
-      assert(result.significantIndices.size() <=
-             std::numeric_limits<
-                 std::remove_reference_t<decltype(window_n_clusters)>>::max());
-      window_n_clusters =
-          static_cast<std::remove_reference_t<decltype(window_n_clusters)>>(
-              result.significantIndices.size());
+    if (args.create_eigengaps_plots()) {
+      auto const [eigengaps_filename, perturbed_eigengaps_filename] = [&] {
+        std::array<std::string, 2> filenames;
+        auto const start_base = window.start_base + 1;
+        auto const end_base = window.start_base + window_size;
+        std::stringstream buf;
+        buf << "window_" << start_base << '-' << end_base << "_eigengaps.txt";
+        filenames[0] = buf.str();
 
-      if (args.create_eigengaps_plots()) {
-        auto const [eigengaps_filename, perturbed_eigengaps_filename] = [&] {
-          std::array<std::string, 2> filenames;
-          auto const start_base = window.start_base + 1;
-          auto const end_base = window.start_base + window_size;
-          std::stringstream buf;
-          buf << "window_" << start_base << '-' << end_base << "_eigengaps.txt";
-          filenames[0] = buf.str();
+        buf.str("");
+        buf << "window_" << start_base << '-' << end_base
+            << "_perturbed_eigengaps.txt";
+        filenames[1] = buf.str();
 
-          buf.str("");
-          buf << "window_" << start_base << '-' << end_base
-              << "_perturbed_eigengaps.txt";
-          filenames[1] = buf.str();
+        return filenames;
+      }();
 
-          return filenames;
-        }();
-
-        auto const result_dir =
-            fs::path(args.eigengaps_plots_root_dir()) /
-            std::format("{}_{}", transcript_result.name, replicate_index + 1);
-        fs::create_directory(result_dir);
-        Ptba::dumpEigenGaps(result.eigenGaps,
-                            (result_dir / eigengaps_filename).c_str());
-        Ptba::dumpPerturbedEigenGaps(
-            result.perturbedEigenGaps,
-            (result_dir / perturbed_eigengaps_filename).c_str());
-      }
+      auto const result_dir =
+          fs::path(args.eigengaps_plots_root_dir()) /
+          std::format("{}_{}", transcript_result.name, replicate_index + 1);
+      fs::create_directory(result_dir);
+      Ptba::dumpEigenGaps(result.eigenGaps,
+                          (result_dir / eigengaps_filename).c_str());
+      Ptba::dumpPerturbedEigenGaps(
+          result.perturbedEigenGaps,
+          (result_dir / perturbed_eigengaps_filename).c_str());
     }
-  }
+  });
 
   assert(std::size(windows_n_clusters) == std::size(windows));
   return PtbaOnReplicate{

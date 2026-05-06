@@ -24,6 +24,7 @@
 #include <span>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <vector>
 
 struct Window {
@@ -215,6 +216,19 @@ struct NWindowsAndPreciseOffset {
   std::size_t n_windows;
   double window_precise_offset;
 };
+
+namespace window_offset {
+struct Single {
+  unsigned value;
+};
+
+struct Multiple {
+  std::vector<unsigned> value;
+};
+} // namespace window_offset
+
+using WindowOffset =
+    std::variant<window_offset::Single, window_offset::Multiple>;
 
 constexpr NWindowsAndPreciseOffset
 get_n_windows_and_precise_offset(std::size_t transcript_size,

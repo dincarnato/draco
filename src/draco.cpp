@@ -15,6 +15,7 @@
 #include "windows_merger.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -1121,4 +1122,56 @@ unsigned get_min_max_read_size(
                }
              })
       .value_or(0);
+}
+
+double get_pre_collapsing_clusters_mean(
+    PtbaOnReplicate const &ptba_on_replicate,
+    std::span<const PreCollapsingClusters> pre_collapsing_clusters,
+    std::vector<std::uint16_t> &bases_clusters_buffer,
+    std::vector<std::uint16_t> &bases_count_buffer) noexcept {
+  auto const window_size = ptba_on_replicate.window_size;
+
+  auto begin_base_index = ptba_on_replicate.windows[0].start_base;
+  auto end_base_index =
+      ptba_on_replicate.windows[std::size(ptba_on_replicate.windows) - 1]
+          .start_base +
+      window_size;
+
+  auto buffers_size =
+      static_cast<std::size_t>(end_base_index - begin_base_index);
+  bases_clusters_buffer.assign(buffers_size, static_cast<std::uint16_t>(0));
+  bases_count_buffer.assign(buffers_size, static_cast<std::uint16_t>(0));
+
+  auto const &windows = ptba_on_replicate.windows;
+  assert(!std::empty(windows));
+  assert(std::size(windows) == std::size(pre_collapsing_clusters));
+
+  for (auto &&[window, window_pre_collapsing_clusters] :
+       std::views::zip(windows, pre_collapsing_clusters)) {
+    auto const n_clusters = window_pre_collapsing_clusters.n_clusters;
+
+    auto window_view = std::views::drop(window.start_base - begin_base_index) |
+                       std::views::take(window_size);
+    for (auto &acc_n_clusters : bases_clusters_buffer | window_view) {
+      acc_n_clusters += n_clusters;
+    }
+    for (auto &count : bases_count_buffer | window_view) {
+      ++count;
+    }
+  }
+
+  auto sum = std::ranges::fold_left(
+      std::views::zip(bases_clusters_buffer, bases_count_buffer) |
+          std::views::transform([](auto &&tuple) {
+            auto &&[total_n_clusters, count] = tuple;
+            if (count == 0) {
+              return 0.;
+            }
+
+            return static_cast<double>(total_n_clusters) /
+                   static_cast<double>(count);
+          }),
+      0., std::plus{});
+
+  return sum / static_cast<double>(buffers_size);
 }

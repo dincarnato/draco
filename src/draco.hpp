@@ -23,6 +23,7 @@
 #include <ranges>
 #include <span>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -299,6 +300,60 @@ struct WindowsInfo {
       start_base = transcript_size - window_size;
 
     return start_base;
+  }
+};
+
+struct WindowsInfoAllWindowSizes {
+  std::size_t transcript_size;
+  std::vector<unsigned> window_sizes;
+  WindowOffset window_offset;
+  std::vector<std::size_t> all_n_windows;
+  std::vector<double> window_precise_offsets;
+
+  static constexpr WindowsInfoAllWindowSizes
+  from_sizes_and_offset(std::size_t transcript_size,
+                        std::vector<unsigned> &&window_sizes,
+                        WindowOffset &&window_offset) noexcept {
+    auto n_windows_and_precise_offset = get_n_windows_and_precise_offsets(
+        transcript_size, window_sizes, window_offset);
+
+    return WindowsInfoAllWindowSizes{
+        .transcript_size = transcript_size,
+        .window_sizes = std::move(window_sizes),
+        .window_offset = std::move(window_offset),
+        .all_n_windows = std::move(n_windows_and_precise_offset.all_n_windows),
+        .window_precise_offsets =
+            std::move(n_windows_and_precise_offset.window_precise_offsets),
+    };
+  }
+
+  constexpr WindowsInfo
+  window_size_info(std::size_t window_size_index) const noexcept {
+    auto window_size = window_sizes[window_size_index];
+    auto window_offset = std::visit(
+        [&](auto const &window_offset) {
+          using window_offset_t = std::remove_cvref_t<decltype(window_offset)>;
+          if constexpr (std::is_same_v<window_offset_t,
+                                       window_offset::Single>) {
+            return window_offset.value;
+          } else if constexpr (std::is_same_v<window_offset_t,
+                                              window_offset::Multiple>) {
+            return window_offset.value[window_size_index];
+          } else {
+            static_assert(false);
+          }
+        },
+        this->window_offset);
+    auto n_windows = all_n_windows[window_size_index];
+    auto window_precise_offset = window_precise_offsets[window_size_index];
+
+    return WindowsInfo{
+        .transcript_size = transcript_size,
+        .window_size = window_size,
+        .window_offset = window_offset,
+        .n_windows = n_windows,
+        .window_precise_offset = window_precise_offset,
+    };
   }
 };
 

@@ -441,6 +441,13 @@ constexpr bool operator!=(string<N> const &lhs, string<M> const &rhs) noexcept {
   return not(lhs == rhs);
 }
 
+template <typename T> struct is_string : std::false_type {};
+template <std::size_t N> struct is_string<string<N>> : std::true_type {};
+template <typename T> constexpr bool is_string_v = is_string<T>::value;
+
+static_assert(is_string_v<string<3>>);
+static_assert(not is_string_v<unsigned>);
+
 namespace detail {
 
 template <typename T, typename = void> struct into_string_helper;

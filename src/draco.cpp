@@ -1044,6 +1044,62 @@ WindowsInfo get_windows_info(std::span<RingmapData const *const> ringmaps_data,
                                            window_offset);
 }
 
+NWindowsAndPreciseOffsets
+get_n_windows_and_precise_offsets(std::size_t transcript_size,
+                                  std::span<const unsigned> window_sizes,
+                                  WindowOffset const &window_offset) {
+  std::vector<std::size_t> all_n_windows;
+  std::vector<double> window_precise_offsets;
+
+  all_n_windows.reserve(std::size(window_sizes));
+  window_precise_offsets.reserve(std::size(window_sizes));
+
+  auto inner = [&](unsigned window_size, unsigned window_offset) {
+    assert(window_size <= transcript_size);
+
+    std::size_t n_windows = (transcript_size - window_size) / window_offset + 1;
+    if (n_windows * window_offset + window_size < transcript_size)
+      ++n_windows;
+
+    double window_precise_offset;
+    if (n_windows > 1) {
+      window_precise_offset =
+          static_cast<double>(transcript_size - window_size) /
+          static_cast<double>(n_windows - 1);
+    } else {
+      window_precise_offset = 0.;
+    }
+
+    all_n_windows.push_back(n_windows);
+    window_precise_offsets.push_back(window_precise_offset);
+  };
+
+  std::visit(
+      [&](auto const &window_offset) {
+        using window_offset_t = std::remove_cvref_t<decltype(window_offset)>;
+        if constexpr (std::is_same_v<window_offset_t, window_offset::Single>) {
+          for (auto window_size : window_sizes) {
+            inner(window_size, window_offset.value);
+          }
+        } else if constexpr (std::is_same_v<window_offset_t,
+                                            window_offset::Multiple>) {
+          assert(std::size(window_sizes) == std::size(window_offset.value));
+          for (auto [window_size, window_offset] :
+               std::views::zip(window_sizes, window_offset.value)) {
+            inner(window_size, window_offset);
+          }
+        } else {
+          static_assert(false);
+        }
+      },
+      window_offset);
+
+  return NWindowsAndPreciseOffsets{
+      .all_n_windows = std::move(all_n_windows),
+      .window_precise_offsets = std::move(window_precise_offsets),
+  };
+}
+
 unsigned get_min_max_read_size(
     std::span<RingmapData const *const> ringmaps_data) noexcept {
   return std::ranges::fold_left(

@@ -601,39 +601,54 @@ void test_get_best_pre_collapsing_clusters_one_window() {
 
 void test_window_info_get_n_windows_and_precise_offset() {
   {
-    auto n_windows_and_precise_offset =
-        get_n_windows_and_precise_offset(29, 7, 3);
-    assert(n_windows_and_precise_offset.n_windows == 8);
-    assert(std::abs(n_windows_and_precise_offset.window_precise_offset -
+    std::array<unsigned, 1> window_sizes{7u};
+    auto n_windows_and_precise_offset = get_n_windows_and_precise_offsets(
+        29, window_sizes, window_offset::Single(3));
+    assert(std::size(n_windows_and_precise_offset.all_n_windows) == 1);
+    assert(n_windows_and_precise_offset.all_n_windows[0] == 8);
+    assert(std::size(n_windows_and_precise_offset.window_precise_offsets) == 1);
+    assert(std::abs(n_windows_and_precise_offset.window_precise_offsets[0] -
                     3.142857143) < 0.0001);
   }
 
   {
-    auto n_windows_and_precise_offset =
-        get_n_windows_and_precise_offset(28, 7, 3);
-    assert(n_windows_and_precise_offset.n_windows == 8);
-    assert(n_windows_and_precise_offset.window_precise_offset == 3);
+    std::array<unsigned, 1> window_sizes{7u};
+    auto n_windows_and_precise_offset = get_n_windows_and_precise_offsets(
+        28, window_sizes, window_offset::Single(3));
+    assert(std::size(n_windows_and_precise_offset.all_n_windows) == 1);
+    assert(n_windows_and_precise_offset.all_n_windows[0] == 8);
+    assert(std::size(n_windows_and_precise_offset.window_precise_offsets) == 1);
+    assert(n_windows_and_precise_offset.window_precise_offsets[0] == 3);
   }
 
   {
-    auto n_windows_and_precise_offset =
-        get_n_windows_and_precise_offset(5, 4, 3);
-    assert(n_windows_and_precise_offset.n_windows == 1);
-    assert(n_windows_and_precise_offset.window_precise_offset == 0.);
+    std::array<unsigned, 1> window_sizes{4u};
+    auto n_windows_and_precise_offset = get_n_windows_and_precise_offsets(
+        5, window_sizes, window_offset::Single(3));
+    assert(std::size(n_windows_and_precise_offset.all_n_windows) == 1);
+    assert(n_windows_and_precise_offset.all_n_windows[0] == 1);
+    assert(std::size(n_windows_and_precise_offset.window_precise_offsets) == 1);
+    assert(n_windows_and_precise_offset.window_precise_offsets[0] == 0.);
   }
 
   {
-    auto n_windows_and_precise_offset =
-        get_n_windows_and_precise_offset(5, 5, 3);
-    assert(n_windows_and_precise_offset.n_windows == 1);
-    assert(n_windows_and_precise_offset.window_precise_offset == 0.);
+    std::array<unsigned, 1> window_sizes{5u};
+    auto n_windows_and_precise_offset = get_n_windows_and_precise_offsets(
+        5, window_sizes, window_offset::Single(3));
+    assert(std::size(n_windows_and_precise_offset.all_n_windows) == 1);
+    assert(n_windows_and_precise_offset.all_n_windows[0] == 1);
+    assert(std::size(n_windows_and_precise_offset.window_precise_offsets) == 1);
+    assert(n_windows_and_precise_offset.window_precise_offsets[0] == 0.);
   }
 
   {
-    auto n_windows_and_precise_offset =
-        get_n_windows_and_precise_offset(10, 9, 1);
-    assert(n_windows_and_precise_offset.n_windows == 2);
-    assert(n_windows_and_precise_offset.window_precise_offset == 1.);
+    std::array<unsigned, 1> window_sizes{9u};
+    auto n_windows_and_precise_offset = get_n_windows_and_precise_offsets(
+        10, window_sizes, window_offset::Single(1));
+    assert(std::size(n_windows_and_precise_offset.all_n_windows) == 1);
+    assert(n_windows_and_precise_offset.all_n_windows[0] == 2);
+    assert(std::size(n_windows_and_precise_offset.window_precise_offsets) == 1);
+    assert(n_windows_and_precise_offset.window_precise_offsets[0] == 1.);
   }
 }
 
@@ -738,10 +753,12 @@ void test_handle_transcripts_clusters_confidences() {
   constexpr unsigned n_reads = 1000;
   constexpr unsigned window_size = 10;
   constexpr unsigned window_offset = 3;
-  constexpr unsigned n_windows =
-      get_n_windows_and_precise_offset(std::size(sequence), window_size,
-                                       window_offset)
-          .n_windows;
+  constexpr std::array<unsigned, 1> window_sizes{window_size};
+  const auto n_windows =
+      get_n_windows_and_precise_offsets(std::size(sequence), window_sizes,
+                                        window_offset::Single(window_offset))
+          .all_n_windows[0];
+
   assert((std::size(sequence) - window_size) % window_offset == 0);
 
   std::vector<MutationMapTranscript> owned_transcripts{
@@ -818,8 +835,8 @@ void test_handle_transcripts_clusters_confidences() {
         case 1:
           std::ranges::fill_n(
               std::next(std::ranges::begin(pre_collapsing_clusters),
-                        n_windows / 3),
-              n_windows / 3, 2);
+                        static_cast<std::ptrdiff_t>(n_windows) / 3),
+              static_cast<std::ptrdiff_t>(n_windows) / 3, 2);
           break;
         case 2:
           std::ranges::fill(

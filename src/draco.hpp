@@ -10,6 +10,7 @@
 #include "weighted_clusters.hpp"
 #include "window_clusters_with_confidence.hpp"
 
+#include <algorithm>
 #include <armadillo>
 #include <concepts>
 #include <cstddef>
@@ -18,8 +19,10 @@
 #include <iterator>
 #include <mutex>
 #include <oneapi/tbb/parallel_for.h>
+#include <optional>
 #include <ranges>
 #include <span>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -328,38 +331,16 @@ struct HandleTranscripts {
   std::mutex &raw_n_clusters_stream_mutex;
   bool use_logger;
 
-  void operator()(
+protected:
+  std::optional<std::tuple<std::vector<PreCollapsingClusters>, WindowsInfo,
+                           std::vector<PtbaOnReplicate>>>
+  get_windows_info_data(
       InvocableR<PtbaOnReplicate, std::size_t, RingmapData const &,
                  results::Transcript &, WindowsInfo const &> auto
           &&ptba_on_replicate,
-      InvocableR<WeightedClusters, std::uint8_t, std::vector<arma::mat> const &,
-                 results::Transcript const &, unsigned> auto
-          &&get_weighted_clusters) {
+      results::Transcript &transcript_result) {
     auto const &first_transcript = *transcripts[0];
-    if (std::ranges::any_of(ringmaps_data, [](auto const &ringmap_data) {
-          return ringmap_data->data().rows_size() == 0;
-        })) {
-      if (use_logger) {
-        logger::info("Skipping transcript {} (no reads)",
-                     first_transcript.getId());
-      }
-      return;
-    }
-    if (use_logger) {
-      logger::info("Analyzing transcript {}", first_transcript.getId());
-    }
-
     auto windows_info = get_windows_info(ringmaps_data, args);
-
-    results::Transcript transcript_result(std::size(transcripts));
-    transcript_result.name = first_transcript.getId();
-    std::ranges::copy(transcripts |
-                          std::views::transform([](auto const &transcript) {
-                            return transcript->getReadsSize();
-                          }),
-                      std::ranges::begin(transcript_result.reads));
-    transcript_result.sequence = first_transcript.getSequence();
-    assert(not transcript_result.name.empty());
 
     auto ptba_on_replicate_results =
         std::vector<PtbaOnReplicate>(std::size(transcripts));
@@ -382,7 +363,7 @@ struct HandleTranscripts {
                     ptba_on_replicate_result.pre_collapsing_clusters);
               }),
           transcript_result);
-      return;
+      return std::nullopt;
     }
 
     if (std::ranges::any_of(
@@ -397,11 +378,56 @@ struct HandleTranscripts {
            first_transcript.getId());
     };
 
-    auto const window_size = windows_info.window_size;
-    auto const n_windows = windows_info.n_windows;
-
     auto const pre_collapsing_clusters = get_best_pre_collapsing_clusters(
         ptba_on_replicate_results, first_transcript.getId());
+
+    return std::tuple{std::move(pre_collapsing_clusters),
+                      std::move(windows_info),
+                      std::move(ptba_on_replicate_results)};
+  }
+
+public:
+  void operator()(
+      InvocableR<PtbaOnReplicate, std::size_t, RingmapData const &,
+                 results::Transcript &, WindowsInfo const &> auto
+          &&ptba_on_replicate,
+      InvocableR<WeightedClusters, std::uint8_t, std::vector<arma::mat> const &,
+                 results::Transcript const &, unsigned> auto
+          &&get_weighted_clusters) {
+    auto const &first_transcript = *transcripts[0];
+    if (std::ranges::any_of(ringmaps_data, [](auto const &ringmap_data) {
+          return ringmap_data->data().rows_size() == 0;
+        })) {
+      if (use_logger) {
+        logger::info("Skipping transcript {} (no reads)",
+                     first_transcript.getId());
+      }
+      return;
+    }
+    if (use_logger) {
+      logger::info("Analyzing transcript {}", first_transcript.getId());
+    }
+
+    results::Transcript transcript_result(std::size(transcripts));
+    transcript_result.name = first_transcript.getId();
+    std::ranges::copy(transcripts |
+                          std::views::transform([](auto const &transcript) {
+                            return transcript->getReadsSize();
+                          }),
+                      std::ranges::begin(transcript_result.reads));
+    transcript_result.sequence = first_transcript.getSequence();
+    assert(not transcript_result.name.empty());
+
+    auto windows_info_data =
+        get_windows_info_data(ptba_on_replicate, transcript_result);
+    if (not windows_info_data.has_value()) {
+      return;
+    }
+    auto &&[pre_collapsing_clusters, windows_info, ptba_on_replicate_results] =
+        *windows_info_data;
+
+    auto const window_size = windows_info.window_size;
+    auto const n_windows = windows_info.n_windows;
 
     std::vector<unsigned> windows_n_clusters;
     std::vector<std::optional<unsigned>> windows_max_clusters_constraints(

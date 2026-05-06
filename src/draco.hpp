@@ -395,6 +395,12 @@ void output_raw_n_clusters(std::ofstream &raw_n_clusters_stream,
   }
 }
 
+double get_pre_collapsing_clusters_mean(
+    PtbaOnReplicate const &ptba_on_replicate,
+    std::span<const PreCollapsingClusters> pre_collapsing_clusters,
+    std::vector<std::uint16_t> &bases_clusters_buffer,
+    std::vector<std::uint16_t> &bases_count_buffer) noexcept;
+
 enum class RedundantPatterns {
   AllZeros,
   Redundant,

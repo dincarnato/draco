@@ -306,8 +306,8 @@ void output_raw_n_clusters(std::ofstream &raw_n_clusters_stream,
 
   for (auto &&[window_index, window] :
        std::views::zip(std::views::iota(0uz), windows)) {
-    fmt::print(raw_n_clusters_stream, "{}\t{}\t{}", transcript_result.name,
-               window.start_base, window.start_base + window_size);
+    fmt::print(raw_n_clusters_stream, "{}\t{}\t{}\t{}", transcript_result.name,
+               window.start_base, window.start_base + window_size, window_size);
     for (auto replicate_windows_n_clusters : replicates_windows_n_clusters) {
       fmt::print(raw_n_clusters_stream, "\t{}",
                  replicate_windows_n_clusters[window_index]);

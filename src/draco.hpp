@@ -217,6 +217,11 @@ struct NWindowsAndPreciseOffset {
   double window_precise_offset;
 };
 
+struct NWindowsAndPreciseOffsets {
+  std::vector<std::size_t> all_n_windows;
+  std::vector<double> window_precise_offsets;
+};
+
 namespace window_offset {
 struct Single {
   unsigned value;
@@ -253,6 +258,11 @@ get_n_windows_and_precise_offset(std::size_t transcript_size,
       .window_precise_offset = window_precise_offset,
   };
 }
+
+NWindowsAndPreciseOffsets
+get_n_windows_and_precise_offsets(std::size_t transcript_size,
+                                  std::span<const unsigned> window_sizes,
+                                  WindowOffset const &window_offset);
 
 struct WindowsInfo {
   std::size_t transcript_size;

@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <type_traits>
+#include <vector>
 
 #include "cte/floating_point.hpp"
 #include "cte/string.hpp"
@@ -116,6 +117,12 @@ struct is_convertible_from_default_value<
     T, DefaultValue<size, DefaultValueType::String>,
     std::enable_if_t<std::is_convertible_v<char const *, T>>> : std::true_type {
 };
+
+template <typename T, typename D>
+struct is_convertible_from_default_value<
+    std::vector<T>, D,
+    std::enable_if_t<is_convertible_from_default_value<T, D>::value>>
+    : std::true_type {};
 
 template <typename T, typename D>
 constexpr bool is_convertible_from_default_value_v =

@@ -24,6 +24,10 @@ template <typename T>
 concept multiplicity = std::same_as<T, One> or std::same_as<T, Many>;
 } // namespace multiplicity
 
+template <typename T> struct is_vector : std::false_type {};
+template <typename T> struct is_vector<std::vector<T>> : std::true_type {};
+template <typename T> static constexpr bool is_vector_v = is_vector<T>::value;
+
 template <typename Type, typename Default, std::size_t TypenameSize,
           std::size_t VariableSize, std::size_t ParameterSize,
           std::size_t DescriptionSize, multiplicity::multiplicity Multiplicity>
@@ -168,7 +172,11 @@ struct Arg {
   }
 
   constexpr auto get_default_value() const noexcept {
-    return _default_value.value();
+    if constexpr (is_vector_v<Type>) {
+      return Type{_default_value.value()};
+    } else {
+      return _default_value.value();
+    }
   }
 
   constexpr auto get_default_string() const noexcept {

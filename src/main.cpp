@@ -8,7 +8,6 @@
 #include "utils.hpp"
 
 #include <algorithm>
-#include <cmath>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
@@ -18,7 +17,6 @@
 #include <oneapi/tbb/parallel_pipeline.h>
 #include <optional>
 #include <ranges>
-#include <stdexcept>
 #include <thread>
 
 #include <armadillo>

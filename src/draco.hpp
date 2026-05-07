@@ -213,11 +213,6 @@ void dump_assignments(results::Transcript const &transcript,
                       std::optional<std::size_t> replicate_index,
                       std::string_view assignments_dump_directory);
 
-struct NWindowsAndPreciseOffset {
-  std::size_t n_windows;
-  double window_precise_offset;
-};
-
 struct NWindowsAndPreciseOffsets {
   std::vector<std::size_t> all_n_windows;
   std::vector<double> window_precise_offsets;
@@ -236,30 +231,6 @@ struct Multiple {
 using WindowOffset =
     std::variant<window_offset::Single, window_offset::Multiple>;
 
-constexpr NWindowsAndPreciseOffset
-get_n_windows_and_precise_offset(std::size_t transcript_size,
-                                 unsigned window_size,
-                                 unsigned window_offset) noexcept {
-  assert(window_size <= transcript_size);
-
-  std::size_t n_windows = (transcript_size - window_size) / window_offset + 1;
-  if (n_windows * window_offset + window_size < transcript_size)
-    ++n_windows;
-
-  double window_precise_offset;
-  if (n_windows > 1) {
-    window_precise_offset = static_cast<double>(transcript_size - window_size) /
-                            static_cast<double>(n_windows - 1);
-  } else {
-    window_precise_offset = 0.;
-  }
-
-  return NWindowsAndPreciseOffset{
-      .n_windows = n_windows,
-      .window_precise_offset = window_precise_offset,
-  };
-}
-
 NWindowsAndPreciseOffsets
 get_n_windows_and_precise_offsets(std::size_t transcript_size,
                                   std::span<const unsigned> window_sizes,
@@ -271,22 +242,6 @@ struct WindowsInfo {
   unsigned window_offset;
   std::size_t n_windows;
   double window_precise_offset;
-
-  static constexpr WindowsInfo
-  from_size_and_offset(std::size_t transcript_size, unsigned window_size,
-                       unsigned window_offset) noexcept {
-    auto n_windows_and_precise_offset = get_n_windows_and_precise_offset(
-        transcript_size, window_size, window_offset);
-
-    return WindowsInfo{
-        .transcript_size = transcript_size,
-        .window_size = window_size,
-        .window_offset = window_offset,
-        .n_windows = n_windows_and_precise_offset.n_windows,
-        .window_precise_offset =
-            n_windows_and_precise_offset.window_precise_offset,
-    };
-  }
 
   constexpr std::size_t
   get_start_base(std::size_t window_index) const noexcept {
@@ -364,8 +319,9 @@ void add_detected_clusters_with_confidence(
     std::vector<PreCollapsingClusters> const &pre_collapsing_clusters,
     WindowsInfo const &window_info);
 
-WindowsInfo get_windows_info(std::span<RingmapData const *const> ringmaps_data,
-                             Args const &args) noexcept;
+WindowsInfoAllWindowSizes
+get_windows_info(std::span<RingmapData const *const> ringmaps_data,
+                 Args const &args) noexcept;
 
 template <typename R>
   requires std::ranges::range<R> and std::same_as<std::ranges::range_value_t<R>,
@@ -417,58 +373,180 @@ struct HandleTranscripts {
   bool use_logger;
 
 protected:
+  /**
+   * Returns the windows information related to the window size that leads to
+   * the highest number of clusters.
+   */
   std::optional<std::tuple<std::vector<PreCollapsingClusters>, WindowsInfo,
                            std::vector<PtbaOnReplicate>>>
-  get_windows_info_data(
+  get_best_windows_info_data(
       InvocableR<PtbaOnReplicate, std::size_t, RingmapData const &,
                  results::Transcript &, WindowsInfo const &> auto
           &&ptba_on_replicate,
       results::Transcript &transcript_result) {
     auto const &first_transcript = *transcripts[0];
-    auto windows_info = get_windows_info(ringmaps_data, args);
+    auto windows_info_all_window_sizes = get_windows_info(ringmaps_data, args);
 
-    auto ptba_on_replicate_results =
-        std::vector<PtbaOnReplicate>(std::size(transcripts));
-    tbb::parallel_for(
-        0uz, std::size(transcripts), [&](std::size_t replicate_index) {
-          auto const &ringmap_data = *ringmaps_data[replicate_index];
-          ptba_on_replicate_results[replicate_index] = ptba_on_replicate(
-              replicate_index, ringmap_data, transcript_result, windows_info);
-        });
+    auto n_window_sizes = std::size(windows_info_all_window_sizes.window_sizes);
+    std::vector<std::vector<PreCollapsingClusters>> all_pre_collapsing_clusters(
+        n_window_sizes);
+    std::vector<std::vector<PtbaOnReplicate>> all_ptba_on_replicate_results(
+        n_window_sizes);
+    tbb::parallel_for(0uz, n_window_sizes, [&](auto window_size_index) {
+      auto windows_info =
+          windows_info_all_window_sizes.window_size_info(window_size_index);
+
+      auto ptba_on_replicate_results =
+          std::vector<PtbaOnReplicate>(std::size(transcripts));
+      tbb::parallel_for(
+          0uz, std::size(transcripts), [&](std::size_t replicate_index) {
+            auto const &ringmap_data = *ringmaps_data[replicate_index];
+            ptba_on_replicate_results[replicate_index] = ptba_on_replicate(
+                replicate_index, ringmap_data, transcript_result, windows_info);
+          });
+
+      if (raw_n_clusters_stream) {
+        auto const &first_ptba_on_replicate_result =
+            ptba_on_replicate_results[0];
+        output_raw_n_clusters(
+            *raw_n_clusters_stream, raw_n_clusters_stream_mutex,
+            first_ptba_on_replicate_result.window_size,
+            first_ptba_on_replicate_result.windows,
+            ptba_on_replicate_results |
+                std::views::transform(
+                    [&](auto const &ptba_on_replicate_result) {
+                      return std::span(
+                          ptba_on_replicate_result.pre_collapsing_clusters);
+                    }),
+            transcript_result);
+        return;
+      }
+
+      if (std::ranges::any_of(
+              ptba_on_replicate_results | std::views::drop(1),
+              [&](auto &ptba_on_replicate_result) {
+                return std::size(ptba_on_replicate_result.windows) !=
+                           std::size(ptba_on_replicate_results[0].windows) or
+                       ptba_on_replicate_result.window_size !=
+                           ptba_on_replicate_results[0].window_size;
+              })) {
+        bail("the number of windows for transcript {} is incoherent",
+             first_transcript.getId());
+      };
+
+      auto const pre_collapsing_clusters = get_best_pre_collapsing_clusters(
+          ptba_on_replicate_results, first_transcript.getId());
+
+      all_pre_collapsing_clusters[window_size_index] =
+          std::move(pre_collapsing_clusters);
+      all_ptba_on_replicate_results[window_size_index] =
+          std::move(ptba_on_replicate_results);
+    });
 
     if (raw_n_clusters_stream) {
-      auto const &first_ptba_on_replicate_result = ptba_on_replicate_results[0];
-      output_raw_n_clusters(
-          *raw_n_clusters_stream, raw_n_clusters_stream_mutex,
-          first_ptba_on_replicate_result.window_size,
-          first_ptba_on_replicate_result.windows,
-          ptba_on_replicate_results |
-              std::views::transform([&](auto const &ptba_on_replicate_result) {
-                return std::span(
-                    ptba_on_replicate_result.pre_collapsing_clusters);
-              }),
-          transcript_result);
       return std::nullopt;
     }
 
-    if (std::ranges::any_of(
-            ptba_on_replicate_results | std::views::drop(1),
-            [&](auto &ptba_on_replicate_result) {
-              return std::size(ptba_on_replicate_result.windows) !=
-                         std::size(ptba_on_replicate_results[0].windows) or
-                     ptba_on_replicate_result.window_size !=
-                         ptba_on_replicate_results[0].window_size;
-            })) {
-      bail("the number of windows for transcript {} is incoherent",
-           first_transcript.getId());
-    };
+    auto best_window_size_index = [&] {
+      if (std::size(all_pre_collapsing_clusters) > 1) {
+        std::vector<std::uint16_t> bases_clusters_buffer;
+        std::vector<std::uint16_t> bases_count_buffer;
 
-    auto const pre_collapsing_clusters = get_best_pre_collapsing_clusters(
-        ptba_on_replicate_results, first_transcript.getId());
+        return std::get<0>(std::ranges::max(
+            std::views::zip(std::views::iota(0uz),
+                            all_ptba_on_replicate_results,
+                            all_pre_collapsing_clusters) |
+                std::views::transform([&](auto &&tuple) {
+                  auto &&[window_size_index, ptba_on_replicate_results,
+                          pre_collapsing_clusters] = tuple;
+                  assert(not std::empty(ptba_on_replicate_results));
+                  auto mean = get_pre_collapsing_clusters_mean(
+                      ptba_on_replicate_results[0], pre_collapsing_clusters,
+                      bases_clusters_buffer, bases_count_buffer);
+                  auto window_size = windows_info_all_window_sizes
+                                         .window_sizes[window_size_index];
+                  auto window_offset = std::visit(
+                      [&](auto const &window_offset) {
+                        using window_offset_t =
+                            std::remove_cvref_t<decltype(window_offset)>;
+                        if constexpr (std::is_same_v<window_offset_t,
+                                                     window_offset::Single>) {
+                          logger::debug(
+                              "Transcript {}, window size {}, the average of "
+                              "the number of clusters is {}",
+                              transcript_result.name, window_size, mean);
+                          return window_offset.value;
+                        } else if constexpr (std::is_same_v<
+                                                 window_offset_t,
+                                                 window_offset::Multiple>) {
+                          auto cur_window_offset =
+                              window_offset.value[window_size_index];
+                          logger::debug(
+                              "Transcript {}, window size {}, window offset "
+                              "{}, the average of the number of clusters is {}",
+                              transcript_result.name, window_size,
+                              cur_window_offset, mean);
+                          return cur_window_offset;
+                        } else {
+                          static_assert(false);
+                        }
+                      },
+                      windows_info_all_window_sizes.window_offset);
+                  return std::tuple(window_size_index, mean, window_size,
+                                    window_offset);
+                }),
+            [](auto &&a, auto &&b) {
+              if (std::get<1>(a) > std::get<1>(b)) {
+                return false;
+              }
 
-    return std::tuple{std::move(pre_collapsing_clusters),
-                      std::move(windows_info),
-                      std::move(ptba_on_replicate_results)};
+              if (std::get<1>(a) == std::get<1>(b)) {
+                if (std::get<2>(a) > std::get<2>(b)) {
+                  return false;
+                }
+
+                if (std::get<2>(a) == std::get<2>(b)) {
+                  return std::get<3>(a) < std::get<3>(b);
+                }
+              }
+
+              return true;
+            }));
+      } else {
+        return 0uz;
+      }
+    }();
+
+    if (std::size(all_pre_collapsing_clusters) > 1) {
+      auto best_window_size =
+          windows_info_all_window_sizes.window_sizes[best_window_size_index];
+      std::visit(
+          [&](auto const &window_offset) {
+            using window_offset_t =
+                std::remove_cvref_t<decltype(window_offset)>;
+            if constexpr (std::is_same_v<window_offset_t,
+                                         window_offset::Single>) {
+              logger::debug(
+                  "Transcript {} will be analyzed with a window size of {}",
+                  transcript_result.name, best_window_size);
+            } else if constexpr (std::is_same_v<window_offset_t,
+                                                window_offset::Multiple>) {
+              logger::debug("Transcript {} will be analyzed with a window size "
+                            "of {} and a window offset of {}",
+                            transcript_result.name, best_window_size,
+                            window_offset.value[best_window_size_index]);
+            } else {
+              static_assert(false);
+            }
+          },
+          windows_info_all_window_sizes.window_offset);
+    }
+
+    return std::tuple{
+        std::move(all_pre_collapsing_clusters[best_window_size_index]),
+        std::move(windows_info_all_window_sizes.window_size_info(
+            best_window_size_index)),
+        std::move(all_ptba_on_replicate_results[best_window_size_index])};
   }
 
 public:
@@ -504,7 +582,7 @@ public:
     assert(not transcript_result.name.empty());
 
     auto windows_info_data =
-        get_windows_info_data(ptba_on_replicate, transcript_result);
+        get_best_windows_info_data(ptba_on_replicate, transcript_result);
     if (not windows_info_data.has_value()) {
       return;
     }

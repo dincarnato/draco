@@ -40,18 +40,43 @@ int main(int argc, char *argv[]) {
   }
 
   {
-    auto window_size = args.window_size();
-    auto transcript_fraction = args.window_size_fraction_transcript_size();
-    if (transcript_fraction != 0) {
-      if (transcript_fraction <= 0. or transcript_fraction > 1.) {
+    auto window_sizes = args.window_size();
+    auto window_sizes_size = std::size(window_sizes);
+    auto transcript_fractions = args.window_size_fraction_transcript_size();
+    auto transcript_fractions_size = std::size(transcript_fractions);
+    auto using_fractions =
+        transcript_fractions_size > 1 or transcript_fractions[0] != 0;
+    if (using_fractions and window_sizes_size > 1) {
+      bail("Invalid parameters: cannot specify both --winLen and "
+           "--winLenFracRnaLen");
+    }
+
+    if (using_fractions) {
+      if (std::ranges::any_of(transcript_fractions, [](auto fraction) {
+            return fraction <= 0. or fraction > 1.;
+          })) {
         bail("Invalid parameters: --minWindowBases can only be used with "
              "values between 0 (excluded) and 1 (included)");
       }
     } else {
-      if (window_size > 1 and window_size < args.min_bases_size()) {
-        bail("Invalid parameters: --winLen ({}) < --minWindowBases ({})",
-             window_size, args.min_bases_size());
+      for (auto window_size : window_sizes) {
+        if (window_size > 1 and window_size < args.min_bases_size()) {
+          bail("Invalid parameters: --winLen ({}) < --minWindowBases ({})",
+               window_size, args.min_bases_size());
+        }
       }
+    }
+
+    auto usable_windows_sizes =
+        using_fractions ? transcript_fractions_size : window_sizes_size;
+    auto window_shifts = args.window_shift();
+    auto window_size_fraction_transcript_sizes =
+        args.window_size_fraction_transcript_size();
+    auto window_shifts_size = std::size(window_shifts);
+    if (window_shifts_size > 1 and window_shifts_size != usable_windows_sizes) {
+      bail("Invalid parameters: multiple values given for winOffset ({}), but "
+           "this is not coherent with the number of window lengths ({})",
+           window_shifts_size, usable_windows_sizes);
     }
   }
 

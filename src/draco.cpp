@@ -42,6 +42,7 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -999,50 +1000,173 @@ unsigned get_min_median_window_size(
   return min_median.value_or(0u);
 }
 
-WindowsInfo get_windows_info(std::span<RingmapData const *const> ringmaps_data,
-                             Args const &args) noexcept {
+WindowsInfoAllWindowSizes
+get_windows_info(std::span<RingmapData const *const> ringmaps_data,
+                 Args const &args) noexcept {
   auto const &first_ringmap_data = *ringmaps_data[0];
   auto const transcript_size = first_ringmap_data.data().cols_size();
 
-  unsigned window_size;
-  unsigned max_window_size;
-  if (auto const window_size_fraction_transcript_size =
+  auto reduce_window_size = [](auto &window_size, unsigned max_window_size) {
+    if (window_size > max_window_size) {
+      logger::warn("Window size reduced from {} to {}, which is the lowest of "
+                   "the maximum read length across replicates",
+                   window_size, max_window_size);
+      window_size = max_window_size;
+    }
+  };
+
+  std::vector<unsigned> window_sizes;
+  if (auto const &window_size_fraction_transcript_sizes =
           args.window_size_fraction_transcript_size();
-      args.window_size_fraction_transcript_size() > 0.) {
-    window_size = static_cast<unsigned>(
-        std::min(window_size_fraction_transcript_size, 1.) *
-        static_cast<double>(transcript_size));
-    max_window_size = get_min_max_read_size(ringmaps_data);
-  } else if (auto const window_size_maybe_fraction = args.window_size();
-             window_size_maybe_fraction <= 1.) {
-    auto min_median_read_size = get_min_median_window_size(ringmaps_data);
-    window_size = static_cast<unsigned>(
-        static_cast<double>(min_median_read_size) * window_size_maybe_fraction);
-    max_window_size = transcript_size;
+      std::size(window_size_fraction_transcript_sizes) > 1 or
+      (not std::empty(window_size_fraction_transcript_sizes) and
+       window_size_fraction_transcript_sizes[0] > 0.)) {
+    auto max_window_size = get_min_max_read_size(ringmaps_data);
+    window_sizes.reserve(std::size(window_size_fraction_transcript_sizes));
+    std::ranges::transform(
+        window_size_fraction_transcript_sizes, std::back_inserter(window_sizes),
+        [&](auto window_size_fraction_transcript_size) {
+          auto window_size = static_cast<unsigned>(
+              std::min(window_size_fraction_transcript_size, 1.) *
+              static_cast<double>(transcript_size));
+
+          reduce_window_size(window_size, max_window_size);
+          return window_size;
+        });
   } else {
-    window_size = static_cast<unsigned>(std::round(window_size_maybe_fraction));
-    max_window_size = get_min_max_read_size(ringmaps_data);
+    auto const &window_size_maybe_fractions = args.window_size();
+    window_sizes.reserve(std::size(window_size_maybe_fractions));
+    std::optional<double> min_median_read_size;
+    std::optional<unsigned> max_window_size;
+
+    std::ranges::transform(
+        window_size_maybe_fractions, std::back_inserter(window_sizes),
+        [&](auto window_size_maybe_fraction) {
+          if (window_size_maybe_fraction <= 1.) {
+            if (not min_median_read_size.has_value()) {
+              min_median_read_size = static_cast<double>(
+                  get_min_median_window_size(ringmaps_data));
+            }
+            auto window_size = static_cast<unsigned>(
+                *min_median_read_size * window_size_maybe_fraction);
+            reduce_window_size(window_size, transcript_size);
+            return window_size;
+          } else {
+            if (not max_window_size.has_value()) {
+              max_window_size = get_min_max_read_size(ringmaps_data);
+            }
+            auto window_size =
+                static_cast<unsigned>(std::round(window_size_maybe_fraction));
+            reduce_window_size(window_size, *max_window_size);
+            return window_size;
+          }
+        });
   }
 
-  if (window_size > max_window_size) {
-    logger::warn("Window size reduced from {} to {}, which is the lowest of "
-                 "the maximum read length across replicates",
-                 window_size, max_window_size);
-    window_size = max_window_size;
-  }
-  const auto window_offset = [&] {
-    auto &&window_shift_maybe_fraction = args.window_shift();
-    if (window_shift_maybe_fraction < 1.) {
-      return std::max(1u,
-                      static_cast<unsigned>(static_cast<double>(window_size) *
-                                            window_shift_maybe_fraction));
+  auto window_offset = [&] -> WindowOffset {
+    auto &&window_shift_maybe_fractions = args.window_shift();
+    assert(not std::empty(window_shift_maybe_fractions));
+    if (std::size(window_shift_maybe_fractions) == 1) {
+      if (window_shift_maybe_fractions[0] < 1.) {
+        auto get_integral_offset = [&](unsigned window_size) {
+          return std::max(
+              1u, static_cast<unsigned>(static_cast<double>(window_size) *
+                                        window_shift_maybe_fractions[0]));
+        };
+
+        if (std::size(window_sizes) == 1) {
+          return window_offset::Single(get_integral_offset(window_sizes[0]));
+        } else {
+          return window_offset::Multiple{
+              .value = window_sizes |
+                       std::views::transform(get_integral_offset) |
+                       std::ranges::to<std::vector>(),
+          };
+        }
+      } else {
+        return window_offset::Single{.value = static_cast<unsigned>(std::round(
+                                         window_shift_maybe_fractions[0]))};
+      }
     } else {
-      return static_cast<unsigned>(std::round(window_shift_maybe_fraction));
+      assert(std::size(window_shift_maybe_fractions) ==
+             std::size(window_sizes));
+      auto offsets =
+          std::views::zip(window_sizes, window_shift_maybe_fractions) |
+          std::views::transform([&](auto &&tuple) {
+            auto [window_size, window_shift_maybe_fraction] = tuple;
+            if (window_shift_maybe_fraction < 1.) {
+              return std::max(
+                  1u, static_cast<unsigned>(static_cast<double>(window_size) *
+                                            window_shift_maybe_fraction));
+            } else {
+              return static_cast<unsigned>(
+                  std::round(window_shift_maybe_fraction));
+            }
+          }) |
+          std::ranges::to<std::vector>();
+
+      return window_offset::Multiple{
+          .value = std::move(offsets),
+      };
     }
   }();
 
-  return WindowsInfo::from_size_and_offset(transcript_size, window_size,
-                                           window_offset);
+  std::visit(
+      [&](auto &window_offset) {
+        using window_offset_t = std::remove_cvref_t<decltype(window_offset)>;
+        if constexpr (std::is_same_v<window_offset_t, window_offset::Single>) {
+          std::ranges::sort(window_sizes);
+          auto removed_range = std::ranges::unique(window_sizes);
+          window_sizes.erase(removed_range.begin(), removed_range.end());
+        } else if constexpr (std::is_same_v<window_offset_t,
+                                            window_offset::Multiple>) {
+          auto window_sizes_iter = std::ranges::begin(window_sizes);
+          auto window_sizes_end = std::ranges::end(window_sizes);
+          auto window_offsets_iter = std::ranges::begin(window_offset.value);
+          auto window_offsets_end = std::ranges::end(window_offset.value);
+
+          while (window_sizes_iter < window_sizes_end) {
+            auto &window_size = *window_sizes_iter;
+            auto &window_offset = *window_offsets_iter;
+
+            auto range = std::views::zip(
+                std::ranges::subrange(std::next(window_sizes_iter),
+                                      window_sizes_end),
+                std::ranges::subrange(std::next(window_offsets_iter),
+                                      window_offsets_end));
+            auto other_occurrence_iter =
+                std::ranges::find_if(range, [&](auto &&tuple) {
+                  auto [cur_window_size, cur_window_offset] = tuple;
+                  return cur_window_size == window_size and
+                         cur_window_offset == window_offset;
+                });
+
+            if (other_occurrence_iter != std::ranges::end(range)) {
+              --window_sizes_end;
+              --window_offsets_end;
+
+              std::swap(window_size, *window_sizes_end);
+              std::swap(window_offset, *window_offsets_end);
+            } else {
+              ++window_sizes_iter;
+              ++window_offsets_iter;
+            }
+          }
+
+          if (window_sizes_end != std::ranges::end(window_sizes)) {
+            window_sizes.erase(window_sizes_end,
+                               std::ranges::end(window_sizes));
+            window_offset.value.erase(window_offsets_end,
+                                      std::ranges::end(window_offset.value));
+          }
+        } else {
+          static_assert(false);
+        }
+      },
+      window_offset);
+
+  return WindowsInfoAllWindowSizes::from_sizes_and_offset(
+      transcript_size, std::move(window_sizes), std::move(window_offset));
 }
 
 NWindowsAndPreciseOffsets

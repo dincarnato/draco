@@ -654,7 +654,10 @@ void test_window_info_get_n_windows_and_precise_offset() {
 
 void test_window_info_get_start_base() {
   {
-    auto windows_info = WindowsInfo::from_size_and_offset(29, 7, 3);
+    auto windows_info_all_sizes =
+        WindowsInfoAllWindowSizes::from_sizes_and_offset(
+            29, {7u}, window_offset::Single(3));
+    auto windows_info = windows_info_all_sizes.window_size_info(0);
     assert(windows_info.get_start_base(0) == 0);
     assert(windows_info.get_start_base(1) == 3);
     assert(windows_info.get_start_base(4) == 13);
@@ -662,7 +665,10 @@ void test_window_info_get_start_base() {
   }
 
   {
-    auto windows_info = WindowsInfo::from_size_and_offset(28, 7, 3);
+    auto windows_info_all_sizes =
+        WindowsInfoAllWindowSizes::from_sizes_and_offset(
+            28, {7u}, window_offset::Single(3));
+    auto windows_info = windows_info_all_sizes.window_size_info(0);
     assert(windows_info.get_start_base(0) == 0);
     assert(windows_info.get_start_base(1) == 3);
     assert(windows_info.get_start_base(4) == 12);
@@ -709,9 +715,11 @@ void test_add_detected_clusters_with_confidence() {
   std::vector<WindowClustersWithConfidence> detected_clusters_with_confidence;
   std::size_t window_size = 17;
   std::size_t window_offset = 5;
-  auto windows_info =
-      WindowsInfo::from_size_and_offset(165, static_cast<unsigned>(window_size),
-                                        static_cast<unsigned>(window_offset));
+  auto windows_info_all_sizes =
+      WindowsInfoAllWindowSizes::from_sizes_and_offset(
+          165, {static_cast<unsigned>(window_size)},
+          window_offset::Single(static_cast<unsigned>(window_offset)));
+  auto windows_info = windows_info_all_sizes.window_size_info(0);
   add_detected_clusters_with_confidence(
       detected_clusters_with_confidence,
       results::WindowRange{.window_index_begin = 10, .window_index_end = 24},
@@ -778,8 +786,8 @@ void test_handle_transcripts_clusters_confidences() {
                      std::ranges::to<std::vector>();
 
   test::Args args;
-  args.window_size() = window_size;
-  args.window_shift() = window_offset;
+  args.window_size().assign(1, window_size);
+  args.window_shift().assign(1, window_offset);
 
   auto make_ringmap_matrix = [&] {
     RingmapMatrix data_matrix(std::size(sequence));
@@ -1087,8 +1095,10 @@ static void test_get_windows_info_default_args() {
   std::array ringmaps_data{&ringmap_data};
   auto windows_info = get_windows_info(ringmaps_data, args);
   assert(windows_info.transcript_size == std::size(sequence));
-  assert(windows_info.window_size == 100);
-  assert(windows_info.window_offset == 1);
+  assert(std::size(windows_info.window_sizes) == 1);
+  assert(windows_info.window_sizes[0] == 100);
+  assert(std::get<window_offset::Single>(windows_info.window_offset).value ==
+         1);
 }
 
 static void test_get_windows_info_shorter_window_size() {
@@ -1103,15 +1113,17 @@ static void test_get_windows_info_shorter_window_size() {
       MutationMapTranscriptRead{.begin = 0, .end = 120, .indices = {}});
 
   test::Args args;
-  args.window_size() = 20;
+  args.window_size().assign(1, 20);
   RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
                            std::size(sequence), args);
 
   std::array ringmaps_data{&ringmap_data};
   auto windows_info = get_windows_info(ringmaps_data, args);
   assert(windows_info.transcript_size == std::size(sequence));
-  assert(windows_info.window_size == 20);
-  assert(windows_info.window_offset == 1);
+  assert(std::size(windows_info.window_sizes) == 1);
+  assert(windows_info.window_sizes[0] == 20);
+  assert(std::get<window_offset::Single>(windows_info.window_offset).value ==
+         1);
 }
 
 static void test_get_windows_info_fractional_shift() {
@@ -1126,15 +1138,17 @@ static void test_get_windows_info_fractional_shift() {
       MutationMapTranscriptRead{.begin = 0, .end = 120, .indices = {}});
 
   test::Args args;
-  args.window_shift() = 0.5;
+  args.window_shift().assign(1, 0.5);
   RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
                            std::size(sequence), args);
 
   std::array ringmaps_data{&ringmap_data};
   auto windows_info = get_windows_info(ringmaps_data, args);
   assert(windows_info.transcript_size == std::size(sequence));
-  assert(windows_info.window_size == 100);
-  assert(windows_info.window_offset == 50);
+  assert(std::size(windows_info.window_sizes) == 1);
+  assert(windows_info.window_sizes[0] == 100);
+  assert(std::get<window_offset::Single>(windows_info.window_offset).value ==
+         50);
 }
 
 static void test_get_windows_info_absolute_shift() {
@@ -1149,15 +1163,17 @@ static void test_get_windows_info_absolute_shift() {
       MutationMapTranscriptRead{.begin = 0, .end = 120, .indices = {}});
 
   test::Args args;
-  args.window_shift() = 10;
+  args.window_shift().assign(1, 10);
   RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
                            std::size(sequence), args);
 
   std::array ringmaps_data{&ringmap_data};
   auto windows_info = get_windows_info(ringmaps_data, args);
   assert(windows_info.transcript_size == std::size(sequence));
-  assert(windows_info.window_size == 100);
-  assert(windows_info.window_offset == 10);
+  assert(std::size(windows_info.window_sizes));
+  assert(windows_info.window_sizes[0] == 100);
+  assert(std::get<window_offset::Single>(windows_info.window_offset).value ==
+         10);
 }
 
 static void test_get_windows_info_window_size_too_big() {
@@ -1172,15 +1188,17 @@ static void test_get_windows_info_window_size_too_big() {
       .begin = 0, .end = std::size(sequence), .indices = {}});
 
   test::Args args;
-  args.window_size() = 1000;
+  args.window_size().assign(1, 1000);
   RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
                            std::size(sequence), args);
 
   std::array ringmaps_data{&ringmap_data};
   auto windows_info = get_windows_info(ringmaps_data, args);
   assert(windows_info.transcript_size == std::size(sequence));
-  assert(windows_info.window_size == std::size(sequence));
-  assert(windows_info.window_offset == std::size(sequence) / 100);
+  assert(std::size(windows_info.window_sizes));
+  assert(windows_info.window_sizes[0] == std::size(sequence));
+  assert(std::get<window_offset::Single>(windows_info.window_offset).value ==
+         std::size(sequence) / 100);
 }
 
 static void test_get_windows_info_window_size_fraction() {
@@ -1195,15 +1213,17 @@ static void test_get_windows_info_window_size_fraction() {
       MutationMapTranscriptRead{.begin = 0, .end = 80, .indices = {}});
 
   test::Args args;
-  args.window_size() = 0.5;
+  args.window_size().assign(1, 0.5);
   RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
                            std::size(sequence), args);
 
   std::array ringmaps_data{&ringmap_data};
   auto windows_info = get_windows_info(ringmaps_data, args);
   assert(windows_info.transcript_size == std::size(sequence));
-  assert(windows_info.window_size == 40);
-  assert(windows_info.window_offset == 1);
+  assert(std::size(windows_info.window_sizes));
+  assert(windows_info.window_sizes[0] == 40);
+  assert(std::get<window_offset::Single>(windows_info.window_offset).value ==
+         1);
 }
 
 static void test_get_windows_info_trascript_fraction() {
@@ -1218,15 +1238,17 @@ static void test_get_windows_info_trascript_fraction() {
       MutationMapTranscriptRead{.begin = 0, .end = 120, .indices = {}});
 
   test::Args args;
-  args.window_size_fraction_transcript_size() = 0.5;
+  args.window_size_fraction_transcript_size().assign(1, 0.5);
   RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
                            std::size(sequence), args);
 
   std::array ringmaps_data{&ringmap_data};
   auto windows_info = get_windows_info(ringmaps_data, args);
   assert(windows_info.transcript_size == std::size(sequence));
-  assert(windows_info.window_size == std::size(sequence) / 2);
-  assert(windows_info.window_offset == 1);
+  assert(std::size(windows_info.window_sizes) == 1);
+  assert(windows_info.window_sizes[0] == std::size(sequence) / 2);
+  assert(std::get<window_offset::Single>(windows_info.window_offset).value ==
+         1);
 }
 
 static void test_get_windows_info_trascript_fraction_too_high() {
@@ -1242,15 +1264,17 @@ static void test_get_windows_info_trascript_fraction_too_high() {
       .begin = 0, .end = std::size(sequence), .indices = {}});
 
   test::Args args;
-  args.window_size_fraction_transcript_size() = 2.;
+  args.window_size_fraction_transcript_size().assign(1, 2.);
   RingmapData ringmap_data(sequence, std::move(data_matrix), 0,
                            std::size(sequence), args);
 
   std::array ringmaps_data{&ringmap_data};
   auto windows_info = get_windows_info(ringmaps_data, args);
   assert(windows_info.transcript_size == std::size(sequence));
-  assert(windows_info.window_size == std::size(sequence));
-  assert(windows_info.window_offset == 2);
+  assert(std::size(windows_info.window_sizes) == 1);
+  assert(windows_info.window_sizes[0] == std::size(sequence));
+  assert(std::get<window_offset::Single>(windows_info.window_offset).value ==
+         2);
 }
 
 static void test_get_min_max_read_size() {

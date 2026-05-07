@@ -178,7 +178,7 @@ static constexpr auto opts = args::Opts(
 
     args::Group(
         "Windowed analysis",
-        ARG(double, window_size)
+        ARG(std::vector<double>, window_size)
             .parameter_name("winLen")
             .description(
                 "Length of the window. If this value is comprised between 0 "
@@ -189,13 +189,13 @@ static constexpr auto opts = args::Opts(
                 "window. [Note: this "
                 "parameter and \"--winLenFracRnaLen\"  are mutually exclusive]")
             .DEFAULT_VALUE(100),
-        ARG(double, window_size_fraction_transcript_size)
+        ARG(std::vector<double>, window_size_fraction_transcript_size)
             .parameter_name("winLenFracRnaLen")
             .description("Length of the window as fraction of length of the "
                          "RNA [Note: this parameter and \"--winLen\" are "
                          "mutually exclusive]")
             .DEFAULT_VALUE(0),
-        ARG(double, window_shift)
+        ARG(std::vector<double>, window_shift)
             .parameter_name("winOffset")
             .description("Window sliding offset. If this value is comprised "
                          "between 0 and 1, it is "

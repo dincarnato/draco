@@ -41,10 +41,20 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (auto window_size = args.window_size();
-      window_size > 1 and window_size < args.min_bases_size()) {
-    bail("Invalid parameters: --winLen ({}) < --minWindowBases ({})",
-         window_size, args.min_bases_size());
+  {
+    auto window_size = args.window_size();
+    auto transcript_fraction = args.window_size_fraction_transcript_size();
+    if (transcript_fraction != 0) {
+      if (transcript_fraction <= 0. or transcript_fraction > 1.) {
+        bail("Invalid parameters: --minWindowBases can only be used with "
+             "values between 0 (excluded) and 1 (included)");
+      }
+    } else {
+      if (window_size > 1 and window_size < args.min_bases_size()) {
+        bail("Invalid parameters: --winLen ({}) < --minWindowBases ({})",
+             window_size, args.min_bases_size());
+      }
+    }
   }
 
   if (args.max_clusters() < 1) {

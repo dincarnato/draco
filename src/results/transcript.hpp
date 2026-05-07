@@ -30,6 +30,8 @@ struct Transcript {
   std::vector<WindowRange> window_ranges;
   std::vector<WindowClustersWithConfidence> detected_clusters_with_confidence;
   std::vector<std::optional<std::string>> errors;
+  std::optional<unsigned> window_size;
+  std::optional<unsigned> window_offset;
 };
 
 } // namespace results
@@ -92,6 +94,16 @@ jsonify(std::basic_ostream<CharT, Traits> &os, T &&transcript) {
       })) {
     os << ',';
     jsonify(os, "errors", transcript.errors);
+  }
+
+  if (transcript.window_size.has_value()) {
+    os << ',';
+    jsonify(os, "winLen", *transcript.window_size);
+  }
+
+  if (transcript.window_offset.has_value()) {
+    os << ',';
+    jsonify(os, "winOffset", *transcript.window_offset);
   }
 
   return os << '}';

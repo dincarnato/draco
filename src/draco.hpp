@@ -520,6 +520,7 @@ protected:
     if (std::size(all_pre_collapsing_clusters) > 1) {
       auto best_window_size =
           windows_info_all_window_sizes.window_sizes[best_window_size_index];
+      transcript_result.window_size = best_window_size;
       std::visit(
           [&](auto const &window_offset) {
             using window_offset_t =
@@ -531,10 +532,13 @@ protected:
                   transcript_result.name, best_window_size);
             } else if constexpr (std::is_same_v<window_offset_t,
                                                 window_offset::Multiple>) {
+              auto best_window_offset =
+                  window_offset.value[best_window_size_index];
+              transcript_result.window_offset = best_window_offset;
               logger::debug("Transcript {} will be analyzed with a window size "
                             "of {} and a window offset of {}",
                             transcript_result.name, best_window_size,
-                            window_offset.value[best_window_size_index]);
+                            best_window_offset);
             } else {
               static_assert(false);
             }

@@ -2,6 +2,7 @@
 #include "args.hpp"
 #include "compact_ringmap.hpp"
 #include "expectation_maximization/responsibilities.hpp"
+#include "triangular_matrix_strict.hpp"
 #include "weighted_clusters.hpp"
 #include <algorithm>
 #include <armadillo>
@@ -12,6 +13,29 @@
 #include <ranges>
 
 namespace expectation_maximization {
+
+void ExpectationMaximization::fill_log_ends_probabilities() noexcept {
+  // arma::Mat<std::uint32_t> ends_counts(
+  //     weights_->getElementsSize() + 1, static_cast<std::uint32_t>(0));
+  auto possible_ends = ringmap_->end_index() + 1;
+  arma::Mat<std::uint32_t> ends_counts(possible_ends, possible_ends);
+  ends_counts.fill(0);
+  for (auto &&row : *ringmap_) {
+    // ++ends_counts[row.begin_index()][row.end_index()];
+    ++ends_counts[row.begin_index(), row.end_index()];
+  }
+
+  auto const n_reads = static_cast<double>(ringmap_->n_rows());
+  std::ranges::transform(
+      ends_counts, std::ranges::begin(log_ends_probabilities_),
+      [&](auto count) {
+        if (count == 0) {
+          return 0.;
+        }
+
+        return std::log(static_cast<double>(count) / n_reads);
+      });
+}
 
 void weighted_priors_initialization(std::span<double> priors,
                                     CompactRingmap const &ringmap,
@@ -40,11 +64,16 @@ struct CalcResponsibilitiesResult {
 
 static CalcResponsibilitiesResult calc_responsibilities(
     const CompactRingmapRow &row, std::span<double> responsibilities_row,
-    WeightedClusters const &weights, std::span<const double> priors) noexcept {
+    /* TriangularMatrixStrict<double> */
+    arma::mat const &log_ends_probabilities, WeightedClusters const &weights,
+    std::span<const double> priors) noexcept {
   auto max_log_likelihood = -std::numeric_limits<double>::infinity();
   for (auto &&[prior, cluster_weights, responsibility] :
        std::views::zip(priors, weights.clusters(), responsibilities_row)) {
-    auto new_responsibility = std::log(std::max(prior, 1e-10));
+    auto new_responsibility =
+        std::log(std::max(prior, 1e-10)) +
+        // log_ends_probabilities[row.begin_index()][row.end_index()];
+        log_ends_probabilities[row.begin_index(), row.end_index()];
     auto indices_iter = std::ranges::begin(row.indices());
     for (auto &&[base_index, base_weight] :
          std::views::zip(std::views::iota(0uz), cluster_weights) |
@@ -83,8 +112,8 @@ double ExpectationMaximization::expectation() noexcept {
   auto log_likelihood = 0.;
   for (auto &&[row, responsibilities_row] :
        std::views::zip(*ringmap_, responsibilities_.rows())) {
-    auto result =
-        calc_responsibilities(row, responsibilities_row, *weights_, priors_);
+    auto result = calc_responsibilities(
+        row, responsibilities_row, log_ends_probabilities_, *weights_, priors_);
     log_likelihood +=
         (result.max_log_likelihood + std::log(result.responsibilities_sum)) *
         static_cast<double>(row.count());
@@ -192,6 +221,7 @@ void ExpectationMaximization::read_assignment(
     std::mt19937 &rng) const {
   assert(std::size(assignments) == weights_->getClustersSize());
   assert(ringmap_rows_begin != ringmap_rows_end);
+  [[maybe_unused]]
   auto modified_indices = (*ringmap_rows_begin).indices();
   auto ringmap_rows =
       std::ranges::subrange(ringmap_rows_begin, ringmap_rows_end);
@@ -200,7 +230,8 @@ void ExpectationMaximization::read_assignment(
         return std::ranges::equal(row.indices(), modified_indices);
       }));
 
-  calc_responsibilities(ringmap_rows[0], buffer, *weights_, priors_);
+  calc_responsibilities(ringmap_rows[0], buffer, log_ends_probabilities_,
+                        *weights_, priors_);
   auto total_count = std::ranges::fold_left(
       ringmap_rows |
           std::views::transform([](auto &&row) { return row.count(); }),

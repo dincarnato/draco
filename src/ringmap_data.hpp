@@ -159,6 +159,9 @@ public:
   std::vector<RingmapData>
   split_into_windows(std::vector<results::Window> const &windows) &&;
 
+  constexpr unsigned start_index() const noexcept { return startIndex; }
+  constexpr unsigned end_index() const noexcept { return endIndex; }
+
 private:
   template <typename Iter> void addReads(Iter begin, Iter end);
 };

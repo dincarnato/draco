@@ -9,9 +9,11 @@
 #include "ringmap_data.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <format>
 #include <functional>
 #include <iterator>
+#include <print>
 #include <random>
 #include <ranges>
 #include <tuple>
@@ -121,10 +123,15 @@ Reassignment::reweight_and_reassign_with_expectation_maximization_iteration(
     reassignment::ReweightAndReassignWithExpectationMaximizationIteration args)
     const {
   auto &weighted_clusters = args.window->weighted_clusters;
-  CompactRingmap compact_ringmap(args.ringmap->data());
+  CompactRingmap compact_ringmap(args.ringmap->data(),
+                                 args.ringmap->start_index(),
+                                 args.ringmap->end_index());
   ExpectationMaximization expectation_maximization(
       compact_ringmap, weighted_clusters, *this->args, *args.rng);
+  auto start = std::chrono::steady_clock::now();
   auto em_result = expectation_maximization.run();
+  auto end = std::chrono::steady_clock::now();
+  std::println("EM took {}", end - start);
   std::visit(
       [&](auto &&convergence) {
         using T = std::remove_cvref_t<decltype(convergence)>;

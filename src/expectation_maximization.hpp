@@ -1,8 +1,10 @@
 #pragma once
 
 #include "expectation_maximization/responsibilities.hpp"
+#include "triangular_matrix_strict.hpp"
 #include "weighted_clusters.hpp"
 
+#include <armadillo>
 #include <concepts>
 #include <iterator>
 #include <random>
@@ -68,6 +70,7 @@ struct ExpectationMaximization {
 protected:
   double expectation() noexcept;
   void maximization() noexcept;
+  void fill_log_ends_probabilities() noexcept;
 
   CompactRingmap const *ringmap_;
   WeightedClusters *weights_;
@@ -76,6 +79,8 @@ protected:
   Responsibilities responsibilities_;
   Responsibilities weights_buffer_;
   Responsibilities coverages_buffer_;
+  // TriangularMatrixStrict<double> log_ends_probabilities_;
+  arma::mat log_ends_probabilities_;
 };
 
 void weighted_priors_initialization(std::span<double> priors,
@@ -110,7 +115,10 @@ ExpectationMaximization::ExpectationMaximization(CompactRingmap const &ringmap,
       weights_buffer_(static_cast<std::uint32_t>(weights.getElementsSize()),
                       static_cast<std::uint8_t>(weights.getClustersSize())),
       coverages_buffer_(static_cast<std::uint32_t>(weights.getElementsSize()),
-                        static_cast<std::uint8_t>(weights.getClustersSize())) {
+                        static_cast<std::uint8_t>(weights.getClustersSize())),
+      // log_ends_probabilities_(weights.getElementsSize() + 1)
+      log_ends_probabilities_(ringmap.end_index() + 1,
+                              ringmap.end_index() + 1) {
   if (weights.getElementsSize() > std::numeric_limits<std::uint32_t>::max()) {
     throw std::runtime_error(
         "too many bases to initialize expectation-maximization");
@@ -119,6 +127,8 @@ ExpectationMaximization::ExpectationMaximization(CompactRingmap const &ringmap,
     throw std::runtime_error(
         "too many clusters to initialize expectation-maximization");
   }
+
+  fill_log_ends_probabilities();
 
   switch (args.expectation_maximization_priors_initialization()) {
   case args::PriorsInitialization::Uniform:

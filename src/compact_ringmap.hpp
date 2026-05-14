@@ -166,7 +166,8 @@ protected:
  */
 struct CompactRingmap {
   CompactRingmap() = default;
-  explicit CompactRingmap(RingmapMatrix const &ringmap_matrix);
+  explicit CompactRingmap(RingmapMatrix const &ringmap_matrix,
+                          std::uint32_t start_index, std::uint32_t end_index);
 
   constexpr std::uint32_t row_size() const noexcept {
     return max_modifications_ + 4;
@@ -213,12 +214,17 @@ struct CompactRingmap {
     return CompactRingmapIterator(*this, n_rows_);
   }
 
+  constexpr std::uint32_t start_index() const noexcept { return start_index_; }
+  constexpr std::uint32_t end_index() const noexcept { return end_index_; }
+
 protected:
   std::unique_ptr<std::uint32_t[]> start_end_count_sizes_and_modifications_{};
   std::vector<std::vector<std::uint32_t>> mapping_;
   std::uint32_t n_rows_{};
   std::uint32_t max_modifications_{};
   std::uint32_t original_n_rows_{};
+  std::uint32_t start_index_{};
+  std::uint32_t end_index_{};
 };
 
 struct RingmapMatrixRowHelper {

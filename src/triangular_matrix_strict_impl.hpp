@@ -2,7 +2,7 @@
 
 #include "triangular_matrix_strict.hpp"
 
-#include <cmath>
+#include <cassert>
 
 template <typename T, typename Alloc>
 TriangularMatrixStrict<T, Alloc>::TriangularMatrixStrict(

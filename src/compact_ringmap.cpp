@@ -9,8 +9,11 @@
 #include <span>
 #include <vector>
 
-CompactRingmap::CompactRingmap(RingmapMatrix const &ringmap_matrix)
-    : original_n_rows_(ringmap_matrix.rows_size()) {
+CompactRingmap::CompactRingmap(RingmapMatrix const &ringmap_matrix,
+                               std::uint32_t start_index,
+                               std::uint32_t end_index)
+    : original_n_rows_(ringmap_matrix.rows_size()), start_index_(start_index),
+      end_index_(end_index) {
   std::map<RingmapMatrixRowHelper,
            std::tuple<std::uint32_t, std::vector<std::uint32_t>>>
       unique_modifications_sets;

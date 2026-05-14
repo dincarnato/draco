@@ -200,6 +200,7 @@ fn main() {
                     (profile_index, mutations_indices, begin..end)
                 });
 
+            let mut cluster_attributions = Vec::new();
             let reads: Vec<_> = {
                 if let Some(n_reads) = cli.n_reads {
                     mutations_generator.take(n_reads).map(profile_mapper).collect()
@@ -221,10 +222,19 @@ fn main() {
                             *minimally_covered = true;
                         }
 
+                        cluster_attributions.push(profile_index);
                         Some((profile_index, modification_indices, range))
                     }).map(profile_mapper).collect()
                 }
             };
+
+            {
+                let mut attributions_file = File::create("attributions.txt").expect("unable to create attributions file");
+                for attribution in cluster_attributions {
+                    writeln!(attributions_file, "{attribution}").unwrap();
+                }
+                attributions_file.sync_all().unwrap();
+            }
 
             db_out
                 .write_all(entry.sequence.as_slice())

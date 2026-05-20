@@ -1,6 +1,7 @@
 #pragma once
 
 #include "concepts.hpp"
+#include "fmt/ostream.h"
 #include "logger.hpp"
 #include "mutation_map_transcript.hpp"
 #include "results/analysis.hpp"
@@ -284,12 +285,33 @@ void add_detected_clusters_with_confidence(
 WindowsInfo get_windows_info(std::span<RingmapData const *const> ringmaps_data,
                              Args const &args) noexcept;
 
+template <typename R>
+  requires std::ranges::range<R> and std::same_as<std::ranges::range_value_t<R>,
+                                                  std::span<const unsigned int>>
 void output_raw_n_clusters(std::ofstream &raw_n_clusters_stream,
                            std::mutex &raw_n_clusters_stream_mutex,
                            unsigned int window_size,
                            std::vector<Window> const &windows,
-                           std::vector<unsigned int> const &windows_n_clusters,
-                           results::Transcript &transcript_result);
+                           R &&replicates_windows_n_clusters,
+                           results::Transcript &transcript_result) {
+  assert(std::ranges::all_of(
+      replicates_windows_n_clusters, [&](auto replicate_windows_n_clusters) {
+        return std::size(windows) == std::size(replicate_windows_n_clusters);
+      }));
+
+  std::lock_guard<std::mutex> lock(raw_n_clusters_stream_mutex);
+
+  for (auto &&[window_index, window] :
+       std::views::zip(std::views::iota(0uz), windows)) {
+    fmt::print(raw_n_clusters_stream, "{}\t{}\t{}", transcript_result.name,
+               window.start_base, window.start_base + window_size);
+    for (auto replicate_windows_n_clusters : replicates_windows_n_clusters) {
+      fmt::print(raw_n_clusters_stream, "\t{}",
+                 replicate_windows_n_clusters[window_index]);
+    }
+    fmt::println(raw_n_clusters_stream, "");
+  }
+}
 
 enum class RedundantPatterns {
   AllZeros,
@@ -354,7 +376,11 @@ struct HandleTranscripts {
           *raw_n_clusters_stream, raw_n_clusters_stream_mutex,
           first_ptba_on_replicate_result.window_size,
           first_ptba_on_replicate_result.windows,
-          first_ptba_on_replicate_result.pre_collapsing_clusters,
+          ptba_on_replicate_results |
+              std::views::transform([&](auto const &ptba_on_replicate_result) {
+                return std::span(
+                    ptba_on_replicate_result.pre_collapsing_clusters);
+              }),
           transcript_result);
       return;
     }

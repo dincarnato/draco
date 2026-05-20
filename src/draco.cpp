@@ -1,7 +1,6 @@
 #include "draco.hpp"
 #include "args.hpp"
 #include "fmt/base.h"
-#include "fmt/ostream.h"
 #include "graph_cut.hpp"
 #include "kmeans.hpp"
 #include "logger.hpp"
@@ -543,32 +542,6 @@ void dump_assignments(results::Transcript const &transcript,
       }
 
       mm_transcript.add_read(read);
-    }
-  }
-}
-
-void output_raw_n_clusters(std::ofstream &raw_n_clusters_stream,
-                           std::mutex &raw_n_clusters_stream_mutex,
-                           unsigned int window_size,
-                           std::vector<Window> const &windows,
-                           std::vector<unsigned int> const &windows_n_clusters,
-                           results::Transcript &transcript_result) {
-  auto windows_iter = std::cbegin(windows);
-  auto windows_end = std::cend(windows);
-  auto windows_n_clusters_iter = std::cbegin(windows_n_clusters);
-  assert(std::distance(windows_iter, windows_end) ==
-         std::distance(windows_n_clusters_iter, std::cend(windows_n_clusters)));
-
-  {
-    std::lock_guard<std::mutex> lock(raw_n_clusters_stream_mutex);
-
-    for (; windows_iter < windows_end;
-         ++windows_iter, ++windows_n_clusters_iter) {
-      auto &&window = *windows_iter;
-      auto n_clusters = *windows_n_clusters_iter;
-      fmt::println(raw_n_clusters_stream, "{}\t{}\t{}\t{}",
-                   transcript_result.name, window.start_base,
-                   window.start_base + window_size, n_clusters);
     }
   }
 }

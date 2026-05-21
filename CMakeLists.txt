@@ -16,7 +16,11 @@ endif()
 
 include(FetchContent)
 
-find_package(Boost 1.66 REQUIRED)
+find_package(
+  Boost 1.66 REQUIRED
+  COMPONENTS
+    thread
+)
 find_package(Armadillo REQUIRED)
 find_package(OpenMP REQUIRED)
 

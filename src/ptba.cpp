@@ -32,7 +32,9 @@ Ptba::Ptba(const RingmapData &data, Args const &args)
 std::tuple<arma::mat, arma::vec, arma::vec, arma::mat>
 Ptba::calculateEigenGaps(const RingmapData &data) {
   arma::mat normalizedLaplacian;
-  arma::mat adjacency = data.data().covariance(data.getBaseWeights());
+  auto base_weights = data.getBaseWeights().lock();
+  assert(base_weights);
+  arma::mat adjacency = data.data().covariance(*base_weights);
   {
     // data.fixBadNeighboursOnAdjacency(adjacency);
     RingmapData::removeHighValuesOnAdjacency(

@@ -538,8 +538,9 @@ struct HandleTranscripts {
                     return filtered_data.data().rows_size() > 0;
                   }) |
                   std::views::transform([](const auto &filtered_data) {
-                    return filtered_data.data().covariance(
-                        filtered_data.getBaseWeights());
+                    auto base_weights = filtered_data.getBaseWeights().lock();
+                    assert(base_weights);
+                    return filtered_data.data().covariance(*base_weights);
                   }) |
                   std::views::as_rvalue | std::ranges::to<std::vector>();
 

@@ -14,9 +14,9 @@
 #include <array>
 #include <cassert>
 #include <fstream>
-#include <iomanip>
 #include <iterator>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <random>
 #include <regex>
@@ -398,7 +398,7 @@ RingmapData &RingmapData::operator+=(const RingmapData &other) {
   std::ranges::transform(other.baseCoverages, baseCoverages,
                          std::ranges::begin(baseCoverages),
                          std::plus<unsigned>{});
-  cachedBaseWeights.clear();
+  cached_base_weights.reset();
 
   return *this;
 }
@@ -440,22 +440,20 @@ const std::vector<unsigned> &RingmapData::getBaseCoverages() const {
   return baseCoverages;
 }
 
-const std::vector<double> &RingmapData::getBaseWeights() const {
+const std::weak_ptr<std::vector<double>> RingmapData::getBaseWeights() const {
   assert(m_data.rows_size() > 0);
   assert(nSetReads == m_data.rows_size());
 
-  if (cachedBaseWeights.size() > 0)
+  return cached_base_weights.get_weak_or_init([&] {
+    unsigned highestCoverage = *std::ranges::max_element(baseCoverages);
+    std::vector<double> cachedBaseWeights(baseCoverages.size(), 0.);
+    std::ranges::transform(baseCoverages, std::ranges::begin(cachedBaseWeights),
+                           [highestCoverage](unsigned coverage) {
+                             return static_cast<double>(coverage) /
+                                    highestCoverage;
+                           });
     return cachedBaseWeights;
-
-  unsigned highestCoverage = *std::ranges::max_element(baseCoverages);
-  cachedBaseWeights.resize(baseCoverages.size());
-  std::ranges::transform(baseCoverages, std::ranges::begin(cachedBaseWeights),
-                         [highestCoverage](unsigned coverage) {
-                           return static_cast<double>(coverage) /
-                                  highestCoverage;
-                         });
-
-  return cachedBaseWeights;
+  });
 }
 
 unsigned RingmapData::getModificationsFilter() const {

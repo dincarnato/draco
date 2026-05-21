@@ -1,16 +1,23 @@
 #pragma once
 
 #include "args.hpp"
+#include "concepts.hpp"
 #include "parallel/blocking_queue.hpp"
 #include "read_clusters_assignments.hpp"
 #include "ringmap_matrix.hpp"
 #include "weighted_clusters_impl.hpp"
 
-#include <array>
+#include <boost/thread/lock_options.hpp>
+#include <boost/thread/lock_types.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include <map>
+#include <memory>
+#include <mutex>
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <tuple>
+#include <type_traits>
 #include <vector>
 
 class MutationMap;
@@ -25,6 +32,93 @@ struct RingmapData;
 namespace results {
 struct Window;
 } // namespace results
+
+struct CachedBaseWeights {
+  using data_type = std::vector<double>;
+
+  inline CachedBaseWeights() noexcept = default;
+  inline CachedBaseWeights(CachedBaseWeights const &other)
+      : weights_(([&] {
+          boost::shared_lock lock(other.mutex_);
+          if (other.weights_) {
+            return std::make_shared<data_type>(*other.weights_);
+          } else {
+            return std::shared_ptr<data_type>();
+          }
+        })()) {}
+  inline CachedBaseWeights(CachedBaseWeights &&other) noexcept
+      : weights_(([&] {
+          static_assert(std::is_nothrow_move_constructible_v<
+                        std::shared_ptr<std::vector<double>>>);
+
+          boost::unique_lock lock(other.mutex_);
+          if (other.weights_) {
+            return std::shared_ptr(std::move(other.weights_));
+          } else {
+            return std::shared_ptr<data_type>();
+          }
+        })()) {}
+
+  inline CachedBaseWeights &operator=(CachedBaseWeights const &other) {
+    if (this == &other) {
+      return *this;
+    }
+
+    boost::unique_lock this_lock(mutex_, boost::defer_lock);
+    boost::shared_lock other_lock(other.mutex_, boost::defer_lock);
+    if (&this->mutex_ < &other.mutex_) {
+      this_lock.lock();
+      other_lock.lock();
+    } else {
+      other_lock.lock();
+      this_lock.lock();
+    }
+    if (other.weights_) {
+      weights_ = std::make_shared<std::vector<double>>(*other.weights_);
+    } else {
+      weights_.reset();
+    }
+    return *this;
+  }
+
+  inline CachedBaseWeights &operator=(CachedBaseWeights &&other) {
+    static_assert(std::is_nothrow_move_assignable_v<
+                  std::shared_ptr<std::vector<double>>>);
+    if (this == &other) {
+      return *this;
+    }
+
+    std::scoped_lock lock(mutex_, other.mutex_);
+    if (other.weights_) {
+      weights_ = std::move(other.weights_);
+    } else {
+      weights_.reset();
+    }
+    return *this;
+  }
+
+  constexpr void reset() const noexcept {
+    boost::unique_lock lock(mutex_);
+    weights_.reset();
+  }
+
+  template <typename F>
+    requires InvocableR<F, data_type>
+  constexpr std::weak_ptr<data_type> get_weak_or_init(F &&f) const {
+    boost::upgrade_lock upgrade_lock(mutex_);
+    if (weights_) {
+      return std::weak_ptr(weights_);
+    } else {
+      boost::unique_lock unique_lock(std::move(upgrade_lock));
+      weights_ = std::make_shared<data_type>(f());
+      return std::weak_ptr(weights_);
+    }
+  }
+
+protected:
+  mutable boost::upgrade_mutex mutex_;
+  mutable std::shared_ptr<data_type> weights_;
+};
 
 class RingmapData {
 public:
@@ -137,7 +231,8 @@ private:
   std::string sequence;
   std::vector<unsigned> readsMap;
   std::vector<unsigned> baseCoverages;
-  mutable std::vector<double> cachedBaseWeights;
+  CachedBaseWeights cached_base_weights;
+
   std::map<unsigned, unsigned> oldColsToNew;
   data_type m_data;
   arma::Col<std::uint8_t> basesMask;
@@ -148,7 +243,7 @@ public:
   decltype(oldColsToNew) getFilteredToNonFilteredMap() const;
   const decltype(readsMap) &getReadsMap() const;
   const std::vector<unsigned> &getBaseCoverages() const;
-  const std::vector<double> &getBaseWeights() const;
+  const std::weak_ptr<std::vector<double>> getBaseWeights() const;
   std::vector<RingmapData>
   split_into_windows(std::vector<results::Window> const &windows) &&;
 

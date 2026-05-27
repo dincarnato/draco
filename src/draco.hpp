@@ -18,6 +18,7 @@
 #include <oneapi/tbb/parallel_for.h>
 #include <ranges>
 #include <span>
+#include <utility>
 #include <vector>
 
 struct Window {
@@ -289,6 +290,12 @@ void output_raw_n_clusters(std::ofstream &raw_n_clusters_stream,
                            std::vector<unsigned int> const &windows_n_clusters,
                            results::Transcript &transcript_result);
 
+enum class RedundantPatterns {
+  AllZeros,
+  Redundant,
+  NotRedundant,
+};
+
 struct HandleTranscripts {
   std::vector<MutationMapTranscript const *> const &transcripts;
   std::vector<RingmapData *> const &ringmaps_data;
@@ -297,7 +304,6 @@ struct HandleTranscripts {
   std::optional<std::ofstream> &raw_n_clusters_stream;
   std::mutex &raw_n_clusters_stream_mutex;
   bool use_logger;
-  bool allow_empty_patterns;
 
   void operator()(
       InvocableR<PtbaOnReplicate, std::size_t, RingmapData const &,
@@ -690,19 +696,16 @@ struct HandleTranscripts {
                 assert(window.fractions.size() > 1 or
                        window.fractions.empty() or window.fractions[0] >= 0.01);
 
-                bool const redundand_patterns = [&] {
-                  if (!allow_empty_patterns and
-                      std::ranges::any_of(
+                RedundantPatterns const redundant_patterns = [&] {
+                  if (window.fractions.size() == 1) {
+                    return RedundantPatterns::NotRedundant;
+                  }
+                  if (std::ranges::any_of(
                           *window.patterns, [](auto const &pattern) {
                             return std::ranges::all_of(
                                 pattern, [](auto value) { return value == 0; });
                           })) {
-                    throw std::runtime_error(
-                        std::format("A pattern for window {}-{} of "
-                                    "transcript {} contains "
-                                    "only zeros. This should never happen.",
-                                    window.begin_index, window.end_index,
-                                    transcript_result.name));
+                    return RedundantPatterns::AllZeros;
                   }
 
                   auto patterns_iter = std::cbegin(*window.patterns);
@@ -720,14 +723,15 @@ struct HandleTranscripts {
                                           std::cbegin(next_pattern),
                                           std::cend(next_pattern));
                                     })) {
-                      return true;
+
+                      return RedundantPatterns::Redundant;
                     }
                   }
 
-                  return false;
+                  return RedundantPatterns::NotRedundant;
                 }();
 
-                if (redundand_patterns or
+                if (redundant_patterns != RedundantPatterns::NotRedundant or
                     std::ranges::any_of(
                         window.fractions,
                         [min_cluster_fraction =
@@ -739,11 +743,19 @@ struct HandleTranscripts {
                   auto const result_window_end = window.end_index;
 
                   auto cause = ([&] {
-                    if (redundand_patterns) {
+                    switch (redundant_patterns) {
+                    case RedundantPatterns::AllZeros:
+                      return "a weights pattern is all zeros";
+
+                    case RedundantPatterns::Redundant:
                       return "a redundant weights pattern is found";
-                    } else {
+
+                    case RedundantPatterns::NotRedundant:
                       return "at least one fraction is below the minimum "
                              "threshold";
+
+                    default:
+                      std::unreachable();
                     }
                   })();
                   logger::debug(

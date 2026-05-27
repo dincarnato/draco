@@ -905,7 +905,6 @@ void handle_transcripts(
       .raw_n_clusters_stream = raw_n_clusters_stream,
       .raw_n_clusters_stream_mutex = raw_n_clusters_stream_mutex,
       .use_logger = true,
-      .allow_empty_patterns = false,
   }(
       [&](auto replicate_index, auto const &ringmap_data,
           auto &transcript_result, auto const &windows_info) {

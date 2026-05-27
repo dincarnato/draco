@@ -5,10 +5,12 @@
 #include "parallel/blocking_queue.hpp"
 #include "results/analysis.hpp"
 #include "ringmap_data.hpp"
+#include "utils.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <exception>
 #include <filesystem>
 #include <iostream>
 #include <mutex>
@@ -41,14 +43,12 @@ int main(int argc, char *argv[]) {
 
   if (auto window_size = args.window_size();
       window_size > 1 and window_size < args.min_bases_size()) {
-    logger::error("Invalid parameters: --winLen ({}) < --minWindowBases ({})",
-                  window_size, args.min_bases_size());
-    return EXIT_FAILURE;
+    bail("Invalid parameters: --winLen ({}) < --minWindowBases ({})",
+         window_size, args.min_bases_size());
   }
 
   if (args.max_clusters() < 1) {
-    logger::error("--maxClusters must be at least 1");
-    return EXIT_FAILURE;
+    bail("--maxClusters must be at least 1");
   }
 
   if (not args.assignments_dump_directory().empty()) {
@@ -65,7 +65,13 @@ int main(int argc, char *argv[]) {
   for (auto const &mm_filename : args.mm_filenames()) {
     mutation_maps.emplace_back(mm_filename);
   }
-  results::Analysis analysisResult(args);
+  auto analysisResult = ([&] {
+    try {
+      return results::Analysis(args);
+    } catch (std::exception &err) {
+      bail("unable to create an analysis result: {}", err.what());
+    }
+  })();
 
   analysisResult.filenames = args.mm_filenames();
 
@@ -159,10 +165,9 @@ int main(int argc, char *argv[]) {
                                              transcript->getSequence() !=
                                                  first_transcript.getSequence();
                                     })) {
-              logger::error("Expected ordered transcripts between files, "
-                            "discrepancies found on transcript {}, exiting.",
-                            first_transcript.getId());
-              std::exit(EXIT_FAILURE);
+              bail("Expected ordered transcripts between files, discrepancies "
+                   "found on transcript {}, exiting.",
+                   first_transcript.getId());
             }
 
             handle_transcripts(transcripts, ringmaps_data, analysisResult, args,

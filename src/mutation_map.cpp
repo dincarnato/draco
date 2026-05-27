@@ -31,7 +31,7 @@ void MutationMap::checkEofMarker() noexcept(false) {
     value = static_cast<std::uint8_t>(stream_char);
   }
   if (marker != eofMarker)
-    throw std::runtime_error("end-of-file magic marker not found");
+    bail("end-of-file magic marker not found");
 }
 
 unsigned MutationMap::loadOtherTranscripts(unsigned n) noexcept(false) {

@@ -1,9 +1,11 @@
 #pragma once
 
 #include "args.hpp"
+#include "logger.hpp"
 #include "math.hpp"
 
 #include <array>
+#include <cstdlib>
 #include <functional>
 #include <type_traits>
 #include <vector>
@@ -152,6 +154,13 @@ inline std::size_t count_intersections(InputIt1 first1, InputIt1 last1,
   return count_intersections(std::move(first1), std::move(last1),
                              std::move(first2), std::move(last2),
                              std::less<typename InputIt1::value_type>());
+}
+
+template <typename... Args>
+[[noreturn]]
+inline void bail(fmt::format_string<Args...> format_string, Args &&...args) {
+  logger::error(std::move(format_string), std::forward<Args>(args)...);
+  std::exit(EXIT_FAILURE);
 }
 
 /*

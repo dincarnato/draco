@@ -5,6 +5,7 @@
 #include "mutation_map_transcript.hpp"
 #include "results/analysis.hpp"
 #include "results/transcript.hpp"
+#include "utils.hpp"
 #include "weighted_clusters.hpp"
 #include "window_clusters_with_confidence.hpp"
 
@@ -366,9 +367,8 @@ struct HandleTranscripts {
                      ptba_on_replicate_result.window_size !=
                          ptba_on_replicate_results[0].window_size;
             })) {
-      throw std::runtime_error(
-          std::format("the number of windows for transcript {} is incoherent",
-                      first_transcript.getId()));
+      bail("the number of windows for transcript {} is incoherent",
+           first_transcript.getId());
     };
 
     auto const window_size = windows_info.window_size;
@@ -455,9 +455,8 @@ struct HandleTranscripts {
                                  first_result_window.weights.getClustersSize();
                     });
               })) {
-        throw std::runtime_error(std::format(
-            "incoherent windows between replicates for transcript {}",
-            first_transcript.getId()));
+        bail("incoherent windows between replicates for transcript {}",
+             first_transcript.getId());
       };
 
       std::vector<std::vector<unsigned>> replicates_windows_reads_indices_vec(
@@ -605,9 +604,7 @@ struct HandleTranscripts {
                                     window.has_value() !=
                                     transcript_result.windows[0].has_value());
                               })) {
-        logger::error(
-            "Inconsistency detected between merged windows, exiting.");
-        std::exit(EXIT_FAILURE);
+        bail("Inconsistency detected between merged windows, exiting.");
       }
 
       if (transcript_result.windows[0]) {
@@ -639,9 +636,8 @@ struct HandleTranscripts {
                            first_replicate_result_windows[window_index]
                                .weighted_clusters.getClustersSize();
                   })) {
-            logger::error("Inconsistency between weighted clusters sizes "
-                          "across replicates, exiting.");
-            std::exit(EXIT_FAILURE);
+            bail("Inconsistency between weighted clusters sizes across "
+                 "replicates, exiting.");
           }
 
           if (first_replicate_result_windows[window_index]

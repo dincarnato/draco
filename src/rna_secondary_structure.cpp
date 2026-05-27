@@ -1,5 +1,6 @@
 #include "rna_secondary_structure.hpp"
 #include "helix.hpp"
+#include "utils.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -20,7 +21,7 @@ RnaSecondaryStructure::RnaSecondaryStructure(const std::string &rawStructure)
     else if (baseRawStructure == ')')
       base_type::push_back(BaseSecondaryStructure::double_strand_close);
     else
-      throw std::runtime_error("invalid dot bracket");
+      bail("invalid dot bracket");
   }
 }
 
@@ -36,7 +37,7 @@ RnaSecondaryStructure::RnaSecondaryStructure(const char *const rawStructure)
     else if (*baseRawStructure == ')')
       base_type::push_back(BaseSecondaryStructure::double_strand_close);
     else
-      throw std::runtime_error("invalid dot bracket");
+      bail("invalid dot bracket");
   }
 }
 

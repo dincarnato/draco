@@ -1,4 +1,5 @@
 #include "paired_rna_secondary_structure.hpp"
+#include "utils.hpp"
 
 #include <algorithm>
 #include <stack>
@@ -19,7 +20,7 @@ auto PairedRnaSecondaryStructure::createPairs() const -> pairs_type {
       break;
     case BaseSecondaryStructure::double_strand_close:
       if (boundBases.empty())
-        throw std::runtime_error("unbalanced structure");
+        bail("unbalanced structure");
 
       std::size_t otherBaseIndex = boundBases.top();
       pairs[baseIndex].index = otherBaseIndex;
@@ -31,7 +32,7 @@ auto PairedRnaSecondaryStructure::createPairs() const -> pairs_type {
   }
 
   if (not boundBases.empty())
-    throw std::runtime_error("unbalanced structure");
+    bail("unbalanced structure");
 
   return pairs;
 }

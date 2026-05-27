@@ -71,8 +71,7 @@ inline Window::Window(unsigned short begin_index,
       weighted_clusters(weighted_clusters), coverages(coverages) {
   if (begin_index + coverages.size() >
       std::numeric_limits<unsigned short>::max()) {
-    throw std::runtime_error(
-        "end_index cannot be represented with an unsigned short");
+    bail("end_index cannot be represented with an unsigned short");
   }
   auto const weighted_clusters_size = weighted_clusters.getElementsSize();
   if (weighted_clusters_size != 0 and

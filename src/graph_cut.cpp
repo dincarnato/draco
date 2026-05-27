@@ -57,7 +57,7 @@ arma::mat GraphCut::createGraph(const arma::mat &adjacency) const {
   case Graph::adjacency:
     return adjacency;
   default:
-    throw std::runtime_error("graph type not implemeted, sorry :(");
+    bail("graph type not implemeted, sorry :(");
   }
 }
 

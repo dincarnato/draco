@@ -1331,6 +1331,156 @@ static void test_get_min_max_read_size_empty() {
   assert(max_read_size == 0);
 }
 
+static Window make_window(std::uint16_t start_base) {
+  return Window{.start_base = start_base, .weights = {}, .coverages = {}};
+}
+
+static PtbaOnReplicate make_replicate(std::uint16_t start_base,
+                                      unsigned window_size) {
+  return PtbaOnReplicate{
+      .pre_collapsing_clusters = {},
+      .windows = {make_window(start_base)},
+      .window_size = window_size,
+      .window_offset = 1,
+  };
+}
+
+static PtbaOnReplicate make_replicate(std::vector<std::uint16_t> start_bases,
+                                      unsigned window_size) {
+
+  return PtbaOnReplicate{
+      .pre_collapsing_clusters = {},
+      .windows = start_bases | std::views::transform([&](auto start_base) {
+                   return make_window(start_base);
+                 }) |
+                 std::ranges::to<std::vector>(),
+      .window_size = window_size,
+      .window_offset = 1,
+  };
+}
+
+static void test_get_pre_collapsing_clusters_mean_one_replicate_one_window() {
+  constexpr std::size_t window_size = 3;
+  constexpr std::uint16_t start_base = 0;
+  constexpr unsigned n_clusters = 4;
+
+  PtbaOnReplicate replicate{make_replicate(start_base, window_size)};
+  std::array<PreCollapsingClusters, 1> pcc{{n_clusters, 0.f}};
+
+  std::vector<std::uint16_t> clusters_buf;
+  std::vector<std::uint16_t> count_buf;
+  double result =
+      get_pre_collapsing_clusters_mean(replicate, pcc, clusters_buf, count_buf);
+
+  assert(std::abs(result - 4.0) < 1e-6);
+}
+
+static void
+test_get_pre_collapsing_clusters_mean_one_window_non_overlapping_windows() {
+  constexpr std::size_t window_size = 2;
+  constexpr unsigned n_clusters = 5;
+
+  PtbaOnReplicate replicate{make_replicate({0u, 5u}, window_size)};
+  std::array<PreCollapsingClusters, 2> pcc{
+      PreCollapsingClusters{n_clusters, 0.f}, {n_clusters, 0.f}};
+
+  std::vector<std::uint16_t> clusters_buf;
+  std::vector<std::uint16_t> count_buf;
+  double result =
+      get_pre_collapsing_clusters_mean(replicate, pcc, clusters_buf, count_buf);
+
+  auto expected_mean = static_cast<double>(n_clusters) * window_size * 2 /
+                       static_cast<double>(5 + window_size);
+  assert(std::abs(result - expected_mean) < 1e-6);
+}
+
+static void test_get_pre_collapsing_clusters_mean_buffer_size() {
+  constexpr std::size_t window_size = 4;
+  constexpr std::uint16_t start_base = 10;
+
+  PtbaOnReplicate replicate{make_replicate(start_base, window_size)};
+  std::array<PreCollapsingClusters, 1> pcc{{1u, 0.f}};
+
+  std::vector<std::uint16_t> clusters_buf;
+  std::vector<std::uint16_t> count_buf;
+  get_pre_collapsing_clusters_mean(replicate, pcc, clusters_buf, count_buf);
+
+  assert(clusters_buf.size() == window_size);
+  assert(count_buf.size() == window_size);
+}
+
+static void test_get_pre_collapsing_clusters_mean_non_zero_start_base() {
+  constexpr std::size_t window_size = 3;
+  constexpr std::uint16_t start_base = 10;
+  constexpr unsigned n_clusters = 7;
+
+  PtbaOnReplicate replicate{make_replicate(start_base, window_size)};
+  std::array<PreCollapsingClusters, 1> pcc{{n_clusters, 0.f}};
+
+  std::vector<std::uint16_t> clusters_buf;
+  std::vector<std::uint16_t> count_buf;
+  double result =
+      get_pre_collapsing_clusters_mean(replicate, pcc, clusters_buf, count_buf);
+
+  assert(std::abs(result - 7.0) < 1e-6);
+}
+
+static void test_get_pre_collapsing_clusters_mean_zero_n_clusters() {
+  constexpr std::size_t window_size = 3;
+  constexpr std::uint16_t start_base = 0;
+
+  PtbaOnReplicate replicate{make_replicate(start_base, window_size)};
+  std::array<PreCollapsingClusters, 1> pcc{{0u, 0.f}};
+
+  std::vector<std::uint16_t> clusters_buf;
+  std::vector<std::uint16_t> count_buf;
+  double result =
+      get_pre_collapsing_clusters_mean(replicate, pcc, clusters_buf, count_buf);
+
+  assert(result == 0.);
+}
+
+static void
+test_get_pre_collapsing_clusters_mean_one_replicate_different_clusters_per_window() {
+  constexpr std::size_t window_size = 2;
+
+  PtbaOnReplicate replicate{make_replicate({0u, 5u}, window_size)};
+  std::array<PreCollapsingClusters, 2> pcc{PreCollapsingClusters{4u, 0.f},
+                                           {8u, 0.f}};
+
+  std::vector<std::uint16_t> clusters_buf;
+  std::vector<std::uint16_t> count_buf;
+  double result =
+      get_pre_collapsing_clusters_mean(replicate, pcc, clusters_buf, count_buf);
+
+  assert(
+      std::abs(result - static_cast<double>(window_size * pcc[0].n_clusters +
+                                            window_size * pcc[1].n_clusters) /
+                            static_cast<double>(5u + window_size)) < 1e-6);
+}
+
+static void
+test_get_pre_collapsing_clusters_mean_one_replicate_overlapping_windows() {
+  constexpr std::size_t window_size = 3;
+
+  PtbaOnReplicate replicate{make_replicate({0u, 2u}, window_size)};
+  std::array<PreCollapsingClusters, 2> pcc{PreCollapsingClusters{4u, 0.f},
+                                           {6u, 0.f}};
+
+  std::vector<std::uint16_t> clusters_buf;
+  std::vector<std::uint16_t> count_buf;
+  double result =
+      get_pre_collapsing_clusters_mean(replicate, pcc, clusters_buf, count_buf);
+
+  assert(std::abs(result -
+                  static_cast<double>(pcc[0].n_clusters * 2 +
+                                      static_cast<double>(pcc[0].n_clusters +
+                                                          pcc[1].n_clusters) /
+                                          2. +
+                                      pcc[1].n_clusters * 2) /
+                      static_cast<double>(2u + window_size)) < 1e-6);
+}
+
 int main() {
   logger::instance.set_level(logger::Level::error);
 
@@ -1359,4 +1509,11 @@ int main() {
   test_get_windows_info_trascript_fraction_too_high();
   test_get_min_max_read_size();
   test_get_min_max_read_size_empty();
+  test_get_pre_collapsing_clusters_mean_one_replicate_one_window();
+  test_get_pre_collapsing_clusters_mean_one_window_non_overlapping_windows();
+  test_get_pre_collapsing_clusters_mean_buffer_size();
+  test_get_pre_collapsing_clusters_mean_non_zero_start_base();
+  test_get_pre_collapsing_clusters_mean_zero_n_clusters();
+  test_get_pre_collapsing_clusters_mean_one_replicate_different_clusters_per_window();
+  test_get_pre_collapsing_clusters_mean_one_replicate_overlapping_windows();
 }

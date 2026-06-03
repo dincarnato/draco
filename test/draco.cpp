@@ -678,39 +678,44 @@ void test_window_info_get_start_base() {
 
 void test_add_detected_clusters_with_confidence() {
   auto pre_collapsing_clusters =
-      std::views::repeat(
-          PreCollapsingClusters{.n_clusters = 999, .confidence = 1.}) |
+      std::views::repeat(PreCollapsingClusters{
+          .n_clusters = 999, .confidence = 1., .heterogeneity = 1.}) |
       std::views::take(10) | std::ranges::to<std::vector>();
-  std::ranges::for_each(std::views::repeat(PreCollapsingClusters{
-                            .n_clusters = 1, .confidence = 1}) |
-                            std::views::take(5) | std::views::as_rvalue,
-                        [&](auto &&value) {
-                          pre_collapsing_clusters.push_back(std::move(value));
-                        });
-  std::ranges::for_each(std::views::repeat(PreCollapsingClusters{
-                            .n_clusters = 1, .confidence = 0.5}) |
-                            std::views::take(3) | std::views::as_rvalue,
-                        [&](auto &&value) {
-                          pre_collapsing_clusters.push_back(std::move(value));
-                        });
-  std::ranges::for_each(std::views::repeat(PreCollapsingClusters{
-                            .n_clusters = 2, .confidence = 0.5}) |
-                            std::views::take(4) | std::views::as_rvalue,
-                        [&](auto &&value) {
-                          pre_collapsing_clusters.push_back(std::move(value));
-                        });
-  std::ranges::for_each(std::views::repeat(PreCollapsingClusters{
-                            .n_clusters = 2, .confidence = 1}) |
-                            std::views::take(2) | std::views::as_rvalue,
-                        [&](auto &&value) {
-                          pre_collapsing_clusters.push_back(std::move(value));
-                        });
-  std::ranges::for_each(std::views::repeat(PreCollapsingClusters{
-                            .n_clusters = 999, .confidence = 1}) |
-                            std::views::take(5) | std::views::as_rvalue,
-                        [&](auto &&value) {
-                          pre_collapsing_clusters.push_back(std::move(value));
-                        });
+  std::ranges::for_each(
+      std::views::repeat(PreCollapsingClusters{
+          .n_clusters = 1, .confidence = 1, .heterogeneity = 1.}) |
+          std::views::take(5) | std::views::as_rvalue,
+      [&](auto &&value) {
+        pre_collapsing_clusters.push_back(std::move(value));
+      });
+  std::ranges::for_each(
+      std::views::repeat(PreCollapsingClusters{
+          .n_clusters = 1, .confidence = 0.5, .heterogeneity = 1.}) |
+          std::views::take(3) | std::views::as_rvalue,
+      [&](auto &&value) {
+        pre_collapsing_clusters.push_back(std::move(value));
+      });
+  std::ranges::for_each(
+      std::views::repeat(PreCollapsingClusters{
+          .n_clusters = 2, .confidence = 0.5, .heterogeneity = 1.}) |
+          std::views::take(4) | std::views::as_rvalue,
+      [&](auto &&value) {
+        pre_collapsing_clusters.push_back(std::move(value));
+      });
+  std::ranges::for_each(
+      std::views::repeat(PreCollapsingClusters{
+          .n_clusters = 2, .confidence = 1, .heterogeneity = 1.}) |
+          std::views::take(2) | std::views::as_rvalue,
+      [&](auto &&value) {
+        pre_collapsing_clusters.push_back(std::move(value));
+      });
+  std::ranges::for_each(
+      std::views::repeat(PreCollapsingClusters{
+          .n_clusters = 999, .confidence = 1, .heterogeneity = 1.}) |
+          std::views::take(5) | std::views::as_rvalue,
+      [&](auto &&value) {
+        pre_collapsing_clusters.push_back(std::move(value));
+      });
 
   std::vector<WindowClustersWithConfidence> detected_clusters_with_confidence;
   std::size_t window_size = 17;
@@ -1389,7 +1394,7 @@ static void test_get_pre_collapsing_clusters_mean_one_replicate_one_window() {
   constexpr unsigned n_clusters = 4;
 
   PtbaOnReplicate replicate{make_replicate(start_base, window_size)};
-  std::array<PreCollapsingClusters, 1> pcc{{n_clusters, 0.f}};
+  std::array<PreCollapsingClusters, 1> pcc{{n_clusters, 0.f, 1.f}};
 
   std::vector<std::uint16_t> clusters_buf;
   std::vector<std::uint16_t> count_buf;
@@ -1406,7 +1411,7 @@ test_get_pre_collapsing_clusters_mean_one_window_non_overlapping_windows() {
 
   PtbaOnReplicate replicate{make_replicate({0u, 5u}, window_size)};
   std::array<PreCollapsingClusters, 2> pcc{
-      PreCollapsingClusters{n_clusters, 0.f}, {n_clusters, 0.f}};
+      PreCollapsingClusters{n_clusters, 0.f, 1.f}, {n_clusters, 0.f, 1.f}};
 
   std::vector<std::uint16_t> clusters_buf;
   std::vector<std::uint16_t> count_buf;
@@ -1423,7 +1428,7 @@ static void test_get_pre_collapsing_clusters_mean_buffer_size() {
   constexpr std::uint16_t start_base = 10;
 
   PtbaOnReplicate replicate{make_replicate(start_base, window_size)};
-  std::array<PreCollapsingClusters, 1> pcc{{1u, 0.f}};
+  std::array<PreCollapsingClusters, 1> pcc{{1u, 0.f, 1.f}};
 
   std::vector<std::uint16_t> clusters_buf;
   std::vector<std::uint16_t> count_buf;
@@ -1439,7 +1444,7 @@ static void test_get_pre_collapsing_clusters_mean_non_zero_start_base() {
   constexpr unsigned n_clusters = 7;
 
   PtbaOnReplicate replicate{make_replicate(start_base, window_size)};
-  std::array<PreCollapsingClusters, 1> pcc{{n_clusters, 0.f}};
+  std::array<PreCollapsingClusters, 1> pcc{{n_clusters, 0.f, 1.f}};
 
   std::vector<std::uint16_t> clusters_buf;
   std::vector<std::uint16_t> count_buf;
@@ -1454,7 +1459,7 @@ static void test_get_pre_collapsing_clusters_mean_zero_n_clusters() {
   constexpr std::uint16_t start_base = 0;
 
   PtbaOnReplicate replicate{make_replicate(start_base, window_size)};
-  std::array<PreCollapsingClusters, 1> pcc{{0u, 0.f}};
+  std::array<PreCollapsingClusters, 1> pcc{{0u, 0.f, 1.f}};
 
   std::vector<std::uint16_t> clusters_buf;
   std::vector<std::uint16_t> count_buf;
@@ -1469,8 +1474,8 @@ test_get_pre_collapsing_clusters_mean_one_replicate_different_clusters_per_windo
   constexpr std::size_t window_size = 2;
 
   PtbaOnReplicate replicate{make_replicate({0u, 5u}, window_size)};
-  std::array<PreCollapsingClusters, 2> pcc{PreCollapsingClusters{4u, 0.f},
-                                           {8u, 0.f}};
+  std::array<PreCollapsingClusters, 2> pcc{PreCollapsingClusters{4u, 0.f, 1.f},
+                                           {8u, 0.f, 1.f}};
 
   std::vector<std::uint16_t> clusters_buf;
   std::vector<std::uint16_t> count_buf;
@@ -1488,8 +1493,8 @@ test_get_pre_collapsing_clusters_mean_one_replicate_overlapping_windows() {
   constexpr std::size_t window_size = 3;
 
   PtbaOnReplicate replicate{make_replicate({0u, 2u}, window_size)};
-  std::array<PreCollapsingClusters, 2> pcc{PreCollapsingClusters{4u, 0.f},
-                                           {6u, 0.f}};
+  std::array<PreCollapsingClusters, 2> pcc{PreCollapsingClusters{4u, 0.f, 1.f},
+                                           {6u, 0.f, 1.f}};
 
   std::vector<std::uint16_t> clusters_buf;
   std::vector<std::uint16_t> count_buf;

@@ -846,13 +846,20 @@ std::vector<PreCollapsingClusters> get_best_pre_collapsing_clusters(
              }
            });
 
-           float confidence =
-               static_cast<float>(std::ranges::count(
-                   window_pre_collapsing_clusters, n_clusters)) /
+           auto n_replicates =
                static_cast<float>(std::size(ptba_on_replicate_results));
+           float confidence = static_cast<float>(std::ranges::count(
+                                  window_pre_collapsing_clusters, n_clusters)) /
+                              n_replicates;
+           float heterogeneity =
+               static_cast<float>(std::ranges::count_if(
+                   window_pre_collapsing_clusters,
+                   [](auto n_clusters) { return n_clusters > 1; })) /
+               n_replicates;
            return PreCollapsingClusters{
-               n_clusters,
-               confidence,
+               .n_clusters = n_clusters,
+               .confidence = confidence,
+               .heterogeneity = heterogeneity,
            };
          }) |
          std::ranges::to<std::vector>();
@@ -932,6 +939,7 @@ void add_detected_clusters_with_confidence(
       return WindowClustersWithConfidence{
           .n_clusters = first_window_clusters.n_clusters,
           .confidence = first_window_clusters.confidence,
+          .heterogeneity = first_window_clusters.heterogeneity,
           .start_base = std::max(
               start_base,
               windows_info.get_start_base(region_range.window_index_begin)),
@@ -947,6 +955,7 @@ void add_detected_clusters_with_confidence(
             detected_clusters_with_confidence.push_back(last_window_clusters);
             last_window_clusters.n_clusters = window_clusters.n_clusters;
             last_window_clusters.confidence = window_clusters.confidence;
+            last_window_clusters.heterogeneity = window_clusters.heterogeneity;
             last_window_clusters.start_base = start_base;
           }
 

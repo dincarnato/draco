@@ -177,15 +177,18 @@ struct PtbaOnReplicate {
 struct PreCollapsingClusters {
   unsigned n_clusters;
   float confidence;
+  float heterogeneity;
 
   bool operator==(const PreCollapsingClusters &other) const noexcept {
-    return n_clusters == other.n_clusters && confidence == other.confidence;
+    return n_clusters == other.n_clusters && confidence == other.confidence &&
+           heterogeneity == other.heterogeneity;
   }
 
   bool operator==(const WindowClustersWithConfidence
                       &window_clusters_with_confidence) const noexcept {
     return n_clusters == window_clusters_with_confidence.n_clusters &&
-           confidence == window_clusters_with_confidence.confidence;
+           confidence == window_clusters_with_confidence.confidence &&
+           heterogeneity == window_clusters_with_confidence.heterogeneity;
   }
 };
 

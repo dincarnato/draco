@@ -5,6 +5,7 @@
 struct WindowClustersWithConfidence {
   unsigned n_clusters;
   float confidence;
+  float heterogeneity;
   std::size_t start_base;
   std::size_t end_base;
 };

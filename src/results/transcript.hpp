@@ -47,7 +47,8 @@ std::basic_ostream<CharT, Traits> &jsonify_window_clusters_with_confidence(
   auto write_data = [&](auto const &data) {
     os << '{';
     jsonify(os, "nClusters", data.n_clusters, "confidence", data.confidence,
-            "start", data.start_base, "end", data.end_base);
+            "heterogeneity", data.heterogeneity, "start", data.start_base,
+            "end", data.end_base);
     os << '}';
   };
   write_data(detected_clusters_with_confidence[0]);

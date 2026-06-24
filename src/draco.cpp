@@ -868,12 +868,14 @@ std::vector<PreCollapsingClusters> get_best_pre_collapsing_clusters(
 void handle_transcripts(
     std::vector<MutationMapTranscript const *> const &transcripts,
     std::vector<RingmapData *> const &ringmaps_data,
+    std::optional<std::uint16_t> forced_window_length,
     results::Analysis &analysis_result, Args const &args,
     std::optional<std::ofstream> &raw_n_clusters_stream,
     std::mutex &raw_n_clusters_stream_mutex) {
   HandleTranscripts{
       .transcripts = transcripts,
       .ringmaps_data = ringmaps_data,
+      .forced_window_length = forced_window_length,
       .analysis_result = analysis_result,
       .args = args,
       .raw_n_clusters_stream = raw_n_clusters_stream,
@@ -1011,6 +1013,7 @@ unsigned get_min_median_window_size(
 
 WindowsInfoAllWindowSizes
 get_windows_info(std::span<RingmapData const *const> ringmaps_data,
+                 std::optional<std::uint16_t> forced_window_length,
                  Args const &args) noexcept {
   auto const &first_ringmap_data = *ringmaps_data[0];
   auto const transcript_size = first_ringmap_data.data().cols_size();
@@ -1025,11 +1028,13 @@ get_windows_info(std::span<RingmapData const *const> ringmaps_data,
   };
 
   std::vector<unsigned> window_sizes;
-  if (auto const &window_size_fraction_transcript_sizes =
-          args.window_size_fraction_transcript_size();
-      std::size(window_size_fraction_transcript_sizes) > 1 or
-      (not std::empty(window_size_fraction_transcript_sizes) and
-       window_size_fraction_transcript_sizes[0] > 0.)) {
+  if (forced_window_length.has_value()) {
+    window_sizes.push_back(static_cast<unsigned>(*forced_window_length));
+  } else if (auto const &window_size_fraction_transcript_sizes =
+                 args.window_size_fraction_transcript_size();
+             std::size(window_size_fraction_transcript_sizes) > 1 or
+             (not std::empty(window_size_fraction_transcript_sizes) and
+              window_size_fraction_transcript_sizes[0] > 0.)) {
     auto max_window_size = get_min_max_read_size(ringmaps_data);
     window_sizes.reserve(std::size(window_size_fraction_transcript_sizes));
     std::ranges::transform(

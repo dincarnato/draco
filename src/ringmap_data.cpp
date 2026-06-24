@@ -1,4 +1,6 @@
 #include "ringmap_data.hpp"
+#include "fmt/base.h"
+#include "fmt/ostream.h"
 #include "logger.hpp"
 #include "mutation_map.hpp"
 #include "mutation_map_transcript.hpp"
@@ -9,10 +11,13 @@
 #include "rna_secondary_structure.hpp"
 #include "spectral_partitioner.hpp"
 #include "tokenizer_iterator.hpp"
+#include "utils.hpp"
 
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <charconv>
+#include <cstdint>
 #include <fstream>
 #include <iterator>
 #include <limits>
@@ -22,6 +27,8 @@
 #include <regex>
 #include <sstream>
 #include <string_view>
+#include <system_error>
+#include <tuple>
 #include <unordered_map>
 
 RingmapData::RingmapData(const std::string &filename, std::string_view sequence,
@@ -850,28 +857,75 @@ auto RingmapData::remapPatterns(const clusters_pattern_type &patterns) const
 
 void RingmapData::enqueueRingmapsFromMutationMap(
     MutationMap &mutationMap,
-    parallel::blocking_queue<std::pair<MutationMapTranscript, RingmapData>>
-        &queue,
+    parallel::blocking_queue<std::tuple<MutationMapTranscript, RingmapData,
+                                        std::optional<std::uint16_t>>> &queue,
     Args const &args) {
 
   if (auto const &whitelist_filename = args.whitelist();
       whitelist_filename.empty()) {
     for (auto &&transcript : mutationMap)
-      queue.push(std::pair(transcript, RingmapData(transcript, args)));
+      queue.push(std::tuple(transcript, RingmapData(transcript, args),
+                            std::optional<std::uint16_t>{}));
   } else {
-    std::vector<std::string> whitelisted_genes;
+    std::vector<std::tuple<std::string, std::optional<std::uint16_t>>>
+        whitelisted_genes_and_forced_lengths;
     {
       std::ifstream whitelist_stream(whitelist_filename);
+      std::uint64_t line_number = 1;
       for (std::string line; std::getline(whitelist_stream, line);
-           line.clear()) {
-        std::ranges::transform(line, std::ranges::begin(line), [](char c) {
-          return static_cast<char>(std::tolower(c));
-        });
-        whitelisted_genes.emplace_back(std::move(line));
+           line.clear(), ++line_number) {
+        std::optional<std::uint16_t> window_size;
+        auto space_index = line.find(' ');
+        std::string_view transcript_id;
+        if (space_index != std::string::npos) {
+          transcript_id = std::string_view(
+              line.data(), static_cast<std::size_t>(space_index));
+          ++space_index;
+          while (line[space_index] == ' ') {
+            ++space_index;
+          }
+
+          std::string_view raw_window_size(line.data() + space_index);
+          auto next_space = raw_window_size.find(' ');
+          if (next_space != std::string::npos) {
+            raw_window_size = raw_window_size.substr(0, next_space);
+          }
+          if (raw_window_size.empty()) {
+            continue;
+          }
+          std::uint16_t parsed_window_size;
+          auto parse_result = std::from_chars(
+              std::addressof(*std::begin(raw_window_size)),
+              std::addressof(*std::end(raw_window_size)), parsed_window_size);
+          if (parse_result.ec == std::errc::invalid_argument or
+              parse_result.ptr != std::addressof(*std::end(raw_window_size))) {
+            bail("Line {} of the whitelist contains an invalid window length: "
+                 "'{}'",
+                 line_number, raw_window_size);
+          }
+
+          if (parse_result.ec == std::errc::result_out_of_range) {
+            bail("Line {} of the whitelist contains an window length that is "
+                 "too big: '{}'",
+                 line_number, raw_window_size);
+          }
+
+          window_size = parsed_window_size;
+        } else {
+          transcript_id = std::string_view(line);
+        }
+        std::ranges::transform(
+            transcript_id, std::ranges::begin(line),
+            [](char c) { return static_cast<char>(std::tolower(c)); });
+        whitelisted_genes_and_forced_lengths.emplace_back(
+            std::string(transcript_id), std::move(window_size));
       }
     }
 
-    std::ranges::sort(whitelisted_genes);
+    std::ranges::sort(whitelisted_genes_and_forced_lengths, {},
+                      [](auto const &tuple) -> std::string const & {
+                        return std::get<0>(tuple);
+                      });
     std::string transcriptId;
     for (auto &&transcript : mutationMap) {
       transcriptId = transcript.getId();
@@ -879,8 +933,17 @@ void RingmapData::enqueueRingmapsFromMutationMap(
           transcriptId, std::ranges::begin(transcriptId),
           [](char c) { return static_cast<char>(std::tolower(c)); });
 
-      if (std::ranges::binary_search(whitelisted_genes, transcriptId)) {
-        queue.push(std::pair(transcript, RingmapData(transcript, args)));
+      auto gene_iter = std::ranges::lower_bound(
+          whitelisted_genes_and_forced_lengths, transcriptId, {},
+          [](const auto &tuple) -> std::string const & {
+            return std::get<0>(tuple);
+          });
+
+      if (gene_iter !=
+              std::ranges::end(whitelisted_genes_and_forced_lengths) and
+          std::get<0>(*gene_iter) == transcriptId) {
+        queue.push(std::tuple(transcript, RingmapData(transcript, args),
+                              std::get<1>(*gene_iter)));
       }
     }
   }

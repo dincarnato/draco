@@ -811,6 +811,8 @@ void test_handle_transcripts_clusters_confidences() {
       RingmapData(sequence, make_ringmap_matrix(), 0, std::size(sequence),
                   args),
   };
+  std::vector<std::optional<std::uint16_t>> owned_forced_window_lengths(
+      std::size(owned_ringmap_data), std::optional<std::uint16_t>{});
   auto ringmap_data =
       owned_ringmap_data |
       std::views::transform([](auto &ringmap_data) { return &ringmap_data; }) |
@@ -832,6 +834,7 @@ void test_handle_transcripts_clusters_confidences() {
 
   HandleTranscripts{.transcripts = transcripts,
                     .ringmaps_data = ringmap_data,
+                    .forced_window_length = {},
                     .analysis_result = analysis_result,
                     .args = args,
                     .raw_n_clusters_stream = raw_n_clusters_stream,
@@ -1098,7 +1101,7 @@ static void test_get_windows_info_default_args() {
                            std::size(sequence), args);
 
   std::array ringmaps_data{&ringmap_data};
-  auto windows_info = get_windows_info(ringmaps_data, args);
+  auto windows_info = get_windows_info(ringmaps_data, {}, args);
   assert(windows_info.transcript_size == std::size(sequence));
   assert(std::size(windows_info.window_sizes) == 1);
   assert(windows_info.window_sizes[0] == 100);
@@ -1123,7 +1126,7 @@ static void test_get_windows_info_shorter_window_size() {
                            std::size(sequence), args);
 
   std::array ringmaps_data{&ringmap_data};
-  auto windows_info = get_windows_info(ringmaps_data, args);
+  auto windows_info = get_windows_info(ringmaps_data, {}, args);
   assert(windows_info.transcript_size == std::size(sequence));
   assert(std::size(windows_info.window_sizes) == 1);
   assert(windows_info.window_sizes[0] == 20);
@@ -1148,7 +1151,7 @@ static void test_get_windows_info_fractional_shift() {
                            std::size(sequence), args);
 
   std::array ringmaps_data{&ringmap_data};
-  auto windows_info = get_windows_info(ringmaps_data, args);
+  auto windows_info = get_windows_info(ringmaps_data, {}, args);
   assert(windows_info.transcript_size == std::size(sequence));
   assert(std::size(windows_info.window_sizes) == 1);
   assert(windows_info.window_sizes[0] == 100);
@@ -1173,7 +1176,7 @@ static void test_get_windows_info_absolute_shift() {
                            std::size(sequence), args);
 
   std::array ringmaps_data{&ringmap_data};
-  auto windows_info = get_windows_info(ringmaps_data, args);
+  auto windows_info = get_windows_info(ringmaps_data, {}, args);
   assert(windows_info.transcript_size == std::size(sequence));
   assert(std::size(windows_info.window_sizes));
   assert(windows_info.window_sizes[0] == 100);
@@ -1198,7 +1201,7 @@ static void test_get_windows_info_window_size_too_big() {
                            std::size(sequence), args);
 
   std::array ringmaps_data{&ringmap_data};
-  auto windows_info = get_windows_info(ringmaps_data, args);
+  auto windows_info = get_windows_info(ringmaps_data, {}, args);
   assert(windows_info.transcript_size == std::size(sequence));
   assert(std::size(windows_info.window_sizes));
   assert(windows_info.window_sizes[0] == std::size(sequence));
@@ -1223,7 +1226,7 @@ static void test_get_windows_info_window_size_fraction() {
                            std::size(sequence), args);
 
   std::array ringmaps_data{&ringmap_data};
-  auto windows_info = get_windows_info(ringmaps_data, args);
+  auto windows_info = get_windows_info(ringmaps_data, {}, args);
   assert(windows_info.transcript_size == std::size(sequence));
   assert(std::size(windows_info.window_sizes));
   assert(windows_info.window_sizes[0] == 40);
@@ -1248,7 +1251,7 @@ static void test_get_windows_info_trascript_fraction() {
                            std::size(sequence), args);
 
   std::array ringmaps_data{&ringmap_data};
-  auto windows_info = get_windows_info(ringmaps_data, args);
+  auto windows_info = get_windows_info(ringmaps_data, {}, args);
   assert(windows_info.transcript_size == std::size(sequence));
   assert(std::size(windows_info.window_sizes) == 1);
   assert(windows_info.window_sizes[0] == std::size(sequence) / 2);
@@ -1274,7 +1277,7 @@ static void test_get_windows_info_trascript_fraction_too_high() {
                            std::size(sequence), args);
 
   std::array ringmaps_data{&ringmap_data};
-  auto windows_info = get_windows_info(ringmaps_data, args);
+  auto windows_info = get_windows_info(ringmaps_data, {}, args);
   assert(windows_info.transcript_size == std::size(sequence));
   assert(std::size(windows_info.window_sizes) == 1);
   assert(windows_info.window_sizes[0] == std::size(sequence));

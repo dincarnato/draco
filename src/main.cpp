@@ -8,6 +8,7 @@
 #include "utils.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
@@ -112,8 +113,8 @@ int main(int argc, char *argv[]) {
     fs::create_directory(fs::path(args.eigengaps_plots_root_dir()));
   }
 
-  std::vector<
-      parallel::blocking_queue<std::pair<MutationMapTranscript, RingmapData>>>
+  std::vector<parallel::blocking_queue<std::tuple<
+      MutationMapTranscript, RingmapData, std::optional<std::uint16_t>>>>
       queues;
   std::vector<std::thread> readers;
   queues.reserve(std::size(mutation_maps));
@@ -158,7 +159,8 @@ int main(int argc, char *argv[]) {
   }
 
   using popped_data_t =
-      std::vector<std::optional<std::pair<MutationMapTranscript, RingmapData>>>;
+      std::vector<std::optional<std::tuple<MutationMapTranscript, RingmapData,
+                                           std::optional<std::uint16_t>>>>;
   tbb::parallel_pipeline(
       max_allowed_parallelism,
       tbb::make_filter<void, popped_data_t>(
@@ -173,8 +175,9 @@ int main(int argc, char *argv[]) {
                                       return not single_popped_data;
                                     })) {
               flow_control.stop();
-              return std::vector<std::optional<
-                  std::pair<MutationMapTranscript, RingmapData>>>();
+              return std::vector<
+                  std::optional<std::tuple<MutationMapTranscript, RingmapData,
+                                           std::optional<std::uint16_t>>>>();
             } else {
               return popped_data;
             }
@@ -183,9 +186,23 @@ int main(int argc, char *argv[]) {
           tbb::filter_mode::parallel, [&](popped_data_t &&popped_data) {
             std::vector<MutationMapTranscript const *> transcripts;
             std::vector<RingmapData *> ringmaps_data;
-            for (auto &single_popped_data : popped_data) {
+            std::optional<std::uint16_t> forced_window_length;
+
+            if (!popped_data.empty()) {
+              transcripts.push_back(&std::get<0>(*popped_data[0]));
+              ringmaps_data.push_back(&std::get<1>(*popped_data[0]));
+              forced_window_length = std::get<2>(*popped_data[0]);
+            }
+
+            for (auto &single_popped_data : popped_data | std::views::drop(1)) {
               transcripts.push_back(&std::get<0>(*single_popped_data));
               ringmaps_data.push_back(&std::get<1>(*single_popped_data));
+
+              if (forced_window_length != std::get<2>(*single_popped_data)) {
+                assert(not transcripts.empty());
+                bail("Inconsitent forced_window_length on transcript {}",
+                     transcripts[0]->getId());
+              }
             }
 
             assert(not transcripts.empty());
@@ -203,8 +220,8 @@ int main(int argc, char *argv[]) {
                    first_transcript.getId());
             }
 
-            handle_transcripts(transcripts, ringmaps_data, analysisResult, args,
-                               raw_n_clusters_stream,
+            handle_transcripts(transcripts, ringmaps_data, forced_window_length,
+                               analysisResult, args, raw_n_clusters_stream,
                                raw_n_clusters_stream_mutex);
           }));
 

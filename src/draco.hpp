@@ -45,6 +45,7 @@ struct Args;
 void handle_transcripts(
     std::vector<MutationMapTranscript const *> const &transcripts,
     std::vector<RingmapData *> const &ringmapsData,
+    std::optional<std::uint16_t> forced_window_length,
     results::Analysis &analysisResult, Args const &args,
     std::optional<std::ofstream> &raw_n_clusters_stream,
     std::mutex &raw_n_clusters_stream_mutex);
@@ -324,6 +325,7 @@ void add_detected_clusters_with_confidence(
 
 WindowsInfoAllWindowSizes
 get_windows_info(std::span<RingmapData const *const> ringmaps_data,
+                 std::optional<std::uint16_t> forced_window_length,
                  Args const &args) noexcept;
 
 template <typename R>
@@ -369,6 +371,7 @@ enum class RedundantPatterns {
 struct HandleTranscripts {
   std::vector<MutationMapTranscript const *> const &transcripts;
   std::vector<RingmapData *> const &ringmaps_data;
+  std::optional<std::uint16_t> forced_window_length;
   results::Analysis &analysis_result;
   Args const &args;
   std::optional<std::ofstream> &raw_n_clusters_stream;
@@ -388,7 +391,8 @@ protected:
           &&ptba_on_replicate,
       results::Transcript &transcript_result) {
     auto const &first_transcript = *transcripts[0];
-    auto windows_info_all_window_sizes = get_windows_info(ringmaps_data, args);
+    auto windows_info_all_window_sizes =
+        get_windows_info(ringmaps_data, forced_window_length, args);
 
     auto n_window_sizes = std::size(windows_info_all_window_sizes.window_sizes);
     std::vector<std::vector<PreCollapsingClusters>> all_pre_collapsing_clusters(

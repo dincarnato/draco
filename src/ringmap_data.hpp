@@ -10,9 +10,11 @@
 #include <boost/thread/lock_options.hpp>
 #include <boost/thread/lock_types.hpp>
 #include <boost/thread/shared_mutex.hpp>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -191,8 +193,8 @@ public:
 
   static void enqueueRingmapsFromMutationMap(
       MutationMap &mutationMap,
-      parallel::blocking_queue<std::pair<MutationMapTranscript, RingmapData>>
-          &queue,
+      parallel::blocking_queue<std::tuple<MutationMapTranscript, RingmapData,
+                                          std::optional<std::uint16_t>>> &queue,
       Args const &args);
 
   template <typename R>

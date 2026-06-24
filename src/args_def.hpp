@@ -29,7 +29,9 @@ static constexpr auto opts = args::Opts(
             .parameter_name("whitelist")
             .description(
                 "A whitelist file, containing the IDs of the transcripts "
-                "to be analyzed, one per row"),
+                "to be analyzed, one per row. It is possible to add a specific "
+                "window length, separated by a space, that is going to be "
+                "forced for the specified transcript"),
         ARG(bool, shape)
             .description(
                 "Enables spectral analysis on all four bases (Default: "

@@ -85,8 +85,24 @@ inline auto make_windows_and_reads_indices_range(
        zip_iter != zip_end; ++zip_iter) {
     auto const &window = std::get<1>(*zip_iter);
 
+    // Consecutive windows with the same number of clusters always belong
+    // to the same region. A window with the same number of clusters that
+    // comes after one or more windows with a different number is merged
+    // only when it overlaps the last merged window by at least
+    // min_windows_overlap bases (and by at least one base: windows that
+    // merely touch, or with a gap between them, never form a region). A
+    // window with a different number of clusters that overlaps the last
+    // merged one by min_windows_overlap bases or fewer ends the search,
+    // since no later window can overlap it enough.
+    auto const last_end = last_same_clusters_start_base + window_size;
+    bool const contiguous = zip_maybe_end == std::ranges::end(zip);
+    bool const mergeable =
+        contiguous or
+        last_end >= window.start_base + std::max(min_windows_overlap, 1u);
+    bool const too_far = last_end <= window.start_base + min_windows_overlap;
+
     auto last_window_clusters = window.weights.getClustersSize();
-    if (last_window_clusters == n_clusters) {
+    if (last_window_clusters == n_clusters and mergeable) {
       last_same_clusters_start_base = window.start_base;
       zip_maybe_end = std::ranges::end(zip);
     } else {
@@ -94,8 +110,7 @@ inline auto make_windows_and_reads_indices_range(
         zip_maybe_end = std::next(zip_iter);
       }
 
-      if (n_clusters == 0 or last_same_clusters_start_base + window_size <=
-                                 window.start_base + min_windows_overlap) {
+      if (n_clusters == 0 or too_far or not mergeable) {
         break;
       }
     }
@@ -149,20 +164,27 @@ void update_iters_and_region(
   assert(std::get<1>(*last_same_clusters_size_iter).weights.getClustersSize() ==
          n_clusters);
 
-  // There is no need to store the end of the region if there are
-  // not other set of windows with different number of clusters.
-  if (first_different_clusters_size_iter !=
-      std::end(windows_and_reads_indices_range)) {
-    auto const &last_with_same_n_clusters = *last_same_clusters_size_iter;
-
-    if (n_clusters > 0) {
-      auto const &last_window_with_same_n_clusters =
-          std::get<1>(last_with_same_n_clusters);
-      previous_overlapping_region_ends[n_clusters - 1] =
-          last_window_with_same_n_clusters.start_base + window_size -
-          min_windows_overlap;
+  // Every window of the range with this number of clusters was merged into
+  // the region just added, including those beyond the leading run of
+  // consecutive windows (the ones the iterators are advanced past). Record
+  // the start of the last one, so that the main loop skips the merged
+  // windows it reaches later instead of starting a second region that ends
+  // where this one ends.
+  if (n_clusters > 0 and
+      first_different_clusters_size_iter !=
+          std::end(windows_and_reads_indices_range)) {
+    std::optional<std::uint16_t> last_merged_start_base;
+    for (auto const &tuple : windows_and_reads_indices_range) {
+      auto const &window = std::get<1>(tuple);
+      if (window.weights.getClustersSize() == n_clusters) {
+        last_merged_start_base = window.start_base;
+      }
     }
+    assert(last_merged_start_base.has_value());
+    previous_overlapping_region_ends[n_clusters - 1] = last_merged_start_base;
   }
+  (void)window_size;
+  (void)min_windows_overlap;
 
   window_iter += region_size;
   window_reads_indices_iter += region_size;
@@ -1045,65 +1067,47 @@ enum class HandleOverlappingRegionsResult {
   Break,
 };
 
+/// Skips the windows with `n_clusters` clusters that were already merged
+/// into the previous region with that number of clusters (those starting at
+/// or before the last window merged into it, `last_merged_start_base`).
+/// Returns Continue when the iterators were advanced, Break when the window
+/// at `windows_iter` starts a new region.
 inline HandleOverlappingRegionsResult handle_overlapping_regions(
-    std::optional<unsigned short> &previous_overlapping_region_end,
+    std::optional<unsigned short> &last_merged_start_base,
     std::vector<Window>::const_iterator &windows_iter,
     std::vector<Window>::const_iterator const &windows_iter_end,
     std::span<std::vector<unsigned>>::iterator &windows_reads_indices_iter,
-    unsigned n_clusters, unsigned min_windows_overlap) {
+    unsigned n_clusters, [[maybe_unused]] unsigned min_windows_overlap) {
   auto &&window = *windows_iter;
-  if (previous_overlapping_region_end.has_value() and
-      window.start_base < *previous_overlapping_region_end) {
+  if (last_merged_start_base.has_value() and
+      window.start_base <= *last_merged_start_base) {
 
     auto next_useful_window = std::ranges::find_if(
         windows_iter, windows_iter_end, [&](auto const &window) {
           return window.weights.getClustersSize() != n_clusters or
-                 window.start_base >= *previous_overlapping_region_end;
+                 window.start_base > *last_merged_start_base;
         });
-
-    auto last_window_same_clusters = *std::ranges::prev(next_useful_window);
-    assert(last_window_same_clusters.weights.getClustersSize() == n_clusters);
-
-    auto window_size = window.weights.getElementsSize();
-    auto new_region_end = last_window_same_clusters.start_base + window_size -
-                          min_windows_overlap;
 
     auto iter_offset = std::ranges::distance(windows_iter, next_useful_window);
     windows_reads_indices_iter += iter_offset;
     windows_iter = next_useful_window;
 
-    logger::on_trace_level([&] {
-      if (next_useful_window == windows_iter_end) {
-        logger::trace("handle_overlapping_regions found no more useful windows "
-                      "with clusters != {} or window.start_base >= {}, "
-                      "advances the iterators by {}, updates the region end to "
-                      "{} and returns continue",
-                      n_clusters, *previous_overlapping_region_end, iter_offset,
-                      new_region_end);
-      } else {
-        logger::trace(
-            "handle_overlapping_regions found a useful windows with {} "
-            "clusters (needed != {}) and window.start_base {} (needed >= {}), "
-            "advances the iterators by {}, updates the region end to {} and "
-            "returns continue",
-            next_useful_window->weights.getClustersSize(), n_clusters,
-            next_useful_window->start_base, *previous_overlapping_region_end,
-            iter_offset, new_region_end);
-      }
-    });
+    logger::trace("handle_overlapping_regions skips {} window(s) with {} "
+                  "clusters already merged (start base <= {})",
+                  iter_offset, n_clusters, *last_merged_start_base);
 
-    previous_overlapping_region_end = new_region_end;
     return HandleOverlappingRegionsResult::Continue;
   } else {
     logger::on_trace_level([&] {
-      if (previous_overlapping_region_end.has_value()) {
+      if (last_merged_start_base.has_value()) {
         logger::trace(
-            "handle_overlapping_regions sees the windows start base ({}) is "
-            "less than the previous overlapping region end ({}), returns break",
-            window.start_base, *previous_overlapping_region_end);
+            "handle_overlapping_regions sees the window start base ({}) is "
+            "after the last merged window ({}), returns break",
+            window.start_base, *last_merged_start_base);
       } else {
-        logger::trace("handle_overlapping_regions sees no previous overlapping "
-                      "region end, returns break");
+        logger::trace("handle_overlapping_regions sees no previous region "
+                      "with {} clusters, returns break",
+                      n_clusters);
       }
     });
 
